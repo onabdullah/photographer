@@ -168,12 +168,12 @@ function NavItem({ name, href, icon: Icon, isActive, iconOnly, badge, badgeColor
             title={iconOnly ? name : undefined}
             aria-label={iconOnly ? name : undefined}
             className={[
-                'group flex items-center px-3 py-2 mx-2 rounded-lg text-sm font-medium',
-                'transition-colors duration-150 min-h-[38px]',
+                'group flex items-center px-3 py-2.5 mx-2 rounded-lg text-sm',
+                'transition-colors duration-150 min-h-[40px]',
                 iconOnly ? 'justify-center' : '',
                 isActive
-                    ? 'bg-primary-600 text-white shadow-sm shadow-primary-900/20'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70',
+                    ? 'bg-primary-600 text-white font-semibold shadow-md shadow-primary-700/25'
+                    : 'font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70',
             ].filter(Boolean).join(' ')}
         >
             <Icon
@@ -217,7 +217,7 @@ function CollapsibleNavItem({ name, icon: Icon, badge, badgeColor, children, ico
             <button
                 title={name}
                 aria-label={name}
-                className="group flex items-center justify-center px-3 py-2 mx-2 rounded-lg text-sm font-medium min-h-[38px] w-[calc(100%-1rem)] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
+                className="group flex items-center justify-center px-3 py-2.5 mx-2 rounded-lg text-sm font-medium min-h-[40px] w-[calc(100%-1rem)] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
             >
                 <Icon size={17} className="flex-shrink-0 text-gray-400 dark:text-gray-500" />
             </button>
@@ -228,7 +228,7 @@ function CollapsibleNavItem({ name, icon: Icon, badge, badgeColor, children, ico
         <div>
             <button
                 onClick={() => setOpen(!open)}
-                className="group flex items-center px-3 py-2 mx-2 rounded-lg text-sm font-medium min-h-[38px] w-[calc(100%-1rem)] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
+                className="group flex items-center px-3 py-2.5 mx-2 rounded-lg text-sm font-medium min-h-[40px] w-[calc(100%-1rem)] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
             >
                 <Icon
                     size={17}
@@ -395,7 +395,7 @@ function Breadcrumbs({ crumbs }) {
     if (!crumbs?.length) return null;
     return (
         <nav
-            className="hidden lg:flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500"
+            className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap"
             aria-label="Breadcrumb"
         >
             <Link
@@ -534,7 +534,7 @@ export default function AdminLayout({
                 className={[
                     'fixed top-0 left-0 h-screen z-40 flex flex-col',
                     'bg-white dark:bg-gray-900',
-                    'border-r border-gray-100 dark:border-gray-800',
+                    'border-r border-gray-200 dark:border-gray-700/70',
                     'overflow-hidden',
                     // Smooth width + slide transition
                     'transition-all duration-200 ease-in-out',
@@ -551,8 +551,8 @@ export default function AdminLayout({
             >
                 {/* ── Logo header ── */}
                 <div className={[
-                    'flex items-center flex-shrink-0 h-[64px] px-3 gap-3',
-                    'border-b border-gray-100 dark:border-gray-800',
+                    'flex items-center flex-shrink-0 h-[68px] px-3 gap-3',
+                    'border-b border-gray-200 dark:border-gray-700/70',
                     iconOnly ? 'justify-center' : 'justify-between',
                 ].join(' ')}>
 
@@ -614,9 +614,9 @@ export default function AdminLayout({
                             <div key={id}>
                                 {/* Section label */}
                                 {iconOnly ? (
-                                    <div className="mx-3 my-2 border-t border-gray-100 dark:border-gray-800" />
+                                    <div className="mx-3 my-2 border-t border-gray-200 dark:border-gray-700/60" />
                                 ) : (
-                                    <p className="px-5 pt-4 pb-1.5 text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">
+                                    <p className="px-5 pt-5 pb-1.5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.1em]">
                                         {label}
                                     </p>
                                 )}
@@ -648,7 +648,7 @@ export default function AdminLayout({
                     {/* Quick Actions */}
                     {!iconOnly && QUICK_ACTIONS.some((a) => can(a.permission)) && (
                         <div>
-                            <p className="px-5 pt-4 pb-1.5 text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">
+                            <p className="px-5 pt-5 pb-1.5 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.1em]">
                                 QUICK ACTIONS
                             </p>
                             {QUICK_ACTIONS.filter((a) => can(a.permission)).map((action) => {
@@ -657,7 +657,7 @@ export default function AdminLayout({
                                     <Link
                                         key={action.href}
                                         href={action.href}
-                                        className="flex items-center gap-2 px-4 py-1.5 mx-2 text-xs font-medium rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+                                        className="flex items-center gap-2 px-4 py-2 mx-2 text-xs font-semibold rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                                     >
                                         <Plus size={12} className="flex-shrink-0 text-secondary-500" />
                                         {action.name}
@@ -685,53 +685,67 @@ export default function AdminLayout({
             ].join(' ')}>
 
                 {/* ── TOP BAR ── */}
-                <header className="sticky top-0 z-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 shadow-sm shadow-black/[0.04] dark:shadow-black/20">
-                    <div className="flex items-center gap-3 px-4 sm:px-6 h-[64px]">
+                <header className="sticky top-0 z-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700/70 shadow shadow-black/[0.06] dark:shadow-black/30">
+                    {/*
+                      3-zone layout:
+                        LEFT  — flex-1 min-w-0   (title + controls)
+                        CENTER — absolute, left-1/2 -translate-x-1/2  (breadcrumbs, pixel-perfect center)
+                        RIGHT  — flex-shrink-0   (user menu)
+                      Using position:absolute on CENTER prevents it from displacing LEFT/RIGHT
+                      and ensures it always sits at the mathematical midpoint of the bar.
+                    */}
+                    <div className="relative flex items-center px-4 sm:px-6 h-[68px]">
 
-                        {/* Mobile hamburger */}
-                        <button
-                            onClick={() => setMobileOpen(true)}
-                            className="lg:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[36px] flex items-center"
-                            aria-label="Open menu"
-                        >
-                            <Menu size={20} />
-                        </button>
-
-                        {/* Desktop: expand button when sidebar is collapsed */}
-                        {collapsed && (
+                        {/* ── LEFT: nav controls + page title ── */}
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {/* Mobile hamburger */}
                             <button
-                                onClick={toggleSidebar}
-                                className="hidden lg:flex p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[36px] items-center"
-                                aria-label="Expand sidebar"
+                                onClick={() => setMobileOpen(true)}
+                                className="lg:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[36px] flex-shrink-0 flex items-center"
+                                aria-label="Open menu"
                             >
                                 <Menu size={20} />
                             </button>
-                        )}
 
-                        {/* Page title */}
-                        <div className="flex-1 min-w-0">
-                            <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate leading-tight">
-                                {title ?? 'Admin Panel'}
-                            </h1>
-                            {subtitle && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                                    {subtitle}
-                                </p>
+                            {/* Desktop: expand when sidebar collapsed */}
+                            {collapsed && (
+                                <button
+                                    onClick={toggleSidebar}
+                                    className="hidden lg:flex p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[36px] flex-shrink-0 items-center"
+                                    aria-label="Expand sidebar"
+                                >
+                                    <Menu size={20} />
+                                </button>
                             )}
+
+                            {/* Page title */}
+                            <div className="min-w-0">
+                                <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate leading-tight">
+                                    {title ?? 'Admin Panel'}
+                                </h1>
+                                {subtitle && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5 leading-tight">
+                                        {subtitle}
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Breadcrumbs (center, hidden on small screens) */}
+                        {/*
+                          ── CENTER: breadcrumbs — absolutely centered ──
+                          position:absolute + left:50% + -translate-x-1/2 places this at
+                          the exact horizontal midpoint of the bar regardless of left/right widths.
+                          hidden below md (768px) — not needed on mobile.
+                        */}
                         {breadcrumbs?.length > 0 && (
-                            <div className="hidden lg:flex flex-1 justify-center">
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
                                 <Breadcrumbs crumbs={breadcrumbs} />
                             </div>
                         )}
 
-                        {/* Right: custom actions + user profile */}
-                        <div className="flex items-center gap-2 ml-auto">
+                        {/* ── RIGHT: page actions + user profile ── */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
                             {headerActions}
-
-                            {/* User profile dropdown (always top-right) */}
                             <UserMenu
                                 user={user}
                                 role={role}
@@ -748,7 +762,7 @@ export default function AdminLayout({
                 </main>
 
                 {/* ── Footer ── */}
-                <footer className="px-6 py-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <footer className="px-6 py-3 border-t border-gray-200 dark:border-gray-700/70 bg-white dark:bg-gray-900">
                     <p className="text-xs text-gray-400 dark:text-gray-600 text-center">
                         &copy; {new Date().getFullYear()} PhotoAdmin &mdash; Built by Muhammad Abdullah
                     </p>
