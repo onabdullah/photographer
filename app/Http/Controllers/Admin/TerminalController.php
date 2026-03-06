@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -123,17 +123,25 @@ class TerminalController extends Controller
             ], 200);
         }
 
-        // ── Execute via Artisan facade — runs inside the current PHP process ────
-        // Artisan::call() resolves to ConsoleKernel (bound in the IoC container)
-        // and bootstraps the console application on-demand, even from a web request.
-        // No child process is spawned, so the same PHP 8.4 runtime is used.
+        // ── Execute inside the current PHP process — zero child process ─────────
+        // We bypass the Artisan facade (whose alias 'artisan' is only bound during
+        // CLI bootstrap) and use app()->make() with the concrete ConsoleKernel class.
+        // The container auto-wires its constructor even without a prior binding.
+        // call() bootstraps the console on-demand and captures output via BufferedOutput.
         $start = microtime(true);
 
         try {
+            /** @var ConsoleKernel $kernel */
+            $kernel = app()->make(ConsoleKernel::class);
+
             $buffered = new BufferedOutput();
-            // array_slice($parts, 1) skips the command name (index 0)
-            $exitCode = Artisan::call($baseName, $this->parseParams(array_slice($parts, 1)), $buffered);
-            $output   = $buffered->fetch();
+            // array_slice($parts, 1) drops the command name (index 0)
+            $exitCode = $kernel->call(
+                $baseName,
+                $this->parseParams(array_slice($parts, 1)),
+                $buffered,
+            );
+            $output = $buffered->fetch();
         } catch (\Throwable $e) {
             $output   = 'Exception: ' . $e->getMessage() . "\n";
             $exitCode = 1;
