@@ -116,20 +116,20 @@ export default function MerchantsIndex({ merchants }) {
                             </p>
                             <div className="flex gap-2">
                                 {paginator.prev_page_url ? (
-                                    <Link href={paginator.prev_page_url} className="btn-secondary text-sm px-3 py-1.5">
+                                    <Link href={paginator.prev_page_url} className="btn btn-secondary">
                                         Previous
                                     </Link>
                                 ) : (
-                                    <span className="btn-secondary opacity-40 cursor-not-allowed text-sm px-3 py-1.5">
+                                    <span className="btn btn-secondary opacity-40 cursor-not-allowed">
                                         Previous
                                     </span>
                                 )}
                                 {paginator.next_page_url ? (
-                                    <Link href={paginator.next_page_url} className="btn-secondary text-sm px-3 py-1.5">
+                                    <Link href={paginator.next_page_url} className="btn btn-secondary">
                                         Next
                                     </Link>
                                 ) : (
-                                    <span className="btn-secondary opacity-40 cursor-not-allowed text-sm px-3 py-1.5">
+                                    <span className="btn btn-secondary opacity-40 cursor-not-allowed">
                                         Next
                                     </span>
                                 )}

@@ -135,12 +135,12 @@ export default function UsersIndex({ users }) {
                         </p>
                         <div className="flex gap-2">
                             {users.prev_page_url
-                                ? <Link href={users.prev_page_url} className="btn-secondary text-sm px-3 py-1.5">Previous</Link>
-                                : <span className="btn-secondary text-sm px-3 py-1.5 opacity-40 cursor-not-allowed">Previous</span>
+                                ? <Link href={users.prev_page_url} className="btn btn-secondary">Previous</Link>
+                                : <span className="btn btn-secondary opacity-40 cursor-not-allowed">Previous</span>
                             }
                             {users.next_page_url
-                                ? <Link href={users.next_page_url} className="btn-secondary text-sm px-3 py-1.5">Next</Link>
-                                : <span className="btn-secondary text-sm px-3 py-1.5 opacity-40 cursor-not-allowed">Next</span>
+                                ? <Link href={users.next_page_url} className="btn btn-secondary">Next</Link>
+                                : <span className="btn btn-secondary opacity-40 cursor-not-allowed">Next</span>
                             }
                         </div>
                     </div>

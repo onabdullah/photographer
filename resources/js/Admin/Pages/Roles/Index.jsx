@@ -13,7 +13,7 @@ export default function RolesIndex({ roles, totalPermissions }) {
             breadcrumbs={[{ label: 'Roles' }]}
             headerActions={
                 <Link href="/admin/roles/create" className="btn btn-primary">
-                    <Plus size={14} className="mr-1.5" />
+                    <Plus size={12} className="mr-1.5" />
                     New Role
                 </Link>
             }
@@ -87,8 +87,8 @@ export default function RolesIndex({ roles, totalPermissions }) {
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                             Create your first role to start managing permissions.
                                         </p>
-                                        <Link href="/admin/roles/create" className="btn btn-primary mt-4 inline-flex">
-                                            <Plus size={14} className="mr-1.5" /> New Role
+                                        <Link href="/admin/roles/create" className="btn btn-primary mt-4">
+                                            <Plus size={12} className="mr-1" /> New Role
                                         </Link>
                                     </td>
                                 </tr>
