@@ -126,7 +126,7 @@ export default function AdminLayout({ children }) {
             </div>
 
             {/* Main content area */}
-            <div className="lg:pl-64">
+            <div className="lg:pl-64 flex min-h-screen flex-col">
                 {/* Top bar */}
                 <div className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm lg:px-8">
                     {/* Mobile menu button */}
@@ -154,9 +154,13 @@ export default function AdminLayout({ children }) {
                 </div>
 
                 {/* Page content */}
-                <main className="p-6 lg:p-8">
+                <main className="flex-1 p-6 lg:p-8">
                     {children}
                 </main>
+
+                <footer className="border-t border-gray-200 bg-white px-6 py-4 text-center text-sm text-gray-500 lg:px-8">
+                    Built by Muhammad Abdullah
+                </footer>
             </div>
         </div>
     );
