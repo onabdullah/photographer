@@ -25,9 +25,7 @@ import {
     Users,
     Shield,
     TerminalSquare,
-    ExternalLink,
-    Code2,
-    FlaskConical,
+    X,
 } from 'lucide-react';
 
 // ============================================================
@@ -403,45 +401,21 @@ function Breadcrumbs({ crumbs }) {
 // DEVELOPER PANEL  —  expandable section pinned to sidebar bottom
 // ============================================================
 
-const DEV_TOOLS = [
-    {
-        label: 'Artisan Terminal',
-        icon:  TerminalSquare,
-        href:  '/admin/terminal',
-        desc:  'Run artisan commands',
-    },
-    {
-        label: 'Route Inspector',
-        icon:  Code2,
-        href:  '#',
-        desc:  'Browse registered routes',
-        soon:  true,
-    },
-    {
-        label: 'App Sandbox',
-        icon:  FlaskConical,
-        href:  '#',
-        desc:  'Test features safely',
-        soon:  true,
-    },
-];
-
-function DeveloperPanel({ iconOnly, envBadge, appEnv }) {
+function DeveloperPanel({ iconOnly }) {
     const [open, setOpen] = useState(false);
 
-    // Icon-only mode: show just a terminal icon that opens in new window directly
+    // Icon-only: just the terminal icon
     if (iconOnly) {
         return (
-            <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 flex flex-col items-center gap-1.5 py-2">
+            <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 flex justify-center py-2">
                 <button
                     type="button"
-                    title="Developer Tools"
-                    onClick={() => window.open('/admin/terminal', '_blank', 'noopener,noreferrer')}
+                    title="Developer"
+                    onClick={() => (window.location.href = '/admin/terminal')}
                     className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 dark:text-gray-500 hover:text-primary-500 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                     <TerminalSquare size={16} />
                 </button>
-                <div className={`w-2 h-2 rounded-full ${envBadge.dot}`} title={appEnv} />
             </div>
         );
     }
@@ -449,64 +423,36 @@ function DeveloperPanel({ iconOnly, envBadge, appEnv }) {
     return (
         <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800">
 
-            {/* Expanded tools list — slides from the bottom up */}
+            {/* Expanded: Artisan Terminal link */}
             {open && (
-                <div className="border-b border-gray-200 dark:border-gray-800 py-1.5 px-2 space-y-px"
+                <div className="border-b border-gray-200 dark:border-gray-800 py-1.5 px-2"
                      style={{ background: 'rgba(0,0,0,0.02)' }}>
-                    <p className="px-2.5 pt-1 pb-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-gray-400 dark:text-gray-600 select-none">
-                        Dev Tools
-                    </p>
-                    {DEV_TOOLS.map((tool) => {
-                        const Icon = tool.icon;
-                        return (
-                            <button
-                                key={tool.label}
-                                type="button"
-                                onClick={() => !tool.soon && window.open(tool.href, '_blank', 'noopener,noreferrer')}
-                                disabled={tool.soon}
-                                className={[
-                                    'group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left transition-colors',
-                                    tool.soon
-                                        ? 'opacity-40 cursor-not-allowed'
-                                        : 'hover:bg-gray-100 dark:hover:bg-gray-800/70 cursor-pointer',
-                                ].join(' ')}
-                            >
-                                <Icon
-                                    size={15}
-                                    className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 transition-colors"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 leading-tight truncate">
-                                        {tool.label}
-                                    </p>
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-600 leading-tight truncate">
-                                        {tool.desc}
-                                    </p>
-                                </div>
-                                {tool.soon ? (
-                                    <span className="flex-shrink-0 text-[9px] font-bold px-1 py-px rounded bg-secondary-500/15 text-secondary-600 dark:text-secondary-400 uppercase tracking-wide">
-                                        Soon
-                                    </span>
-                                ) : (
-                                    <ExternalLink
-                                        size={11}
-                                        className="flex-shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-primary-400 transition-colors opacity-0 group-hover:opacity-100"
-                                    />
-                                )}
-                            </button>
-                        );
-                    })}
+                    <button
+                        type="button"
+                        onClick={() => (window.location.href = '/admin/terminal')}
+                        className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
+                    >
+                        <TerminalSquare size={15}
+                            className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 transition-colors"
+                        />
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 leading-tight">Artisan Terminal</p>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-600 leading-tight">Run artisan commands</p>
+                        </div>
+                        <ChevronRight size={11}
+                            className="flex-shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-primary-400 transition-colors opacity-0 group-hover:opacity-100"
+                        />
+                    </button>
                 </div>
             )}
 
-            {/* DEVELOPER toggle row */}
+            {/* DEVELOPER toggle */}
             <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
                 className="group w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
             >
-                <TerminalSquare
-                    size={13}
+                <TerminalSquare size={13}
                     className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors"
                 />
                 <span className="flex-1 text-left text-[10px] font-bold uppercase tracking-[0.09em] text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
@@ -517,14 +463,6 @@ function DeveloperPanel({ iconOnly, envBadge, appEnv }) {
                     : <ChevronUp   size={12} className="flex-shrink-0 text-gray-400 dark:text-gray-500" />
                 }
             </button>
-
-            {/* Env badge */}
-            <div className="px-4 pb-2.5">
-                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider ${envBadge.pill}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${envBadge.dot} flex-shrink-0`} />
-                    {appEnv}
-                </span>
-            </div>
         </div>
     );
 }
@@ -555,7 +493,7 @@ function DeveloperPanel({ iconOnly, envBadge, appEnv }) {
  *   headerActions {ReactNode} — Action buttons next to the title
  *   children      {ReactNode} — Page body
  */
-export default function AdminLayout({ children, title, subtitle, breadcrumbs, headerActions }) {
+export default function AdminLayout({ children, title, subtitle, breadcrumbs, headerActions, fullHeight = false }) {
     const { url, props } = usePage();
     const { can, role }  = usePermissions();
 
@@ -607,15 +545,11 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
         return url.startsWith(href);
     };
 
-    const user   = props.auth?.user;
-    const appEnv = props.appEnv ?? 'local';
+    const user      = props.auth?.user;
+    const appEnv    = props.appEnv ?? 'local';
 
-    // Env badge colours (sidebar bottom)
-    const envBadge = appEnv === 'production'
-        ? { dot: 'bg-red-500',    pill: 'bg-red-900/20 text-red-400 border border-red-800/30' }
-        : appEnv === 'local'
-            ? { dot: 'bg-green-500', pill: 'bg-green-900/20 text-green-400 border border-green-800/30' }
-            : { dot: 'bg-yellow-500',pill: 'bg-yellow-900/20 text-yellow-400 border border-yellow-800/30' };
+    // Developer mode — detected from the current URL
+    const isDevMode = url.startsWith('/admin/terminal');
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
@@ -762,28 +696,53 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 </nav>
 
                 {/* ── DEVELOPER expandable section — sidebar bottom ── */}
-                <DeveloperPanel
-                    iconOnly={iconOnly}
-                    envBadge={envBadge}
-                    appEnv={appEnv}
-                />
+                <DeveloperPanel iconOnly={iconOnly} />
 
             </aside>
 
             {/* ══════════════════════════════════════════════════
                 MAIN CONTENT WRAPPER
-                — offset from top band (pt-9) and sidebar (left pad)
             ══════════════════════════════════════════════════ */}
             <div className={[
-                'min-h-screen flex flex-col',
-                'pt-9',           // clears the top band
-                contentPad,       // clears the sidebar on desktop
+                fullHeight ? 'h-screen overflow-hidden' : 'min-h-screen',
+                'flex flex-col',
+                'pt-9',       // clears the top band
+                contentPad,   // clears the sidebar on desktop
                 'transition-[padding] duration-200 ease-in-out',
             ].join(' ')}>
 
-                {/* ── Page content (title + breadcrumbs flow naturally inside main, no border/bg) ── */}
-                <main id="main-content" className="flex-1 p-6">
-                    {(title || breadcrumbs?.length > 0 || headerActions) && (
+                {/* ── Developer Mode impersonation bar ────────────────────
+                    Shown whenever the current URL is a developer route.
+                    Matches the "impersonation" pattern used in many admin panels —
+                    a thin full-width strip signalling a special mode with an exit.
+                ──────────────────────────────────────────────────────────── */}
+                {isDevMode && (
+                    <div className="flex-shrink-0 flex items-center gap-3 px-5 h-8 border-b border-primary-200/60 dark:border-primary-800/30 bg-primary-50 dark:bg-primary-900/10">
+                        <TerminalSquare size={13} className="text-primary-500 dark:text-primary-400 flex-shrink-0" />
+                        <span className="text-xs font-bold text-primary-700 dark:text-primary-400 tracking-wide">
+                            Developer Mode
+                        </span>
+                        <span className="text-[10px] text-primary-400 dark:text-primary-600 hidden sm:block">
+                            — changes made here affect the live application
+                        </span>
+                        <div className="flex-1" />
+                        <Link
+                            href="/admin/dashboard"
+                            className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-200 transition-colors px-2 py-1 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30"
+                        >
+                            <X size={12} />
+                            Exit Developer Mode
+                        </Link>
+                    </div>
+                )}
+
+                {/* ── Page content ── */}
+                <main
+                    id="main-content"
+                    className={fullHeight ? 'flex-1 overflow-hidden flex flex-col' : 'flex-1 p-6'}
+                >
+                    {/* Normal page header (title + breadcrumbs) — not shown in fullHeight mode */}
+                    {!fullHeight && (title || breadcrumbs?.length > 0 || headerActions) && (
                         <div className="flex items-start justify-between gap-4 mb-6">
                             <div className="min-w-0">
                                 {title && (
@@ -807,12 +766,14 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                     {children}
                 </main>
 
-                {/* ── Footer ── */}
-                <footer className="px-6 py-1.5 border-t border-gray-200 dark:border-gray-700/50">
-                    <p className="text-xs text-gray-400 dark:text-gray-600 text-center">
-                        &copy; {new Date().getFullYear()} PhotoAdmin &mdash; Built by Muhammad Abdullah
-                    </p>
-                </footer>
+                {/* ── Footer (hidden in fullHeight mode) ── */}
+                {!fullHeight && (
+                    <footer className="px-6 py-1.5 border-t border-gray-200 dark:border-gray-700/50">
+                        <p className="text-xs text-gray-400 dark:text-gray-600 text-center">
+                            &copy; {new Date().getFullYear()} PhotoAdmin &mdash; Built by Muhammad Abdullah
+                        </p>
+                    </footer>
+                )}
             </div>
         </div>
     );
