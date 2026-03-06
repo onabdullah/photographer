@@ -536,6 +536,9 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
 
     const iconOnly   = collapsed && !hovered && !mobileOpen;
     const sidebarW   = iconOnly ? W_COLLAPSED : W_EXPANDED;
+
+    // Developer mode — detected from the current URL (must be before contentPad)
+    const isDevMode = url.startsWith('/admin/terminal');
     const contentPad = isDevMode ? '' : (iconOnly ? 'lg:pl-[58px]' : 'lg:pl-56');
 
     const isActive = (href) => {
@@ -544,9 +547,6 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
     };
 
     const user = props.auth?.user;
-
-    // Developer mode — detected from the current URL
-    const isDevMode = url.startsWith('/admin/terminal');
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
@@ -732,9 +732,9 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                         <div className="flex-1" />
                         <Link
                             href="/admin/dashboard"
-                            className="flex items-center gap-1.5 text-xs font-semibold text-secondary-600 dark:text-secondary-400 hover:text-secondary-800 dark:hover:text-secondary-200 transition-colors px-2 py-1 rounded hover:bg-secondary-100 dark:hover:bg-secondary-900/30"
+                            className="flex items-center gap-1.5 text-sm font-semibold text-white bg-secondary-500 hover:bg-secondary-600 dark:bg-secondary-600 dark:hover:bg-secondary-500 transition-colors px-3 py-1.5 rounded-md shadow-sm"
                         >
-                            <X size={12} />
+                            <X size={14} />
                             Exit Developer Mode
                         </Link>
                     </div>
