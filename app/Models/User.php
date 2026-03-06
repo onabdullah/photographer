@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -13,36 +12,73 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * Valid roles and their human-readable labels.
      */
+    const ROLES = [
+        'super_admin' => 'Super Admin',
+        'admin'       => 'Admin',
+        'viewer'      => 'Viewer',
+    ];
+
+    /**
+     * Permissions granted per role.
+     * super_admin gets the wildcard ['*'] which bypasses all checks.
+     */
+    const ROLE_PERMISSIONS = [
+        'super_admin' => ['*'],
+        'admin' => [
+            'dashboard.view',
+            'merchants.view', 'merchants.manage',
+            'products.view',  'products.manage',
+            'ai.view',        'ai.manage',
+            'analytics.view',
+            'settings.view',
+        ],
+        'viewer' => [
+            'dashboard.view',
+            'merchants.view',
+            'products.view',
+            'ai.view',
+            'analytics.view',
+        ],
+    ];
+
     protected $fillable = [
         'name',
         'email',
         'password',
+        'role',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
         ];
+    }
+
+    /**
+     * Returns the permissions array for this user's role.
+     * Used by HandleInertiaRequests to share with the frontend.
+     */
+    public function getPermissionsAttribute(): array
+    {
+        return self::ROLE_PERMISSIONS[$this->role] ?? [];
+    }
+
+    /**
+     * Check whether this user has a given permission.
+     */
+    public function can($permission, $arguments = []): bool
+    {
+        $perms = $this->permissions;
+        if (in_array('*', $perms)) return true;
+        return in_array($permission, $perms);
     }
 }

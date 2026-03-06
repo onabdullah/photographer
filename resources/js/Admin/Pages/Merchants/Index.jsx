@@ -1,100 +1,96 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { Link } from '@inertiajs/react';
+import { Store } from 'lucide-react';
 
-/**
- * Admin Merchants list – real data: plan name, credits, images generated, pagination.
- */
-export default function Index({ merchants }) {
+export default function MerchantsIndex({ merchants }) {
     const paginator = merchants;
-    const items = paginator?.data ?? [];
+    const items     = paginator?.data ?? [];
 
     const planName = (m) => {
         if (m.shopify_freemium) return 'Free';
         return m.plan?.name ?? (m.plan_id ? `Plan #${m.plan_id}` : 'None');
     };
 
-    return (
-        <AdminLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Merchants</h1>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Installed stores and usage
-                    </p>
-                </div>
+    const formatDate = (iso) =>
+        iso
+            ? new Date(iso).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day:   'numeric',
+                  year:  'numeric',
+              })
+            : '—';
 
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    return (
+        <AdminLayout
+            title="Merchants"
+            subtitle="All installed stores and their usage"
+            breadcrumbs={[{ label: 'Management' }, { label: 'Merchants' }]}
+        >
+            <div className="space-y-5">
+
+                {/* Table card */}
+                <div className="card-base overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className="bg-gray-50 dark:bg-gray-800/60">
                                 <tr>
-                                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 sm:pl-6">
-                                        Store
-                                    </th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                        Domain
-                                    </th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                        Contact
-                                    </th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                        Owner
-                                    </th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                        Plan
-                                    </th>
-                                    <th scope="col" className="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 sm:pr-6">
-                                        Credits
-                                    </th>
-                                    <th scope="col" className="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 sm:pr-6">
-                                        Images
-                                    </th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                        Installed
-                                    </th>
+                                    {['Store', 'Domain', 'Contact', 'Owner', 'Plan', 'Credits', 'Images', 'Installed'].map((col, i) => (
+                                        <th
+                                            key={col}
+                                            scope="col"
+                                            className={[
+                                                'py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400',
+                                                i === 0 ? 'pl-6 pr-3' : i === 5 || i === 6 ? 'px-4 text-right' : 'px-4',
+                                            ].join(' ')}
+                                        >
+                                            {col}
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 bg-white">
-                                {items.map((merchant) => (
-                                    <tr key={merchant.id} className="hover:bg-gray-50/50">
-                                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                                            {merchant.store_name || '—'}
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50 bg-white dark:bg-gray-800">
+                                {items.map((m) => (
+                                    <tr
+                                        key={m.id}
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+                                    >
+                                        <td className="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-gray-900 dark:text-white">
+                                            {m.store_name || '—'}
                                         </td>
-                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
-                                            {merchant.name}
+                                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                            {m.name}
                                         </td>
-                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                            {merchant.email || '—'}
+                                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                            {m.email || '—'}
                                         </td>
-                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                            {merchant.shop_owner || '—'}
+                                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                            {m.shop_owner || '—'}
                                         </td>
-                                        <td className="whitespace-nowrap px-3 py-4">
-                                            <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                                                {planName(merchant)}
+                                        <td className="whitespace-nowrap px-4 py-4">
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                                {planName(m)}
                                             </span>
                                         </td>
-                                        <td className="whitespace-nowrap px-3 py-4 text-right text-sm tabular-nums text-gray-600 sm:pr-6">
-                                            {Number(merchant.ai_credits_balance ?? 0).toLocaleString()}
+                                        <td className="whitespace-nowrap px-4 py-4 text-right text-sm tabular-nums text-gray-700 dark:text-gray-300">
+                                            {Number(m.ai_credits_balance ?? 0).toLocaleString()}
                                         </td>
-                                        <td className="whitespace-nowrap px-3 py-4 text-right text-sm tabular-nums text-gray-600 sm:pr-6">
-                                            {Number(merchant.images_generated_count ?? 0).toLocaleString()}
+                                        <td className="whitespace-nowrap px-4 py-4 text-right text-sm tabular-nums text-gray-700 dark:text-gray-300">
+                                            {Number(m.images_generated_count ?? 0).toLocaleString()}
                                         </td>
-                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                            {merchant.created_at
-                                                ? new Date(merchant.created_at).toLocaleDateString(undefined, {
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    year: 'numeric',
-                                                })
-                                                : '—'}
+                                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                            {formatDate(m.created_at)}
                                         </td>
                                     </tr>
                                 ))}
+
                                 {items.length === 0 && (
                                     <tr>
-                                        <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
-                                            No merchants installed yet.
+                                        <td colSpan={8} className="px-6 py-14 text-center">
+                                            <Store size={32} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">No merchants yet</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                Merchants appear here once they install the app.
+                                            </p>
                                         </td>
                                     </tr>
                                 )}
@@ -102,39 +98,39 @@ export default function Index({ merchants }) {
                         </table>
                     </div>
 
+                    {/* Pagination */}
                     {paginator?.last_page > 1 && (
-                        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 sm:px-6">
-                            <p className="text-sm text-gray-600">
+                        <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-6 py-3">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Showing{' '}
-                                <span className="font-medium">{(paginator.current_page - 1) * paginator.per_page + 1}</span>
-                                {' '}-{' '}
-                                <span className="font-medium">
+                                <span className="font-medium text-gray-900 dark:text-white">
+                                    {(paginator.current_page - 1) * paginator.per_page + 1}
+                                </span>
+                                {' – '}
+                                <span className="font-medium text-gray-900 dark:text-white">
                                     {Math.min(paginator.current_page * paginator.per_page, paginator.total)}
                                 </span>
-                                {' '}of <span className="font-medium">{paginator.total}</span>
+                                {' of '}
+                                <span className="font-medium text-gray-900 dark:text-white">
+                                    {paginator.total}
+                                </span>
                             </p>
                             <div className="flex gap-2">
                                 {paginator.prev_page_url ? (
-                                    <Link
-                                        href={paginator.prev_page_url}
-                                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#468A9A] focus:ring-offset-2"
-                                    >
+                                    <Link href={paginator.prev_page_url} className="btn-secondary text-sm px-3 py-1.5">
                                         Previous
                                     </Link>
                                 ) : (
-                                    <span className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-400 cursor-not-allowed">
+                                    <span className="btn-secondary opacity-40 cursor-not-allowed text-sm px-3 py-1.5">
                                         Previous
                                     </span>
                                 )}
                                 {paginator.next_page_url ? (
-                                    <Link
-                                        href={paginator.next_page_url}
-                                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#468A9A] focus:ring-offset-2"
-                                    >
+                                    <Link href={paginator.next_page_url} className="btn-secondary text-sm px-3 py-1.5">
                                         Next
                                     </Link>
                                 ) : (
-                                    <span className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-400 cursor-not-allowed">
+                                    <span className="btn-secondary opacity-40 cursor-not-allowed text-sm px-3 py-1.5">
                                         Next
                                     </span>
                                 )}
@@ -142,6 +138,7 @@ export default function Index({ merchants }) {
                         </div>
                     )}
                 </div>
+
             </div>
         </AdminLayout>
     );
