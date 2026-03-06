@@ -91,10 +91,12 @@ class TerminalController extends Controller
         $start = microtime(true);
 
         try {
+            // PHP_BINARY = the exact PHP executable running this web process (e.g. /usr/local/php84/bin/php).
+            // Using plain 'php' would resolve to the system PATH default (e.g. 8.2), causing version mismatches.
             $result = Process::path(base_path())
                 ->timeout(30)
-                ->env(['COLUMNS' => '120'])   // widen artisan table output
-                ->run(array_merge(['php', 'artisan', '--no-ansi'], $parts));
+                ->env(['COLUMNS' => '120'])
+                ->run(array_merge([PHP_BINARY, 'artisan', '--no-ansi'], $parts));
 
             $output   = $result->output() ?: $result->errorOutput();
             $exitCode = $result->exitCode();
