@@ -62,6 +62,15 @@ export default {
                 200: '200ms',
                 250: '250ms',
             },
+            keyframes: {
+                'blink-slow': {
+                    '0%, 100%': { opacity: '1' },
+                    '50%': { opacity: '0.5' },
+                },
+            },
+            animation: {
+                'blink-slow': 'blink-slow 2.5s ease-in-out infinite',
+            },
         },
     },
 

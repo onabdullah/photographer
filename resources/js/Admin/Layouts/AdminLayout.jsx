@@ -721,22 +721,23 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                     a thin full-width strip signalling a special mode with an exit.
                 ──────────────────────────────────────────────────────────── */}
                 {isDevMode && (
-                    <div className="flex-shrink-0 flex items-center gap-3 px-5 h-8 border-b border-secondary-200/60 dark:border-secondary-800/30 bg-secondary-50 dark:bg-secondary-900/20">
-                        <TerminalSquare size={13} className="text-secondary-500 dark:text-secondary-400 flex-shrink-0" />
-                        <span className="text-xs font-bold text-secondary-700 dark:text-secondary-300 tracking-wide">
-                            Developer Mode
-                        </span>
-                        <span className="text-[10px] text-secondary-500 dark:text-secondary-500 hidden sm:block">
-                            — changes made here affect the live application
-                        </span>
-                        <div className="flex-1" />
+                    <div className="flex-shrink-0 flex items-center justify-between gap-3 px-5 h-8 border-b border-secondary-200/60 dark:border-secondary-800/30 bg-secondary-50 dark:bg-secondary-900/20">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <TerminalSquare size={13} className="text-secondary-500 dark:text-secondary-400 flex-shrink-0" />
+                            <span className="text-xs font-bold text-secondary-700 dark:text-secondary-300 tracking-wide">
+                                Developer Mode
+                            </span>
+                            <span className="text-[10px] text-secondary-500 dark:text-secondary-500 hidden sm:block truncate">
+                                — changes made here affect the live application
+                            </span>
+                        </div>
                         <Link
                             href="/admin/dashboard"
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary-600 dark:text-secondary-400 bg-white dark:bg-secondary-800/60 border border-secondary-200 dark:border-secondary-600/60 hover:bg-secondary-50 dark:hover:bg-secondary-800 shadow-sm hover:shadow transition-all duration-150 px-3 py-1.5 rounded-md"
+                            className="flex-shrink-0 text-xs font-bold text-secondary-700 dark:text-secondary-300 tracking-wide animate-blink-slow hover:opacity-100 hover:animate-none"
                         >
-                            <X size={12} />
                             Exit Developer Mode
                         </Link>
+                        <div className="flex-1 min-w-0" aria-hidden="true" />
                     </div>
                 )}
 
