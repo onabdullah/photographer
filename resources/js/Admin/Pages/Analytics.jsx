@@ -5,8 +5,7 @@ export default function Analytics() {
     return (
         <AdminLayout
             title="Analytics"
-            subtitle="Platform-wide reporting and insights"
-            breadcrumbs={[{ label: 'Reports' }, { label: 'Analytics' }]}
+            breadcrumbs={[{ label: 'Analytics' }]}
         >
             <div className="card flex flex-col items-center justify-center py-20 text-center">
                 <BarChart3 size={40} className="mb-4 text-gray-300 dark:text-gray-600" />

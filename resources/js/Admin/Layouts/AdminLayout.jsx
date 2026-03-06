@@ -356,18 +356,35 @@ function UserMenu({ user, role, theme, onToggleTheme }) {
 
 function Breadcrumbs({ crumbs }) {
     if (!crumbs?.length) return null;
+    const last = crumbs.length - 1;
     return (
-        <nav className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap mb-1" aria-label="Breadcrumb">
-            <Link href="/admin/dashboard" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+        <nav className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" aria-label="Breadcrumb">
+            {/* "Home" always links to the dashboard */}
+            <Link
+                href="/admin/dashboard"
+                className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+            >
                 Home
             </Link>
             {crumbs.map((crumb, i) => (
                 <span key={i} className="flex items-center gap-1">
                     <ChevronRight size={10} className="flex-shrink-0 text-gray-300 dark:text-gray-600" />
-                    {crumb.href
-                        ? <Link href={crumb.href} className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{crumb.label}</Link>
-                        : <span className="text-gray-600 dark:text-gray-300 font-medium">{crumb.label}</span>
-                    }
+                    {/* Items with href are clickable; last item (current page) is plain text */}
+                    {crumb.href && i !== last ? (
+                        <Link
+                            href={crumb.href}
+                            className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                        >
+                            {crumb.label}
+                        </Link>
+                    ) : (
+                        <span className={i === last
+                            ? 'text-gray-700 dark:text-gray-300 font-medium'
+                            : 'text-gray-400 dark:text-gray-500'
+                        }>
+                            {crumb.label}
+                        </span>
+                    )}
                 </span>
             ))}
         </nav>
@@ -455,7 +472,7 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
     const user = props.auth?.user;
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
 
             {/* ══════════════════════════════════════════════════
                 TOP BAND  —  fixed, full-width, h-9 (36px)
@@ -619,24 +636,26 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 'transition-[padding] duration-200 ease-in-out',
             ].join(' ')}>
 
-                {/* ── PAGE HEADER — title lives in the content area, NOT a sticky bar ── */}
-                {(title || subtitle || breadcrumbs?.length > 0 || headerActions) && (
-                    <div className="px-6 pt-6 pb-5 border-b border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900">
-                        {/* Breadcrumbs above the title */}
-                        <Breadcrumbs crumbs={breadcrumbs} />
-
-                        {/* Title row: H1 left, actions right */}
-                        <div className="flex items-start justify-between gap-4 mt-0.5">
+                {/* ── PAGE HEADER
+                    Order: H1 title → breadcrumbs underneath
+                    No subtitle/description per design intent.
+                    No separate bg — inherits the page wrapper bg for a unified dark surface.
+                ── */}
+                {(title || breadcrumbs?.length > 0 || headerActions) && (
+                    <div className="px-6 pt-6 pb-5 border-b border-gray-200 dark:border-gray-700/50">
+                        {/* H1 + actions row */}
+                        <div className="flex items-center justify-between gap-4">
                             <div className="min-w-0">
                                 {title && (
-                                    <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight truncate">
+                                    <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                                         {title}
                                     </h1>
                                 )}
-                                {subtitle && (
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                                        {subtitle}
-                                    </p>
+                                {/* Breadcrumbs sit directly under the heading */}
+                                {breadcrumbs?.length > 0 && (
+                                    <div className="mt-1">
+                                        <Breadcrumbs crumbs={breadcrumbs} />
+                                    </div>
                                 )}
                             </div>
                             {headerActions && (
@@ -654,7 +673,7 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 </main>
 
                 {/* ── Footer ── */}
-                <footer className="px-6 py-3 border-t border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900">
+                <footer className="px-6 py-3 border-t border-gray-200 dark:border-gray-700/50">
                     <p className="text-xs text-gray-400 dark:text-gray-600 text-center">
                         &copy; {new Date().getFullYear()} PhotoAdmin &mdash; Built by Muhammad Abdullah
                     </p>

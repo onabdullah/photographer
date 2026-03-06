@@ -5,8 +5,7 @@ export default function AIProcessingIndex() {
     return (
         <AdminLayout
             title="AI Processing"
-            subtitle="Monitor and manage AI generation jobs"
-            breadcrumbs={[{ label: 'Management' }, { label: 'AI Processing' }]}
+            breadcrumbs={[{ label: 'AI Processing' }]}
         >
             <div className="card flex flex-col items-center justify-center py-20 text-center">
                 <Zap size={40} className="mb-4 text-gray-300 dark:text-gray-600" />

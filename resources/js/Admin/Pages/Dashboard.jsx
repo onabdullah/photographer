@@ -50,7 +50,6 @@ export default function Dashboard({ data }) {
     return (
         <AdminLayout
             title="Dashboard"
-            subtitle="Platform overview and recent activity"
             breadcrumbs={[{ label: 'Dashboard' }]}
         >
             <div className="space-y-6">

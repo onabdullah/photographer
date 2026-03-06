@@ -5,8 +5,7 @@ export default function ProductsIndex() {
     return (
         <AdminLayout
             title="Products"
-            subtitle="All products across connected merchants"
-            breadcrumbs={[{ label: 'Management' }, { label: 'Products' }]}
+            breadcrumbs={[{ label: 'Products' }]}
         >
             <div className="card flex flex-col items-center justify-center py-20 text-center">
                 <Package size={40} className="mb-4 text-gray-300 dark:text-gray-600" />

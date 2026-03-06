@@ -12,8 +12,7 @@ export default function Settings() {
     return (
         <AdminLayout
             title="System Settings"
-            subtitle="Global configuration and server tools"
-            breadcrumbs={[{ label: 'System' }, { label: 'Settings' }]}
+            breadcrumbs={[{ label: 'Settings' }]}
         >
             <div className="max-w-3xl space-y-6">
 

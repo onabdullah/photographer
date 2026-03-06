@@ -23,8 +23,7 @@ export default function MerchantsIndex({ merchants }) {
     return (
         <AdminLayout
             title="Merchants"
-            subtitle="All installed stores and their usage"
-            breadcrumbs={[{ label: 'Management' }, { label: 'Merchants' }]}
+            breadcrumbs={[{ label: 'Merchants' }]}
         >
             <div className="space-y-5">
 
