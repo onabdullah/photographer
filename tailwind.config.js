@@ -50,6 +50,7 @@ export default {
             fontFamily: {
                 sans: ['Manrope', 'Inter', ...defaultTheme.fontFamily.sans],
                 heading: ['Manrope', 'Plus Jakarta Sans', ...defaultTheme.fontFamily.sans],
+                brand: ['Patrick Hand', 'cursive'],
             },
             boxShadow: {
                 'premium-sm': '0 1px 2px rgba(0, 0, 0, 0.04)',

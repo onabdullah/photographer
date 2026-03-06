@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import {
     LayoutDashboard,
@@ -10,14 +10,19 @@ import {
     LogOut,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
+    ChevronUp,
     Sun,
     Moon,
     Menu,
-    X,
     Plus,
+    Lightbulb,
+    Bot,
+    FileBarChart2,
+    Crown,
     ShieldCheck,
     Eye,
-    Crown,
+    User,
 } from 'lucide-react';
 
 // ============================================================
@@ -83,17 +88,26 @@ const SECTIONS = [
                 icon: Settings,
                 permission: 'settings.view',
             },
+            // Collapsible "Coming Soon" section with BETA badge
+            {
+                name: 'Coming Soon',
+                icon: Lightbulb,
+                permission: null,
+                badge: 'BETA',
+                badgeColor: 'secondary', // uses secondary-500 orange
+                collapsible: true,
+                children: [
+                    { name: 'AI Models', icon: Bot,          href: '#' },
+                    { name: 'Reports',   icon: FileBarChart2, href: '#' },
+                ],
+            },
         ],
     },
 ];
 
 const QUICK_ACTIONS = [
-    {
-        name: 'New Merchant',
-        href: '/admin/merchants/create',
-        icon: Plus,
-        permission: 'merchants.manage',
-    },
+    { name: 'New Merchant',  href: '/admin/merchants/create', icon: Plus,    permission: 'merchants.manage' },
+    { name: 'View Products', href: '/admin/products',         icon: Package, permission: 'products.view'   },
 ];
 
 // ============================================================
@@ -104,8 +118,8 @@ const ROLE_CONFIG = {
     super_admin: {
         label: 'Super Admin',
         icon: Crown,
-        cls: 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800/50',
-        iconCls: 'text-primary-600 dark:text-primary-400',
+        cls: 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700/50',
+        iconCls: 'text-primary-500 dark:text-primary-400',
     },
     admin: {
         label: 'Admin',
@@ -116,8 +130,8 @@ const ROLE_CONFIG = {
     viewer: {
         label: 'Viewer',
         icon: Eye,
-        cls: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800/50',
-        iconCls: 'text-yellow-600 dark:text-yellow-400',
+        cls: 'bg-secondary-50 dark:bg-secondary-900/20 text-secondary-700 dark:text-secondary-300 border border-secondary-200 dark:border-secondary-700/50',
+        iconCls: 'text-secondary-500 dark:text-secondary-400',
     },
 };
 
@@ -127,13 +141,14 @@ const ROLE_CONFIG = {
 
 function usePermissions() {
     const { props } = usePage();
-    const role = props.auth?.user?.role || 'super_admin';
+    const role        = props.auth?.user?.role        || 'super_admin';
     const permissions = props.auth?.user?.permissions || [];
 
     const can = useCallback(
         (permission) => {
-            if (role === 'super_admin') return true;
-            if (permissions.includes('*')) return true;
+            if (!permission)                      return true;
+            if (role === 'super_admin')            return true;
+            if (permissions.includes('*'))         return true;
             return permissions.includes(permission);
         },
         [role, permissions],
@@ -146,61 +161,256 @@ function usePermissions() {
 // NAV ITEM COMPONENT
 // ============================================================
 
-function NavItem({ name, href, icon: Icon, isActive, iconOnly }) {
+function NavItem({ name, href, icon: Icon, isActive, iconOnly, badge, badgeColor }) {
     return (
         <Link
             href={href}
             title={iconOnly ? name : undefined}
             aria-label={iconOnly ? name : undefined}
             className={[
-                'flex items-center px-3 py-2 mx-2 rounded-lg text-sm transition-colors duration-150 min-h-[36px]',
+                'group flex items-center px-3 py-2 mx-2 rounded-lg text-sm font-medium',
+                'transition-colors duration-150 min-h-[38px]',
                 iconOnly ? 'justify-center' : '',
                 isActive
-                    ? 'bg-primary-600 text-white font-semibold shadow-sm'
-                    : 'text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800',
-            ]
-                .filter(Boolean)
-                .join(' ')}
+                    ? 'bg-primary-600 text-white shadow-sm shadow-primary-900/20'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70',
+            ].filter(Boolean).join(' ')}
         >
             <Icon
-                size={18}
+                size={17}
                 className={[
                     'flex-shrink-0',
-                    isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500',
+                    isActive
+                        ? 'text-white'
+                        : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300',
                     !iconOnly ? 'mr-3' : '',
-                ]
-                    .filter(Boolean)
-                    .join(' ')}
+                ].filter(Boolean).join(' ')}
             />
-            {!iconOnly && <span className="truncate">{name}</span>}
+            {!iconOnly && (
+                <>
+                    <span className="flex-1 truncate">{name}</span>
+                    {badge && (
+                        <span className={[
+                            'ml-2 flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase',
+                            badgeColor === 'secondary'
+                                ? 'bg-secondary-500 text-white'
+                                : 'bg-primary-500 text-white',
+                        ].join(' ')}>
+                            {badge}
+                        </span>
+                    )}
+                </>
+            )}
         </Link>
     );
 }
 
 // ============================================================
-// BREADCRUMB RENDERER
+// COLLAPSIBLE NAV ITEM (Coming Soon pattern)
+// ============================================================
+
+function CollapsibleNavItem({ name, icon: Icon, badge, badgeColor, children, iconOnly }) {
+    const [open, setOpen] = useState(false);
+
+    if (iconOnly) {
+        return (
+            <button
+                title={name}
+                aria-label={name}
+                className="group flex items-center justify-center px-3 py-2 mx-2 rounded-lg text-sm font-medium min-h-[38px] w-[calc(100%-1rem)] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
+            >
+                <Icon size={17} className="flex-shrink-0 text-gray-400 dark:text-gray-500" />
+            </button>
+        );
+    }
+
+    return (
+        <div>
+            <button
+                onClick={() => setOpen(!open)}
+                className="group flex items-center px-3 py-2 mx-2 rounded-lg text-sm font-medium min-h-[38px] w-[calc(100%-1rem)] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
+            >
+                <Icon
+                    size={17}
+                    className="flex-shrink-0 mr-3 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300"
+                />
+                <span className="flex-1 truncate text-left">{name}</span>
+                {badge && (
+                    <span className={[
+                        'mr-2 flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase',
+                        badgeColor === 'secondary'
+                            ? 'bg-secondary-500 text-white'
+                            : 'bg-primary-500 text-white',
+                    ].join(' ')}>
+                        {badge}
+                    </span>
+                )}
+                {open
+                    ? <ChevronUp size={14} className="flex-shrink-0 text-gray-400" />
+                    : <ChevronDown size={14} className="flex-shrink-0 text-gray-400" />
+                }
+            </button>
+
+            {open && (
+                <div className="ml-4 mt-0.5 mb-1 space-y-0.5">
+                    {children.map((child) => {
+                        const ChildIcon = child.icon;
+                        return (
+                            <Link
+                                key={child.href}
+                                href={child.href}
+                                className="flex items-center px-3 py-1.5 mx-2 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
+                            >
+                                <ChildIcon size={15} className="mr-2.5 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                                {child.name}
+                            </Link>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ============================================================
+// USER PROFILE DROPDOWN (top-bar right corner)
+// ============================================================
+
+function UserMenu({ user, role, theme, onToggleTheme }) {
+    const [open, setOpen] = useState(false);
+    const ref             = useRef(null);
+    const roleCfg         = ROLE_CONFIG[role] || ROLE_CONFIG.super_admin;
+    const RoleIcon        = roleCfg.icon;
+    const userInitial     = user?.name?.charAt(0)?.toUpperCase() || 'A';
+
+    // Close on outside click
+    useEffect(() => {
+        const handler = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    return (
+        <div ref={ref} className="relative flex items-center gap-2">
+
+            {/* Dark mode toggle */}
+            <button
+                onClick={onToggleTheme}
+                className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-400 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+                {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+
+            {/* Divider */}
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+
+            {/* Avatar trigger */}
+            <button
+                onClick={() => setOpen(!open)}
+                className="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                aria-label="User menu"
+                aria-expanded={open}
+            >
+                {/* Avatar circle — gradient primary→secondary */}
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold shadow-sm"
+                     style={{ background: 'linear-gradient(135deg, #3b7a8a 0%, #FF7A30 100%)' }}>
+                    {userInitial}
+                </div>
+                <div className="hidden md:block text-left">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+                        {user?.name || 'Admin'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">
+                        {roleCfg.label}
+                    </p>
+                </div>
+                <ChevronDown
+                    size={14}
+                    className={[
+                        'hidden md:block flex-shrink-0 text-gray-400 transition-transform duration-150',
+                        open ? 'rotate-180' : '',
+                    ].join(' ')}
+                />
+            </button>
+
+            {/* Dropdown panel */}
+            {open && (
+                <div className="absolute right-0 top-full mt-2 w-60 z-50 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl shadow-black/10 dark:shadow-black/30 overflow-hidden">
+
+                    {/* User info header */}
+                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700/70">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white text-base font-bold"
+                                 style={{ background: 'linear-gradient(135deg, #3b7a8a 0%, #FF7A30 100%)' }}>
+                                {userInitial}
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                    {user?.name || 'Admin'}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    {user?.email || ''}
+                                </p>
+                            </div>
+                        </div>
+                        {/* Role badge */}
+                        <div className="mt-2.5">
+                            <span className={[
+                                'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium',
+                                roleCfg.cls,
+                            ].join(' ')}>
+                                <RoleIcon size={10} className={roleCfg.iconCls} />
+                                {roleCfg.label}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="p-1.5">
+                        <Link
+                            href="/logout"
+                            method="post"
+                            as="button"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            onClick={() => setOpen(false)}
+                        >
+                            <LogOut size={15} className="flex-shrink-0" />
+                            Sign out
+                        </Link>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ============================================================
+// BREADCRUMBS
 // ============================================================
 
 function Breadcrumbs({ crumbs }) {
     if (!crumbs?.length) return null;
     return (
         <nav
-            className="hidden md:flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500"
+            className="hidden lg:flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500"
             aria-label="Breadcrumb"
         >
             <Link
                 href="/admin/dashboard"
-                className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
             >
                 Home
             </Link>
             {crumbs.map((crumb, i) => (
                 <span key={i} className="flex items-center gap-1">
-                    <ChevronRight size={12} className="flex-shrink-0" />
+                    <ChevronRight size={11} className="flex-shrink-0 text-gray-300 dark:text-gray-600" />
                     {crumb.href ? (
                         <Link
                             href={crumb.href}
-                            className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                            className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                         >
                             {crumb.label}
                         </Link>
@@ -223,11 +433,11 @@ function Breadcrumbs({ crumbs }) {
  * AdminLayout — Professional admin panel layout.
  *
  * Props:
- *   title        {string}   — Page title shown in the top bar H1
- *   subtitle     {string}   — Optional subtitle below the title
- *   breadcrumbs  {Array}    — [{label, href?}] shown in the top bar center
- *   headerActions {ReactNode} — Buttons/actions rendered in the top-bar right slot
- *   children     {ReactNode} — Page content
+ *   title         {string}    — Page title in the top bar H1
+ *   subtitle      {string}    — Optional subtitle
+ *   breadcrumbs   {Array}     — [{label, href?}]
+ *   headerActions {ReactNode} — Buttons shown in top-bar right slot
+ *   children      {ReactNode} — Page content
  */
 export default function AdminLayout({
     children,
@@ -237,26 +447,27 @@ export default function AdminLayout({
     headerActions,
 }) {
     const { url, props } = usePage();
-    const { can, role } = usePermissions();
+    const { can, role }  = usePermissions();
 
-    // ---- Theme ------------------------------------------------
+    // ── Theme ────────────────────────────────────────────────
     const [theme, setTheme] = useState('light');
 
     useEffect(() => {
-        const stored = localStorage.getItem('theme');
+        const stored     = localStorage.getItem('theme');
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const resolved =
-            stored === 'dark' || stored === 'light' ? stored : systemDark ? 'dark' : 'light';
+        const resolved   = stored === 'dark' || stored === 'light'
+            ? stored
+            : systemDark ? 'dark' : 'light';
         setTheme(resolved);
         if (resolved === 'dark') document.documentElement.classList.add('dark');
-        else document.documentElement.classList.remove('dark');
+        else                     document.documentElement.classList.remove('dark');
     }, []);
 
     const toggleTheme = useCallback(() => {
         const next = theme === 'dark' ? 'light' : 'dark';
         document.documentElement.classList.add('no-transitions');
         if (next === 'dark') document.documentElement.classList.add('dark');
-        else document.documentElement.classList.remove('dark');
+        else                 document.documentElement.classList.remove('dark');
         localStorage.setItem('theme', next);
         setTheme(next);
         requestAnimationFrame(() =>
@@ -266,14 +477,20 @@ export default function AdminLayout({
         );
     }, [theme]);
 
-    // ---- Sidebar ---------------------------------------------
-    const [collapsed, setCollapsed] = useState(false);
-    const [hovered, setHovered] = useState(false);
+    // ── Sidebar state ────────────────────────────────────────
+    const [collapsed,  setCollapsed]  = useState(false);
+    const [hovered,    setHovered]    = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
 
+    // Restore persisted state after mount (avoids SSR mismatch)
     useEffect(() => {
         setCollapsed(localStorage.getItem('sidebarCollapsed') === 'true');
     }, []);
+
+    // Close mobile sidebar on route change
+    useEffect(() => {
+        setMobileOpen(false);
+    }, [url]);
 
     const toggleSidebar = useCallback(() => {
         setCollapsed((prev) => {
@@ -284,7 +501,7 @@ export default function AdminLayout({
         setHovered(false);
     }, []);
 
-    // When collapsed and not hovered (and not mobile open), show icon-only
+    // icon-only = collapsed + not hovered + not mobile open
     const iconOnly = collapsed && !hovered && !mobileOpen;
 
     const isActive = (href) => {
@@ -292,266 +509,246 @@ export default function AdminLayout({
         return url.startsWith(href);
     };
 
-    // ---- User info -------------------------------------------
-    const user = props.auth?.user;
-    const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'A';
-    const roleCfg = ROLE_CONFIG[role] || ROLE_CONFIG.super_admin;
-    const RoleIcon = roleCfg.icon;
-
-    // Sidebar width
-    const sidebarWidth = iconOnly ? 'w-[68px]' : 'w-64';
-    // Main content left padding mirrors sidebar width
-    const contentPadding = iconOnly ? 'lg:pl-[68px]' : 'lg:pl-64';
+    const user       = props.auth?.user;
+    const sidebarW   = iconOnly ? 'w-[68px]' : 'w-64';
+    const contentPad = iconOnly ? 'lg:pl-[68px]' : 'lg:pl-64';
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans">
 
-            {/* ───── MOBILE OVERLAY ───── */}
+            {/* ── Mobile backdrop ── */}
             {mobileOpen && (
                 <div
-                    className="fixed inset-0 z-30 bg-gray-900/60 backdrop-blur-sm lg:hidden"
+                    className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
                     onClick={() => setMobileOpen(false)}
                     aria-hidden="true"
                 />
             )}
 
-            {/* ───── SIDEBAR ───── */}
+            {/* ══════════════════════════════
+                SIDEBAR
+            ══════════════════════════════ */}
             <aside
-                onMouseEnter={() => collapsed && setHovered(true)}
+                onMouseEnter={() => collapsed && !mobileOpen && setHovered(true)}
                 onMouseLeave={() => collapsed && setHovered(false)}
                 className={[
                     'fixed top-0 left-0 h-screen z-40 flex flex-col',
                     'bg-white dark:bg-gray-900',
-                    'border-r border-gray-200 dark:border-gray-800',
-                    'transition-[width,transform,box-shadow] duration-200 ease-in-out',
+                    'border-r border-gray-100 dark:border-gray-800',
                     'overflow-hidden',
-                    sidebarWidth,
-                    // Mobile: off-screen unless open; desktop: always visible
+                    // Smooth width + slide transition
+                    'transition-all duration-200 ease-in-out',
+                    sidebarW,
+                    // Visibility: mobile hides, desktop always shows
                     mobileOpen ? 'translate-x-0' : '-translate-x-full',
                     'lg:translate-x-0',
-                    // Elevated shadow when hovering a collapsed sidebar (peek effect)
+                    // Peek shadow when hovering collapsed sidebar
                     collapsed && hovered
-                        ? 'shadow-2xl shadow-black/15 dark:shadow-black/40'
+                        ? 'shadow-2xl shadow-black/20 dark:shadow-black/50'
                         : '',
-                ]
-                    .filter(Boolean)
-                    .join(' ')}
+                ].filter(Boolean).join(' ')}
                 aria-label="Sidebar navigation"
             >
-                {/* --- Logo + collapse toggle --- */}
-                <div
-                    className={[
-                        'flex items-center h-20 flex-shrink-0 px-3',
-                        'border-b border-gray-200 dark:border-gray-800',
-                        iconOnly ? 'justify-center' : 'justify-between',
-                    ].join(' ')}
-                >
+                {/* ── Logo header ── */}
+                <div className={[
+                    'flex items-center flex-shrink-0 h-[64px] px-3 gap-3',
+                    'border-b border-gray-100 dark:border-gray-800',
+                    iconOnly ? 'justify-center' : 'justify-between',
+                ].join(' ')}>
+
+                    {/* Logo mark + brand name */}
                     <div className="flex items-center gap-2.5 min-w-0">
-                        {/* App logo mark */}
-                        <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-                            <svg
-                                viewBox="0 0 24 24"
-                                className="w-4 h-4 text-white"
-                                fill="currentColor"
-                                aria-hidden="true"
-                            >
-                                <path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+                        {/* Gradient logo tile — primary + secondary */}
+                        <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md"
+                            style={{ background: 'linear-gradient(135deg, #3b7a8a 0%, #FF7A30 100%)' }}
+                        >
+                            <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 text-white w-[18px] h-[18px]" fill="currentColor" aria-hidden="true">
+                                <path d="M12 3a9 9 0 110 18A9 9 0 0112 3zm0 2a7 7 0 100 14A7 7 0 0012 5zm-1 3h2v5h3l-4 4-4-4h3V8z" />
                             </svg>
                         </div>
                         {!iconOnly && (
-                            <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                                PhotoAdmin
-                            </span>
+                            <div className="min-w-0">
+                                {/* Patrick Hand for the brand name */}
+                                <p className="font-brand text-[17px] leading-tight text-gray-900 dark:text-white truncate">
+                                    PhotoAdmin
+                                </p>
+                                <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight truncate -mt-0.5">
+                                    Photographer Suite
+                                </p>
+                            </div>
                         )}
                     </div>
 
-                    {/* Collapse toggle — shown when expanded */}
+                    {/* Collapse button (only in expanded state) */}
                     {!iconOnly && (
                         <button
                             onClick={toggleSidebar}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0 lg:flex hidden"
                             aria-label="Collapse sidebar"
                         >
-                            <ChevronLeft size={16} />
+                            <ChevronLeft size={15} />
                         </button>
                     )}
+
+                    {/* Mobile close button */}
+                    <button
+                        onClick={() => setMobileOpen(false)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0 lg:hidden"
+                        aria-label="Close menu"
+                    >
+                        <ChevronLeft size={15} />
+                    </button>
                 </div>
 
-                {/* --- Navigation --- */}
-                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3" aria-label="Main navigation">
+                {/* ── Navigation ── */}
+                <nav
+                    className="flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-0.5"
+                    aria-label="Main navigation"
+                >
                     {SECTIONS.map(({ id, label, items }) => {
                         const visible = items.filter((item) => can(item.permission));
                         if (!visible.length) return null;
 
                         return (
-                            <div key={id} className="mb-1">
-                                {/* Section header / divider */}
+                            <div key={id}>
+                                {/* Section label */}
                                 {iconOnly ? (
                                     <div className="mx-3 my-2 border-t border-gray-100 dark:border-gray-800" />
                                 ) : (
-                                    <div className="sidebar-section-header">{label}</div>
+                                    <p className="px-5 pt-4 pb-1.5 text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">
+                                        {label}
+                                    </p>
                                 )}
 
-                                {visible.map((item) => (
-                                    <NavItem
-                                        key={item.href}
-                                        {...item}
-                                        isActive={isActive(item.href)}
-                                        iconOnly={iconOnly}
-                                    />
-                                ))}
+                                {visible.map((item) => {
+                                    // Collapsible items (Coming Soon pattern)
+                                    if (item.collapsible) {
+                                        return (
+                                            <CollapsibleNavItem
+                                                key={item.name}
+                                                {...item}
+                                                iconOnly={iconOnly}
+                                            />
+                                        );
+                                    }
+                                    return (
+                                        <NavItem
+                                            key={item.href}
+                                            {...item}
+                                            isActive={isActive(item.href)}
+                                            iconOnly={iconOnly}
+                                        />
+                                    );
+                                })}
                             </div>
                         );
                     })}
 
                     {/* Quick Actions */}
-                    {!iconOnly &&
-                        QUICK_ACTIONS.some((a) => can(a.permission)) && (
-                            <div className="mt-2 mb-1 px-2">
-                                <div className="sidebar-section-header">QUICK ACTIONS</div>
-                                {QUICK_ACTIONS.filter((a) => can(a.permission)).map((action) => {
-                                    const ActionIcon = action.icon;
-                                    return (
-                                        <Link
-                                            key={action.href}
-                                            href={action.href}
-                                            className="sidebar-quick-action"
-                                        >
-                                            <ActionIcon size={14} className="mr-1.5 flex-shrink-0" />
-                                            {action.name}
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        )}
-                </nav>
-
-                {/* --- User footer --- */}
-                <div className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-800">
-                    {iconOnly ? (
-                        /* Collapsed: just avatar */
-                        <div className="flex justify-center">
-                            <div
-                                className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center ring-2 ring-primary-200 dark:ring-primary-800"
-                                title={user?.name || 'Admin'}
-                            >
-                                <span className="text-sm font-semibold text-white">{userInitial}</span>
-                            </div>
-                        </div>
-                    ) : (
-                        /* Expanded: full user info */
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0 ring-2 ring-primary-200 dark:ring-primary-800">
-                                <span className="text-sm font-semibold text-white">{userInitial}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                    {user?.name || 'Admin'}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                    {user?.email || ''}
-                                </p>
-                            </div>
-                            <Link
-                                href="/logout"
-                                method="post"
-                                as="button"
-                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0"
-                                aria-label="Logout"
-                            >
-                                <LogOut size={18} />
-                            </Link>
+                    {!iconOnly && QUICK_ACTIONS.some((a) => can(a.permission)) && (
+                        <div>
+                            <p className="px-5 pt-4 pb-1.5 text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">
+                                QUICK ACTIONS
+                            </p>
+                            {QUICK_ACTIONS.filter((a) => can(a.permission)).map((action) => {
+                                const Icon = action.icon;
+                                return (
+                                    <Link
+                                        key={action.href}
+                                        href={action.href}
+                                        className="flex items-center gap-2 px-4 py-1.5 mx-2 text-xs font-medium rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+                                    >
+                                        <Plus size={12} className="flex-shrink-0 text-secondary-500" />
+                                        {action.name}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     )}
-                </div>
+
+                    {/* Bottom padding so last item isn't cut off */}
+                    <div className="h-4" />
+                </nav>
+
+                {/* ── Sidebar footer — teal/orange accent strip ── */}
+                <div className="flex-shrink-0 h-1 bg-gradient-to-r from-primary-500 via-primary-600 to-secondary-500" />
             </aside>
 
-            {/* ───── MAIN CONTENT WRAPPER ───── */}
-            <div
-                className={[
-                    'transition-[padding] duration-200 ease-in-out min-h-screen flex flex-col',
-                    contentPadding,
-                ].join(' ')}
-            >
-                {/* ───── TOP BAR ───── */}
-                <header className="top-bar">
-                    <div className="top-bar-content">
+            {/* ══════════════════════════════
+                MAIN CONTENT WRAPPER
+            ══════════════════════════════ */}
+            <div className={[
+                'min-h-screen flex flex-col',
+                'transition-[padding-left] duration-200 ease-in-out',
+                contentPad,
+            ].join(' ')}>
 
-                        {/* Mobile: hamburger menu */}
+                {/* ── TOP BAR ── */}
+                <header className="sticky top-0 z-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 shadow-sm shadow-black/[0.04] dark:shadow-black/20">
+                    <div className="flex items-center gap-3 px-4 sm:px-6 h-[64px]">
+
+                        {/* Mobile hamburger */}
                         <button
                             onClick={() => setMobileOpen(true)}
-                            className="lg:hidden mr-4 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[36px]"
+                            className="lg:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[36px] flex items-center"
                             aria-label="Open menu"
                         >
                             <Menu size={20} />
                         </button>
 
-                        {/* Desktop: expand sidebar button when collapsed */}
+                        {/* Desktop: expand button when sidebar is collapsed */}
                         {collapsed && (
                             <button
                                 onClick={toggleSidebar}
-                                className="hidden lg:flex mr-4 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[36px] items-center"
+                                className="hidden lg:flex p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[36px] items-center"
                                 aria-label="Expand sidebar"
                             >
                                 <Menu size={20} />
                             </button>
                         )}
 
-                        {/* Left: Page title + subtitle */}
-                        <div className="top-bar-section min-w-0">
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+                        {/* Page title */}
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate leading-tight">
                                 {title ?? 'Admin Panel'}
                             </h1>
                             {subtitle && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
                                     {subtitle}
                                 </p>
                             )}
                         </div>
 
-                        {/* Center: Breadcrumbs */}
+                        {/* Breadcrumbs (center, hidden on small screens) */}
                         {breadcrumbs?.length > 0 && (
-                            <div className="top-bar-center">
+                            <div className="hidden lg:flex flex-1 justify-center">
                                 <Breadcrumbs crumbs={breadcrumbs} />
                             </div>
                         )}
 
-                        {/* Right: page actions + role badge + dark mode toggle */}
-                        <div className="top-bar-end">
+                        {/* Right: custom actions + user profile */}
+                        <div className="flex items-center gap-2 ml-auto">
                             {headerActions}
 
-                            {/* Role badge */}
-                            <span
-                                className={[
-                                    'hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium',
-                                    roleCfg.cls,
-                                ].join(' ')}
-                            >
-                                <RoleIcon size={12} className={roleCfg.iconCls} />
-                                {roleCfg.label}
-                            </span>
-
-                            {/* Dark mode toggle */}
-                            <button
-                                onClick={toggleTheme}
-                                className="p-2.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
-                                aria-label={
-                                    theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
-                                }
-                            >
-                                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                            </button>
+                            {/* User profile dropdown (always top-right) */}
+                            <UserMenu
+                                user={user}
+                                role={role}
+                                theme={theme}
+                                onToggleTheme={toggleTheme}
+                            />
                         </div>
                     </div>
                 </header>
 
-                {/* ───── PAGE CONTENT ───── */}
-                <main id="main-content" className="flex-1 p-6">
+                {/* ── Page content ── */}
+                <main id="main-content" className="flex-1 p-4 sm:p-6">
                     {children}
                 </main>
 
-                {/* ───── FOOTER ───── */}
-                <footer className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/80">
+                {/* ── Footer ── */}
+                <footer className="px-6 py-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                     <p className="text-xs text-gray-400 dark:text-gray-600 text-center">
                         &copy; {new Date().getFullYear()} PhotoAdmin &mdash; Built by Muhammad Abdullah
                     </p>

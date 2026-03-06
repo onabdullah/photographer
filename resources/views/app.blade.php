@@ -26,10 +26,10 @@
         @include('shopify-app::partials.token_handler')
         @endif
 
-        {{-- Manrope (admin) + Inter/Plus Jakarta Sans (Shopify app) --}}
+        {{-- Manrope + Patrick Hand (admin) + Inter/Plus Jakarta Sans (Shopify app) --}}
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Patrick+Hand&display=swap" rel="stylesheet">
         <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600&family=plus-jakarta-sans:500,600,700&display=swap" rel="stylesheet">
 
