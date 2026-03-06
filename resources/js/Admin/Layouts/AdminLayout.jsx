@@ -747,34 +747,59 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                     id="main-content"
                     className={fullHeight ? 'flex-1 overflow-hidden flex flex-col' : 'flex-1 p-6'}
                 >
-                    {/* Normal page header (title + breadcrumbs) — not shown in fullHeight mode */}
-                    {!fullHeight && (title || breadcrumbs?.length > 0 || headerActions) && (
-                        <div className={[
-                            'flex gap-4 mb-6',
-                            centerHeader
-                                ? 'flex-col items-center text-center'
-                                : 'items-start justify-between',
-                        ].join(' ')}>
-                            <div className={centerHeader ? 'flex flex-col items-center' : 'min-w-0'}>
-                                {title && (
-                                    <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
-                                        {title}
-                                    </h1>
-                                )}
-                                {breadcrumbs?.length > 0 && (
-                                    <div className={centerHeader ? 'mt-1 flex justify-center' : 'mt-1'}>
-                                        <Breadcrumbs crumbs={breadcrumbs} />
+                    {!fullHeight && centerHeader ? (
+                        /* Centered content block: header (breadcrumbs left, button right) + children */
+                        <div className="max-w-5xl mx-auto space-y-6">
+                            {(title || breadcrumbs?.length > 0 || headerActions) && (
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="min-w-0">
+                                        {title && (
+                                            <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                                                {title}
+                                            </h1>
+                                        )}
+                                        {breadcrumbs?.length > 0 && (
+                                            <div className="mt-1">
+                                                <Breadcrumbs crumbs={breadcrumbs} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    {headerActions && (
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            {headerActions}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {children}
+                        </div>
+                    ) : !fullHeight && (title || breadcrumbs?.length > 0 || headerActions) ? (
+                        /* Default full-width header */
+                        <>
+                            <div className="flex items-start justify-between gap-4 mb-6">
+                                <div className="min-w-0">
+                                    {title && (
+                                        <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                                            {title}
+                                        </h1>
+                                    )}
+                                    {breadcrumbs?.length > 0 && (
+                                        <div className="mt-1">
+                                            <Breadcrumbs crumbs={breadcrumbs} />
+                                        </div>
+                                    )}
+                                </div>
+                                {headerActions && (
+                                    <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+                                        {headerActions}
                                     </div>
                                 )}
                             </div>
-                            {headerActions && (
-                                <div className={centerHeader ? 'flex justify-center' : 'flex items-center gap-2 flex-shrink-0 mt-0.5'}>
-                                    {headerActions}
-                                </div>
-                            )}
-                        </div>
+                            {children}
+                        </>
+                    ) : (
+                        children
                     )}
-                    {children}
                 </main>
 
                 {/* ── Footer (hidden in fullHeight mode) ── */}

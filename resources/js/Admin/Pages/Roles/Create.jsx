@@ -152,7 +152,7 @@ export default function RoleCreate({ allPermissions }) {
                 </Link>
             }
         >
-            <form onSubmit={submit} className="space-y-6 max-w-5xl mx-auto">
+            <form onSubmit={submit} className="space-y-6">
 
                 {/* Role name */}
                 <div className="card">

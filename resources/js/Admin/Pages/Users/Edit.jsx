@@ -33,7 +33,7 @@ export default function UserEdit({ user, roles }) {
             }
             centerHeader
         >
-            <form onSubmit={submit} className="space-y-6 max-w-xl mx-auto">
+            <form onSubmit={submit} className="space-y-6 max-w-xl">
                 <div className="card space-y-4">
 
                     {/* Name */}

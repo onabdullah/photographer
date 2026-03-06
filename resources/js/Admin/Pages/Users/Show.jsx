@@ -93,7 +93,7 @@ export default function UserShow({ user, allPermissions, roles }) {
             }
             centerHeader
         >
-            <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
+            <div className="flex flex-col lg:flex-row gap-6">
 
                 {/* ── Left panel ── */}
                 <div className="flex-1 min-w-0 space-y-5">
