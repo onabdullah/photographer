@@ -25,6 +25,7 @@ import {
     Users,
     Shield,
     TerminalSquare,
+    ExternalLink,
 } from 'lucide-react';
 
 // ============================================================
@@ -86,13 +87,6 @@ const SECTIONS = [
                     { name: 'Reports',   icon: FileBarChart2, href: '#' },
                 ],
             },
-        ],
-    },
-    {
-        id: 'developer',
-        label: 'DEVELOPER',
-        items: [
-            { name: 'Terminal', href: '/admin/terminal', icon: TerminalSquare, permission: 'settings.view' },
         ],
     },
 ];
@@ -635,22 +629,55 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                     <div className="h-3" />
                 </nav>
 
-                {/* ── Environment badge — sidebar bottom ── */}
-                <div className={[
-                    'flex-shrink-0 px-3 py-2 border-t border-gray-200 dark:border-gray-800',
-                    iconOnly ? 'flex justify-center' : '',
-                ].join(' ')}>
-                    {iconOnly ? (
-                        <div
-                            className={`w-2 h-2 rounded-full ${envBadge.dot}`}
-                            title={appEnv}
-                        />
-                    ) : (
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider ${envBadge.pill}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${envBadge.dot} flex-shrink-0`} />
-                            {appEnv}
-                        </span>
-                    )}
+                {/* ── DEVELOPER button + env badge — fixed sidebar bottom ── */}
+                <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800">
+
+                    {/* DEVELOPER — opens Terminal in a new window, no sub-items */}
+                    <button
+                        type="button"
+                        onClick={() => window.open('/admin/terminal', '_blank', 'noopener,noreferrer')}
+                        title="Open Developer Terminal"
+                        className={[
+                            'w-full flex items-center gap-2.5 px-4 py-2.5',
+                            'text-[10px] font-bold uppercase tracking-[0.09em]',
+                            'text-gray-400 dark:text-gray-500',
+                            'hover:text-primary-600 dark:hover:text-primary-400',
+                            'hover:bg-gray-50 dark:hover:bg-gray-800/60',
+                            'transition-colors group',
+                            iconOnly ? 'justify-center px-0' : '',
+                        ].filter(Boolean).join(' ')}
+                    >
+                        {iconOnly ? (
+                            <TerminalSquare
+                                size={15}
+                                className="text-gray-400 dark:text-gray-500 group-hover:text-primary-500 transition-colors"
+                            />
+                        ) : (
+                            <>
+                                <TerminalSquare size={13} className="flex-shrink-0 group-hover:text-primary-500 transition-colors" />
+                                <span className="flex-1 text-left">Developer</span>
+                                <ExternalLink size={11} className="flex-shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </>
+                        )}
+                    </button>
+
+                    {/* Env badge */}
+                    <div className={[
+                        'px-3 pb-2',
+                        iconOnly ? 'flex justify-center' : '',
+                    ].join(' ')}>
+                        {iconOnly ? (
+                            <div
+                                className={`w-2 h-2 rounded-full ${envBadge.dot}`}
+                                title={appEnv}
+                            />
+                        ) : (
+                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider ${envBadge.pill}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${envBadge.dot} flex-shrink-0`} />
+                                {appEnv}
+                            </span>
+                        )}
+                    </div>
                 </div>
 
             </aside>
