@@ -1,0 +1,14 @@
+#!/bin/sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Build assets before push so server gets pre-built files (no npm run build on server)
+echo "Building assets..."
+npm run build
+
+# If build output changed, commit it so it gets pushed
+if [ -n "$(git status --porcelain public/build)" ]; then
+  echo "Build output changed. Committing..."
+  git add public/build
+  git commit -m "chore: update build assets"
+  echo "Build committed. Pushing..."
+fi
