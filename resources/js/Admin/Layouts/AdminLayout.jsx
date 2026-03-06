@@ -73,8 +73,7 @@ const SECTIONS = [
         id: 'system',
         label: 'SYSTEM',
         items: [
-            { name: 'Settings', href: '/admin/settings', icon: Settings,        permission: 'settings.view' },
-            { name: 'Terminal', href: '/admin/terminal', icon: TerminalSquare,  permission: 'settings.view' },
+            { name: 'Settings', href: '/admin/settings', icon: Settings, permission: 'settings.view' },
             {
                 name: 'Coming Soon',
                 icon: Lightbulb,
@@ -87,6 +86,13 @@ const SECTIONS = [
                     { name: 'Reports',   icon: FileBarChart2, href: '#' },
                 ],
             },
+        ],
+    },
+    {
+        id: 'developer',
+        label: 'DEVELOPER',
+        items: [
+            { name: 'Terminal', href: '/admin/terminal', icon: TerminalSquare, permission: 'settings.view' },
         ],
     },
 ];
@@ -475,7 +481,15 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
         return url.startsWith(href);
     };
 
-    const user = props.auth?.user;
+    const user   = props.auth?.user;
+    const appEnv = props.appEnv ?? 'local';
+
+    // Env badge colours (sidebar bottom)
+    const envBadge = appEnv === 'production'
+        ? { dot: 'bg-red-500',    pill: 'bg-red-900/20 text-red-400 border border-red-800/30' }
+        : appEnv === 'local'
+            ? { dot: 'bg-green-500', pill: 'bg-green-900/20 text-green-400 border border-green-800/30' }
+            : { dot: 'bg-yellow-500',pill: 'bg-yellow-900/20 text-yellow-400 border border-yellow-800/30' };
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
@@ -620,6 +634,24 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
 
                     <div className="h-3" />
                 </nav>
+
+                {/* ── Environment badge — sidebar bottom ── */}
+                <div className={[
+                    'flex-shrink-0 px-3 py-2 border-t border-gray-200 dark:border-gray-800',
+                    iconOnly ? 'flex justify-center' : '',
+                ].join(' ')}>
+                    {iconOnly ? (
+                        <div
+                            className={`w-2 h-2 rounded-full ${envBadge.dot}`}
+                            title={appEnv}
+                        />
+                    ) : (
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider ${envBadge.pill}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${envBadge.dot} flex-shrink-0`} />
+                            {appEnv}
+                        </span>
+                    )}
+                </div>
 
             </aside>
 

@@ -3,7 +3,7 @@ import { usePage } from '@inertiajs/react';
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import {
     Terminal, Copy, Trash2, ChevronRight, Loader2,
-    CheckCircle2, XCircle, Clock, Info, AlertTriangle,
+    CheckCircle2, XCircle, Clock, AlertTriangle,
     ChevronDown, ChevronUp, Zap,
 } from 'lucide-react';
 
@@ -331,10 +331,7 @@ export default function TerminalPage({ phpVersion, laravelVersion, appEnv, appNa
             : 'bg-yellow-900/30 text-yellow-400 border border-yellow-800/50';
 
     return (
-        <AdminLayout
-            title="Terminal"
-            breadcrumbs={[{ label: 'Terminal' }]}
-        >
+        <AdminLayout>
             {/* ── Confirm dialog for destructive commands ── */}
             {confirm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -369,9 +366,12 @@ export default function TerminalPage({ phpVersion, laravelVersion, appEnv, appNa
                 </div>
             )}
 
-            {/* ── Terminal card — always dark, regardless of UI theme ── */}
-            <div className="rounded-xl overflow-hidden border border-gray-700/60 shadow-2xl shadow-black/40 flex flex-col"
-                 style={{ background: '#0d1117', minHeight: '70vh' }}>
+            {/* ── Terminal card — fixed viewport height, internal scroll only ── */}
+            {/* h-[calc(100vh-X)] where X = top-band(36px) + p-6 top+bottom(48px) + footer(30px) */}
+            <div
+                className="rounded-xl overflow-hidden border border-gray-700/60 shadow-2xl shadow-black/40 flex flex-col"
+                style={{ background: '#0d1117', height: 'calc(100vh - 130px)' }}
+            >
 
                 {/* ─── Title bar ───────────────────────────────────────────── */}
                 <div className="flex items-center gap-3 px-4 h-11 flex-shrink-0 border-b border-gray-800/80"
@@ -385,13 +385,16 @@ export default function TerminalPage({ phpVersion, laravelVersion, appEnv, appNa
                     </div>
 
                     {/* Title */}
-                    <div className="flex-1 flex items-center justify-center gap-2">
+                    <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
                         <Terminal size={13} className="text-gray-500 flex-shrink-0" />
-                        <span className="font-mono text-xs text-gray-400 font-medium tracking-wide">
+                        <span className="font-mono text-xs text-gray-400 font-medium tracking-wide truncate">
                             {appName} — artisan
                         </span>
-                        <span className={`ml-1 px-1.5 py-px rounded text-[10px] font-bold uppercase tracking-wider font-mono ${envCls}`}>
+                        <span className={`flex-shrink-0 px-1.5 py-px rounded text-[10px] font-bold uppercase tracking-wider font-mono ${envCls}`}>
                             {appEnv}
+                        </span>
+                        <span className="hidden md:block text-[10px] text-gray-600 font-mono flex-shrink-0">
+                            PHP {phpVersion} · Laravel {laravelVersion}
                         </span>
                     </div>
 
@@ -487,15 +490,7 @@ export default function TerminalPage({ phpVersion, laravelVersion, appEnv, appNa
                 </div>
             </div>
 
-            {/* ── Info footer ── */}
-            <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-600 font-mono">
-                <span className="flex items-center gap-1">
-                    <Info size={11} />
-                    PHP {phpVersion} · Laravel {laravelVersion}
-                </span>
-                <span>·</span>
-                <span>Shell injection is blocked. Destructive commands require confirmation.</span>
-            </div>
+            {/* Info moved into terminal title bar — no extra element needed here */}
         </AdminLayout>
     );
 }

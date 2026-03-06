@@ -44,6 +44,7 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => $user->permissions ?? ['*'],
                 ] : null,
             ],
+            'appEnv' => config('app.env'),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error'   => fn () => $request->session()->get('error'),
