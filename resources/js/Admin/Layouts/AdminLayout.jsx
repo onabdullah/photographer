@@ -636,22 +636,16 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 'transition-[padding] duration-200 ease-in-out',
             ].join(' ')}>
 
-                {/* ── PAGE HEADER
-                    Order: H1 title → breadcrumbs underneath
-                    No subtitle/description per design intent.
-                    No separate bg — inherits the page wrapper bg for a unified dark surface.
-                ── */}
-                {(title || breadcrumbs?.length > 0 || headerActions) && (
-                    <div className="px-6 pt-6 pb-5 border-b border-gray-200 dark:border-gray-700/50">
-                        {/* H1 + actions row */}
-                        <div className="flex items-center justify-between gap-4">
+                {/* ── Page content (title + breadcrumbs flow naturally inside main, no border/bg) ── */}
+                <main id="main-content" className="flex-1 p-6">
+                    {(title || breadcrumbs?.length > 0 || headerActions) && (
+                        <div className="flex items-start justify-between gap-4 mb-6">
                             <div className="min-w-0">
                                 {title && (
                                     <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                                         {title}
                                     </h1>
                                 )}
-                                {/* Breadcrumbs sit directly under the heading */}
                                 {breadcrumbs?.length > 0 && (
                                     <div className="mt-1">
                                         <Breadcrumbs crumbs={breadcrumbs} />
@@ -659,21 +653,17 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                                 )}
                             </div>
                             {headerActions && (
-                                <div className="flex items-center gap-2 flex-shrink-0">
+                                <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
                                     {headerActions}
                                 </div>
                             )}
                         </div>
-                    </div>
-                )}
-
-                {/* ── Page content ── */}
-                <main id="main-content" className="flex-1 p-6">
+                    )}
                     {children}
                 </main>
 
                 {/* ── Footer ── */}
-                <footer className="px-6 py-3 border-t border-gray-200 dark:border-gray-700/50">
+                <footer className="px-6 py-1.5 border-t border-gray-200 dark:border-gray-700/50">
                     <p className="text-xs text-gray-400 dark:text-gray-600 text-center">
                         &copy; {new Date().getFullYear()} PhotoAdmin &mdash; Built by Muhammad Abdullah
                     </p>
