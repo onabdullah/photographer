@@ -9,8 +9,9 @@ export default function Settings() {
         <AdminLayout
             title="System Settings"
             breadcrumbs={[{ label: 'Settings' }]}
+            centerHeader
         >
-            <div className="max-w-3xl space-y-6">
+            <div className="max-w-3xl mx-auto space-y-6">
 
                 {/* Flash messages */}
                 {flash?.success && (

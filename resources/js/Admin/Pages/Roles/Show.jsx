@@ -22,8 +22,9 @@ export default function RoleShow({ role, allPermissions }) {
                     </Link>
                 </div>
             }
+            centerHeader
         >
-            <div className="flex flex-col lg:flex-row gap-6">
+            <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
 
                 {/* ── Left: Permissions Grid ── */}
                 <div className="flex-1 min-w-0">

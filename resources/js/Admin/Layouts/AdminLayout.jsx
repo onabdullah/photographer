@@ -489,9 +489,10 @@ function DeveloperPanel({ iconOnly }) {
  *   subtitle      {string}    — Muted line below title
  *   breadcrumbs   {Array}     — [{label, href?}] above the title
  *   headerActions {ReactNode} — Action buttons next to the title
+ *   centerHeader  {boolean}  — Center title, breadcrumbs, and headerActions
  *   children      {ReactNode} — Page body
  */
-export default function AdminLayout({ children, title, subtitle, breadcrumbs, headerActions, fullHeight = false }) {
+export default function AdminLayout({ children, title, subtitle, breadcrumbs, headerActions, centerHeader = false, fullHeight = false }) {
     const { url, props } = usePage();
     const { can, role }  = usePermissions();
 
@@ -748,21 +749,26 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 >
                     {/* Normal page header (title + breadcrumbs) — not shown in fullHeight mode */}
                     {!fullHeight && (title || breadcrumbs?.length > 0 || headerActions) && (
-                        <div className="flex items-start justify-between gap-4 mb-6">
-                            <div className="min-w-0">
+                        <div className={[
+                            'flex gap-4 mb-6',
+                            centerHeader
+                                ? 'flex-col items-center text-center'
+                                : 'items-start justify-between',
+                        ].join(' ')}>
+                            <div className={centerHeader ? 'flex flex-col items-center' : 'min-w-0'}>
                                 {title && (
                                     <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                                         {title}
                                     </h1>
                                 )}
                                 {breadcrumbs?.length > 0 && (
-                                    <div className="mt-1">
+                                    <div className={centerHeader ? 'mt-1 flex justify-center' : 'mt-1'}>
                                         <Breadcrumbs crumbs={breadcrumbs} />
                                     </div>
                                 )}
                             </div>
                             {headerActions && (
-                                <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+                                <div className={centerHeader ? 'flex justify-center' : 'flex items-center gap-2 flex-shrink-0 mt-0.5'}>
                                     {headerActions}
                                 </div>
                             )}

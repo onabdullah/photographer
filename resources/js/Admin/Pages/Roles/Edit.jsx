@@ -118,8 +118,9 @@ export default function RoleEdit({ role, allPermissions }) {
                     Back to Role
                 </Link>
             }
+            centerHeader
         >
-            <form onSubmit={submit} className="space-y-6 max-w-5xl">
+            <form onSubmit={submit} className="space-y-6 max-w-5xl mx-auto">
                 <div className="card">
                     <div className="max-w-xs">
                         <label className="form-label">

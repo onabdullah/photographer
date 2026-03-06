@@ -144,6 +144,7 @@ export default function RoleCreate({ allPermissions }) {
         <AdminLayout
             title="Create Role"
             breadcrumbs={[{ label: 'Roles', href: '/admin/roles' }, { label: 'Create' }]}
+            centerHeader
             headerActions={
                 <Link href="/admin/roles" className="btn btn-secondary">
                     <ArrowLeft size={14} className="mr-1.5" />
