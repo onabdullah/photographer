@@ -48,7 +48,15 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'admin_role_id',
+        'status',
+        'last_login_at',
     ];
+
+    public function adminRole()
+    {
+        return $this->belongsTo(AdminRole::class, 'admin_role_id');
+    }
 
     protected $hidden = [
         'password',
@@ -59,6 +67,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at'     => 'datetime',
             'password'          => 'hashed',
         ];
     }

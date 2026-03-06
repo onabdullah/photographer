@@ -22,6 +22,9 @@ import {
     Crown,
     ShieldCheck,
     Eye,
+    Users,
+    Shield,
+    TerminalSquare,
 } from 'lucide-react';
 
 // ============================================================
@@ -55,6 +58,8 @@ const SECTIONS = [
             { name: 'Merchants',     href: '/admin/merchants',     icon: Store,    permission: 'merchants.view' },
             { name: 'Products',      href: '/admin/products',      icon: Package,  permission: 'products.view'  },
             { name: 'AI Processing', href: '/admin/ai-processing', icon: Zap,      permission: 'ai.view'        },
+            { name: 'Users',         href: '/admin/users',         icon: Users,    permission: 'dashboard.view' },
+            { name: 'Roles',         href: '/admin/roles',         icon: Shield,   permission: 'dashboard.view' },
         ],
     },
     {
@@ -68,7 +73,8 @@ const SECTIONS = [
         id: 'system',
         label: 'SYSTEM',
         items: [
-            { name: 'Settings', href: '/admin/settings', icon: Settings, permission: 'settings.view' },
+            { name: 'Settings', href: '/admin/settings', icon: Settings,        permission: 'settings.view' },
+            { name: 'Terminal', href: '/admin/terminal', icon: TerminalSquare,  permission: 'settings.view' },
             {
                 name: 'Coming Soon',
                 icon: Lightbulb,

@@ -126,20 +126,33 @@ Route::middleware(['auth:admin'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | API Routes for Admin Panel
+    | Artisan Terminal
     |--------------------------------------------------------------------------
     */
+    Route::get('/terminal',     [\App\Http\Controllers\Admin\TerminalController::class, 'index'])->name('terminal');
+    Route::post('/terminal/run',[\App\Http\Controllers\Admin\TerminalController::class, 'run'])->name('terminal.run');
 
-    // Example: Merchant management
-    // Route::resource('merchants', Admin\MerchantController::class);
-    
-    // Example: Product management
-    // Route::resource('products', Admin\ProductController::class);
-    
-    // Example: AI job management
-    // Route::post('/ai-processing/{id}/retry', [Admin\AIProcessingController::class, 'retry'])->name('ai-processing.retry');
-    // Route::post('/ai-processing/{id}/cancel', [Admin\AIProcessingController::class, 'cancel'])->name('ai-processing.cancel');
-    
-    // Example: Analytics data
-    // Route::get('/analytics/data', [Admin\AnalyticsController::class, 'getData'])->name('analytics.data');
+    /*
+    |--------------------------------------------------------------------------
+    | Role Management
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/roles',                  [\App\Http\Controllers\Admin\RoleController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create',           [\App\Http\Controllers\Admin\RoleController::class, 'create'])->name('roles.create');
+    Route::post('/roles',                 [\App\Http\Controllers\Admin\RoleController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{adminRole}',      [\App\Http\Controllers\Admin\RoleController::class, 'show'])->name('roles.show');
+    Route::get('/roles/{adminRole}/edit', [\App\Http\Controllers\Admin\RoleController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{adminRole}',      [\App\Http\Controllers\Admin\RoleController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{adminRole}',   [\App\Http\Controllers\Admin\RoleController::class, 'destroy'])->name('roles.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Management
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/users',                   [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}',            [\App\Http\Controllers\Admin\UserController::class, 'show'])->name('users.show');
+    Route::get('/users/{user}/edit',       [\App\Http\Controllers\Admin\UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}',            [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('users.update');
+    Route::post('/users/{user}/status',    [\App\Http\Controllers\Admin\UserController::class, 'updateStatus'])->name('users.status');
 });
