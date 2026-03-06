@@ -536,7 +536,7 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
 
     const iconOnly   = collapsed && !hovered && !mobileOpen;
     const sidebarW   = iconOnly ? W_COLLAPSED : W_EXPANDED;
-    const contentPad = iconOnly ? 'lg:pl-[58px]' : 'lg:pl-56';
+    const contentPad = isDevMode ? '' : (iconOnly ? 'lg:pl-[58px]' : 'lg:pl-56');
 
     const isActive = (href) => {
         if (href === '/admin/dashboard') return url === href || url === '/admin';
@@ -558,14 +558,16 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
             ══════════════════════════════════════════════════ */}
             <div className="fixed top-0 left-0 right-0 z-50 h-9 flex items-center px-3 gap-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700/80">
 
-                {/* Mobile hamburger */}
-                <button
-                    onClick={() => setMobileOpen(true)}
-                    className="lg:hidden flex items-center justify-center w-7 h-7 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    aria-label="Open navigation"
-                >
-                    <Menu size={15} />
-                </button>
+                {/* Mobile hamburger — hidden in developer mode */}
+                {!isDevMode && (
+                    <button
+                        onClick={() => setMobileOpen(true)}
+                        className="lg:hidden flex items-center justify-center w-7 h-7 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        aria-label="Open navigation"
+                    >
+                        <Menu size={15} />
+                    </button>
+                )}
 
                 {/* ── Brand: logo tile + name ── */}
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -583,14 +585,16 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 {/* Separator */}
                 <div className="hidden sm:block h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1" />
 
-                {/* Desktop sidebar collapse toggle in band */}
-                <button
-                    onClick={toggleSidebar}
-                    className="hidden lg:flex items-center justify-center w-7 h-7 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                >
-                    {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-                </button>
+                {/* Desktop sidebar collapse toggle — hidden in developer mode */}
+                {!isDevMode && (
+                    <button
+                        onClick={toggleSidebar}
+                        className="hidden lg:flex items-center justify-center w-7 h-7 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    >
+                        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                    </button>
+                )}
 
                 {/* ── Right: user menu + theme ── */}
                 <div className="ml-auto">
@@ -610,7 +614,9 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
 
             {/* ══════════════════════════════════════════════════
                 SIDEBAR  —  separate fixed panel, starts BELOW the band
+                Hidden when developer mode is active
             ══════════════════════════════════════════════════ */}
+            {!isDevMode && (
             <aside
                 onMouseEnter={() => collapsed && !mobileOpen && setHovered(true)}
                 onMouseLeave={() => collapsed && setHovered(false)}
@@ -696,6 +702,7 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 <DeveloperPanel iconOnly={iconOnly} />
 
             </aside>
+            )}
 
             {/* ══════════════════════════════════════════════════
                 MAIN CONTENT WRAPPER
@@ -714,18 +721,18 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                     a thin full-width strip signalling a special mode with an exit.
                 ──────────────────────────────────────────────────────────── */}
                 {isDevMode && (
-                    <div className="flex-shrink-0 flex items-center gap-3 px-5 h-8 border-b border-primary-200/60 dark:border-primary-800/30 bg-primary-50 dark:bg-primary-900/10">
-                        <TerminalSquare size={13} className="text-primary-500 dark:text-primary-400 flex-shrink-0" />
-                        <span className="text-xs font-bold text-primary-700 dark:text-primary-400 tracking-wide">
+                    <div className="flex-shrink-0 flex items-center gap-3 px-5 h-8 border-b border-secondary-200/60 dark:border-secondary-800/30 bg-secondary-50 dark:bg-secondary-900/10">
+                        <TerminalSquare size={13} className="text-secondary-500 dark:text-secondary-400 flex-shrink-0" />
+                        <span className="text-xs font-bold text-secondary-700 dark:text-secondary-400 tracking-wide">
                             Developer Mode
                         </span>
-                        <span className="text-[10px] text-primary-400 dark:text-primary-600 hidden sm:block">
+                        <span className="text-[10px] text-secondary-500 dark:text-secondary-600 hidden sm:block">
                             — changes made here affect the live application
                         </span>
                         <div className="flex-1" />
                         <Link
                             href="/admin/dashboard"
-                            className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-200 transition-colors px-2 py-1 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30"
+                            className="flex items-center gap-1.5 text-xs font-semibold text-secondary-600 dark:text-secondary-400 hover:text-secondary-800 dark:hover:text-secondary-200 transition-colors px-2 py-1 rounded hover:bg-secondary-100 dark:hover:bg-secondary-900/30"
                         >
                             <X size={12} />
                             Exit Developer Mode
