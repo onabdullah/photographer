@@ -1,6 +1,7 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { Link } from '@inertiajs/react';
 import { Users } from 'lucide-react';
+import ActionButtons from '@/Admin/Components/ActionButtons';
 
 const STATUS_CLS = {
     active:   'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300',
@@ -96,12 +97,10 @@ export default function UsersIndex({ users }) {
                                     </td>
                                     <td className="whitespace-nowrap py-3.5 pl-4 pr-6 text-right">
                                         <div className="flex items-center justify-end gap-1.5">
-                                            <Link href={`/admin/users/${user.id}`} className="btn-sm-secondary">
-                                                View
-                                            </Link>
-                                            <Link href={`/admin/users/${user.id}/edit`} className="btn-sm-primary">
-                                                Edit
-                                            </Link>
+                                            <ActionButtons
+                                                viewHref={`/admin/users/${user.id}`}
+                                                editHref={`/admin/users/${user.id}/edit`}
+                                            />
                                         </div>
                                     </td>
                                 </tr>

@@ -1,15 +1,11 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
-import { Link, router } from '@inertiajs/react';
-import { Plus, Shield, Trash2, Eye, Edit } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { Plus, Shield } from 'lucide-react';
+import ActionButtons from '@/Admin/Components/ActionButtons';
 
 export default function RolesIndex({ roles, totalPermissions }) {
     const formatDate = (iso) =>
         iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-
-    const handleDelete = (role) => {
-        if (!confirm(`Delete role "${role.name}"? This cannot be undone.`)) return;
-        router.delete(`/admin/roles/${role.id}`);
-    };
 
     return (
         <AdminLayout
@@ -68,18 +64,17 @@ export default function RolesIndex({ roles, totalPermissions }) {
                                     </td>
                                     <td className="whitespace-nowrap py-3.5 pl-4 pr-6 text-right">
                                         <div className="flex items-center justify-end gap-1.5">
-                                            <Link href={`/admin/roles/${role.id}`} className="btn-sm-secondary">
-                                                View
-                                            </Link>
-                                            <Link href={`/admin/roles/${role.id}/edit`} className="btn-sm-primary">
-                                                Edit
-                                            </Link>
-                                            <button
-                                                onClick={() => handleDelete(role)}
-                                                className="btn-sm-danger"
-                                            >
-                                                Delete
-                                            </button>
+                                            <ActionButtons
+                                                viewHref={`/admin/roles/${role.id}`}
+                                                editHref={`/admin/roles/${role.id}/edit`}
+                                                onDelete={() => {
+                                                    if (!confirm(`Delete role "${role.name}"? This cannot be undone.`)) return;
+                                                    import('@inertiajs/react').then(({ router }) =>
+                                                        router.delete(`/admin/roles/${role.id}`)
+                                                    );
+                                                }}
+                                                deleteConfirmMessage={`Delete role "${role.name}"? This cannot be undone.`}
+                                            />
                                         </div>
                                     </td>
                                 </tr>
