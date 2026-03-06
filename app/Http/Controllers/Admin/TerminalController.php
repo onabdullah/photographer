@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Process;
 use Inertia\Inertia;
+use Symfony\Component\Console\Input\StringInput;
+use Symfony\Component\Console\Output\BufferedOutput;
 
 class TerminalController extends Controller
 {
@@ -87,21 +88,23 @@ class TerminalController extends Controller
             ], 200);
         }
 
-        // ── Execute safely via Process (array form = no shell spawn) ─────────
+        // ── Execute inside the current PHP process — no child process spawned ─
+        // StringInput parses the full command string (including options/arguments).
+        // BufferedOutput captures everything the command writes.
+        // This runs under the same PHP binary (8.4) that serves this request,
+        // completely bypassing the system PATH and avoiding version mismatches.
         $start = microtime(true);
 
         try {
-            // PHP_BINARY = the exact PHP executable running this web process (e.g. /usr/local/php84/bin/php).
-            // Using plain 'php' would resolve to the system PATH default (e.g. 8.2), causing version mismatches.
-            $result = Process::path(base_path())
-                ->timeout(30)
-                ->env(['COLUMNS' => '120'])
-                ->run(array_merge([PHP_BINARY, 'artisan', '--no-ansi'], $parts));
+            // Append --no-ansi --no-interaction so output is plain text
+            $input = new StringInput($cmd . ' --no-ansi --no-interaction');
+            $input->setInteractive(false);
 
-            $output   = $result->output() ?: $result->errorOutput();
-            $exitCode = $result->exitCode();
+            $buffered = new BufferedOutput();
+            $exitCode = app('artisan')->run($input, $buffered);
+            $output   = $buffered->fetch();
         } catch (\Throwable $e) {
-            $output   = "Process error: " . $e->getMessage() . "\n";
+            $output   = 'Exception: ' . $e->getMessage() . "\n";
             $exitCode = 1;
         }
 
