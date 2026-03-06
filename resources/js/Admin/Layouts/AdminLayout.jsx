@@ -26,6 +26,8 @@ import {
     Shield,
     TerminalSquare,
     ExternalLink,
+    Code2,
+    FlaskConical,
 } from 'lucide-react';
 
 // ============================================================
@@ -398,6 +400,136 @@ function Breadcrumbs({ crumbs }) {
 }
 
 // ============================================================
+// DEVELOPER PANEL  —  expandable section pinned to sidebar bottom
+// ============================================================
+
+const DEV_TOOLS = [
+    {
+        label: 'Artisan Terminal',
+        icon:  TerminalSquare,
+        href:  '/admin/terminal',
+        desc:  'Run artisan commands',
+    },
+    {
+        label: 'Route Inspector',
+        icon:  Code2,
+        href:  '#',
+        desc:  'Browse registered routes',
+        soon:  true,
+    },
+    {
+        label: 'App Sandbox',
+        icon:  FlaskConical,
+        href:  '#',
+        desc:  'Test features safely',
+        soon:  true,
+    },
+];
+
+function DeveloperPanel({ iconOnly, envBadge, appEnv }) {
+    const [open, setOpen] = useState(false);
+
+    // Icon-only mode: show just a terminal icon that opens in new window directly
+    if (iconOnly) {
+        return (
+            <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 flex flex-col items-center gap-1.5 py-2">
+                <button
+                    type="button"
+                    title="Developer Tools"
+                    onClick={() => window.open('/admin/terminal', '_blank', 'noopener,noreferrer')}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 dark:text-gray-500 hover:text-primary-500 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                    <TerminalSquare size={16} />
+                </button>
+                <div className={`w-2 h-2 rounded-full ${envBadge.dot}`} title={appEnv} />
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800">
+
+            {/* Expanded tools list — slides from the bottom up */}
+            {open && (
+                <div className="border-b border-gray-200 dark:border-gray-800 py-1.5 px-2 space-y-px"
+                     style={{ background: 'rgba(0,0,0,0.02)' }}>
+                    <p className="px-2.5 pt-1 pb-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-gray-400 dark:text-gray-600 select-none">
+                        Dev Tools
+                    </p>
+                    {DEV_TOOLS.map((tool) => {
+                        const Icon = tool.icon;
+                        return (
+                            <button
+                                key={tool.label}
+                                type="button"
+                                onClick={() => !tool.soon && window.open(tool.href, '_blank', 'noopener,noreferrer')}
+                                disabled={tool.soon}
+                                className={[
+                                    'group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left transition-colors',
+                                    tool.soon
+                                        ? 'opacity-40 cursor-not-allowed'
+                                        : 'hover:bg-gray-100 dark:hover:bg-gray-800/70 cursor-pointer',
+                                ].join(' ')}
+                            >
+                                <Icon
+                                    size={15}
+                                    className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 transition-colors"
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 leading-tight truncate">
+                                        {tool.label}
+                                    </p>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-600 leading-tight truncate">
+                                        {tool.desc}
+                                    </p>
+                                </div>
+                                {tool.soon ? (
+                                    <span className="flex-shrink-0 text-[9px] font-bold px-1 py-px rounded bg-secondary-500/15 text-secondary-600 dark:text-secondary-400 uppercase tracking-wide">
+                                        Soon
+                                    </span>
+                                ) : (
+                                    <ExternalLink
+                                        size={11}
+                                        className="flex-shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-primary-400 transition-colors opacity-0 group-hover:opacity-100"
+                                    />
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* DEVELOPER toggle row */}
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                className="group w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+            >
+                <TerminalSquare
+                    size={13}
+                    className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors"
+                />
+                <span className="flex-1 text-left text-[10px] font-bold uppercase tracking-[0.09em] text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    Developer
+                </span>
+                {open
+                    ? <ChevronDown size={12} className="flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                    : <ChevronUp   size={12} className="flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                }
+            </button>
+
+            {/* Env badge */}
+            <div className="px-4 pb-2.5">
+                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider ${envBadge.pill}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${envBadge.dot} flex-shrink-0`} />
+                    {appEnv}
+                </span>
+            </div>
+        </div>
+    );
+}
+
+// ============================================================
 // ADMIN LAYOUT
 // ============================================================
 
@@ -629,56 +761,12 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                     <div className="h-3" />
                 </nav>
 
-                {/* ── DEVELOPER button + env badge — fixed sidebar bottom ── */}
-                <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800">
-
-                    {/* DEVELOPER — opens Terminal in a new window, no sub-items */}
-                    <button
-                        type="button"
-                        onClick={() => window.open('/admin/terminal', '_blank', 'noopener,noreferrer')}
-                        title="Open Developer Terminal"
-                        className={[
-                            'w-full flex items-center gap-2.5 px-4 py-2.5',
-                            'text-[10px] font-bold uppercase tracking-[0.09em]',
-                            'text-gray-400 dark:text-gray-500',
-                            'hover:text-primary-600 dark:hover:text-primary-400',
-                            'hover:bg-gray-50 dark:hover:bg-gray-800/60',
-                            'transition-colors group',
-                            iconOnly ? 'justify-center px-0' : '',
-                        ].filter(Boolean).join(' ')}
-                    >
-                        {iconOnly ? (
-                            <TerminalSquare
-                                size={15}
-                                className="text-gray-400 dark:text-gray-500 group-hover:text-primary-500 transition-colors"
-                            />
-                        ) : (
-                            <>
-                                <TerminalSquare size={13} className="flex-shrink-0 group-hover:text-primary-500 transition-colors" />
-                                <span className="flex-1 text-left">Developer</span>
-                                <ExternalLink size={11} className="flex-shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
-                            </>
-                        )}
-                    </button>
-
-                    {/* Env badge */}
-                    <div className={[
-                        'px-3 pb-2',
-                        iconOnly ? 'flex justify-center' : '',
-                    ].join(' ')}>
-                        {iconOnly ? (
-                            <div
-                                className={`w-2 h-2 rounded-full ${envBadge.dot}`}
-                                title={appEnv}
-                            />
-                        ) : (
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider ${envBadge.pill}`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${envBadge.dot} flex-shrink-0`} />
-                                {appEnv}
-                            </span>
-                        )}
-                    </div>
-                </div>
+                {/* ── DEVELOPER expandable section — sidebar bottom ── */}
+                <DeveloperPanel
+                    iconOnly={iconOnly}
+                    envBadge={envBadge}
+                    appEnv={appEnv}
+                />
 
             </aside>
 
