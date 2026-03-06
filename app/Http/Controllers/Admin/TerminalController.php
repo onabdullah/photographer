@@ -4,12 +4,47 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
-use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 class TerminalController extends Controller
 {
+    /**
+     * Parse the tokens after the command name into an Artisan parameters array.
+     *
+     * Handles:
+     *   --key=value   → ['--key' => 'value']
+     *   --flag        → ['--flag' => true]
+     *   -f            → ['-f' => true]
+     *   positional    → stored with a numeric key (works for simple commands)
+     *
+     * Flags --no-ansi and --no-interaction are always injected so output is plain.
+     */
+    private function parseParams(array $tokens): array
+    {
+        $params   = ['--no-ansi' => true, '--no-interaction' => true];
+        $posIndex = 0;
+
+        foreach ($tokens as $token) {
+            if (str_starts_with($token, '--')) {
+                if (str_contains($token, '=')) {
+                    [$key, $value] = explode('=', $token, 2);
+                    $params[$key]  = is_numeric($value) ? (int) $value : $value;
+                } else {
+                    $params[$token] = true;
+                }
+            } elseif (str_starts_with($token, '-') && strlen($token) === 2) {
+                $params[$token] = true;
+            } else {
+                // Positional argument — numeric index
+                $params[$posIndex++] = $token;
+            }
+        }
+
+        return $params;
+    }
+
     /**
      * Commands that are completely blocked — too dangerous or interactive.
      */
@@ -88,27 +123,23 @@ class TerminalController extends Controller
             ], 200);
         }
 
-        // ── Execute inside the current PHP process — no child process spawned ─
-        // StringInput parses the full command string (including options/arguments).
-        // BufferedOutput captures everything the command writes.
-        // This runs under the same PHP binary (8.4) that serves this request,
-        // completely bypassing the system PATH and avoiding version mismatches.
+        // ── Execute via Artisan facade — runs inside the current PHP process ────
+        // Artisan::call() resolves to ConsoleKernel (bound in the IoC container)
+        // and bootstraps the console application on-demand, even from a web request.
+        // No child process is spawned, so the same PHP 8.4 runtime is used.
         $start = microtime(true);
 
         try {
-            // Append --no-ansi --no-interaction so output is plain text
-            $input = new StringInput($cmd . ' --no-ansi --no-interaction');
-            $input->setInteractive(false);
-
             $buffered = new BufferedOutput();
-            $exitCode = app('artisan')->run($input, $buffered);
+            // array_slice($parts, 1) skips the command name (index 0)
+            $exitCode = Artisan::call($baseName, $this->parseParams(array_slice($parts, 1)), $buffered);
             $output   = $buffered->fetch();
         } catch (\Throwable $e) {
             $output   = 'Exception: ' . $e->getMessage() . "\n";
             $exitCode = 1;
         }
 
-        $duration = round((microtime(true) - $start) * 1000);
+        $duration  = round((microtime(true) - $start) * 1000);
 
         return response()->json([
             'output'    => $output ?: "(no output)\n",
