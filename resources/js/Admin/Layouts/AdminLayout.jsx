@@ -59,8 +59,8 @@ const SECTIONS = [
             { name: 'Merchants',     href: '/admin/merchants',     icon: Store,    permission: 'merchants.view' },
             { name: 'Products',      href: '/admin/products',      icon: Package,  permission: 'products.view'  },
             { name: 'AI Processing', href: '/admin/ai-processing', icon: Zap,      permission: 'ai.view'        },
-            { name: 'Users',         href: '/admin/users',         icon: Users,    permission: 'dashboard.view' },
-            { name: 'Roles',         href: '/admin/roles',         icon: Shield,   permission: 'dashboard.view' },
+            { name: 'Users',         href: '/admin/users',         icon: Users,    permission: 'users.view' },
+            { name: 'Roles',         href: '/admin/roles',         icon: Shield,   permission: 'roles.view' },
         ],
     },
     {
@@ -698,8 +698,8 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                     <div className="h-3" />
                 </nav>
 
-                {/* ── DEVELOPER expandable section — sidebar bottom ── */}
-                <DeveloperPanel iconOnly={iconOnly} />
+                {/* ── DEVELOPER expandable section — sidebar bottom (requires developer.terminal) ── */}
+                {can('developer.terminal') && <DeveloperPanel iconOnly={iconOnly} />}
 
             </aside>
             )}

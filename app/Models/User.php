@@ -21,7 +21,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * Permissions granted per role.
+     * Permissions granted per role (legacy, when admin_role_id is null).
      * super_admin gets the wildcard ['*'] which bypasses all checks.
      */
     const ROLE_PERMISSIONS = [
@@ -29,10 +29,13 @@ class User extends Authenticatable
         'admin' => [
             'dashboard.view',
             'merchants.view', 'merchants.manage',
-            'products.view',  'products.manage',
-            'ai.view',        'ai.manage',
+            'products.view', 'products.manage',
+            'ai.view', 'ai.manage',
             'analytics.view',
-            'settings.view',
+            'users.view', 'users.manage',
+            'roles.view', 'roles.manage',
+            'settings.view', 'settings.manage',
+            'developer.terminal',
         ],
         'viewer' => [
             'dashboard.view',
@@ -40,6 +43,9 @@ class User extends Authenticatable
             'products.view',
             'ai.view',
             'analytics.view',
+            'users.view',
+            'roles.view',
+            'settings.view',
         ],
     ];
 
@@ -74,11 +80,15 @@ class User extends Authenticatable
 
     /**
      * Returns the permissions array for this user's role.
-     * Used by HandleInertiaRequests to share with the frontend.
+     * Prefers adminRole->permissions when admin_role_id is set; otherwise uses legacy ROLE_PERMISSIONS.
      */
     public function getPermissionsAttribute(): array
     {
-        return self::ROLE_PERMISSIONS[$this->role] ?? [];
+        if ($this->admin_role_id) {
+            $role = $this->adminRole;
+            return $role?->permissions ?? [];
+        }
+        return self::ROLE_PERMISSIONS[$this->role ?? 'viewer'] ?? [];
     }
 
     /**

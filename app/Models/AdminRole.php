@@ -29,9 +29,20 @@ class AdminRole extends Model
         'ANALYTICS' => [
             'analytics.view'    => 'Analytics View',
         ],
+        'USERS' => [
+            'users.view'        => 'Users View',
+            'users.manage'      => 'Users Manage',
+        ],
+        'ROLES' => [
+            'roles.view'        => 'Roles View',
+            'roles.manage'      => 'Roles Manage',
+        ],
         'SYSTEM SETTINGS' => [
             'settings.view'     => 'Settings View',
             'settings.manage'   => 'Settings Manage',
+        ],
+        'DEVELOPER' => [
+            'developer.terminal'=> 'Artisan Terminal',
         ],
     ];
 

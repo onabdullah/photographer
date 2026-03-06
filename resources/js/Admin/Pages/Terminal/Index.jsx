@@ -35,6 +35,7 @@ const LINE_CLS = {
 // ── Quick commands ────────────────────────────────────────────────────────────
 const QUICK_GROUPS = [
     { label: 'DB',      cmds: ['migrate:status', 'migrate', 'migrate:fresh --seed', 'db:seed', 'migrate:rollback'] },
+    { label: 'Roles',   cmds: ['roles:seed', 'db:seed --class=RolesAndPermissionsSeeder'] },
     { label: 'Cache',   cmds: ['cache:clear', 'config:cache', 'config:clear', 'view:clear', 'route:clear', 'optimize', 'optimize:clear'] },
     { label: 'Info',    cmds: ['about', 'version', 'env', 'route:list --compact', 'schedule:list'] },
     { label: 'Storage', cmds: ['storage:link'] },

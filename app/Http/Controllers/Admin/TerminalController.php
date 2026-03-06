@@ -65,8 +65,12 @@ class TerminalController extends Controller
         'migrate:rollback',
     ];
 
-    public function index()
+    public function index(Request $request)
     {
+        if (! $this->userCanAccessTerminal($request)) {
+            abort(403, 'You do not have permission to access the developer terminal.');
+        }
+
         return Inertia::render('Admin/Pages/Terminal/Index', [
             'phpVersion'     => PHP_VERSION,
             'laravelVersion' => app()->version(),
@@ -75,8 +79,21 @@ class TerminalController extends Controller
         ]);
     }
 
+    /**
+     * Check if the authenticated user can access the developer terminal.
+     */
+    private function userCanAccessTerminal(Request $request): bool
+    {
+        $user = $request->user('admin') ?? $request->user();
+        return $user && $user->can('developer.terminal');
+    }
+
     public function run(Request $request)
     {
+        if (! $this->userCanAccessTerminal($request)) {
+            return response()->json(['error' => 'Permission denied. You need developer.terminal access.'], 403);
+        }
+
         $raw = trim($request->input('command', ''));
 
         if ($raw === '') {

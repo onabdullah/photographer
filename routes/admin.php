@@ -114,16 +114,6 @@ Route::middleware(['auth:admin'])->group(function () {
         return Inertia::render('Admin/Pages/Settings');
     })->name('settings');
 
-    // Create storage link (runs php artisan storage:link)
-    Route::post('/settings/storage-link', function () {
-        try {
-            \Illuminate\Support\Facades\Artisan::call('storage:link');
-            return back()->with('success', 'Storage link created successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to create storage link: ' . $e->getMessage());
-        }
-    })->name('settings.storage-link');
-
     /*
     |--------------------------------------------------------------------------
     | Artisan Terminal
