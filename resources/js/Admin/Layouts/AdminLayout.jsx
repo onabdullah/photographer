@@ -735,7 +735,7 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                             href="/admin/dashboard"
                             className="flex-shrink-0 text-xs font-bold text-secondary-700 dark:text-secondary-300 tracking-wide animate-blink-slow hover:opacity-100 hover:animate-none"
                         >
-                            Exit Developer Mode
+                            click here to exit
                         </Link>
                         <div className="flex-1 min-w-0" aria-hidden="true" />
                     </div>
