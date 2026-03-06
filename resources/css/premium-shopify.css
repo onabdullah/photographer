@@ -1,0 +1,1741 @@
+/**
+ * Premium AI Product Photography App – Design System
+ * Ultra-clean, Stripe/Linear/Apple-inspired SaaS aesthetic
+ * Brand colors: #468A9A (teal), #FF7A30 (orange)
+ */
+
+:root {
+  /* Brand palette */
+  --premium-teal: #468A9A;
+  --premium-teal-light: #5a9faf;
+  --premium-teal-muted: rgba(70, 138, 154, 0.12);
+  --premium-orange: #FF7A30;
+  --premium-orange-hover: #E56218;
+  --premium-orange-muted: rgba(255, 122, 48, 0.12);
+
+  /* Typography */
+  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Spacing scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Elevation & depth */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.08);
+
+  /* Glassmorphism (subtle) */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-blur: 12px;
+
+  /* Transitions */
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-fast: 150ms var(--ease-smooth);
+  --transition-normal: 200ms var(--ease-smooth);
+  --transition-slow: 250ms var(--ease-smooth);
+}
+
+/* Recent Creations empty state – icon and CTA */
+.recent-creations-empty .Polaris-Icon {
+  color: var(--premium-teal);
+}
+
+/* Dashboard section headings – professional, uncluttered */
+.dashboard-section-heading {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--p-color-text-subdued);
+  padding-block-end: var(--space-sm);
+  margin-block-end: var(--space-md);
+  border-block-end: 1px solid var(--p-color-border-subdued);
+  white-space: nowrap;
+}
+
+/* Dashboard Recent Creations – grid and cards */
+.dashboard-recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--p-space-200);
+  margin-block-end: var(--p-space-200);
+}
+
+.dashboard-recent-header .dashboard-section-heading {
+  margin-block-end: 0;
+  padding-block-end: 0;
+  border-block-end: none;
+}
+
+.dashboard-recent-arrow {
+  display: inline-flex;
+  margin-inline-start: var(--p-space-100);
+  vertical-align: middle;
+  color: var(--p-color-text-subdued);
+}
+
+.dashboard-recent-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--p-space-300);
+  padding: var(--p-space-400);
+}
+
+@media (min-width: 600px) {
+  .dashboard-recent-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.dashboard-recent-card-create {
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--p-color-bg-surface-secondary);
+  border: 1px dashed var(--p-color-border);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.dashboard-recent-card-create:hover {
+  border-color: var(--premium-teal);
+  background: rgba(70, 138, 154, 0.04);
+}
+
+.dashboard-recent-card-create .dashboard-recent-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: var(--p-space-300);
+  box-sizing: border-box;
+}
+
+.dashboard-recent-card-create .dashboard-recent-create-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--premium-teal-muted);
+  color: var(--premium-teal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--p-space-200);
+  flex-shrink: 0;
+}
+
+.dashboard-recent-card-create .dashboard-recent-create-btn {
+  margin-top: var(--p-space-200);
+  padding: var(--p-space-100) var(--p-space-300);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--p-color-text-on-primary);
+  background: var(--premium-teal);
+  border-radius: var(--p-border-radius-200);
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.dashboard-recent-card-create .dashboard-recent-card-inner:hover .dashboard-recent-create-btn {
+  background: var(--premium-teal);
+  opacity: 0.95;
+}
+
+.dashboard-recent-card-create .dashboard-recent-card-inner:focus-visible .dashboard-recent-create-btn {
+  outline: 2px solid var(--premium-teal);
+  outline-offset: 2px;
+}
+
+.dashboard-recent-card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--p-color-bg-surface-secondary);
+  border: 1px solid var(--p-color-border-subdued);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  aspect-ratio: 1;
+}
+
+.dashboard-recent-card:hover {
+  border-color: var(--p-color-border);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-recent-card-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dashboard-recent-card-inner:focus-visible {
+  outline: 2px solid var(--premium-teal);
+  outline-offset: 2px;
+}
+
+.dashboard-recent-card .dashboard-recent-checkerboard {
+  flex: 1;
+  min-height: 0;
+  aspect-ratio: unset;
+}
+
+.dashboard-recent-card .dashboard-recent-meta {
+  flex-shrink: 0;
+}
+
+.dashboard-recent-checkerboard {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background-image:
+    linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+    linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-color: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dashboard-recent-checkerboard img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.dashboard-recent-meta {
+  padding: var(--p-space-200) var(--p-space-300);
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-100);
+  flex-wrap: wrap;
+}
+
+.dashboard-recent-empty {
+  padding: var(--p-space-800) var(--p-space-600);
+  background: linear-gradient(160deg, rgba(70, 138, 154, 0.06) 0%, rgba(255, 122, 48, 0.04) 100%);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.dashboard-recent-empty-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: var(--premium-teal-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--premium-teal);
+}
+
+/* Premium page wrapper – fade-in on load */
+.premium-page-enter {
+  animation: premiumFadeIn 0.4s var(--ease-smooth) forwards;
+}
+
+@keyframes premiumFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card hover states */
+.premium-card {
+  transition: box-shadow var(--transition-normal), transform var(--transition-fast);
+}
+
+.premium-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Overview cards – plan value (orange), counts (larger), Manage button (dark) */
+.overview-plan-value {
+  color: var(--premium-orange) !important;
+}
+
+.overview-manage-btn,
+.overview-manage-btn span {
+  background: #1a1a1a !important;
+  border-color: #1a1a1a !important;
+  color: #fff !important;
+  font-weight: 600;
+  transition: background-color var(--transition-normal), border-color var(--transition-normal) !important;
+}
+
+.overview-manage-btn:hover,
+.overview-manage-btn:hover span {
+  background: #333 !important;
+  border-color: #333 !important;
+  color: #fff !important;
+}
+
+.overview-manage-btn:focus-visible {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 2px;
+}
+
+.overview-count {
+  font-size: 1.75rem !important;
+  line-height: 1.2;
+}
+
+/* Metric card styling */
+.premium-metric-value {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--premium-teal);
+}
+
+/* Magic Button overrides (brand orange) */
+.magic-button-wrapper .Polaris-Button--variantPrimary {
+  background: var(--premium-orange) !important;
+  border-color: var(--premium-orange) !important;
+  color: white !important;
+  font-weight: 500 !important;
+  transition: background-color var(--transition-normal), transform var(--transition-fast) !important;
+  opacity: 1;
+}
+
+.magic-button-wrapper .Polaris-Button--variantPrimary:hover:not(.Polaris-Button--disabled):not([aria-busy="true"]) {
+  background: var(--premium-orange-hover) !important;
+  border-color: var(--premium-orange-hover) !important;
+  transform: translateY(-1px);
+}
+
+.magic-button-wrapper .Polaris-Button--variantPrimary:active:not(.Polaris-Button--disabled) {
+  transform: translateY(0);
+}
+
+.magic-button-wrapper .Polaris-Button--disabled,
+.magic-button-wrapper .Polaris-Button[aria-busy="true"] {
+  background: #e1e3e5 !important;
+  border-color: #e1e3e5 !important;
+  opacity: 0.7 !important;
+}
+
+/* Help & Support – Open Priority Ticket: dark button */
+.priority-ticket-callout .Polaris-Button--variantPrimary,
+.priority-ticket-callout .Polaris-Button--variantSecondary {
+  background: #1a1a1a !important;
+  border-color: #1a1a1a !important;
+  color: #fff !important;
+  font-weight: 500 !important;
+  transition: background-color var(--transition-normal), border-color var(--transition-normal) !important;
+}
+
+.priority-ticket-callout .Polaris-Button--variantPrimary:hover:not(.Polaris-Button--disabled):not([aria-busy="true"]),
+.priority-ticket-callout .Polaris-Button--variantSecondary:hover:not(.Polaris-Button--disabled):not([aria-busy="true"]) {
+  background: #333 !important;
+  border-color: #333 !important;
+  color: #fff !important;
+}
+
+.priority-ticket-callout .Polaris-Button--variantPrimary:focus,
+.priority-ticket-callout .Polaris-Button--variantSecondary:focus {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 2px;
+}
+
+/* Plans & Billing – Tips for savings */
+.billing-tip-card {
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
+}
+
+.billing-tip-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--p-color-border);
+}
+
+.billing-tip-image {
+  min-height: 160px;
+  background-color: var(--p-color-bg-surface-secondary);
+  background-repeat: no-repeat;
+}
+
+.billing-tip-image:not([style*="background-image"]) {
+  background: linear-gradient(135deg, var(--p-color-bg-surface-secondary) 0%, var(--p-color-bg-surface) 100%);
+}
+
+/* Polaris Card subtle elevation */
+.Polaris-LegacyCard {
+  transition: box-shadow var(--transition-normal);
+}
+
+.Polaris-LegacyCard:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Empty state image container */
+.premium-empty-image {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Style selector (AI Studio) */
+.premium-style-chip {
+  transition: all var(--transition-normal);
+}
+
+.premium-style-chip:hover {
+  border-color: var(--premium-teal) !important;
+  background: var(--premium-teal-muted) !important;
+}
+
+.premium-style-chip.selected {
+  border-color: var(--premium-orange) !important;
+  background: var(--premium-orange-muted) !important;
+}
+
+/* Toast – bottom of viewport, minimal (Shopify-style). Rendered via portal into body. */
+.premium-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  max-width: min(380px, calc(100vw - 24px));
+  min-width: 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  animation: premiumToastIn 0.2s ease-out;
+  pointer-events: auto;
+}
+
+.premium-toast--success {
+  background: var(--p-color-bg-fill-inverse, #202223);
+  color: var(--p-color-text-inverse, #fff);
+}
+
+.premium-toast--error {
+  background: var(--p-color-bg-fill-critical, #d72c0d);
+  color: var(--p-color-text-on-color, #fff);
+}
+
+.premium-toast--error .Polaris-Button {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.premium-toast--error .Polaris-Button:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.premium-toast__message {
+  flex: 1;
+}
+
+@keyframes premiumToastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ==========================================================================
+   AI Studio – World-class editor workspace (Hero left, Command right)
+   Banana AI / Midjourney-style: hero canvas + compact control panel
+   ========================================================================== */
+
+/* Hero card – no padding so image fills the frame */
+.aistudio-hero-card.Polaris-LegacyCard,
+.aistudio-hero-card [class*='Card'] {
+  padding: 0 !important;
+}
+
+.aistudio-hero-canvas {
+  width: 100%;
+  min-height: 480px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(165deg, var(--p-color-bg-surface-secondary) 0%, var(--p-color-bg-surface) 50%);
+  overflow: hidden;
+  transition: box-shadow 0.4s ease;
+}
+
+/* ============================================================
+   PREMIUM NEON BORDER — Teal + Orange brand colors, border only
+   ============================================================ */
+
+@keyframes aistudio-neon-border {
+  0% {
+    box-shadow:
+      0 0 0 3px rgba(70, 200, 220, 1),
+      0 0 12px 4px rgba(70, 200, 220, 0.85),
+      0 0 32px 10px rgba(70, 200, 220, 0.5),
+      0 0 64px 18px rgba(70, 200, 220, 0.2);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(255, 122, 48, 1),
+      0 0 12px 4px rgba(255, 122, 48, 0.85),
+      0 0 32px 10px rgba(255, 122, 48, 0.5),
+      0 0 64px 18px rgba(255, 122, 48, 0.2);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 3px rgba(70, 200, 220, 1),
+      0 0 12px 4px rgba(70, 200, 220, 0.85),
+      0 0 32px 10px rgba(70, 200, 220, 0.5),
+      0 0 64px 18px rgba(70, 200, 220, 0.2);
+  }
+}
+
+
+.aistudio-hero-canvas--processing {
+  animation: aistudio-neon-border 2.4s ease-in-out infinite;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Empty state – custom illustration + copy in hero */
+.aistudio-hero-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-3xl);
+  gap: var(--space-md);
+}
+
+.aistudio-hero-empty-illustration {
+  color: var(--premium-teal);
+}
+
+.aistudio-hero-empty-illustration svg {
+  display: block;
+}
+
+/* Loading state – base image with blur + teal pulse overlay */
+.aistudio-hero-loading-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--p-color-bg-surface-secondary);
+}
+
+.aistudio-hero-loading-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: blur(12px);
+  opacity: 0.7;
+}
+
+.aistudio-hero-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  background: rgba(255, 255, 255, 0.75);
+  z-index: 1;
+}
+
+.aistudio-hero-pulse {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid var(--premium-teal);
+  border-top-color: transparent;
+  animation: aistudio-spin 0.9s linear infinite;
+}
+
+@keyframes aistudio-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* AI Scanning – premium neon spinning border (teal + orange), full output card */
+.aistudio-scanning {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Wrapper: fills entire output card; 3px border = padding; neon on full card */
+.premium-scanning-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 3px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Spinning conic gradient – theme colors only (teal + orange) */
+.premium-scanning-wrapper::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 65%,
+    var(--premium-teal) 75%,
+    var(--premium-orange) 90%,
+    var(--premium-teal) 100%
+  );
+  animation: premium-scanning-spin 2s linear infinite;
+  z-index: 0;
+}
+
+@keyframes premium-scanning-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Inner mask – hollow out the middle so only the 3px neon border is visible */
+.premium-scanning-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background-color: #f4f6f8;
+  border-radius: 13px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Image: blurred, on top of mask, with pulse */
+.premium-scanning-wrapper .premium-scanning-img {
+  position: relative;
+  z-index: 10;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  filter: blur(2px);
+  opacity: 0.85;
+  animation: premium-scanning-pulse 2s ease-in-out infinite;
+  display: block;
+}
+
+@keyframes premium-scanning-pulse {
+  0%, 100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Badge – centered, theme-colored glow */
+.premium-scanning-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  padding: var(--p-space-200) var(--p-space-400);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: var(--p-border-radius-300);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #fff;
+  text-shadow: 0 0 12px rgba(70, 138, 154, 0.6), 0 0 24px rgba(255, 122, 48, 0.3);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Magic Eraser – canvas overlay for drawing mask */
+.aistudio-magic-eraser-draw {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aistudio-magic-eraser-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.aistudio-magic-eraser-img {
+  display: block;
+  max-width: 100%;
+  max-height: min(65vh, 520px);
+  width: auto;
+  height: auto;
+  vertical-align: middle;
+}
+
+.aistudio-magic-eraser-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.aistudio-magic-eraser-cursor {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 122, 48, 0.5);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 122, 48, 0.12);
+  z-index: 15;
+}
+
+/* Before/After comparison slider (e.g. upscale result) */
+.aistudio-compare-slider-wrap {
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--p-color-bg-surface-secondary);
+}
+.aistudio-compare-slider {
+  position: relative;
+  width: 100%;
+  max-height: min(65vh, 520px);
+  aspect-ratio: 1;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.aistudio-compare-slider .aistudio-compare-before,
+.aistudio-compare-slider .aistudio-compare-after {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: clip-path 0.05s linear;
+}
+.aistudio-compare-slider .aistudio-compare-before img,
+.aistudio-compare-slider .aistudio-compare-after img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.aistudio-compare-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.35);
+  z-index: 10;
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: left 0.05s linear;
+  -webkit-tap-highlight-color: transparent;
+}
+.aistudio-compare-divider:focus-visible {
+  outline: 2px solid var(--premium-teal);
+  outline-offset: 2px;
+}
+.aistudio-compare-handle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #4a4a4a;
+  pointer-events: none;
+}
+.aistudio-compare-handle svg {
+  flex-shrink: 0;
+}
+
+/* Result – checkerboard wraps image tightly, minimal padding */
+.aistudio-result-checkerboard {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm);
+  background-color: var(--p-color-bg-surface-secondary);
+  background-image:
+    linear-gradient(45deg, #e1e3e5 25%, transparent 25%),
+    linear-gradient(-45deg, #e1e3e5 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e1e3e5 75%),
+    linear-gradient(-45deg, transparent 75%, #e1e3e5 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  border-radius: 8px;
+  line-height: 0;
+}
+
+.aistudio-result-checkerboard .aistudio-hero-result-img {
+  max-height: min(65vh, 520px);
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  vertical-align: middle;
+}
+
+/* Result state – compact layout, equal top/bottom margin */
+.aistudio-hero-result-container {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding-top: var(--space-lg);
+  padding-bottom: var(--space-lg);
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+  box-sizing: border-box;
+}
+
+.aistudio-hero-result-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) 0;
+  box-sizing: border-box;
+}
+
+.aistudio-hero-result-img {
+  max-width: 100%;
+  max-height: 500px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  display: block;
+}
+
+/* Result image container (background removal output) */
+.aistudio-result-image-wrap {
+  position: relative;
+  max-height: 500px;
+  overflow: hidden;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aistudio-result-image-wrap .aistudio-hero-result-img {
+  max-width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Polaris Button layout only – our colors applied via classes below */
+.aistudio-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
+  z-index: 2;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.aistudio-hero-actions--outside {
+  margin-top: 0;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--p-color-border-subdued);
+}
+
+/* Teal primary (Download): Polaris button shape, our brand fill */
+.aistudio-hero-actions .aistudio-btn-download,
+.aistudio-hero-actions .Polaris-Button:first-of-type {
+  background: var(--premium-teal) !important;
+  border-color: var(--premium-teal) !important;
+  color: #fff !important;
+}
+
+.aistudio-hero-actions .aistudio-btn-download:hover,
+.aistudio-hero-actions .Polaris-Button:first-of-type:hover {
+  background: var(--premium-teal-light) !important;
+  border-color: var(--premium-teal-light) !important;
+  color: #fff !important;
+}
+
+.aistudio-hero-actions .aistudio-btn-download:focus-visible,
+.aistudio-hero-actions .Polaris-Button:first-of-type:focus-visible {
+  outline: 2px solid var(--premium-teal);
+  outline-offset: 2px;
+}
+
+/* Orange secondary (Save to Store): Polaris button shape, our brand fill */
+.aistudio-hero-actions .aistudio-btn-save,
+.aistudio-hero-actions .Polaris-Button:last-of-type {
+  background: var(--premium-orange) !important;
+  border-color: var(--premium-orange) !important;
+  color: #fff !important;
+}
+
+.aistudio-hero-actions .aistudio-btn-save:hover,
+.aistudio-hero-actions .Polaris-Button:last-of-type:hover {
+  background: var(--premium-orange-hover) !important;
+  border-color: var(--premium-orange-hover) !important;
+  color: #fff !important;
+}
+
+.aistudio-hero-actions .aistudio-btn-save:focus-visible,
+.aistudio-hero-actions .Polaris-Button:last-of-type:focus-visible {
+  outline: 2px solid var(--premium-orange);
+  outline-offset: 2px;
+}
+
+/* Thumbnail strip (multiple results) – bottom of hero */
+.aistudio-thumb-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--p-color-border-subdued);
+}
+
+.aistudio-thumb-strip-hero {
+  border-top: none;
+  padding-top: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.aistudio-thumb-btn {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.aistudio-thumb-btn:hover {
+  border-color: var(--p-color-border);
+}
+
+.aistudio-thumb-btn.active {
+  border-color: var(--premium-teal);
+  box-shadow: 0 0 0 1px var(--premium-teal);
+}
+
+.aistudio-thumb-btn:focus-visible {
+  outline: 2px solid var(--premium-teal);
+  outline-offset: 2px;
+}
+
+/* Command panel – small square thumbnail + Replace */
+.aistudio-panel-thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--p-color-bg-surface-secondary);
+  flex-shrink: 0;
+}
+
+.aistudio-panel-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Right panel: source → output with arrow */
+.aistudio-panel-source-output {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  flex-wrap: nowrap;
+}
+
+.aistudio-panel-source-output .aistudio-panel-thumb {
+  width: 72px;
+  height: 72px;
+}
+
+.aistudio-panel-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--p-color-text-subdued);
+}
+
+.aistudio-panel-arrow svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Output thumbnail: checkerboard for transparent result (matches left canvas) */
+.aistudio-panel-thumb-checkerboard {
+  background-image:
+    linear-gradient(45deg, #e1e3e5 25%, transparent 25%),
+    linear-gradient(-45deg, #e1e3e5 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e1e3e5 75%),
+    linear-gradient(-45deg, transparent 75%, #e1e3e5 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+  background-color: var(--p-color-bg-surface-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.aistudio-panel-thumb-checkerboard img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Recent Masterpieces gallery */
+.aistudio-gallery {
+  display: grid;
+  gap: var(--p-space-300);
+  width: 100%;
+}
+
+.aistudio-gallery-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--p-color-bg-surface-secondary);
+  border: 1px solid var(--p-color-border-subdued);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.aistudio-gallery-card:hover {
+  border-color: var(--p-color-border);
+  box-shadow: var(--shadow-md);
+}
+
+.aistudio-gallery-card-image-wrap {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.aistudio-gallery-card-checkerboard {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background-image:
+    linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+    linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-color: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aistudio-gallery-card-checkerboard img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.aistudio-gallery-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.aistudio-gallery-card:hover .aistudio-gallery-card-overlay {
+  opacity: 1;
+}
+
+.aistudio-gallery-card-overlay .Polaris-Button {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.95) !important;
+  color: var(--p-color-text) !important;
+}
+
+.aistudio-gallery-card-overlay .Polaris-Button:hover {
+  background: #fff !important;
+  border-color: #fff !important;
+}
+
+.aistudio-gallery-card-overlay .Polaris-Button:focus-visible {
+  outline: 2px solid var(--premium-teal);
+  outline-offset: 2px;
+}
+
+.aistudio-gallery-card-meta {
+  padding: var(--p-space-200) var(--p-space-300);
+  min-height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-100);
+  flex-wrap: wrap;
+}
+
+.aistudio-gallery-card-meta .Polaris-Text {
+  font-size: 12px;
+}
+
+/* Recent Masterpieces – empty state */
+.aistudio-gallery-empty {
+  text-align: center;
+  padding: var(--p-space-800) var(--p-space-400);
+  background: var(--p-color-bg-surface-secondary);
+  border: 1px dashed var(--p-color-border);
+  border-radius: 12px;
+}
+
+.aistudio-gallery-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--p-space-300);
+  color: var(--p-color-icon-subdued);
+}
+
+.aistudio-gallery-empty-icon .Polaris-Icon {
+  width: 40px;
+  height: 40px;
+}
+
+.aistudio-gallery-empty .Polaris-Text--headingMd {
+  margin-bottom: var(--p-space-200);
+}
+
+.aistudio-gallery-empty .Polaris-Text--bodyMd {
+  max-width: 36ch;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+
+/* Aspect ratio – visual shape buttons (Teal when selected) */
+.aistudio-ratio-btn {
+  min-width: 36px;
+  min-height: 28px;
+  padding: 0;
+  border: 2px solid var(--p-color-border);
+  border-radius: 8px;
+  background: var(--p-color-bg-surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.aistudio-ratio-btn:hover {
+  border-color: var(--p-color-border-hover);
+  background: var(--p-color-bg-surface-hover);
+}
+
+.aistudio-ratio-btn-selected {
+  border-color: var(--premium-teal) !important;
+  background: var(--premium-teal-muted) !important;
+}
+
+.aistudio-ratio-btn:focus-visible {
+  outline: 2px solid var(--premium-teal);
+  outline-offset: 2px;
+}
+
+.aistudio-ratio-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--p-color-text-subdued);
+  pointer-events: none;
+}
+
+.aistudio-ratio-btn-selected .aistudio-ratio-label {
+  color: var(--premium-teal);
+}
+
+/* Browse from Store modal – dark backdrop */
+body.ai-browse-modal-open .Polaris-Backdrop {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Browse from Store – professional product & image picker */
+.browse-product-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-bottom: 1px solid var(--p-color-border-subdued);
+  background: var(--p-color-bg-surface);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background 150ms var(--ease-smooth);
+}
+
+.browse-product-row:hover {
+  background: var(--p-color-bg-surface-hover);
+}
+
+.browse-product-row:focus-visible {
+  outline: 2px solid var(--premium-teal);
+  outline-offset: 2px;
+}
+
+.browse-product-thumb {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--p-color-bg-surface-secondary);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.browse-product-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.browse-product-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.browse-product-title {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--p-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browse-product-sub {
+  font-size: 12px;
+  color: var(--p-color-text-subdued);
+  margin-top: 2px;
+}
+
+.browse-view-hint {
+  font-size: 12px;
+  color: var(--premium-teal);
+  font-weight: 500;
+}
+
+.browse-image-tile {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 0;
+  border: 2px solid var(--p-color-border-subdued);
+  cursor: pointer;
+  background: var(--p-color-bg-surface-secondary);
+  transition: all 180ms var(--ease-smooth);
+}
+
+.browse-image-tile:hover,
+.browse-image-tile:focus-visible {
+  border-color: var(--premium-teal);
+  box-shadow: var(--shadow-md);
+}
+
+.browse-image-tile:focus-visible {
+  outline: 2px solid var(--premium-teal);
+  outline-offset: 2px;
+}
+
+.browse-image-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.browse-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--premium-teal-muted);
+  color: var(--premium-teal);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ─── All Tools section (hero of the app) ─────────────────────────────────── */
+.dashboard-tools-section {
+  background: linear-gradient(160deg, rgba(70, 138, 154, 0.06) 0%, rgba(255, 122, 48, 0.04) 100%);
+  border: 1px solid var(--p-color-border-subdued);
+  border-radius: 16px;
+  padding: var(--space-xl) var(--space-lg);
+}
+
+/* Plans & Billing – Why credits help your business (same gray background as All Tools) */
+.billing-credits-guide-section {
+  background: linear-gradient(160deg, rgba(70, 138, 154, 0.06) 0%, rgba(255, 122, 48, 0.04) 100%);
+  border: 1px solid var(--p-color-border-subdued);
+  border-radius: 16px;
+  padding: var(--space-xl) var(--space-lg);
+}
+
+.billing-benefit-row:first-child {
+  padding-top: 0;
+}
+
+.billing-benefit-row-image {
+  flex-shrink: 0;
+}
+
+/* One-time credit pack mini cards */
+.billing-pack-card {
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
+}
+
+.billing-pack-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--p-color-border);
+}
+
+/* Plans & Billing – Top-up packs section (professional) */
+.billing-topup-section {
+  background: linear-gradient(165deg, var(--p-color-bg-surface) 0%, var(--p-color-bg-surface-secondary) 100%) !important;
+  border: 1px solid var(--p-color-border-subdued);
+}
+
+.billing-topup-badge {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--premium-teal);
+  background: var(--premium-teal-muted);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.billing-topup-card {
+  position: relative;
+  background: var(--p-color-bg-surface);
+  border: 1px solid var(--p-color-border);
+  border-radius: 12px;
+  padding: var(--space-lg);
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal), transform var(--transition-fast);
+}
+
+.billing-topup-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--p-color-border-hover);
+}
+
+.billing-topup-card-popular {
+  border-color: var(--premium-teal);
+  box-shadow: 0 0 0 1px var(--premium-teal);
+}
+
+.billing-topup-card-popular:hover {
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--premium-teal);
+}
+
+.billing-topup-card-badge {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+}
+
+/* Top-up section lured for Free plan – strong blur + glassmorphism overlay */
+.billing-topup-lured {
+  position: relative;
+}
+
+.billing-topup-lured .billing-topup-section,
+.billing-topup-lured .Polaris-LegacyCard {
+  filter: blur(5px);
+  opacity: 0.65;
+  pointer-events: none;
+  user-select: none;
+}
+
+.billing-topup-lured-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  padding: var(--space-2xl);
+  text-align: center;
+  pointer-events: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+.billing-topup-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-block: var(--space-sm);
+}
+
+.billing-topup-amount span {
+  line-height: 1.2;
+}
+
+.billing-topup-price {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--p-color-border-subdued);
+  border-bottom: 1px solid var(--p-color-border-subdued);
+}
+
+.billing-topup-price span:first-child {
+  color: var(--premium-teal);
+  font-weight: 700;
+}
+
+/* Plans & Billing – Status banner & subscription tiers */
+.billing-status-card {
+  background: var(--p-color-bg-surface-secondary) !important;
+}
+
+.billing-progress-teal .Polaris-ProgressBar__Progress,
+.billing-progress-teal [class*='ProgressBar'] [class*='Progress'] {
+  background: var(--premium-teal) !important;
+}
+
+.billing-plan-hero {
+  position: relative;
+  border: 2px solid var(--premium-teal) !important;
+}
+
+.billing-benefit-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--premium-teal-muted);
+}
+
+/* Why invest in AI Photography – same background as Dashboard "All Tools" */
+.billing-why-invest-wrapper {
+  background: linear-gradient(160deg, rgba(70, 138, 154, 0.06) 0%, rgba(255, 122, 48, 0.04) 100%);
+  border: 1px solid var(--p-color-border-subdued);
+  border-radius: 16px;
+  padding: var(--space-xl) var(--space-lg);
+  overflow: hidden;
+}
+
+.billing-why-invest-section,
+.billing-why-invest-section .Polaris-LegacyCard,
+.billing-why-invest-section [class*='Card'] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.billing-why-card {
+  padding: var(--space-md);
+  border-radius: 12px;
+  background: var(--p-color-bg-surface);
+  border: 1px solid var(--p-color-border-subdued);
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
+}
+
+.billing-why-card:hover {
+  border-color: var(--p-color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.billing-why-card .billing-benefit-icon {
+  margin-bottom: var(--space-xs);
+}
+
+.billing-why-cta {
+  margin-top: var(--space-md);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--p-color-border-subdued);
+}
+
+.dashboard-tools-header {
+  margin-bottom: var(--space-lg);
+  max-width: 42rem;
+}
+
+.dashboard-tools-heading {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  color: var(--p-color-text);
+  margin: 0 0 var(--space-sm) 0;
+  white-space: nowrap;
+}
+
+.dashboard-tools-subtitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.dashboard-tools-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+.dashboard-tools-grid .Polaris-LegacyCard {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  display: flex;
+  min-height: 0;
+}
+
+.dashboard-tools-grid .Polaris-LegacyCard .dashboard-tool-card {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 600px) {
+  .dashboard-tools-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 990px) {
+  .dashboard-tools-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.dashboard-tool-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  height: 88px;
+  min-height: 88px;
+  padding: var(--space-md) var(--space-lg);
+  border: none;
+  border-radius: 12px;
+  background: var(--p-color-bg-surface);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background-color var(--transition-normal), box-shadow var(--transition-normal), color var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dashboard-tool-card:hover {
+  background: var(--p-color-bg-surface-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-tool-card:focus-visible {
+  outline: 2px solid var(--premium-teal);
+  outline-offset: 2px;
+}
+
+.dashboard-tool-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--premium-teal-muted);
+  color: var(--premium-teal);
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+.dashboard-tool-card:hover .dashboard-tool-icon,
+.dashboard-tool-card:focus-visible .dashboard-tool-icon {
+  background: var(--premium-teal);
+  color: white;
+}
+
+.dashboard-tool-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dashboard-tool-name {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--p-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-tool-desc {
+  display: block;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-tool-arrow {
+  flex-shrink: 0;
+  color: var(--p-color-icon-subdued);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.dashboard-tool-card:hover .dashboard-tool-arrow,
+.dashboard-tool-card:focus-visible .dashboard-tool-arrow {
+  color: var(--premium-orange);
+  transform: translateX(2px);
+}
+
+/* Settings page – sticky save bar (no Frame/ContextualSaveBar) */
+.settings-save-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--p-color-bg-surface);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-200, 8px);
+  box-shadow: var(--shadow-sm);
+}
+
+.settings-save-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  gap: var(--space-md);
+}
+
+.settings-save-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
