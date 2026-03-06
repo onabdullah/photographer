@@ -615,14 +615,6 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                     <div className="h-3" />
                 </nav>
 
-                {/* ── Sidebar bottom: version / build info ── */}
-                {!iconOnly && (
-                    <div className="flex-shrink-0 px-4 py-2.5 border-t border-gray-100 dark:border-gray-800">
-                        <p className="text-[10px] text-gray-400 dark:text-gray-600">
-                            PhotoAdmin &middot; {new Date().getFullYear()}
-                        </p>
-                    </div>
-                )}
             </aside>
 
             {/* ══════════════════════════════════════════════════
