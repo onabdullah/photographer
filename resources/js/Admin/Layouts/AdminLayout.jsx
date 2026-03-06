@@ -404,18 +404,17 @@ function Breadcrumbs({ crumbs }) {
 function DeveloperPanel({ iconOnly }) {
     const [open, setOpen] = useState(false);
 
-    // Icon-only: just the terminal icon
+    // Icon-only: just the terminal icon — use Link for same-tab navigation
     if (iconOnly) {
         return (
             <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 flex justify-center py-2">
-                <button
-                    type="button"
+                <Link
+                    href="/admin/terminal"
                     title="Developer"
-                    onClick={() => (window.location.href = '/admin/terminal')}
                     className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 dark:text-gray-500 hover:text-primary-500 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                     <TerminalSquare size={16} />
-                </button>
+                </Link>
             </div>
         );
     }
@@ -427,9 +426,8 @@ function DeveloperPanel({ iconOnly }) {
             {open && (
                 <div className="border-b border-gray-200 dark:border-gray-800 py-1.5 px-2"
                      style={{ background: 'rgba(0,0,0,0.02)' }}>
-                    <button
-                        type="button"
-                        onClick={() => (window.location.href = '/admin/terminal')}
+                    <Link
+                        href="/admin/terminal"
                         className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
                     >
                         <TerminalSquare size={15}
@@ -442,7 +440,7 @@ function DeveloperPanel({ iconOnly }) {
                         <ChevronRight size={11}
                             className="flex-shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-primary-400 transition-colors opacity-0 group-hover:opacity-100"
                         />
-                    </button>
+                    </Link>
                 </div>
             )}
 
@@ -545,8 +543,7 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
         return url.startsWith(href);
     };
 
-    const user      = props.auth?.user;
-    const appEnv    = props.appEnv ?? 'local';
+    const user = props.auth?.user;
 
     // Developer mode — detected from the current URL
     const isDevMode = url.startsWith('/admin/terminal');

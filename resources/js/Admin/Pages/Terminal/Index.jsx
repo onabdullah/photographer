@@ -316,11 +316,6 @@ const TABS = [
 export default function TerminalPage({ phpVersion, laravelVersion, appEnv, appName }) {
     const [activeTab, setActiveTab] = useState('terminal');
 
-    const envCls =
-        appEnv === 'production' ? 'bg-red-900/40 text-red-400 border-red-800/50' :
-        appEnv === 'local'      ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800/50' :
-                                   'bg-yellow-900/30 text-yellow-400 border-yellow-800/50';
-
     return (
         <AdminLayout fullHeight>
             {/* ── Tab bar ──────────────────────────────────────────────── */}
@@ -354,13 +349,10 @@ export default function TerminalPage({ phpVersion, laravelVersion, appEnv, appNa
                     );
                 })}
 
-                {/* Right: version info */}
+                {/* Right: version info — no env badge */}
                 <div className="ml-auto flex items-center gap-3 px-4 flex-shrink-0">
                     <span className="hidden md:block text-[10px] font-mono text-gray-700">
                         PHP {phpVersion} · Laravel {laravelVersion}
-                    </span>
-                    <span className={`px-1.5 py-px rounded text-[9px] font-bold uppercase tracking-wider font-mono border ${envCls}`}>
-                        {appEnv}
                     </span>
                 </div>
             </div>
