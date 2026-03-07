@@ -21,7 +21,7 @@ Route::middleware(['auth:admin'])->group(function () {
     // Dashboard - Main admin overview (real stats)
     Route::get('/dashboard', function () {
         $totalMerchants = \App\Models\Merchant::count();
-        $imagesGenerated = \App\Models\Image::whereNotNull('generated_image_url')->count();
+        $imagesGenerated = \App\Models\ImageGeneration::where('status', 'completed')->whereNotNull('result_image_url')->count();
         $totalCreditsIssued = (int) \App\Models\Merchant::sum('ai_credits_balance');
         $merchantsWithPlan = \App\Models\Merchant::whereNotNull('plan_id')->count();
         $newMerchantsLast7Days = \App\Models\Merchant::where('created_at', '>=', now()->subDays(7))->count();
@@ -41,17 +41,24 @@ Route::middleware(['auth:admin'])->group(function () {
                 'created_at' => $m->created_at?->toIso8601String(),
             ]);
 
-        $recentImages = \App\Models\Image::with('merchant:id,name,store_name')
-            ->whereNotNull('generated_image_url')
-            ->latest()
+        $recentGenerations = \App\Models\ImageGeneration::where('status', 'completed')
+            ->whereNotNull('result_image_url')
+            ->latest('updated_at')
             ->take(8)
-            ->get()
-            ->map(fn ($img) => [
-                'id' => $img->id,
-                'generated_image_url' => $img->generated_image_url,
-                'store_name' => $img->merchant?->store_name ?: $img->merchant?->name,
-                'created_at' => $img->created_at?->toIso8601String(),
-            ]);
+            ->get(['id', 'shop_domain', 'result_image_url', 'created_at', 'updated_at']);
+        $baseUrl = rtrim(request()->getSchemeAndHttpHost(), '/');
+        $recentImages = $recentGenerations->map(function ($gen) use ($baseUrl) {
+            $url = $gen->result_image_url;
+            if ($url && str_starts_with($url, '/')) {
+                $url = $baseUrl . $url;
+            }
+            return [
+                'id' => $gen->id,
+                'generated_image_url' => $url,
+                'store_name' => $gen->shop_domain ?? '—',
+                'created_at' => ($gen->updated_at ?? $gen->created_at)?->toIso8601String(),
+            ];
+        })->toArray();
 
         return Inertia::render('Admin/Pages/Dashboard', [
             'data' => [
