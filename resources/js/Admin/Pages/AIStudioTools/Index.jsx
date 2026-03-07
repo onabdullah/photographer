@@ -201,7 +201,7 @@ export default function AIStudioToolsIndex({
                                 >
                                     <div
                                         className="h-1 flex-shrink-0"
-                                        style={{ backgroundColor: TOOL_COLORS[index % TOOL_COLORS.length] }}
+                                        style={{ backgroundColor: TOOL_COLORS[index % TOOL_COLORS.length], opacity: 0.35 }}
                                     />
                                     <div className="p-4 flex-1 flex flex-col gap-3">
                                         <div className="flex items-start justify-between gap-2">
@@ -216,24 +216,10 @@ export default function AIStudioToolsIndex({
                                                     {t.model_provider}
                                                 </p>
                                             </div>
-                                            <span className="flex-shrink-0 text-lg font-bold tabular-nums text-gray-900 dark:text-white" title="Credits used">
-                                                {(t.credits_used ?? 0).toLocaleString()}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-2 py-2 border-t border-gray-100 dark:border-gray-700/80">
-                                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Show on store</span>
-                                            <label className="relative inline-flex items-center cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={!!t.is_enabled}
-                                                    onChange={(e) => {
-                                                        const checked = e.target.checked;
-                                                        router.patch('/admin/ai-studio-tools/settings', { tool_key: t.key, is_enabled: checked }, { preserveScroll: true });
-                                                    }}
-                                                    className="sr-only peer"
-                                                />
-                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-500/30 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-500 peer-checked:bg-primary-600" />
-                                            </label>
+                                            <div className="flex-shrink-0 text-right">
+                                                <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">Credit used</p>
+                                                <p className="text-lg font-bold tabular-nums text-gray-900 dark:text-white">{(t.credits_used ?? 0).toLocaleString()}</p>
+                                            </div>
                                         </div>
                                         <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700/80 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                                             <div>
@@ -256,6 +242,20 @@ export default function AIStudioToolsIndex({
                                                 <p className="text-gray-500 dark:text-gray-400">In production</p>
                                                 <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.used_in_production?.toLocaleString() ?? 0}</p>
                                             </div>
+                                        </div>
+                                        <div className="flex justify-end pt-2">
+                                            <select
+                                                value={t.is_enabled ? 'enabled' : 'disabled'}
+                                                onChange={(e) => {
+                                                    const isEnabled = e.target.value === 'enabled';
+                                                    router.patch('/admin/ai-studio-tools/settings', { tool_key: t.key, is_enabled: isEnabled }, { preserveScroll: true });
+                                                }}
+                                                className="text-[11px] font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/80 border border-gray-200 dark:border-gray-600 rounded-md py-1.5 pl-2 pr-7 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500"
+                                                aria-label={`${t.label} visibility on store`}
+                                            >
+                                                <option value="enabled">Show on store</option>
+                                                <option value="disabled">Hidden</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
