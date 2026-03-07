@@ -16,12 +16,14 @@ class ImageGeneration extends Model
         'status',
         'error_message',
         'processing_time_seconds',
+        'downloaded_at',
     ];
 
     protected function casts(): array
     {
         return [
             'processing_time_seconds' => 'decimal:4',
+            'downloaded_at' => 'datetime',
         ];
     }
 }

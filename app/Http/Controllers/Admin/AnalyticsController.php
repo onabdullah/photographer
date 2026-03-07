@@ -66,7 +66,6 @@ class AnalyticsController extends Controller
         $merchantsWithPlan = Merchant::whereNotNull('plan_id')->count();
         $totalCreditsIssued = (int) Merchant::sum('ai_credits_balance');
         $creditsConsumedInPeriod = ImageGeneration::where('created_at', '>=', $start)
-            ->where('tool_used', '!=', 'compressor')
             ->whereIn('status', ['completed', 'failed'])
             ->count();
 

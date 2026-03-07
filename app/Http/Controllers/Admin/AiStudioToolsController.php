@@ -51,6 +51,13 @@ class AiStudioToolsController extends Controller
             ->pluck('used', 'tool_used')
             ->toArray();
 
+        $downloadedByTool = ImageGeneration::query()
+            ->selectRaw('tool_used, count(*) as downloaded')
+            ->whereNotNull('downloaded_at')
+            ->groupBy('tool_used')
+            ->pluck('downloaded', 'tool_used')
+            ->toArray();
+
         // Response time stats per tool (avg, min, max, count) — only where processing_time_seconds is set
         $responseTimeByTool = ImageGeneration::query()
             ->selectRaw('tool_used, count(*) as cnt, avg(processing_time_seconds) as avg_sec, min(processing_time_seconds) as min_sec, max(processing_time_seconds) as max_sec')
@@ -79,8 +86,8 @@ class AiStudioToolsController extends Controller
             $success = (int) ($appStats[$prefix . '_success_count'] ?? 0);
             $failed = (int) ($appStats[$prefix . '_failed_count'] ?? 0);
             $requestsCount = $success + $failed;
-            // Compressor does not use paid API; others use 1 credit per request
-            $credits_used = $toolKey === 'compressor' ? 0 : $requestsCount;
+            // All tools use 1 credit per image (including compressor)
+            $credits_used = $requestsCount;
             $rt = $responseTimeByTool[$toolKey] ?? null;
             $tools[] = [
                 'key' => $toolKey,
@@ -91,6 +98,7 @@ class AiStudioToolsController extends Controller
                 'success_count' => $success,
                 'failed_count' => $failed,
                 'used_in_production' => (int) ($usedInProductionByTool[$toolKey] ?? 0),
+                'downloaded_count' => (int) ($downloadedByTool[$toolKey] ?? 0),
                 'credits_used' => $credits_used,
                 'requests_count' => $requestsCount,
                 'avg_response_seconds' => $rt ? round((float) $rt['avg_sec'], 2) : null,

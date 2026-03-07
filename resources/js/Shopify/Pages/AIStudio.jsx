@@ -1094,7 +1094,10 @@ export default function AIStudio({ product, initialImage, initialTool }) {
     a.click();
     document.body.removeChild(a);
     showToast('Download started');
-  }, [resultImageUrl, displayGenerated, showToast]);
+    if (generationId != null) {
+      axios.post('/shopify/tools/generation/downloaded', { generation_id: generationId }).catch(() => {});
+    }
+  }, [resultImageUrl, displayGenerated, showToast, generationId]);
 
   useEffect(() => {
     if (initialImage && !inputImage) setInputImage(initialImage);
@@ -2025,6 +2028,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                                       a.click();
                                       document.body.removeChild(a);
                                       showToast('Download started');
+                                      axios.post('/shopify/tools/generation/downloaded', { generation_id: gen.id }).catch(() => {});
                                     }}
                                   />
                                 </Tooltip>

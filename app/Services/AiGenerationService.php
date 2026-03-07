@@ -233,10 +233,8 @@ class AiGenerationService
             throw new \InvalidArgumentException('Missing image_url or shop domain.');
         }
 
-        // Compressor uses built-in GD only — no paid API; do not count toward credits
-        if ($toolUsed !== 'compressor') {
-            AppStat::incrementKey('total_api_requests');
-        }
+        // All tools (including compressor) use 1 credit per image
+        AppStat::incrementKey('total_api_requests');
 
         if ($toolUsed === 'remove_bg') {
             return $this->startBackgroundRemoval($imageUrl, $shopDomain);

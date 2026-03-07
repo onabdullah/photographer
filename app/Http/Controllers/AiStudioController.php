@@ -370,4 +370,31 @@ GRAPHQL;
             return null;
         }
     }
+
+    /**
+     * Record that a generation was downloaded by the merchant (for admin stats).
+     */
+    public function markDownloaded(Request $request)
+    {
+        $shopDomain = $this->shopDomain($request);
+        if (! $shopDomain) {
+            return response()->json(['message' => 'Shop not authenticated.'], 403);
+        }
+
+        $request->validate(['generation_id' => 'required|integer|min:1']);
+
+        $generation = ImageGeneration::where('id', $request->input('generation_id'))
+            ->where('shop_domain', $shopDomain)
+            ->first();
+
+        if (! $generation) {
+            return response()->json(['message' => 'Generation not found.'], 404);
+        }
+
+        if (! $generation->downloaded_at) {
+            $generation->update(['downloaded_at' => now()]);
+        }
+
+        return response()->json(['ok' => true]);
+    }
 }

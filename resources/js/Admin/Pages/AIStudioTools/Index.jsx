@@ -1,7 +1,7 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
-import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle } from 'lucide-react';
+import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag } from 'lucide-react';
 
 const TOOL_COLORS = [
     '#0ea5e9',
@@ -202,15 +202,17 @@ export default function AIStudioToolsIndex({
                                                 <p className="font-semibold text-red-600 dark:text-red-400 tabular-nums">{t.failed_count?.toLocaleString() ?? 0}</p>
                                             </div>
                                             <div>
+                                                <p className="text-gray-500 dark:text-gray-400">Downloaded</p>
+                                                <p className="font-semibold text-teal-600 dark:text-teal-400 tabular-nums">{t.downloaded_count?.toLocaleString() ?? 0}</p>
+                                            </div>
+                                            <div>
                                                 <p className="text-gray-500 dark:text-gray-400">In production</p>
                                                 <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.used_in_production?.toLocaleString() ?? 0}</p>
                                             </div>
                                         </div>
-                                        {t.credits_used != null && t.credits_used > 0 && (
-                                            <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                                                Credits used: <span className="font-medium text-gray-700 dark:text-gray-300 tabular-nums">{t.credits_used.toLocaleString()}</span>
-                                            </div>
-                                        )}
+                                        <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                                            Credits used: <span className="font-medium text-gray-700 dark:text-gray-300 tabular-nums">{(t.credits_used ?? 0).toLocaleString()}</span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -239,7 +241,7 @@ export default function AIStudioToolsIndex({
                         </div>
 
                         {/* Summary cards - compact */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
                             <div className="card flex items-center gap-3 p-3">
                                 <div className="rounded-lg p-2 bg-primary-50 dark:bg-primary-900/20">
                                     <Activity size={18} className="text-primary-600 dark:text-primary-400" />
@@ -281,6 +283,17 @@ export default function AIStudioToolsIndex({
                                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Used in production</p>
                                     <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
                                         {filteredTools.reduce((s, t) => s + (t.used_in_production || 0), 0).toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="card flex items-center gap-3 p-3">
+                                <div className="rounded-lg p-2 bg-teal-50 dark:bg-teal-900/20">
+                                    <Download size={18} className="text-teal-600 dark:text-teal-400" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Downloaded</p>
+                                    <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
+                                        {filteredTools.reduce((s, t) => s + (t.downloaded_count ?? 0), 0).toLocaleString()}
                                     </p>
                                 </div>
                             </div>
@@ -351,6 +364,23 @@ export default function AIStudioToolsIndex({
                             </div>
                         </div>
 
+                        {/* Used in products by type */}
+                        <div className="card overflow-hidden p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <ShoppingBag size={16} className="text-amber-500 dark:text-amber-400" />
+                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Generations used in products (by tool type)</h2>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                {filteredTools.map((t) => (
+                                    <div key={t.key} className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50/50 dark:bg-gray-800/30">
+                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate" title={t.label}>{t.label}</p>
+                                        <p className="text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums">{t.used_in_production?.toLocaleString() ?? 0}</p>
+                                        <p className="text-[10px] text-gray-400 dark:text-gray-500">assigned to product</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Usage summary table - compact (with credits, response time) */}
                         <div className="card overflow-hidden">
                             <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
@@ -365,8 +395,9 @@ export default function AIStudioToolsIndex({
                                             <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Runs</th>
                                             <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Success</th>
                                             <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Failed</th>
-                                            <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Avg response</th>
+                                            <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Downloaded</th>
                                             <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">In production</th>
+                                            <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Avg response</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -377,10 +408,11 @@ export default function AIStudioToolsIndex({
                                                 <td className="py-2 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300">{t.total_completed?.toLocaleString() ?? 0}</td>
                                                 <td className="py-2 px-4 text-right tabular-nums text-green-600 dark:text-green-400">{t.success_count?.toLocaleString() ?? 0}</td>
                                                 <td className="py-2 px-4 text-right tabular-nums text-red-600 dark:text-red-400">{t.failed_count?.toLocaleString() ?? 0}</td>
+                                                <td className="py-2 px-4 text-right tabular-nums text-teal-600 dark:text-teal-400">{t.downloaded_count?.toLocaleString() ?? 0}</td>
+                                                <td className="py-2 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300">{t.used_in_production?.toLocaleString() ?? 0}</td>
                                                 <td className="py-2 px-4 text-right tabular-nums text-gray-600 dark:text-gray-400">
                                                     {t.avg_response_seconds != null ? `${t.avg_response_seconds}s` : '—'}
                                                 </td>
-                                                <td className="py-2 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300">{t.used_in_production?.toLocaleString() ?? 0}</td>
                                             </tr>
                                         ))}
                                     </tbody>
