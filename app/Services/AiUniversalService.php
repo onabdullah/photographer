@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AppStat;
 use App\Models\ImageGeneration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -73,6 +74,8 @@ class AiUniversalService
             'original_image_url' => $productUrl,
         ]);
 
+        AppStat::incrementKey('total_api_requests');
+
         try {
             // Build the image_input array: product image first, then refs in order
             // Convert local storage URLs to base64 so Replicate can read them.
@@ -116,6 +119,7 @@ class AiUniversalService
                 $errorMsg    = 'Nano Banana 2 API error: ' . (is_string($errorDetail) && $errorDetail !== '' ? $errorDetail : ('HTTP ' . $response->status()));
                 Log::error('Nano Banana 2 API error', ['status' => $response->status(), 'body' => $response->body()]);
                 $generation->update(['status' => 'failed', 'error_message' => $errorMsg]);
+                AppStat::incrementKey('universal_generate_failed_count');
                 throw new \RuntimeException($errorMsg);
             }
 
@@ -125,6 +129,7 @@ class AiUniversalService
 
             if (! $jobId) {
                 $generation->update(['status' => 'failed', 'error_message' => 'Replicate did not return a job ID.']);
+                AppStat::incrementKey('universal_generate_failed_count');
                 throw new \RuntimeException('Replicate did not return a job ID.');
             }
 
@@ -138,6 +143,7 @@ class AiUniversalService
                     $stored    = $this->downloadAndStore($outputUrl, $token, 'universal');
                     $outputUrl = $stored ?? $outputUrl;
                     $generation->update(['status' => 'completed', 'result_image_url' => $outputUrl]);
+                    AppStat::incrementKey('universal_generate_success_count');
                     return [
                         'status'           => 'done',
                         'result_image_url' => $outputUrl,
@@ -150,6 +156,7 @@ class AiUniversalService
                 $error    = $data['error'] ?? 'Nano Banana 2 job failed.';
                 $errorMsg = is_string($error) ? $error : 'Nano Banana 2 job failed.';
                 $generation->update(['status' => 'failed', 'error_message' => $errorMsg]);
+                AppStat::incrementKey('universal_generate_failed_count');
                 throw new \RuntimeException($errorMsg);
             }
 
@@ -169,6 +176,7 @@ class AiUniversalService
                     'status'        => 'failed',
                     'error_message' => $e->getMessage() ?: 'Unexpected error during generation.',
                 ]);
+                AppStat::incrementKey('universal_generate_failed_count');
             }
             throw $e;
         }
@@ -207,6 +215,7 @@ class AiUniversalService
             }
             if ($generation) {
                 $generation->update(['status' => 'completed', 'result_image_url' => $outputUrl]);
+                AppStat::incrementKey('universal_generate_success_count');
             }
             return [
                 'status'           => 'done',
@@ -221,6 +230,7 @@ class AiUniversalService
                 'status'        => 'failed',
                 'error_message' => is_string($error) ? $error : json_encode($error),
             ]);
+            AppStat::incrementKey('universal_generate_failed_count');
             return ['status' => 'error', 'message' => is_string($error) ? $error : 'Job failed.'];
         }
 
@@ -290,8 +300,11 @@ class AiUniversalService
     }
 
     /**
-     * If $url is one of our own app storage URLs, convert to base64 data URI
-     * so Replicate can read it even from localhost / ngrok.
+     * If $url is one of our own app storage URLs on localhost (where Replicate
+     * cannot reach), convert to base64 data URI.  For all other hosts (ngrok,
+     * staging, production) the file is publicly accessible, so we return the
+     * URL as-is to avoid bloating the Replicate request payload — especially
+     * when multiple reference images are included.
      */
     private function imageUrlToReplicateInput(string $url): string
     {
@@ -299,6 +312,14 @@ class AiUniversalService
         if ($appUrl === '' || ! str_starts_with($url, $appUrl . '/')) {
             return $url;
         }
+
+        // Only base64-encode when running on localhost/127.0.0.1 (unreachable by Replicate).
+        // Publicly accessible hosts (ngrok, production) can serve the URL directly.
+        $host = strtolower(parse_url($appUrl, PHP_URL_HOST) ?? '');
+        if ($host !== 'localhost' && $host !== '127.0.0.1') {
+            return $url;
+        }
+
         $path = parse_url($url, PHP_URL_PATH);
         if (! $path || ! str_starts_with($path, '/storage/')) {
             return $url;
