@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
  * Magic Eraser (object removal / inpainting) – Replicate Nano Banana 2 (Gemini 3.1 Flash Image).
  * Thin controller: auth + validation, delegates to AiGenerationService.
  * Expects image (file or URL) and mask_base64 (PNG: white = erase, black = keep).
- * Optional: aspect_ratio, resolution, output_format. Removal prompt is fixed server-side.
+ * Optional: prompt, aspect_ratio, resolution, output_format.
  */
 class MagicEraserController extends Controller
 {
@@ -50,6 +50,9 @@ class MagicEraserController extends Controller
                 'image_url' => $imageUrl,
                 'mask_base64' => $maskBase64,
             ];
+            if ($request->filled('prompt')) {
+                $payload['prompt'] = $request->input('prompt');
+            }
             if ($request->filled('aspect_ratio')) {
                 $payload['aspect_ratio'] = $request->input('aspect_ratio');
             }

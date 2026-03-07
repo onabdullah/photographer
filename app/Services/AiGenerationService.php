@@ -406,6 +406,7 @@ class AiGenerationService
 
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
         $maskInput = $this->imageUrlToReplicateInput($maskUrl);
+        $prompt = $payload['prompt'] ?? 'Remove the selected region and reconstruct the area seamlessly so it matches the surrounding context, lighting, and texture. Output must be photorealistic and visually consistent with the rest of the image.';
         $aspectRatio = $payload['aspect_ratio'] ?? 'match_input_image';
         $resolution = $payload['resolution'] ?? '1K';
         $outputFormat = $payload['output_format'] ?? 'jpg';
@@ -413,7 +414,7 @@ class AiGenerationService
         $apiPayload = [
             'version' => self::NANO_BANANA_2_MODEL_VERSION,
             'input' => [
-                'prompt' => 'Remove the selected region and reconstruct the area seamlessly so it matches the surrounding context, lighting, and texture. Output must be photorealistic and visually consistent with the rest of the image.',
+                'prompt' => $prompt,
                 'image_input' => [$imageInput, $maskInput],
                 'aspect_ratio' => $aspectRatio,
                 'resolution' => $resolution,
