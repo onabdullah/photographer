@@ -170,9 +170,9 @@ const MAGIC_ERASER_ASPECT_RATIOS = [
 ];
 
 const MAGIC_ERASER_RESOLUTIONS = [
-  { value: '1K', label: '1K (default)' },
-  { value: '2K', label: '2K' },
-  { value: '4K', label: '4K (highest quality, more credits)' },
+  { value: '1K', label: '1K (1 credit)' },
+  { value: '2K', label: '2K (2 credits)' },
+  { value: '4K', label: '4K (4 credits)' },
 ];
 
 const MAGIC_ERASER_OUTPUT_FORMATS = [
@@ -463,12 +463,20 @@ function MasterpieceIllustration() {
   );
 }
 
-export default function AIStudio({ product, initialImage, initialTool, enabledTools: enabledToolsProp }) {
+function creditsForResolution(resolution) {
+  const r = (resolution || '1K').toUpperCase();
+  if (r === '4K') return 4;
+  if (r === '2K') return 2;
+  return 1;
+}
+
+export default function AIStudio({ product, initialImage, initialTool, enabledTools: enabledToolsProp, credits: initialCredits = 0 }) {
   const enabledTools = Array.isArray(enabledToolsProp) && enabledToolsProp.length > 0
     ? enabledToolsProp
     : VALID_TOOLS;
   const toolOptions = AI_TOOLS.filter((t) => enabledTools.includes(t.value));
   const validInitialTool = initialTool && enabledTools.includes(initialTool) ? initialTool : (enabledTools[0] ?? 'magic_eraser');
+  const [credits, setCredits] = useState(() => Math.max(0, parseInt(initialCredits, 10) || 0));
   const [inputImage, setInputImage] = useState(initialImage || null);
   const [generatedImages, setGeneratedImages] = useState([]);
   const [selectedGeneratedIndex, setSelectedGeneratedIndex] = useState(0);
@@ -604,8 +612,9 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      const { status: resStatus, job_id: resJobId, result_url: resResultUrl, generation_id: resGenId } = res.data;
+      const { status: resStatus, job_id: resJobId, result_url: resResultUrl, generation_id: resGenId, credits_remaining } = res.data;
       if (resGenId != null) setGenerationId(resGenId);
+      if (credits_remaining != null) setCredits(credits_remaining);
 
       if (resStatus === 'completed' && resResultUrl) {
         setResultImageUrl(resResultUrl);
@@ -664,8 +673,9 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 60000,
       });
-      const { status: resStatus, result_url: resResultUrl, generation_id: resGenId, original_size, result_size } = res.data;
+      const { status: resStatus, result_url: resResultUrl, generation_id: resGenId, original_size, result_size, credits_remaining } = res.data;
       if (resGenId != null) setGenerationId(resGenId);
+      if (credits_remaining != null) setCredits(credits_remaining);
       if (resStatus === 'completed' && resResultUrl) {
         setResultImageUrl(resResultUrl);
         setCompressorSizes(original_size != null || result_size != null ? { original_size: original_size ?? null, result_size: result_size ?? null } : null);
@@ -874,8 +884,9 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       const res = await axios.post('/shopify/tools/magic-eraser', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const { status: resStatus, job_id: resJobId, result_url: resResultUrl, generation_id: resGenId } = res.data;
+      const { status: resStatus, job_id: resJobId, result_url: resResultUrl, generation_id: resGenId, credits_remaining } = res.data;
       if (resGenId != null) setGenerationId(resGenId);
+      if (credits_remaining != null) setCredits(credits_remaining);
       if (resStatus === 'completed' && resResultUrl) {
         setResultImageUrl(resResultUrl);
         setProcessingStatus('done');
@@ -929,8 +940,9 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       try {
         const res = await axios.get(pollUrl);
         if (cancelled) return;
-        const { status: resStatus, result_url: resResultUrl, generation_id: resGenId } = res.data;
+        const { status: resStatus, result_url: resResultUrl, generation_id: resGenId, credits_remaining } = res.data;
         if (resGenId != null) setGenerationId(resGenId);
+        if (credits_remaining != null) setCredits(credits_remaining);
         if (resStatus === 'completed' && resResultUrl) {
           setResultImageUrl(resResultUrl);
           setProcessingStatus('done');
@@ -1915,9 +1927,23 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                         >
                           {selectedTool === 'magic_eraser' ? '✨ Erase Object' : selectedTool === 'compressor' ? '✨ Compress' : '✨ Generate'}
                         </MagicButton>
-                        <Text variant="bodySm" tone="subdued">
-                          {selectedTool === 'compressor' ? 'Free — no paid model' : '(1 Credit)'}
-                        </Text>
+                        {(() => {
+                          const creditsForAction = selectedTool === 'magic_eraser' ? creditsForResolution(magicEraserResolution) : 1;
+                          const remainingAfter = Math.max(0, credits - creditsForAction);
+                          return (
+                            <BlockStack gap="100">
+                              <Text variant="bodySm" tone="subdued" as="p">
+                                Total credits: <strong className="tabular-nums">{credits.toLocaleString()}</strong>
+                              </Text>
+                              <Text variant="bodySm" tone="subdued" as="p">
+                                This action uses: <strong className="tabular-nums">{creditsForAction} credit{creditsForAction !== 1 ? 's' : ''}</strong>
+                              </Text>
+                              <Text variant="bodySm" tone="subdued" as="p">
+                                Remaining after: <strong className="tabular-nums">{remainingAfter.toLocaleString()}</strong>
+                              </Text>
+                            </BlockStack>
+                          );
+                        })()}
                       </BlockStack>
                     )}
                   </Box>

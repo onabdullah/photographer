@@ -56,11 +56,14 @@ class ShopifyController extends Controller
             $initialTool = $enabledTools[0] ?? 'magic_eraser';
         }
 
+        $credits = (int) ($shop->ai_credits_balance ?? 0);
+
         return \Inertia\Inertia::render('Shopify/AIStudio', [
             'product' => $product,
             'initialImage' => $imageUrl,
             'initialTool' => $initialTool,
             'enabledTools' => $enabledTools,
+            'credits' => $credits,
         ]);
     }
 

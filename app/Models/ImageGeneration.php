@@ -17,6 +17,7 @@ class ImageGeneration extends Model
         'error_message',
         'processing_time_seconds',
         'downloaded_at',
+        'credits_used',
     ];
 
     protected function casts(): array
@@ -24,6 +25,7 @@ class ImageGeneration extends Model
         return [
             'processing_time_seconds' => 'decimal:4',
             'downloaded_at' => 'datetime',
+            'credits_used' => 'integer',
         ];
     }
 }

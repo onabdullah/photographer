@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Contracts\BackgroundRemoverInterface;
 use App\Models\AppStat;
 use App\Models\ImageGeneration;
+use App\Models\Merchant;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -20,6 +22,42 @@ class AiGenerationService
     private static function processingDurationSeconds(ImageGeneration $generation): float
     {
         return round($generation->created_at->diffInSeconds(now(), true), 4);
+    }
+
+    /** Credits for this run: Magic Eraser 1K=1, 2K=2, 4K=4; all other tools = 1. */
+    private static function creditsForTool(string $toolUsed, ?string $resolution = null): int
+    {
+        if ($toolUsed !== 'magic_eraser') {
+            return 1;
+        }
+        $r = strtoupper((string) $resolution);
+        if ($r === '4K') {
+            return 4;
+        }
+        if ($r === '2K') {
+            return 2;
+        }
+        return 1; // 1K or default
+    }
+
+    /** Deduct credits for a completed generation. Returns new balance or null if merchant not found. */
+    private static function deductCreditsForGeneration(ImageGeneration $generation): ?int
+    {
+        $credits = (int) ($generation->credits_used ?? 1);
+        if ($credits <= 0) {
+            return null;
+        }
+        return DB::transaction(function () use ($generation, $credits) {
+            $merchant = Merchant::where('name', $generation->shop_domain)->lockForUpdate()->first();
+            if (! $merchant) {
+                return null;
+            }
+            $balance = (int) ($merchant->ai_credits_balance ?? 0);
+            $newBalance = max(0, $balance - $credits);
+            $merchant->ai_credits_balance = $newBalance;
+            $merchant->save();
+            return $newBalance;
+        });
     }
 
     private const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
@@ -299,6 +337,7 @@ class AiGenerationService
             'status' => 'processing',
             'error_message' => null,
             'processing_time_seconds' => null,
+            'credits_used' => 1,
         ]);
 
         try {
@@ -315,6 +354,14 @@ class AiGenerationService
                     'processing_time_seconds' => self::processingDurationSeconds($generation),
                 ]);
                 AppStat::incrementKey('bg_remover_success_count');
+                $creditsRemaining = self::deductCreditsForGeneration($generation);
+                return [
+                    'status' => $result['status'],
+                    'job_id' => $result['job_id'] ?? null,
+                    'result_url' => $result['result_url'] ?? null,
+                    'generation_id' => $generation->id,
+                    'credits_remaining' => $creditsRemaining,
+                ];
             }
 
             return [
@@ -356,6 +403,7 @@ class AiGenerationService
             'status' => 'processing',
             'error_message' => null,
             'processing_time_seconds' => null,
+            'credits_used' => 1,
         ]);
 
         try {
@@ -380,6 +428,7 @@ class AiGenerationService
                 'processing_time_seconds' => self::processingDurationSeconds($generation),
             ]);
             AppStat::incrementKey('compressor_success_count');
+            $creditsRemaining = self::deductCreditsForGeneration($generation);
             Log::channel('upscaler')->info('Compressor completed', ['generation_id' => $generation->id]);
             return [
                 'status' => 'completed',
@@ -388,6 +437,7 @@ class AiGenerationService
                 'generation_id' => $generation->id,
                 'original_size' => $result['original_size'] ?? null,
                 'result_size' => $result['result_size'] ?? null,
+                'credits_remaining' => $creditsRemaining,
             ];
         } catch (\Throwable $e) {
             $generation->update([
@@ -456,6 +506,7 @@ class AiGenerationService
             'status' => 'processing',
             'error_message' => null,
             'processing_time_seconds' => null,
+            'credits_used' => 1,
         ]);
 
         return [
@@ -531,6 +582,7 @@ class AiGenerationService
             $resultUrl = $this->extractFirstUrlFromArray($body);
         }
 
+        $creditsUsed = self::creditsForTool('magic_eraser', $resolution);
         $generation = ImageGeneration::create([
             'shop_domain' => $shopDomain,
             'tool_used' => 'magic_eraser',
@@ -541,6 +593,7 @@ class AiGenerationService
             'status' => 'processing',
             'error_message' => null,
             'processing_time_seconds' => null,
+            'credits_used' => $creditsUsed,
         ]);
 
         if (in_array($replicateStatus, ['succeeded', 'successful'], true) && $resultUrl) {
@@ -554,12 +607,14 @@ class AiGenerationService
                 'processing_time_seconds' => self::processingDurationSeconds($generation),
             ]);
             AppStat::incrementKey('magic_eraser_success_count');
+            $creditsRemaining = self::deductCreditsForGeneration($generation);
             Log::channel('magic_eraser')->info('Magic eraser completed in sync response', ['job_id' => $predictionId]);
             return [
                 'status' => 'completed',
                 'job_id' => $predictionId,
                 'result_url' => $resultUrl,
                 'generation_id' => $generation->id,
+                'credits_remaining' => $creditsRemaining,
             ];
         }
 
@@ -574,12 +629,14 @@ class AiGenerationService
                         'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('magic_eraser_success_count');
+                    $creditsRemaining = self::deductCreditsForGeneration($generation);
                     Log::channel('magic_eraser')->info('Magic eraser completed via stream URL (sync)', ['job_id' => $predictionId]);
                     return [
                         'status' => 'completed',
                         'job_id' => $predictionId,
                         'result_url' => $resultUrl,
                         'generation_id' => $generation->id,
+                        'credits_remaining' => $creditsRemaining,
                     ];
                 }
             }
@@ -669,6 +726,7 @@ class AiGenerationService
             'status' => 'processing',
             'error_message' => null,
             'processing_time_seconds' => null,
+            'credits_used' => 1,
         ]);
 
         return [
@@ -741,6 +799,7 @@ class AiGenerationService
             'status' => 'processing',
             'error_message' => null,
             'processing_time_seconds' => null,
+            'credits_used' => 1,
         ]);
 
         return [
@@ -764,6 +823,14 @@ class AiGenerationService
                     'processing_time_seconds' => self::processingDurationSeconds($generation),
                 ]);
                 AppStat::incrementKey('bg_remover_success_count');
+                $creditsRemaining = self::deductCreditsForGeneration($generation);
+                return [
+                    'status' => $result['status'],
+                    'job_id' => $result['job_id'] ?? $jobId,
+                    'result_url' => $result['result_url'] ?? null,
+                    'generation_id' => $generation->id,
+                    'credits_remaining' => $creditsRemaining,
+                ];
             }
 
             return [
@@ -822,6 +889,14 @@ class AiGenerationService
                         'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('upscaler_success_count');
+                    $creditsRemaining = self::deductCreditsForGeneration($generation);
+                    return [
+                        'status' => 'completed',
+                        'job_id' => $jobId,
+                        'result_url' => $resultUrl ?? null,
+                        'generation_id' => $generation->id,
+                        'credits_remaining' => $creditsRemaining,
+                    ];
                 }
 
                 return [
@@ -929,6 +1004,14 @@ class AiGenerationService
                         'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('magic_eraser_success_count');
+                    $creditsRemaining = self::deductCreditsForGeneration($generation);
+                    return [
+                        'status' => 'completed',
+                        'job_id' => $jobId,
+                        'result_url' => $resultUrl ?? null,
+                        'generation_id' => $generation->id,
+                        'credits_remaining' => $creditsRemaining,
+                    ];
                 }
 
                 return [
@@ -1012,6 +1095,14 @@ class AiGenerationService
                         'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('enhance_success_count');
+                    $creditsRemaining = self::deductCreditsForGeneration($generation);
+                    return [
+                        'status' => 'completed',
+                        'job_id' => $jobId,
+                        'result_url' => $resultUrl ?? null,
+                        'generation_id' => $generation->id,
+                        'credits_remaining' => $creditsRemaining,
+                    ];
                 }
 
                 return [
@@ -1104,6 +1195,14 @@ class AiGenerationService
                         'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('lighting_success_count');
+                    $creditsRemaining = self::deductCreditsForGeneration($generation);
+                    return [
+                        'status' => 'completed',
+                        'job_id' => $jobId,
+                        'result_url' => $resultUrl,
+                        'generation_id' => $generation->id,
+                        'credits_remaining' => $creditsRemaining,
+                    ];
                 } elseif ($rawResultUrl && $generation) {
                     $generation->update([
                         'status' => 'failed',
