@@ -38,7 +38,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'shopify/tools/lighting',
             'shopify/save-to-shopify',
             'shopify/assign-to-product',
-            'shopify/ai-studio/generate',                  // AI Studio Pro: smart router (apparel + universal)
             'shopify/settings', // Embedded app iframe often blocks cookies; route is protected by verify.shopify
         ]);
     })
