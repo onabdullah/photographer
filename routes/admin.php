@@ -24,6 +24,9 @@ Route::middleware(['auth:admin'])->group(function () {
         $imagesGenerated = \App\Models\Image::whereNotNull('generated_image_url')->count();
         $totalCreditsIssued = (int) \App\Models\Merchant::sum('ai_credits_balance');
         $merchantsWithPlan = \App\Models\Merchant::whereNotNull('plan_id')->count();
+        $newMerchantsLast7Days = \App\Models\Merchant::where('created_at', '>=', now()->subDays(7))->count();
+        $aiStudioRunsTotal = \App\Models\ImageGeneration::where('status', 'completed')->whereNotNull('result_image_url')->count();
+        $aiStudioRunsLast7Days = \App\Models\ImageGeneration::where('status', 'completed')->whereNotNull('result_image_url')->where('created_at', '>=', now()->subDays(7))->count();
 
         $recentMerchants = \App\Models\Merchant::with('plan')
             ->latest()
@@ -56,6 +59,9 @@ Route::middleware(['auth:admin'])->group(function () {
                 'imagesGenerated' => $imagesGenerated,
                 'totalCreditsIssued' => $totalCreditsIssued,
                 'merchantsWithPlan' => $merchantsWithPlan,
+                'newMerchantsLast7Days' => $newMerchantsLast7Days,
+                'aiStudioRunsTotal' => $aiStudioRunsTotal,
+                'aiStudioRunsLast7Days' => $aiStudioRunsLast7Days,
                 'recentMerchants' => $recentMerchants,
                 'recentImages' => $recentImages,
             ],
@@ -105,9 +111,9 @@ Route::middleware(['auth:admin'])->group(function () {
     })->middleware('admin.permission:ai.view')->name('ai-processing.show');
 
     // Analytics & Reporting
-    Route::get('/analytics', function () {
-        return Inertia::render('Admin/Pages/Analytics');
-    })->middleware('admin.permission:analytics.view')->name('analytics');
+    Route::get('/analytics', \App\Http\Controllers\Admin\AnalyticsController::class)
+        ->middleware('admin.permission:analytics.view')
+        ->name('analytics');
 
     Route::get('/ai-studio-tools', \App\Http\Controllers\Admin\AiStudioToolsController::class)
         ->middleware('admin.permission:ai_studio.view')

@@ -159,32 +159,61 @@ export default function AIStudioToolsIndex({
                 </div>
 
                 {mainTab === 'models' && (
-                    <div className="card overflow-hidden">
-                        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
-                            <Cpu size={16} className="text-gray-500 dark:text-gray-400" />
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Cpu size={18} className="text-gray-500 dark:text-gray-400" />
                             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                Model information
+                                Model information & quick stats
                             </h2>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-100 dark:border-gray-700">
-                                        <th className="text-left py-2.5 px-4 font-medium text-gray-700 dark:text-gray-300">Tool</th>
-                                        <th className="text-left py-2.5 px-4 font-medium text-gray-700 dark:text-gray-300">Model</th>
-                                        <th className="text-left py-2.5 px-4 font-medium text-gray-700 dark:text-gray-300">Provider</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {tools.map((t) => (
-                                        <tr key={t.key} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                            <td className="py-2.5 px-4 text-gray-900 dark:text-white">{t.label}</td>
-                                            <td className="py-2.5 px-4 text-gray-700 dark:text-gray-300">{t.model_name}</td>
-                                            <td className="py-2.5 px-4 text-gray-600 dark:text-gray-400">{t.model_provider}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {tools.map((t, index) => (
+                                <div
+                                    key={t.key}
+                                    className="card overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+                                >
+                                    <div
+                                        className="h-1 flex-shrink-0"
+                                        style={{ backgroundColor: TOOL_COLORS[index % TOOL_COLORS.length] }}
+                                    />
+                                    <div className="p-4 flex-1 flex flex-col gap-3">
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                {t.label}
+                                            </h3>
+                                            <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400 line-clamp-2" title={t.model_name}>
+                                                {t.model_name}
+                                            </p>
+                                            <p className="mt-1 text-[11px] font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wide">
+                                                {t.model_provider}
+                                            </p>
+                                        </div>
+                                        <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700/80 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                                            <div>
+                                                <p className="text-gray-500 dark:text-gray-400">Runs</p>
+                                                <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.total_completed?.toLocaleString() ?? 0}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-500 dark:text-gray-400">Success</p>
+                                                <p className="font-semibold text-green-600 dark:text-green-400 tabular-nums">{t.success_count?.toLocaleString() ?? 0}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-500 dark:text-gray-400">Failed</p>
+                                                <p className="font-semibold text-red-600 dark:text-red-400 tabular-nums">{t.failed_count?.toLocaleString() ?? 0}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-500 dark:text-gray-400">In production</p>
+                                                <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.used_in_production?.toLocaleString() ?? 0}</p>
+                                            </div>
+                                        </div>
+                                        {t.credits_used != null && t.credits_used > 0 && (
+                                            <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                Credits used: <span className="font-medium text-gray-700 dark:text-gray-300 tabular-nums">{t.credits_used.toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}

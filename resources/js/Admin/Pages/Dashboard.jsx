@@ -1,6 +1,6 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { Link } from '@inertiajs/react';
-import { Users, Image as ImageIcon, CreditCard, Store } from 'lucide-react';
+import { Users, Image as ImageIcon, CreditCard, Store, UserPlus, Zap, BarChart3 } from 'lucide-react';
 
 const STAT_CONFIG = {
     merchants: {
@@ -19,22 +19,34 @@ const STAT_CONFIG = {
         bg: 'bg-gray-100 dark:bg-gray-700/50',
         icon: 'text-gray-600 dark:text-gray-400',
     },
+    newMerchants: {
+        bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+        icon: 'text-emerald-600 dark:text-emerald-400',
+    },
+    aiStudio: {
+        bg: 'bg-violet-50 dark:bg-violet-900/20',
+        icon: 'text-violet-600 dark:text-violet-400',
+    },
 };
 
 export default function Dashboard({ data }) {
     const d = data || {};
-    const totalMerchants     = Number(d.totalMerchants)    || 0;
-    const imagesGenerated    = Number(d.imagesGenerated)   || 0;
-    const totalCreditsIssued = Number(d.totalCreditsIssued)|| 0;
-    const merchantsWithPlan  = Number(d.merchantsWithPlan) || 0;
-    const recentMerchants    = d.recentMerchants ?? [];
-    const recentImages       = d.recentImages    ?? [];
+    const totalMerchants        = Number(d.totalMerchants)        || 0;
+    const imagesGenerated       = Number(d.imagesGenerated)      || 0;
+    const totalCreditsIssued    = Number(d.totalCreditsIssued)    || 0;
+    const merchantsWithPlan     = Number(d.merchantsWithPlan)     || 0;
+    const newMerchantsLast7Days = Number(d.newMerchantsLast7Days) || 0;
+    const aiStudioRunsTotal     = Number(d.aiStudioRunsTotal)     || 0;
+    const recentMerchants       = d.recentMerchants ?? [];
+    const recentImages          = d.recentImages    ?? [];
 
     const stats = [
-        { name: 'Total Merchants',    value: totalMerchants.toLocaleString(),     key: 'merchants', icon: Users     },
-        { name: 'Images Generated',   value: imagesGenerated.toLocaleString(),    key: 'images',    icon: ImageIcon },
-        { name: 'Credits Issued',     value: totalCreditsIssued.toLocaleString(), key: 'credits',   icon: CreditCard },
-        { name: 'On Paid Plan',       value: merchantsWithPlan.toLocaleString(),  key: 'plans',     icon: Store     },
+        { name: 'Total Merchants',        value: totalMerchants.toLocaleString(),       key: 'merchants',    icon: Users      },
+        { name: 'New (last 7 days)',      value: newMerchantsLast7Days.toLocaleString(), key: 'newMerchants', icon: UserPlus   },
+        { name: 'Images Generated',       value: imagesGenerated.toLocaleString(),      key: 'images',      icon: ImageIcon   },
+        { name: 'AI Studio runs (total)', value: aiStudioRunsTotal.toLocaleString(),    key: 'aiStudio',    icon: Zap        },
+        { name: 'Credits Issued',         value: totalCreditsIssued.toLocaleString(),   key: 'credits',     icon: CreditCard  },
+        { name: 'On Paid Plan',           value: merchantsWithPlan.toLocaleString(),    key: 'plans',       icon: Store       },
     ];
 
     const formatDate = (iso) => {
@@ -55,7 +67,17 @@ export default function Dashboard({ data }) {
             <div className="space-y-6">
 
                 {/* ── Stat cards ── */}
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Key metrics</span>
+                    <Link
+                        href="/admin/analytics"
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                    >
+                        <BarChart3 size={16} />
+                        Full analytics
+                    </Link>
+                </div>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
                     {stats.map((stat) => {
                         const Icon  = stat.icon;
                         const style = STAT_CONFIG[stat.key] || STAT_CONFIG.plans;
