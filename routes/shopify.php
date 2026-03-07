@@ -27,6 +27,16 @@ Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMis
     Route::get('/ai-studio', [\App\Http\Controllers\ShopifyController::class, 'aiStudio'])->name('ai-studio');
     Route::post('/generate-image', [\App\Http\Controllers\ShopifyController::class, 'generateImage'])->name('generate-image');
 
+    // Fashion AI Lab (Virtual Try-On – apparel & garments via IDM-VTON)
+    Route::get('/fashion-ai-lab', [\App\Http\Controllers\ShopifyController::class, 'fashionAILab'])->name('fashion-ai-lab');
+
+    // Product AI Studio (Universal products & backgrounds via Nano Banana 2)
+    Route::get('/product-ai-studio', [\App\Http\Controllers\ShopifyController::class, 'productAIStudio'])->name('product-ai-studio');
+
+    // AI Studio Smart Router – single generate endpoint + async job polling
+    Route::post('/api/ai-studio/generate', [\App\Http\Controllers\AiRouterController::class, 'generate'])->name('api.ai-studio.generate');
+    Route::get('/api/ai-studio/job/{jobId}', [\App\Http\Controllers\AiRouterController::class, 'jobStatus'])->name('api.ai-studio.job');
+
     // Settings
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'settings'])->name('settings');
     Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'updateSettings'])->name('settings.update');

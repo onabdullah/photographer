@@ -193,4 +193,38 @@ class ShopifyController extends Controller
     {
         return \Inertia\Inertia::render('Shopify/AiModels');
     }
+
+    /**
+     * Render Fashion AI Lab page (Virtual Try-On for apparel).
+     */
+    public function fashionAILab(Request $request)
+    {
+        $shop = $this->currentShop($request);
+        if (! $shop) {
+            abort(403, 'Shop not authenticated');
+        }
+
+        $credits = (int) ($shop->ai_credits_balance ?? 0);
+
+        return \Inertia\Inertia::render('Shopify/FashionAILab', [
+            'credits' => $credits,
+        ]);
+    }
+
+    /**
+     * Render Product AI Studio page (Universal products & accessories via Nano Banana 2).
+     */
+    public function productAIStudio(Request $request)
+    {
+        $shop = $this->currentShop($request);
+        if (! $shop) {
+            abort(403, 'Shop not authenticated');
+        }
+
+        $credits = (int) ($shop->ai_credits_balance ?? 0);
+
+        return \Inertia\Inertia::render('Shopify/ProductAIStudio', [
+            'credits' => $credits,
+        ]);
+    }
 }

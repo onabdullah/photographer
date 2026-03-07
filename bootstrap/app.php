@@ -39,6 +39,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'shopify/save-to-shopify',
             'shopify/assign-to-product',
             'shopify/settings', // Embedded app iframe often blocks cookies; route is protected by verify.shopify
+            // AI Studio Pro smart router
+            'shopify/api/ai-studio/generate',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
