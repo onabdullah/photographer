@@ -3,7 +3,6 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     LayoutDashboard,
     Store,
-    Package,
     Zap,
     BarChart3,
     Settings,
@@ -59,7 +58,6 @@ const SECTIONS = [
         label: 'MANAGEMENT',
         items: [
             { name: 'Merchants',     href: '/admin/merchants',     icon: Store,    permission: 'merchants.view' },
-            { name: 'Products',      href: '/admin/products',      icon: Package,  permission: 'products.view'  },
             { name: 'AI Processing', href: '/admin/ai-processing', icon: Zap,      permission: 'ai.view'        },
             { name: 'Users',         href: '/admin/users',         icon: Users,    permission: 'users.view' },
             { name: 'Roles',         href: '/admin/roles',         icon: Shield,   permission: 'roles.view' },
@@ -102,8 +100,7 @@ const SECTIONS = [
 ];
 
 const QUICK_ACTIONS = [
-    { name: 'New Merchant',  href: '/admin/merchants/create', icon: Plus,    permission: 'merchants.manage' },
-    { name: 'View Products', href: '/admin/products',         icon: Package, permission: 'products.view'   },
+    { name: 'New Merchant',  href: '/admin/merchants/create', icon: Plus, permission: 'merchants.manage' },
 ];
 
 // ============================================================

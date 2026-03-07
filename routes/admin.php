@@ -103,10 +103,10 @@ Route::middleware(['auth:admin'])->group(function () {
         ]);
     })->middleware('admin.permission:products.view')->name('products.show');
 
-    // AI Processing - Monitor all AI jobs
-    Route::get('/ai-processing', function () {
-        return Inertia::render('Admin/Pages/AIProcessing/Index');
-    })->middleware('admin.permission:ai.view')->name('ai-processing.index');
+    // AI Processing - Masterpieces gallery by category
+    Route::get('/ai-processing', [\App\Http\Controllers\Admin\AIProcessingController::class, 'index'])
+        ->middleware('admin.permission:ai.view')
+        ->name('ai-processing.index');
 
     Route::get('/ai-processing/{id}', function ($id) {
         return Inertia::render('Admin/Pages/AIProcessing/Show', [
