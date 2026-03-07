@@ -93,6 +93,7 @@ const SECTIONS = [
                 children: [
                     { name: 'AI Models', icon: Bot,           href: '#' },
                     { name: 'Reports',   icon: FileBarChart2, href: '#' },
+                    { name: 'Finance',   icon: DollarSign,     href: '#' },
                 ],
             },
         ],
