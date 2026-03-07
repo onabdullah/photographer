@@ -197,53 +197,53 @@ export default function AIStudioToolsIndex({
                             {tools.map((t, index) => (
                                 <div
                                     key={t.key}
-                                    className="card overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+                                    className="card overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors w-full"
                                 >
                                     <div
-                                        className="h-1 flex-shrink-0"
+                                        className="h-0.5 flex-shrink-0"
                                         style={{ backgroundColor: TOOL_COLORS[index % TOOL_COLORS.length], opacity: 0.35 }}
                                     />
-                                    <div className="p-4 flex-1 flex flex-col gap-3">
+                                    <div className="p-3 flex flex-col gap-2">
                                         <div className="flex items-start justify-between gap-2">
-                                            <div className="min-w-0">
-                                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
                                                     {t.label}
                                                 </h3>
-                                                <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400 line-clamp-2" title={t.model_name}>
+                                                <p className="mt-0.5 text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2 leading-snug" title={t.model_name}>
                                                     {t.model_name}
                                                 </p>
-                                                <p className="mt-1 text-[11px] font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wide">
+                                                <p className="mt-0.5 text-[10px] font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wide">
                                                     {t.model_provider}
                                                 </p>
                                             </div>
                                             <div className="flex-shrink-0 text-right">
-                                                <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">Credit used</p>
-                                                <p className="text-lg font-bold tabular-nums text-gray-900 dark:text-white">{(t.credits_used ?? 0).toLocaleString()}</p>
+                                                <p className="text-[9px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">Credit used</p>
+                                                <p className="text-base font-bold tabular-nums text-gray-900 dark:text-white leading-tight">{(t.credits_used ?? 0).toLocaleString()}</p>
                                             </div>
                                         </div>
-                                        <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700/80 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
-                                            <div>
-                                                <p className="text-gray-500 dark:text-gray-400">Runs</p>
-                                                <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.total_completed?.toLocaleString() ?? 0}</p>
+                                        <div className="pt-2 border-t border-gray-100 dark:border-gray-700/80 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-gray-500 dark:text-gray-400">Runs</span>
+                                                <span className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.total_completed?.toLocaleString() ?? 0}</span>
                                             </div>
-                                            <div>
-                                                <p className="text-gray-500 dark:text-gray-400">Success</p>
-                                                <p className="font-semibold text-green-600 dark:text-green-400 tabular-nums">{t.success_count?.toLocaleString() ?? 0}</p>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-gray-500 dark:text-gray-400">Success</span>
+                                                <span className="font-semibold text-green-600 dark:text-green-400 tabular-nums">{t.success_count?.toLocaleString() ?? 0}</span>
                                             </div>
-                                            <div>
-                                                <p className="text-gray-500 dark:text-gray-400">Failed</p>
-                                                <p className="font-semibold text-red-600 dark:text-red-400 tabular-nums">{t.failed_count?.toLocaleString() ?? 0}</p>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-gray-500 dark:text-gray-400">Failed</span>
+                                                <span className="font-semibold text-red-600 dark:text-red-400 tabular-nums">{t.failed_count?.toLocaleString() ?? 0}</span>
                                             </div>
-                                            <div>
-                                                <p className="text-gray-500 dark:text-gray-400">Downloaded</p>
-                                                <p className="font-semibold text-teal-600 dark:text-teal-400 tabular-nums">{t.downloaded_count?.toLocaleString() ?? 0}</p>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-gray-500 dark:text-gray-400">Downloaded</span>
+                                                <span className="font-semibold text-teal-600 dark:text-teal-400 tabular-nums">{t.downloaded_count?.toLocaleString() ?? 0}</span>
                                             </div>
-                                            <div>
-                                                <p className="text-gray-500 dark:text-gray-400">In production</p>
-                                                <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.used_in_production?.toLocaleString() ?? 0}</p>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-gray-500 dark:text-gray-400">In production</span>
+                                                <span className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.used_in_production?.toLocaleString() ?? 0}</span>
                                             </div>
                                         </div>
-                                        <div className="flex justify-end pt-2">
+                                        <div className="flex justify-end pt-1.5">
                                             <select
                                                 value={t.is_enabled ? 'enabled' : 'disabled'}
                                                 onChange={(e) => {
