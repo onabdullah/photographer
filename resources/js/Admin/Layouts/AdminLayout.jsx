@@ -72,13 +72,6 @@ const SECTIONS = [
         ],
     },
     {
-        id: 'finance',
-        label: 'FINANCE',
-        items: [
-            { name: 'Finance', href: '/admin/finance', icon: DollarSign, permission: 'finance.view' },
-        ],
-    },
-    {
         id: 'system',
         label: 'SYSTEM',
         items: [
