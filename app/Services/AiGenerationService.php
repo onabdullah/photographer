@@ -419,8 +419,8 @@ class AiGenerationService
         ]);
 
         $response = Http::withToken($token)
-            ->withHeaders(['Prefer' => 'wait=90'])
-            ->timeout(95)
+            ->withHeaders(['Prefer' => 'wait=60'])
+            ->timeout(65)
             ->post(self::REPLICATE_API, $apiPayload);
 
         $statusCode = $response->status();
