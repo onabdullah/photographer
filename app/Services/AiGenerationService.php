@@ -19,11 +19,11 @@ class AiGenerationService
 {
     private const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
 
-    /**
-     * SUPIR – photorealistic upscale & enhance (replaces Real-ESRGAN + GFPGAN).
-     * zust-ai/supir: image, upscale, min_size, model_name. Yields photorealistic details vs plastic/smooth look.
-     */
-    private const SUPIR_MODEL_VERSION = 'zust-ai/supir:9daf6d19556db0fd6e347a7a5cae7d4a68cf25486266ca3e6dc82618f0a2e0b9';
+    /** nightmareai/real-esrgan – image, scale (2–10), face_enhance */
+    private const UPSCALER_MODEL_VERSION = 'nightmareai/real-esrgan:279a18ae4f30c9d3636516918d76c8c8262a9bc7c415fe90a88087c78c9ebbef';
+
+    /** tencentarc/gfpgan – face/quality enhancement: img, version (v1.4, v1.3, RestoreFormer), scale (1 or 2). */
+    private const ENHANCER_MODEL_VERSION = 'tencentarc/gfpgan:0fbacf7afc6c144e5be9767cff80f25aff23e52b0708f17e20f9879b2f21516c';
 
     /**
      * Nano Banana 2 (Gemini 3.1 Flash Image) – inpainting/object removal.
@@ -331,26 +331,26 @@ class AiGenerationService
 
         $imageUrl = $payload['image_url'];
         $scale = (int) ($payload['scale'] ?? 4);
-        $scale = max(2, min(4, $scale)); // SUPIR typically 2 or 4
+        $faceEnhance = (bool) ($payload['face_enhance'] ?? false);
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
 
         $apiPayload = [
-            'version' => self::SUPIR_MODEL_VERSION,
+            'version' => self::UPSCALER_MODEL_VERSION,
             'input' => [
                 'image' => $imageInput,
-                'upscale' => $scale,
-                'min_size' => 1024,
-                'model_name' => 'SUPIR-v0F', // high generalization, high quality
+                'scale' => $scale,
+                'face_enhance' => $faceEnhance,
             ],
         ];
 
-        Log::channel('upscaler')->info('Upscaler (SUPIR) create prediction', [
+        Log::channel('upscaler')->info('Upscaler create prediction', [
             'shop_domain' => $shopDomain,
             'scale' => $scale,
+            'face_enhance' => $faceEnhance,
         ]);
 
         $response = Http::withToken($token)
-            ->timeout(45)
+            ->timeout(30)
             ->post(self::REPLICATE_API, $apiPayload);
 
         $statusCode = $response->status();
@@ -537,28 +537,27 @@ class AiGenerationService
             throw new \InvalidArgumentException('Missing image_url for enhance.');
         }
 
+        $version = $payload['version'] ?? 'v1.4';
         $scale = (int) ($payload['scale'] ?? 2);
-        $scale = max(2, min(4, $scale));
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
 
         $apiPayload = [
-            'version' => self::SUPIR_MODEL_VERSION,
+            'version' => self::ENHANCER_MODEL_VERSION,
             'input' => [
-                'image' => $imageInput,
-                'upscale' => $scale,
-                'min_size' => 1024,
-                'model_name' => 'SUPIR-v0F',
-                'a_prompt' => 'sharp, detailed, photorealistic, high quality, natural skin texture, fine details',
+                'img' => $imageInput,
+                'version' => $version,
+                'scale' => $scale,
             ],
         ];
 
-        Log::channel('upscaler')->info('Enhancer (SUPIR) create prediction', [
+        Log::channel('upscaler')->info('Enhancer create prediction', [
             'shop_domain' => $shopDomain,
+            'version' => $version,
             'scale' => $scale,
         ]);
 
         $response = Http::withToken($token)
-            ->timeout(45)
+            ->timeout(30)
             ->post(self::REPLICATE_API, $apiPayload);
 
         $statusCode = $response->status();
@@ -717,16 +716,13 @@ class AiGenerationService
 
         try {
             $url = self::REPLICATE_API . '/' . $jobId;
-            $response = Http::withToken($token)->timeout(25)->get($url);
+            $response = Http::withToken($token)->timeout(15)->get($url);
             $data = $response->json() ?? [];
             $status = $data['status'] ?? '';
 
             if ($status === 'succeeded') {
                 $output = $data['output'] ?? null;
-                $resultUrl = $this->extractResultUrlFromReplicateOutput($output);
-                if ($resultUrl === null && is_array($output)) {
-                    $resultUrl = is_string($output[0] ?? null) ? $output[0] : ($output['url'] ?? null);
-                }
+                $resultUrl = is_string($output) ? $output : (is_array($output) ? ($output['url'] ?? $output[0] ?? null) : null);
 
                 if ($resultUrl && $generation) {
                     $storedUrl = $this->storeProcessedImageFromUrl($resultUrl, 'upscale');
@@ -892,15 +888,15 @@ class AiGenerationService
 
         try {
             $url = self::REPLICATE_API . '/' . $jobId;
-            $response = Http::withToken($token)->timeout(25)->get($url);
+            $response = Http::withToken($token)->timeout(15)->get($url);
             $data = $response->json() ?? [];
             $status = $data['status'] ?? '';
 
             if ($status === 'succeeded') {
                 $output = $data['output'] ?? null;
-                $resultUrl = $this->extractResultUrlFromReplicateOutput($output);
+                $resultUrl = is_string($output) ? $output : (is_array($output) ? ($output['url'] ?? $output[0] ?? null) : null);
                 if ($resultUrl === null && is_array($output)) {
-                    $resultUrl = is_string($output[0] ?? null) ? $output[0] : ($output['url'] ?? null);
+                    $resultUrl = $this->extractResultUrlFromReplicateOutput($output);
                 }
                 if ($resultUrl === null) {
                     $resultUrl = $this->extractFirstUrlFromArray($data);

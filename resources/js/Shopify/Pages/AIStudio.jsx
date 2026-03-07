@@ -1021,7 +1021,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   }, [resultImageUrl, displayGenerated, showToast]);
 
   useEffect(() => {
-    if (initialImage && initialImage !== inputImage) setInputImage(initialImage);
+    if (initialImage && !inputImage) setInputImage(initialImage);
   }, [initialImage]);
 
   useEffect(() => {
@@ -1113,6 +1113,14 @@ export default function AIStudio({ product, initialImage, initialTool }) {
     const t = setTimeout(() => setToast(null), 4000);
     return () => clearTimeout(t);
   }, [toast]);
+
+  useEffect(() => {
+    if (processingStatus !== 'error') return;
+    setInputImage(null);
+    setResultImageUrl(null);
+    setJobId(null);
+    setLastCompletedTool(null);
+  }, [processingStatus]);
 
   useEffect(() => {
     refetchRecentGenerations();
