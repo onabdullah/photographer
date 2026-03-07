@@ -73,88 +73,105 @@ class AiUniversalService
             'original_image_url' => $productUrl,
         ]);
 
-        // Build the image_input array: product image first, then refs in order
-        // Convert local storage URLs to base64 so Replicate can read them.
-        $imageInput = [$this->imageUrlToReplicateInput($productUrl)];
-        foreach ($refUrls as $refUrl) {
-            $imageInput[] = $this->imageUrlToReplicateInput($refUrl);
-        }
-
-        // Nano Banana 2 Replicate payload — identical structure to Magic Eraser
-        $aspectRatio = $request->input('aspect_ratio', '1:1');
-        $resolution  = strtoupper($request->input('resolution', '1K'));
-
-        $payload = [
-            'version' => self::NANO_BANANA_2_VERSION,
-            'input'   => [
-                'prompt'        => $engineeredPrompt,
-                'image_input'   => $imageInput,
-                'aspect_ratio'  => $aspectRatio,
-                'resolution'    => $resolution,
-                'output_format' => 'jpg',
-            ],
-        ];
-
-        Log::info('AiUniversal: dispatching Nano Banana 2', [
-            'shop'         => $shopDomain,
-            'intent'       => $intent,
-            'aspect_ratio' => $aspectRatio,
-            'resolution'   => $resolution,
-            'has_refs'     => $hasRefs,
-            'ref_count'    => count($refUrls),
-            'credits_used' => $creditsUsed,
-        ]);
-
-        $response = Http::withToken($token)
-            ->withHeaders(['Prefer' => 'wait=60'])
-            ->timeout(65)
-            ->post(self::REPLICATE_API, $payload);
-
-        if ($response->failed()) {
-            Log::error('Nano Banana 2 API error', ['status' => $response->status(), 'body' => $response->body()]);
-            $generation->update(['status' => 'failed']);
-            throw new \RuntimeException('Nano Banana 2 API error: ' . ($response->json('detail') ?? $response->body()));
-        }
-
-        $data   = $response->json();
-        $jobId  = $data['id'] ?? null;
-        $status = $data['status'] ?? '';
-
-        if (! $jobId) {
-            $generation->update(['status' => 'failed']);
-            throw new \RuntimeException('Replicate did not return a job ID.');
-        }
-
-        $generation->update(['api_job_id' => $jobId]);
-
-        // Handle synchronous completion (Prefer: wait=60 may resolve immediately)
-        if (in_array($status, ['succeeded', 'successful'], true)) {
-            $outputUrl = $data['output'] ?? null;
-            $outputUrl = $this->extractOutput($outputUrl);
-            if ($outputUrl) {
-                $stored    = $this->downloadAndStore($outputUrl, $token, 'universal');
-                $outputUrl = $stored ?? $outputUrl;
-                $generation->update(['status' => 'completed', 'result_image_url' => $outputUrl]);
-                return [
-                    'status'           => 'done',
-                    'result_image_url' => $outputUrl,
-                    'generation_id'    => $generation->id,
-                ];
+        try {
+            // Build the image_input array: product image first, then refs in order
+            // Convert local storage URLs to base64 so Replicate can read them.
+            $imageInput = [$this->imageUrlToReplicateInput($productUrl)];
+            foreach ($refUrls as $refUrl) {
+                $imageInput[] = $this->imageUrlToReplicateInput($refUrl);
             }
-        }
 
-        if (in_array($status, ['failed', 'canceled'], true)) {
-            $error = $data['error'] ?? 'Nano Banana 2 job failed.';
-            $generation->update(['status' => 'failed']);
-            throw new \RuntimeException(is_string($error) ? $error : 'Nano Banana 2 job failed.');
-        }
+            // Nano Banana 2 Replicate payload — identical structure to Magic Eraser
+            $aspectRatio = $request->input('aspect_ratio', '1:1');
+            $resolution  = strtoupper($request->input('resolution', '1K'));
 
-        // Still queued / processing — caller will poll
-        return [
-            'status'        => 'processing',
-            'job_id'        => $jobId,
-            'generation_id' => $generation->id,
-        ];
+            $payload = [
+                'version' => self::NANO_BANANA_2_VERSION,
+                'input'   => [
+                    'prompt'        => $engineeredPrompt,
+                    'image_input'   => $imageInput,
+                    'aspect_ratio'  => $aspectRatio,
+                    'resolution'    => $resolution,
+                    'output_format' => 'jpg',
+                ],
+            ];
+
+            Log::info('AiUniversal: dispatching Nano Banana 2', [
+                'shop'         => $shopDomain,
+                'intent'       => $intent,
+                'aspect_ratio' => $aspectRatio,
+                'resolution'   => $resolution,
+                'has_refs'     => $hasRefs,
+                'ref_count'    => count($refUrls),
+                'credits_used' => $creditsUsed,
+            ]);
+
+            $response = Http::withToken($token)
+                ->withHeaders(['Prefer' => 'wait=60'])
+                ->timeout(65)
+                ->post(self::REPLICATE_API, $payload);
+
+            if ($response->failed()) {
+                $errorDetail = $response->json('detail') ?? $response->body();
+                $errorMsg    = 'Nano Banana 2 API error: ' . (is_string($errorDetail) && $errorDetail !== '' ? $errorDetail : ('HTTP ' . $response->status()));
+                Log::error('Nano Banana 2 API error', ['status' => $response->status(), 'body' => $response->body()]);
+                $generation->update(['status' => 'failed', 'error_message' => $errorMsg]);
+                throw new \RuntimeException($errorMsg);
+            }
+
+            $data   = $response->json();
+            $jobId  = $data['id'] ?? null;
+            $status = $data['status'] ?? '';
+
+            if (! $jobId) {
+                $generation->update(['status' => 'failed', 'error_message' => 'Replicate did not return a job ID.']);
+                throw new \RuntimeException('Replicate did not return a job ID.');
+            }
+
+            $generation->update(['api_job_id' => $jobId]);
+
+            // Handle synchronous completion (Prefer: wait=60 may resolve immediately)
+            if (in_array($status, ['succeeded', 'successful'], true)) {
+                $outputUrl = $data['output'] ?? null;
+                $outputUrl = $this->extractOutput($outputUrl);
+                if ($outputUrl) {
+                    $stored    = $this->downloadAndStore($outputUrl, $token, 'universal');
+                    $outputUrl = $stored ?? $outputUrl;
+                    $generation->update(['status' => 'completed', 'result_image_url' => $outputUrl]);
+                    return [
+                        'status'           => 'done',
+                        'result_image_url' => $outputUrl,
+                        'generation_id'    => $generation->id,
+                    ];
+                }
+            }
+
+            if (in_array($status, ['failed', 'canceled'], true)) {
+                $error    = $data['error'] ?? 'Nano Banana 2 job failed.';
+                $errorMsg = is_string($error) ? $error : 'Nano Banana 2 job failed.';
+                $generation->update(['status' => 'failed', 'error_message' => $errorMsg]);
+                throw new \RuntimeException($errorMsg);
+            }
+
+            // Still queued / processing — caller will poll
+            return [
+                'status'        => 'processing',
+                'job_id'        => $jobId,
+                'generation_id' => $generation->id,
+            ];
+
+        } catch (\Throwable $e) {
+            // Catch any unexpected exception after the generation record was created
+            // (e.g. base64 conversion failure, HTTP connection error, etc.)
+            // Only mark failed if still in processing state (specific paths above already set it)
+            if ($generation->status === 'processing') {
+                $generation->update([
+                    'status'        => 'failed',
+                    'error_message' => $e->getMessage() ?: 'Unexpected error during generation.',
+                ]);
+            }
+            throw $e;
+        }
     }
 
     /* ──────────────────────────────────────────────────────────────

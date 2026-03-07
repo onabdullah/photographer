@@ -493,6 +493,9 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                               a.target = '_blank'; a.rel = 'noopener noreferrer';
                               document.body.appendChild(a); a.click(); document.body.removeChild(a);
                               showToast('Download started');
+                              if (generationId) {
+                                axios.post('/shopify/tools/generation/downloaded', { generation_id: generationId }).catch(() => {});
+                              }
                             }}
                           >
                             Download
