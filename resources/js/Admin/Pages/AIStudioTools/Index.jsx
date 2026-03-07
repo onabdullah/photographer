@@ -1,5 +1,5 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { router } from '@inertiajs/react';
 import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag } from 'lucide-react';
@@ -71,6 +71,8 @@ export default function AIStudioToolsIndex({
 
     const [activitySearch, setActivitySearch] = useState('');
     const [activityStatusFilter, setActivityStatusFilter] = useState('all'); // 'all' | 'on_product' | 'downloaded' | 'ready'
+    const [activityPage, setActivityPage] = useState(1);
+    const ACTIVITY_PAGE_SIZE = 15;
 
     const getActivityStatusLabel = (gen) => {
         const onProduct = !!gen.has_product;
@@ -94,6 +96,17 @@ export default function AIStudioToolsIndex({
         }
         return list;
     }, [filteredRecent, activitySearch, activityStatusFilter]);
+
+    const activityTotal = filteredRecentForTable.length;
+    const activityLastPage = Math.max(1, Math.ceil(activityTotal / ACTIVITY_PAGE_SIZE));
+    const activityPaginated = useMemo(() => {
+        const start = (activityPage - 1) * ACTIVITY_PAGE_SIZE;
+        return filteredRecentForTable.slice(start, start + ACTIVITY_PAGE_SIZE);
+    }, [filteredRecentForTable, activityPage, ACTIVITY_PAGE_SIZE]);
+
+    useEffect(() => {
+        setActivityPage(1);
+    }, [activitySearch, activityStatusFilter, selectedTool]);
 
     const toolLabel = (key) => tools.find((t) => t.key === key)?.label || key;
 
@@ -617,7 +630,7 @@ export default function AIStudioToolsIndex({
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {filteredRecentForTable.map((gen) => {
+                                            {activityPaginated.map((gen) => {
                                                 const statusLabel = getActivityStatusLabel(gen);
                                                 const isOnProduct = !!gen.has_product;
                                                 const isDownloaded = !!gen.has_downloaded;
@@ -652,6 +665,40 @@ export default function AIStudioToolsIndex({
                                     </table>
                                 )}
                             </div>
+                            {activityTotal > ACTIVITY_PAGE_SIZE && (
+                                <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-4 py-2">
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                                        Showing{' '}
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                            {(activityPage - 1) * ACTIVITY_PAGE_SIZE + 1}
+                                        </span>
+                                        {' – '}
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                            {Math.min(activityPage * ACTIVITY_PAGE_SIZE, activityTotal)}
+                                        </span>
+                                        {' of '}
+                                        <span className="font-medium text-gray-900 dark:text-white">{activityTotal}</span>
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                                            disabled={activityPage <= 1}
+                                            className="btn btn-secondary text-xs py-1 px-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setActivityPage((p) => Math.min(activityLastPage, p + 1))}
+                                            disabled={activityPage >= activityLastPage}
+                                            className="btn btn-secondary text-xs py-1 px-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </>
                 )}

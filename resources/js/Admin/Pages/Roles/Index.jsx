@@ -3,7 +3,7 @@ import { Link } from '@inertiajs/react';
 import { Plus, Shield } from 'lucide-react';
 import ActionButtons from '@/Admin/Components/ActionButtons';
 
-export default function RolesIndex({ roles, totalPermissions }) {
+export default function RolesIndex({ roles = [], totalPermissions, rolesPaginator }) {
     const formatDate = (iso) =>
         iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
@@ -96,6 +96,35 @@ export default function RolesIndex({ roles, totalPermissions }) {
                         </tbody>
                     </table>
                 </div>
+
+                {rolesPaginator?.last_page > 1 && (
+                    <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-6 py-3">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Showing{' '}
+                            <span className="font-medium text-gray-900 dark:text-white">
+                                {(rolesPaginator.current_page - 1) * rolesPaginator.per_page + 1}
+                            </span>
+                            {' – '}
+                            <span className="font-medium text-gray-900 dark:text-white">
+                                {Math.min(rolesPaginator.current_page * rolesPaginator.per_page, rolesPaginator.total)}
+                            </span>
+                            {' of '}
+                            <span className="font-medium text-gray-900 dark:text-white">{rolesPaginator.total}</span>
+                        </p>
+                        <div className="flex gap-2">
+                            {rolesPaginator.prev_page_url ? (
+                                <Link href={rolesPaginator.prev_page_url} className="btn btn-secondary">Previous</Link>
+                            ) : (
+                                <span className="btn btn-secondary opacity-40 cursor-not-allowed">Previous</span>
+                            )}
+                            {rolesPaginator.next_page_url ? (
+                                <Link href={rolesPaginator.next_page_url} className="btn btn-secondary">Next</Link>
+                            ) : (
+                                <span className="btn btn-secondary opacity-40 cursor-not-allowed">Next</span>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </AdminLayout>
     );

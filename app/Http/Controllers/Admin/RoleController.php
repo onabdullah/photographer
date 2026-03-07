@@ -11,20 +11,29 @@ class RoleController extends Controller
 {
     public function index()
     {
-        $roles = AdminRole::withCount('users')
+        $paginator = AdminRole::withCount('users')
             ->latest()
-            ->get()
-            ->map(fn ($r) => [
-                'id'               => $r->id,
-                'name'             => $r->name,
-                'permissions_count'=> $r->permissions_count,
-                'users_count'      => $r->users_count,
-                'created_at'       => $r->created_at?->toIso8601String(),
-            ]);
+            ->paginate(15);
+
+        $roles = collect($paginator->items())->map(fn ($r) => [
+            'id'               => $r->id,
+            'name'             => $r->name,
+            'permissions_count'=> $r->permissions_count,
+            'users_count'      => $r->users_count,
+            'created_at'       => $r->created_at?->toIso8601String(),
+        ])->all();
 
         return Inertia::render('Admin/Pages/Roles/Index', [
             'roles'           => $roles,
             'totalPermissions'=> count(AdminRole::allPermissionKeys()),
+            'rolesPaginator'  => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+                'prev_page_url'=> $paginator->previousPageUrl(),
+                'next_page_url'=> $paginator->nextPageUrl(),
+            ],
         ]);
     }
 
