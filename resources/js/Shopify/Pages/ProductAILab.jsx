@@ -627,7 +627,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
 
                   {/* Step 5 – Resolution */}
                   <BlockStack gap="200">
-                    <Text variant="bodySm" tone="subdued" as="p">Step 5 — Resolution</Text>
+                    <Text variant="bodySm" tone="subdued" as="p">Resolution</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
                       {RESOLUTION_OPTIONS.map((opt) => (
                         <PillButton
