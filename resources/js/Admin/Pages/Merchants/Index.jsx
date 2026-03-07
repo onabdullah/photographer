@@ -1,10 +1,35 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
-import { Link } from '@inertiajs/react';
-import { Store } from 'lucide-react';
+import { Link, usePage, router } from '@inertiajs/react';
+import { useState } from 'react';
+import { Store, Pencil } from 'lucide-react';
 
 export default function MerchantsIndex({ merchants }) {
     const paginator = merchants;
     const items     = paginator?.data ?? [];
+    const { auth } = usePage().props;
+    const permissions = auth?.user?.permissions ?? [];
+    const canManage = permissions.includes('*') || permissions.includes('merchants.manage');
+
+    const [editingCredits, setEditingCredits] = useState(null); // { id, store_name, value }
+    const [creditsInput, setCreditsInput] = useState('');
+
+    const openEditCredits = (m) => {
+        setEditingCredits({ id: m.id, store_name: m.store_name || m.name });
+        setCreditsInput(String(m.ai_credits_balance ?? 0));
+    };
+    const closeEditCredits = () => {
+        setEditingCredits(null);
+        setCreditsInput('');
+    };
+    const saveCredits = () => {
+        if (editingCredits == null) return;
+        const value = Math.max(0, parseInt(creditsInput, 10));
+        if (Number.isNaN(value)) return;
+        router.patch(`/admin/merchants/${editingCredits.id}/credits`, { ai_credits_balance: value }, {
+            preserveScroll: true,
+            onSuccess: () => closeEditCredits(),
+        });
+    };
 
     const planName = (m) => {
         if (m.shopify_freemium) return 'Free';
@@ -70,8 +95,23 @@ export default function MerchantsIndex({ merchants }) {
                                                 {planName(m)}
                                             </span>
                                         </td>
-                                        <td className="whitespace-nowrap px-4 py-4 text-right text-sm tabular-nums text-gray-700 dark:text-gray-300">
-                                            {Number(m.ai_credits_balance ?? 0).toLocaleString()}
+                                        <td
+                                            className="whitespace-nowrap px-4 py-4 text-right text-sm tabular-nums text-gray-700 dark:text-gray-300"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <span className="inline-flex items-center justify-end gap-1.5 w-full">
+                                                {Number(m.ai_credits_balance ?? 0).toLocaleString()}
+                                                {canManage && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEditCredits(m)}
+                                                        className="p-1 rounded text-gray-400 hover:text-primary-600 hover:bg-primary-500/10 dark:hover:text-primary-400 dark:hover:bg-primary-500/20 transition-colors"
+                                                        aria-label={`Edit credits for ${m.store_name || m.name}`}
+                                                    >
+                                                        <Pencil size={14} />
+                                                    </button>
+                                                )}
+                                            </span>
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-4 text-right text-sm tabular-nums text-gray-700 dark:text-gray-300">
                                             {Number(m.images_generated_count ?? 0).toLocaleString()}
@@ -138,6 +178,44 @@ export default function MerchantsIndex({ merchants }) {
                     )}
                 </div>
 
+                {/* Edit credits modal */}
+                {editingCredits && (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="edit-credits-title"
+                        onClick={closeEditCredits}
+                    >
+                        <div className="card-base w-full max-w-sm p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                            <h2 id="edit-credits-title" className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                                Edit credits
+                            </h2>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                                {editingCredits.store_name}
+                            </p>
+                            <label className="form-label">Credits</label>
+                            <input
+                                type="number"
+                                min={0}
+                                step={1}
+                                value={creditsInput}
+                                onChange={(e) => setCreditsInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && saveCredits()}
+                                className="form-input mb-4"
+                                autoFocus
+                            />
+                            <div className="flex justify-end gap-2">
+                                <button type="button" onClick={closeEditCredits} className="btn btn-secondary">
+                                    Cancel
+                                </button>
+                                <button type="button" onClick={saveCredits} className="btn btn-primary">
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </AdminLayout>
     );
