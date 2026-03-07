@@ -457,23 +457,27 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   const handleMagicEraser = useCallback(async () => {
     if (!hasValidInput || selectedTool !== 'magic_eraser') return;
     const canvas = magicEraserCanvasRef.current;
-    if (!canvas || !magicEraserHasStrokes) {
+    const img = magicEraserImageRef.current;
+    if (!canvas || !img || !magicEraserHasStrokes) {
       showToast('Draw over the area you want to erase, then click Erase Object.', true);
       return;
     }
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const w = canvas.width;
-    const h = canvas.height;
+    const displayW = canvas.width;
+    const displayH = canvas.height;
+    const naturalW = img.naturalWidth || displayW;
+    const naturalH = img.naturalHeight || displayH;
+
     const maskCanvas = document.createElement('canvas');
-    maskCanvas.width = w;
-    maskCanvas.height = h;
+    maskCanvas.width = displayW;
+    maskCanvas.height = displayH;
     const mCtx = maskCanvas.getContext('2d');
     if (!mCtx) return;
     mCtx.fillStyle = '#000000';
-    mCtx.fillRect(0, 0, w, h);
-    const imgData = ctx.getImageData(0, 0, w, h);
-    const maskData = mCtx.createImageData(w, h);
+    mCtx.fillRect(0, 0, displayW, displayH);
+    const imgData = ctx.getImageData(0, 0, displayW, displayH);
+    const maskData = mCtx.createImageData(displayW, displayH);
     for (let i = 0; i < imgData.data.length; i += 4) {
       const a = imgData.data[i + 3];
       maskData.data[i] = a > 10 ? 255 : 0;
@@ -482,7 +486,17 @@ export default function AIStudio({ product, initialImage, initialTool }) {
       maskData.data[i + 3] = 255;
     }
     mCtx.putImageData(maskData, 0, 0);
-    let maskBase64 = maskCanvas.toDataURL('image/png');
+
+    const fullSizeMaskCanvas = document.createElement('canvas');
+    fullSizeMaskCanvas.width = naturalW;
+    fullSizeMaskCanvas.height = naturalH;
+    const fullCtx = fullSizeMaskCanvas.getContext('2d');
+    if (!fullCtx) return;
+    fullCtx.fillStyle = '#000000';
+    fullCtx.fillRect(0, 0, naturalW, naturalH);
+    fullCtx.drawImage(maskCanvas, 0, 0, displayW, displayH, 0, 0, naturalW, naturalH);
+
+    let maskBase64 = fullSizeMaskCanvas.toDataURL('image/png');
     if (maskBase64.startsWith('data:')) maskBase64 = maskBase64.split(',')[1] || maskBase64;
 
     setProcessingStatus('uploading');
