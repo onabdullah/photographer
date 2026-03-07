@@ -192,9 +192,9 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
               </div>
               <div className="dashboard-tools-grid">
                 {[
+                  { name: 'Magic Eraser', desc: 'Remove unwanted objects', value: 'magic_eraser', Icon: Eraser },
                   { name: 'Background Remover', desc: 'Clean your image background', value: 'remove_bg', Icon: ImageMinus },
                   { name: 'Upscaler', desc: 'Increase resolution 4×', value: 'upscale', Icon: Maximize2 },
-                  { name: 'Magic Eraser', desc: 'Remove unwanted objects', value: 'magic_eraser', Icon: Eraser },
                   { name: 'Image Enhancer', desc: 'Boost clarity & detail', value: 'enhance', Icon: Sparkles },
                   { name: 'Lighting Fix', desc: 'Adjust exposure & balance', value: 'lighting', Icon: Sun },
                 ].map(({ name, desc, value, Icon }) => (

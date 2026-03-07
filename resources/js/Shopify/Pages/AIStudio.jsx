@@ -36,9 +36,9 @@ import MagicButton from '@/Shopify/Components/MagicButton';
 import BrowseFromStore from '@/Shopify/Components/BrowseFromStore';
 
 const AI_TOOLS = [
+  { value: 'magic_eraser', label: 'Magic Eraser' },
   { value: 'remove_bg', label: 'Background Remover' },
   { value: 'upscale', label: 'Upscaler' },
-  { value: 'magic_eraser', label: 'Magic Eraser' },
   { value: 'enhance', label: 'Image Enhancer' },
   { value: 'lighting', label: 'Lighting Fix' },
 ];
@@ -51,14 +51,14 @@ const ASPECT_RATIOS = [
   { value: '9:16', label: '9:16', ratio: '9/16' },
 ];
 
-const VALID_TOOLS = ['remove_bg', 'upscale', 'magic_eraser', 'enhance', 'lighting'];
+const VALID_TOOLS = ['magic_eraser', 'remove_bg', 'upscale', 'enhance', 'lighting'];
 
 /** Gallery filter: value matches ImageGeneration.tool_used from API (e.g. background_remover) */
 const GALLERY_TOOL_OPTIONS = [
   { value: 'all', label: 'All tools' },
+  { value: 'magic_eraser', label: 'Magic Eraser' },
   { value: 'background_remover', label: 'Background Remover' },
   { value: 'upscaler', label: 'Upscaler' },
-  { value: 'magic_eraser', label: 'Magic Eraser' },
   { value: 'enhance', label: 'Image Enhancer' },
   { value: 'lighting', label: 'Lighting Fix' },
 ];
@@ -145,8 +145,6 @@ const LIGHTING_PRESETS = [
   { value: 'luxury_glossy', label: 'Luxury Glossy', prompt: 'Luxury glossy style: polished, premium reflections. Magazine finish. Subject sharp; only lighting quality and sheen.' },
 ];
 
-const MAGIC_ERASER_DEFAULT_PROMPT = 'Remove the object in the masked region and seamlessly fill the background.';
-
 const MAGIC_ERASER_ASPECT_RATIOS = [
   { value: 'match_input_image', label: 'Match input image' },
   { value: '1:1', label: '1:1' },
@@ -159,15 +157,253 @@ const MAGIC_ERASER_ASPECT_RATIOS = [
 ];
 
 const MAGIC_ERASER_RESOLUTIONS = [
-  { value: '512', label: '512px (fastest)' },
   { value: '1K', label: '1K (default)' },
   { value: '2K', label: '2K' },
-  { value: '4K', label: '4K (highest quality)' },
+  { value: '4K', label: '4K (highest quality, more credits)' },
 ];
 
 const MAGIC_ERASER_OUTPUT_FORMATS = [
   { value: 'jpg', label: 'JPG' },
   { value: 'png', label: 'PNG' },
+];
+
+const PROCESSING_MESSAGES = [
+  'Cooking…',
+  'Burning the midnight oil…',
+  'Bombing the pixels…',
+  'Summoning the AI…',
+  'Polishing the matrix…',
+  'Teaching pixels to behave…',
+  'Convincing the cloud…',
+  'Baking at 4096°…',
+  'Shaking the magic 8-ball…',
+  'Negotiating with robots…',
+  'Un-crunching numbers…',
+  'Defragmenting reality…',
+  'Loading the good stuff…',
+  'Waking up the hamsters…',
+  'Reheating the algorithm…',
+  'Stirring the digital soup…',
+  'Pressing the magic button…',
+  'Asking the oracle…',
+  'Rendering the inevitable…',
+  'Almost there (maybe)…',
+  'Charging the flux capacitor…',
+  'Herding the bits…',
+  'Consulting the neural net…',
+  'Buffering the vibes…',
+  'Calibrating the dream machine…',
+  'Smoothing the wrinkles in spacetime…',
+  'Downloading more RAM…',
+  'Training the hamsters…',
+  'Aligning the chakras of your image…',
+  'Sending thoughts and prayers to the GPU…',
+  'Brewing a fresh batch…',
+  'Dusting off the mainframe…',
+  'Warming up the quantum oven…',
+  'Filing the rough edges…',
+  'Teaching old pixels new tricks…',
+  'Running it through the good filter…',
+  'Applying the secret sauce…',
+  'Dialing up the magic…',
+  'Refreshing the crystal ball…',
+  'Tuning the antenna to the cloud…',
+  'Pumping iron in the data center…',
+  'Meditating on your request…',
+  'Doing the heavy lifting…',
+  'Spinning the wheel of fortune…',
+  'Rolling the dice on quality…',
+  'Crossing the streams…',
+  'Mixing the potion…',
+  'Firing up the afterburners…',
+  'Waking the sleeping servers…',
+  'Untangling the spaghetti code…',
+  'Polishing the digital apple…',
+  'Feeding the model its vitamins…',
+  'Giving the AI a pep talk…',
+  'Squeezing the last drop of genius…',
+  'Running the gauntlet…',
+  'Pushing the envelope (gently)…',
+  'Turning lead into gold…',
+  'Making the magic happen…',
+  'Crunching the crunchy bits…',
+  'Sifting through the noise…',
+  'Finding the signal…',
+  'Connecting the dots…',
+  'Filling in the blanks…',
+  'Dotting the i\'s and crossing the t\'s…',
+  'Putting the pieces together…',
+  'Assembling the dream team…',
+  'Calling in the specialists…',
+  'Running the numbers (and the letters)…',
+  'Double-checking with the universe…',
+  'Getting a second opinion from the cloud…',
+  'Waiting for the green light…',
+  'Clearing the runway…',
+  'Preparing for liftoff…',
+  'Counting down to awesome…',
+  'Building the future, one pixel at a time…',
+  'Quality control in progress…',
+  'Adding the finishing touches…',
+  'Putting the cherry on top…',
+  'Making it pop…',
+  'Kicking it up a notch…',
+  'Taking it to the next level…',
+  'Leveling up your image…',
+  'Unlocking achievements…',
+  'Earning experience points…',
+  'Grinding for that perfect result…',
+  'Crafting something special…',
+  'Forging in the digital fire…',
+  'Tempering the pixels…',
+  'Quenching the hot data…',
+  'Annealing the neural weights…',
+  'Backpropagating the good vibes…',
+  'Gradient descending into greatness…',
+  'Optimizing the optimizer…',
+  'Converging on perfection…',
+  'Minimizing the loss (of quality)…',
+  'Maximizing the wow factor…',
+  'Tuning the hyperparameters of joy…',
+  'Running inference on your dreams…',
+  'Embedding the vibes in latent space…',
+  'Decoding the matrix…',
+  'Rendering with love…',
+  'Ray tracing your happiness…',
+  'Anti-aliasing the rough days…',
+  'Blurring the bad, sharpening the good…',
+  'Applying the beauty filter to reality…',
+  'Color grading the moment…',
+  'Balancing the exposure of life…',
+  'Noise reduction in progress…',
+  'Stabilizing the shot…',
+  'Focus stacking the details…',
+  'HDR merging the highlights…',
+  'Compositing the impossible…',
+  'Keying out the boring parts…',
+  'Tracking the good stuff…',
+  'Motion blurring the stress…',
+  'Depth of field on point…',
+  'Bokeh-ing the background…',
+  'Vignetting the edges of doubt…',
+  'Sharpening the mind (and the image)…',
+  'Cloning out the haters…',
+  'Healing brush on the soul…',
+  'Patch tool fixing the vibes…',
+  'Liquify mode: making it work…',
+  'Content-aware fill for the void…',
+  'Neural filter: optimism…',
+  'Super resolution on your hopes…',
+  'Upscaling the good times…',
+  'Denoising the chaos…',
+  'Style transfer to awesome…',
+  'GAN training complete (almost)…',
+  'Diffusion in progress…',
+  'Latent space exploration…',
+  'Prompt engineering your destiny…',
+  'Tokenizing the good vibes…',
+  'Attention mechanism engaged…',
+  'Transformer doing its thing…',
+  'Feed-forward to greatness…',
+  'Layer normalization in progress…',
+  'Dropout the bad, keep the good…',
+  'Batch norm for your soul…',
+  'Activation function: happiness…',
+  'Loss decreasing (stress decreasing)…',
+  'Epoch 42: still learning…',
+  'Fine-tuning the universe…',
+  'Transfer learning from the best…',
+  'Zero-shotting to success…',
+  'Few-shot learning the way…',
+  'In-context learning your preferences…',
+  'Emergent behavior: magic…',
+  'Scaling laws on your side…',
+  'Parameters aligning…',
+  'Weights updating…',
+  'Bias toward awesome…',
+  'Overfitting to your taste…',
+  'Underfitting the boring stuff…',
+  'Regularization: keeping it real…',
+  'Early stopping the bad ideas…',
+  'Checkpoint saved (your patience)…',
+  'Resume from best epoch…',
+  'Warmup complete, full speed ahead…',
+  'Learning rate just right…',
+  'Momentum building…',
+  'Adam optimizing your day…',
+  'SGD with a smile…',
+  'Gradient descent into delight…',
+  'Backpropagating the love…',
+  'Forward pass to victory…',
+  'Inference time (your time to shine)…',
+  'Model loaded, magic loading…',
+  'Weights downloaded, vibes uploading…',
+  'Pipeline primed…',
+  'Queue position: almost there…',
+  'Serving the good stuff…',
+  'Throughput maximized…',
+  'Latency minimized…',
+  'Bandwidth to the moon…',
+  'Cache warming up…',
+  'Memory allocated for greatness…',
+  'GPU utilization: 100% effort…',
+  'CPU cheering from the sidelines…',
+  'Disk I/O: reading the stars…',
+  'Network: sending love to the cloud…',
+  'API call in progress…',
+  'Webhook pending (good news)…',
+  'Response time: worth the wait…',
+  'Status: making it work…',
+  'Error count: zero (fingers crossed)…',
+  'Retry attempt: infinite optimism…',
+  'Timeout: not today…',
+  'Success rate: trending up…',
+  'Confidence score: high…',
+  'Probability of awesome: 0.99…',
+  'Logits aligning…',
+  'Softmax over options…',
+  'Argmax: choosing the best…',
+  'Sampling from the good distribution…',
+  'Temperature: just right…',
+  'Top-p filtering the best ideas…',
+  'Beam search for quality…',
+  'Greedy decoding the win…',
+  'Your image is in good hands…',
+  'The machines are working for you…',
+  'Trust the process…',
+  'Good things take time…',
+  'Worth the wait…',
+  'Almost ready to impress…',
+  'Preparing your masterpiece…',
+  'Crafting excellence…',
+  'One moment of magic…',
+  'Creating something you\'ll love…',
+  'We\'ve got this…',
+  'Hold tight…',
+  'Sit back and relax…',
+  'Let us do the work…',
+  'You\'re going to love this…',
+  'Building your vision…',
+  'Making it real…',
+  'From idea to image…',
+  'Dreams to pixels…',
+  'Imagination engine running…',
+  'Creativity mode: on…',
+  'Innovation in progress…',
+  'Magic loading…',
+  'Wonder loading…',
+  'Awe loading…',
+  'Delight loading…',
+  'Joy loading…',
+  'Excellence loading…',
+  'Perfection loading…',
+  'Awesome loading…',
+  'Brilliance loading…',
+  'Genius loading…',
+  'Sparkle loading…',
+  'Shine loading…',
+  'Glow loading…',
+  'Bliss loading…',
 ];
 
 const GALLERY_DATE_OPTIONS = [
@@ -213,7 +449,7 @@ function MasterpieceIllustration() {
 }
 
 export default function AIStudio({ product, initialImage, initialTool }) {
-  const validInitialTool = initialTool && VALID_TOOLS.includes(initialTool) ? initialTool : 'remove_bg';
+  const validInitialTool = initialTool && VALID_TOOLS.includes(initialTool) ? initialTool : 'magic_eraser';
   const [inputImage, setInputImage] = useState(initialImage || null);
   const [generatedImages, setGeneratedImages] = useState([]);
   const [selectedGeneratedIndex, setSelectedGeneratedIndex] = useState(0);
@@ -240,7 +476,6 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   const [enhanceVersion, setEnhanceVersion] = useState('v1.4');
   const [enhanceScale, setEnhanceScale] = useState('2');
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
-  const [magicEraserPrompt, setMagicEraserPrompt] = useState(MAGIC_ERASER_DEFAULT_PROMPT);
   const [magicEraserAspectRatio, setMagicEraserAspectRatio] = useState('match_input_image');
   const [magicEraserResolution, setMagicEraserResolution] = useState('1K');
   const [magicEraserOutputFormat, setMagicEraserOutputFormat] = useState('jpg');
@@ -251,6 +486,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   const [exportType, setExportType] = useState('flat'); // 'flat', 'categories', 'specific_tool'
   const [exportSpecificTool, setExportSpecificTool] = useState('background_remover');
   const [isExporting, setIsExporting] = useState(false);
+  const [processingMessageIndex, setProcessingMessageIndex] = useState(0);
 
   const showToast = useCallback((message, isError = false) => {
     setToast({ message, isError });
@@ -278,6 +514,16 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   const isRemoveBg = selectedTool === 'remove_bg';
   const isScanning = processingStatus === 'uploading' || processingStatus === 'scanning';
   const isRemoveBgDone = isRemoveBg && processingStatus === 'done' && resultImageUrl;
+  const processingLabel = PROCESSING_MESSAGES[processingMessageIndex % PROCESSING_MESSAGES.length];
+
+  useEffect(() => {
+    if (!isScanning) return;
+    setProcessingMessageIndex((i) => Math.floor(Math.random() * PROCESSING_MESSAGES.length));
+    const id = setInterval(() => {
+      setProcessingMessageIndex((i) => (i + 1) % PROCESSING_MESSAGES.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [isScanning]);
 
   const handleToolChange = useCallback((value) => setSelectedTool(value), []);
 
@@ -543,8 +789,6 @@ export default function AIStudio({ product, initialImage, initialTool }) {
         throw new Error('Invalid image source');
       }
       formData.append('mask_base64', maskBase64);
-      const promptToSend = (magicEraserPrompt && magicEraserPrompt.trim()) ? magicEraserPrompt.trim() : MAGIC_ERASER_DEFAULT_PROMPT;
-      formData.append('prompt', promptToSend);
       formData.append('aspect_ratio', magicEraserAspectRatio);
       formData.append('resolution', magicEraserResolution);
       formData.append('output_format', magicEraserOutputFormat);
@@ -574,7 +818,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
       showToast(msg, true);
       setProcessingStatus('error');
     }
-  }, [hasValidInput, inputImage, selectedTool, magicEraserHasStrokes, magicEraserPrompt, magicEraserAspectRatio, magicEraserResolution, magicEraserOutputFormat, showToast, refetchRecentGenerations]);
+  }, [hasValidInput, inputImage, selectedTool, magicEraserHasStrokes, magicEraserAspectRatio, magicEraserResolution, magicEraserOutputFormat, showToast, refetchRecentGenerations]);
 
   useEffect(() => {
     if (processingStatus !== 'scanning' || !jobId) return;
@@ -980,7 +1224,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
             <Layout.Section>
               <Card padding="0" className="aistudio-hero-card">
                 <div className={`aistudio-hero-canvas${(isProcessing || isScanning) ? ' aistudio-hero-canvas--processing' : ''}`}>
-                  {isRemoveBg && isScanning && hasValidInput ? (
+                  {isScanning && hasValidInput ? (
                     <div className="aistudio-scanning">
                       <div className="premium-scanning-wrapper">
                         <img
@@ -989,59 +1233,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                           className="premium-scanning-img"
                         />
                         <div className="premium-scanning-badge" aria-live="polite">
-                          ✨ AI is extracting subject...
-                        </div>
-                      </div>
-                    </div>
-                  ) : selectedTool === 'upscale' && isScanning && hasValidInput ? (
-                    <div className="aistudio-scanning">
-                      <div className="premium-scanning-wrapper">
-                        <img
-                          src={inputImage}
-                          alt=""
-                          className="premium-scanning-img"
-                        />
-                        <div className="premium-scanning-badge" aria-live="polite">
-                          Upscaling...
-                        </div>
-                      </div>
-                    </div>
-                  ) : selectedTool === 'magic_eraser' && isScanning && hasValidInput ? (
-                    <div className="aistudio-scanning">
-                      <div className="premium-scanning-wrapper">
-                        <img
-                          src={inputImage}
-                          alt=""
-                          className="premium-scanning-img"
-                        />
-                        <div className="premium-scanning-badge" aria-live="polite">
-                          ✨ Erasing object...
-                        </div>
-                      </div>
-                    </div>
-                  ) : selectedTool === 'enhance' && isScanning && hasValidInput ? (
-                    <div className="aistudio-scanning">
-                      <div className="premium-scanning-wrapper">
-                        <img
-                          src={inputImage}
-                          alt=""
-                          className="premium-scanning-img"
-                        />
-                        <div className="premium-scanning-badge" aria-live="polite">
-                          Enhancing...
-                        </div>
-                      </div>
-                    </div>
-                  ) : selectedTool === 'lighting' && isScanning && hasValidInput ? (
-                    <div className="aistudio-scanning">
-                      <div className="premium-scanning-wrapper">
-                        <img
-                          src={inputImage}
-                          alt=""
-                          className="premium-scanning-img"
-                        />
-                        <div className="premium-scanning-badge" aria-live="polite">
-                          Applying lighting...
+                          ✨ {processingLabel}
                         </div>
                       </div>
                     </div>
@@ -1352,14 +1544,6 @@ export default function AIStudio({ product, initialImage, initialTool }) {
 
                   {selectedTool === 'magic_eraser' && (
                     <BlockStack gap="200">
-                      <TextField
-                        label="Instructions for masked area"
-                        value={magicEraserPrompt}
-                        onChange={setMagicEraserPrompt}
-                        placeholder={MAGIC_ERASER_DEFAULT_PROMPT}
-                        helpText="Edit to describe what should appear in the erased area (e.g. seamless background, specific content)"
-                        autoComplete="off"
-                      />
                       <RangeSlider
                         label="Brush size"
                         value={magicEraserBrushSize}
