@@ -30,6 +30,7 @@ export default function ShopifyLayout({ children }) {
       <NavMenu>
         <a href="/shopify" rel="home">Dashboard</a>
         <a href="/shopify/ai-studio">AI Studio</a>
+        <a href="/shopify/ai-studio-pro">AI Studio Pro</a>
         <a href="/shopify/ai-models">AI Models (Virtual Try-On)</a>
         <a href="/shopify/plans">Plans & Billing</a>
         <a href="/shopify/settings">Settings</a>
