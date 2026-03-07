@@ -119,6 +119,11 @@ Route::middleware(['auth:admin'])->group(function () {
         ->middleware('admin.permission:analytics.view')
         ->name('analytics');
 
+    // Finance
+    Route::get('/finance', function () {
+        return Inertia::render('Admin/Pages/Finance');
+    })->middleware('admin.permission:finance.view')->name('finance');
+
     Route::get('/ai-studio-tools', \App\Http\Controllers\Admin\AiStudioToolsController::class)
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools');

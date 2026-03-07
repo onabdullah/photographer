@@ -30,6 +30,9 @@ class AdminRole extends Model
             'analytics.view'    => 'Analytics View',
             'ai_studio.view'    => 'AI Studio Tools View',
         ],
+        'FINANCE' => [
+            'finance.view'      => 'Finance View',
+        ],
         'USERS' => [
             'users.view'        => 'Users View',
             'users.manage'      => 'Users Manage',

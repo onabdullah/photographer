@@ -27,6 +27,7 @@ import {
     TerminalSquare,
     X,
     Sparkles,
+    DollarSign,
 } from 'lucide-react';
 
 // ============================================================
@@ -70,6 +71,13 @@ const SECTIONS = [
         items: [
             { name: 'AI Studio Tools', href: '/admin/ai-studio-tools', icon: Sparkles, permission: 'ai_studio.view' },
             { name: 'Analytics',     href: '/admin/analytics',     icon: BarChart3, permission: 'analytics.view' },
+        ],
+    },
+    {
+        id: 'finance',
+        label: 'FINANCE',
+        items: [
+            { name: 'Finance', href: '/admin/finance', icon: DollarSign, permission: 'finance.view' },
         ],
     },
     {

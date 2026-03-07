@@ -22,6 +22,9 @@ export const ALL_PERMISSIONS = {
     'ANALYTICS': {
         'analytics.view':    'Analytics View',
     },
+    'FINANCE': {
+        'finance.view':      'Finance View',
+    },
     'USERS': {
         'users.view':        'Users View',
         'users.manage':      'Users Manage',
