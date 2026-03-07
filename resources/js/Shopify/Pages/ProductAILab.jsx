@@ -17,6 +17,7 @@ import {
   ChoiceList,
 } from '@shopify/polaris';
 import {
+  ArrowRightIcon,
   ExportIcon,
   ImageIcon,
   ImageMagicIcon,
@@ -525,6 +526,16 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                       </div>
                     </div>
 
+                  ) : productImage ? (
+                    /* Preview — product selected, waiting for generate */
+                    <div className="aistudio-hero-preview">
+                      <img
+                        src={productImage}
+                        alt="Product preview"
+                        className="aistudio-hero-preview-img"
+                      />
+                    </div>
+
                   ) : (
                     /* Empty state */
                     <div className="aistudio-hero-empty">
@@ -554,9 +565,23 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                     <Text variant="bodySm" tone="subdued" as="p">Select Product</Text>
                     {productImage ? (
                       <BlockStack gap="200">
-                        <div className="aistudio-panel-thumb aistudio-panel-thumb-checkerboard" style={{ borderRadius: 8, overflow: 'hidden' }}>
-                          <img src={productImage} alt="Product" style={{ width: '100%', display: 'block' }} />
-                        </div>
+                        {isDone && resultImageUrl ? (
+                          <div className="aistudio-panel-source-output">
+                            <div className="aistudio-panel-thumb aistudio-panel-thumb-checkerboard">
+                              <img src={productImage} alt="Source" style={{ width: '100%', display: 'block' }} />
+                            </div>
+                            <span className="aistudio-panel-arrow" aria-hidden>
+                              <Icon source={ArrowRightIcon} tone="subdued" />
+                            </span>
+                            <div className="aistudio-panel-thumb aistudio-panel-thumb-output aistudio-panel-thumb-checkerboard">
+                              <img src={resultImageUrl} alt="Output" style={{ width: '100%', display: 'block' }} />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="aistudio-panel-thumb aistudio-panel-thumb-checkerboard" style={{ borderRadius: 8, overflow: 'hidden' }}>
+                            <img src={productImage} alt="Product" style={{ width: '100%', display: 'block' }} />
+                          </div>
+                        )}
                         <Button variant="plain" size="slim" onClick={() => setProductImage(null)}>
                           Remove product
                         </Button>
