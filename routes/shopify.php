@@ -40,6 +40,10 @@ Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMis
     // AI Models (Virtual Try-On) – Coming Soon
     Route::get('/ai-models', [\App\Http\Controllers\ShopifyController::class, 'aiModels'])->name('ai-models');
 
+    // AI Studio Pro – Hybrid Routing (VTON + Universal Multimodal)
+    Route::get('/ai-studio-pro', [\App\Http\Controllers\AiRouterController::class, 'show'])->name('ai-studio-pro');
+    Route::post('/ai-studio/generate', [\App\Http\Controllers\AiRouterController::class, 'generate'])->name('ai-studio.generate');
+
     // Background Remover (strategy-based: Replicate / Photoroom)
     Route::post('/remove-background', [\App\Http\Controllers\AiStudioController::class, 'removeBackground'])->name('remove-background');
     Route::get('/background-job/{jobId}', [\App\Http\Controllers\AiStudioController::class, 'checkJobStatus'])->name('background-job.status');

@@ -86,10 +86,10 @@ class AiGenerationService
      * Resolve image URL from request: upload file to storage or use provided URL.
      * Returns full public URL or null if invalid.
      */
-    public function resolveImageUrlFromRequest(\Illuminate\Http\Request $request): ?string
+    public function resolveImageUrlFromRequest(\Illuminate\Http\Request $request, string $field = 'image'): ?string
     {
-        if ($request->hasFile('image')) {
-            $file = $request->file('image');
+        if ($request->hasFile($field)) {
+            $file = $request->file($field);
             $path = 'ai-studio/uploads/' . Str::random(16) . '_' . $file->getClientOriginalName();
             Storage::disk('public')->put($path, file_get_contents($file->getRealPath()));
             $url = Storage::disk('public')->url($path);
@@ -98,8 +98,8 @@ class AiGenerationService
             }
             return $url;
         }
-        if ($request->filled('image') && filter_var($request->input('image'), FILTER_VALIDATE_URL)) {
-            return $request->input('image');
+        if ($request->filled($field) && filter_var($request->input($field), FILTER_VALIDATE_URL)) {
+            return $request->input($field);
         }
         return null;
     }
