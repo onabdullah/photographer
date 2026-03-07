@@ -260,11 +260,12 @@ export default function AIStudioToolsIndex({
                                                     const isEnabled = e.target.value === 'enabled';
                                                     router.patch('/admin/ai-studio-tools/settings', { tool_key: t.key, is_enabled: isEnabled }, { preserveScroll: true });
                                                 }}
-                                                className={`min-w-0 text-[10px] font-medium rounded py-1 pl-2 pr-6 cursor-pointer focus:outline-none focus:ring-1 border transition-colors ${
+                                                className={`min-h-[28px] px-2.5 py-1 text-xs font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-colors appearance-none bg-no-repeat pr-7 ${
                                                     t.is_enabled
-                                                        ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25 dark:border-emerald-500/30 focus:ring-emerald-500/30'
-                                                        : 'bg-gray-500/10 dark:bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-400/25 dark:border-gray-500/30 focus:ring-gray-500/30'
+                                                        ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25 dark:border-emerald-500/30'
+                                                        : 'bg-gray-500/10 dark:bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-400/25 dark:border-gray-500/30'
                                                 }`}
+                                                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundPosition: 'right 0.5rem center' }}
                                                 aria-label={`${t.label} visibility on store`}
                                             >
                                                 <option value="enabled">Show on store</option>
