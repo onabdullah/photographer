@@ -17,6 +17,11 @@ use Illuminate\Support\Str;
  */
 class AiGenerationService
 {
+    private static function processingDurationSeconds(ImageGeneration $generation): float
+    {
+        return round($generation->created_at->diffInSeconds(now(), true), 4);
+    }
+
     private const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
 
     /** nightmareai/real-esrgan – image, scale (2–10), face_enhance */
@@ -309,6 +314,7 @@ class AiGenerationService
                 $generation->update([
                     'result_image_url' => $result['result_url'],
                     'status' => 'completed',
+                    'processing_time_seconds' => self::processingDurationSeconds($generation),
                 ]);
                 AppStat::incrementKey('bg_remover_success_count');
             }
@@ -323,6 +329,7 @@ class AiGenerationService
             $generation->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
+                'processing_time_seconds' => self::processingDurationSeconds($generation),
             ]);
             AppStat::incrementKey('bg_remover_failed_count');
             throw $e;
@@ -372,6 +379,7 @@ class AiGenerationService
             $generation->update([
                 'result_image_url' => $resultUrl,
                 'status' => 'completed',
+                'processing_time_seconds' => self::processingDurationSeconds($generation),
             ]);
             AppStat::incrementKey('compressor_success_count');
             Log::channel('upscaler')->info('Compressor completed', ['generation_id' => $generation->id]);
@@ -387,6 +395,7 @@ class AiGenerationService
             $generation->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
+                'processing_time_seconds' => self::processingDurationSeconds($generation),
             ]);
             AppStat::incrementKey('compressor_failed_count');
             Log::channel('upscaler')->warning('Compressor failed', ['error' => $e->getMessage(), 'generation_id' => $generation->id]);
@@ -544,6 +553,7 @@ class AiGenerationService
             $generation->update([
                 'result_image_url' => $resultUrl,
                 'status' => 'completed',
+                'processing_time_seconds' => self::processingDurationSeconds($generation),
             ]);
             AppStat::incrementKey('magic_eraser_success_count');
             Log::channel('magic_eraser')->info('Magic eraser completed in sync response', ['job_id' => $predictionId]);
@@ -563,6 +573,7 @@ class AiGenerationService
                     $generation->update([
                         'result_image_url' => $resultUrl,
                         'status' => 'completed',
+                        'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('magic_eraser_success_count');
                     Log::channel('magic_eraser')->info('Magic eraser completed via stream URL (sync)', ['job_id' => $predictionId]);
@@ -585,7 +596,11 @@ class AiGenerationService
 
         if (in_array($replicateStatus, ['failed', 'canceled'], true)) {
             $error = $body['error'] ?? $body['logs'] ?? 'Job failed.';
-            $generation->update(['status' => 'failed', 'error_message' => is_string($error) ? $error : json_encode($error)]);
+            $generation->update([
+                'status' => 'failed',
+                'error_message' => is_string($error) ? $error : json_encode($error),
+                'processing_time_seconds' => self::processingDurationSeconds($generation),
+            ]);
             AppStat::incrementKey('magic_eraser_failed_count');
             throw new \RuntimeException(is_string($error) ? $error : 'Magic eraser job failed.');
         }
@@ -748,6 +763,7 @@ class AiGenerationService
                 $generation->update([
                     'result_image_url' => $result['result_url'],
                     'status' => 'completed',
+                    'processing_time_seconds' => self::processingDurationSeconds($generation),
                 ]);
                 AppStat::incrementKey('bg_remover_success_count');
             }
@@ -763,6 +779,7 @@ class AiGenerationService
                 $generation->update([
                     'status' => 'failed',
                     'error_message' => $e->getMessage(),
+                    'processing_time_seconds' => self::processingDurationSeconds($generation),
                 ]);
                 AppStat::incrementKey('bg_remover_failed_count');
             }
@@ -804,6 +821,7 @@ class AiGenerationService
                     $generation->update([
                         'result_image_url' => $resultUrl,
                         'status' => 'completed',
+                        'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('upscaler_success_count');
                 }
@@ -822,6 +840,7 @@ class AiGenerationService
                     $generation->update([
                         'status' => 'failed',
                         'error_message' => is_string($error) ? $error : json_encode($error),
+                        'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('upscaler_failed_count');
                 }
@@ -838,7 +857,11 @@ class AiGenerationService
             ];
         } catch (\Throwable $e) {
             if (isset($generation)) {
-                $generation->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+                $generation->update([
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'processing_time_seconds' => self::processingDurationSeconds($generation),
+                ]);
                 AppStat::incrementKey('upscaler_failed_count');
             }
             Log::channel('upscaler')->error('Upscaler poll error', ['job_id' => $jobId, 'error' => $e->getMessage()]);
@@ -905,6 +928,7 @@ class AiGenerationService
                     $generation->update([
                         'result_image_url' => $resultUrl,
                         'status' => 'completed',
+                        'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('magic_eraser_success_count');
                 }
@@ -923,6 +947,7 @@ class AiGenerationService
                     $generation->update([
                         'status' => 'failed',
                         'error_message' => is_string($error) ? $error : json_encode($error),
+                        'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('magic_eraser_failed_count');
                 }
@@ -939,7 +964,11 @@ class AiGenerationService
             ];
         } catch (\Throwable $e) {
             if (isset($generation)) {
-                $generation->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+                $generation->update([
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'processing_time_seconds' => self::processingDurationSeconds($generation),
+                ]);
                 AppStat::incrementKey('magic_eraser_failed_count');
             }
             Log::channel('magic_eraser')->error('Magic eraser poll error', ['job_id' => $jobId, 'error' => $e->getMessage()]);
@@ -982,6 +1011,7 @@ class AiGenerationService
                     $generation->update([
                         'result_image_url' => $resultUrl,
                         'status' => 'completed',
+                        'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('enhance_success_count');
                 }
@@ -1000,6 +1030,7 @@ class AiGenerationService
                     $generation->update([
                         'status' => 'failed',
                         'error_message' => is_string($error) ? $error : json_encode($error),
+                        'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('enhance_failed_count');
                 }
@@ -1016,7 +1047,11 @@ class AiGenerationService
             ];
         } catch (\Throwable $e) {
             if (isset($generation)) {
-                $generation->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+                $generation->update([
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'processing_time_seconds' => self::processingDurationSeconds($generation),
+                ]);
                 AppStat::incrementKey('enhance_failed_count');
             }
             Log::channel('upscaler')->error('Enhancer poll error', ['job_id' => $jobId, 'error' => $e->getMessage()]);
@@ -1068,12 +1103,14 @@ class AiGenerationService
                     $generation->update([
                         'result_image_url' => $resultUrl,
                         'status' => 'completed',
+                        'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('lighting_success_count');
                 } elseif ($rawResultUrl && $generation) {
                     $generation->update([
                         'status' => 'failed',
                         'error_message' => 'Result image could not be saved. Please try again.',
+                        'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('lighting_failed_count');
                     return [
@@ -1096,6 +1133,7 @@ class AiGenerationService
                     $generation->update([
                         'status' => 'failed',
                         'error_message' => is_string($error) ? $error : json_encode($error),
+                        'processing_time_seconds' => self::processingDurationSeconds($generation),
                     ]);
                     AppStat::incrementKey('lighting_failed_count');
                 }
@@ -1112,7 +1150,11 @@ class AiGenerationService
             ];
         } catch (\Throwable $e) {
             if (isset($generation)) {
-                $generation->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+                $generation->update([
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'processing_time_seconds' => self::processingDurationSeconds($generation),
+                ]);
                 AppStat::incrementKey('lighting_failed_count');
             }
             Log::channel('upscaler')->error('Lighting fix poll error', ['job_id' => $jobId, 'error' => $e->getMessage()]);

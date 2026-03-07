@@ -1,7 +1,7 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
-import { Sparkles, Cpu, Activity, Package, BarChart3 } from 'lucide-react';
+import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle } from 'lucide-react';
 
 const TOOL_COLORS = [
     '#0ea5e9',
@@ -26,7 +26,14 @@ function formatShortDate(dateStr) {
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export default function AIStudioToolsIndex({ tools = [], chartData = [], recentGenerations = [], totalApiRequests = 0 }) {
+export default function AIStudioToolsIndex({
+    tools = [],
+    chartData = [],
+    recentGenerations = [],
+    totalApiRequests = 0,
+    mostUsedToolKey = null,
+    mostUsedToolLabel = null,
+}) {
     const [selectedTool, setSelectedTool] = useState('all');
     const [mainTab, setMainTab] = useState('overview'); // 'overview' | 'models'
 
@@ -203,7 +210,7 @@ export default function AIStudioToolsIndex({ tools = [], chartData = [], recentG
                         </div>
 
                         {/* Summary cards - compact */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                             <div className="card flex items-center gap-3 p-3">
                                 <div className="rounded-lg p-2 bg-primary-50 dark:bg-primary-900/20">
                                     <Activity size={18} className="text-primary-600 dark:text-primary-400" />
@@ -212,6 +219,17 @@ export default function AIStudioToolsIndex({ tools = [], chartData = [], recentG
                                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Total API requests</p>
                                     <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
                                         {totalApiRequests.toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="card flex items-center gap-3 p-3">
+                                <div className="rounded-lg p-2 bg-sky-50 dark:bg-sky-900/20">
+                                    <Coins size={18} className="text-sky-600 dark:text-sky-400" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Credits used (filtered)</p>
+                                    <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
+                                        {filteredTools.reduce((s, t) => s + (t.credits_used ?? 0), 0).toLocaleString()}
                                     </p>
                                 </div>
                             </div>
@@ -234,6 +252,17 @@ export default function AIStudioToolsIndex({ tools = [], chartData = [], recentG
                                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Used in production</p>
                                     <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
                                         {filteredTools.reduce((s, t) => s + (t.used_in_production || 0), 0).toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="card flex items-center gap-3 p-3">
+                                <div className="rounded-lg p-2 bg-violet-50 dark:bg-violet-900/20">
+                                    <Trophy size={18} className="text-violet-600 dark:text-violet-400" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Most used tool</p>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white truncate" title={mostUsedToolLabel || '—'}>
+                                        {mostUsedToolLabel || '—'}
                                     </p>
                                 </div>
                             </div>
@@ -293,7 +322,7 @@ export default function AIStudioToolsIndex({ tools = [], chartData = [], recentG
                             </div>
                         </div>
 
-                        {/* Usage summary table - compact */}
+                        {/* Usage summary table - compact (with credits, response time) */}
                         <div className="card overflow-hidden">
                             <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
                                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Usage summary</h2>
@@ -303,9 +332,11 @@ export default function AIStudioToolsIndex({ tools = [], chartData = [], recentG
                                     <thead>
                                         <tr className="border-b border-gray-100 dark:border-gray-700">
                                             <th className="text-left py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Tool</th>
+                                            <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Credits</th>
                                             <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Runs</th>
                                             <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Success</th>
                                             <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Failed</th>
+                                            <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Avg response</th>
                                             <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">In production</th>
                                         </tr>
                                     </thead>
@@ -313,9 +344,13 @@ export default function AIStudioToolsIndex({ tools = [], chartData = [], recentG
                                         {filteredTools.map((t) => (
                                             <tr key={t.key} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                 <td className="py-2 px-4 text-gray-900 dark:text-white">{t.label}</td>
+                                                <td className="py-2 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300">{t.credits_used?.toLocaleString() ?? 0}</td>
                                                 <td className="py-2 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300">{t.total_completed?.toLocaleString() ?? 0}</td>
                                                 <td className="py-2 px-4 text-right tabular-nums text-green-600 dark:text-green-400">{t.success_count?.toLocaleString() ?? 0}</td>
                                                 <td className="py-2 px-4 text-right tabular-nums text-red-600 dark:text-red-400">{t.failed_count?.toLocaleString() ?? 0}</td>
+                                                <td className="py-2 px-4 text-right tabular-nums text-gray-600 dark:text-gray-400">
+                                                    {t.avg_response_seconds != null ? `${t.avg_response_seconds}s` : '—'}
+                                                </td>
                                                 <td className="py-2 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300">{t.used_in_production?.toLocaleString() ?? 0}</td>
                                             </tr>
                                         ))}
@@ -323,6 +358,98 @@ export default function AIStudioToolsIndex({ tools = [], chartData = [], recentG
                                 </table>
                             </div>
                         </div>
+
+                        {/* Per-tool: Response time & Errors (when one tool selected, show full details) */}
+                        {selectedTool !== 'all' && filteredTools.length === 1 && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="card overflow-hidden p-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Clock size={14} className="text-gray-500 dark:text-gray-400" />
+                                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Response time — {filteredTools[0].label}</h3>
+                                    </div>
+                                    {filteredTools[0].response_time_count > 0 ? (
+                                        <dl className="grid grid-cols-3 gap-2 text-sm">
+                                            <div>
+                                                <dt className="text-xs text-gray-500 dark:text-gray-400">Avg</dt>
+                                                <dd className="font-mono font-medium text-gray-900 dark:text-white">{filteredTools[0].avg_response_seconds}s</dd>
+                                            </div>
+                                            <div>
+                                                <dt className="text-xs text-gray-500 dark:text-gray-400">Min</dt>
+                                                <dd className="font-mono font-medium text-gray-900 dark:text-white">{filteredTools[0].min_response_seconds}s</dd>
+                                            </div>
+                                            <div>
+                                                <dt className="text-xs text-gray-500 dark:text-gray-400">Max</dt>
+                                                <dd className="font-mono font-medium text-gray-900 dark:text-white">{filteredTools[0].max_response_seconds}s</dd>
+                                            </div>
+                                            <div className="col-span-3">
+                                                <dt className="text-xs text-gray-500 dark:text-gray-400">Samples</dt>
+                                                <dd className="font-mono text-gray-700 dark:text-gray-300">{filteredTools[0].response_time_count} completed/failed with timing</dd>
+                                            </div>
+                                        </dl>
+                                    ) : (
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">No response time data yet (new completions will be recorded).</p>
+                                    )}
+                                </div>
+                                <div className="card overflow-hidden p-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <AlertCircle size={14} className="text-red-500 dark:text-red-400" />
+                                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Errors — {filteredTools[0].label}</h3>
+                                    </div>
+                                    {(filteredTools[0].errors?.length ?? 0) > 0 ? (
+                                        <div className="overflow-x-auto max-h-40 overflow-y-auto">
+                                            <table className="w-full text-xs">
+                                                <thead>
+                                                    <tr className="border-b border-gray-200 dark:border-gray-600">
+                                                        <th className="text-left py-1.5 font-medium text-gray-700 dark:text-gray-300">Error</th>
+                                                        <th className="text-right py-1.5 font-medium text-gray-700 dark:text-gray-300">Count</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {filteredTools[0].errors.map((err, i) => (
+                                                        <tr key={i} className="border-b border-gray-100 dark:border-gray-700/50">
+                                                            <td className="py-1.5 text-gray-700 dark:text-gray-300 truncate max-w-[200px]" title={err.message}>{err.message}</td>
+                                                            <td className="py-1.5 text-right tabular-nums text-red-600 dark:text-red-400">{err.count}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">No errors recorded for this tool.</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* When "All tools": show errors summary (tool + top errors) */}
+                        {selectedTool === 'all' && tools.some((t) => (t.errors?.length ?? 0) > 0) && (
+                            <div className="card overflow-hidden">
+                                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                                    <AlertCircle size={14} className="text-red-500 dark:text-red-400" />
+                                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Errors by tool</h2>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-gray-100 dark:border-gray-700">
+                                                <th className="text-left py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Tool</th>
+                                                <th className="text-left py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Error</th>
+                                                <th className="text-right py-2 px-4 font-medium text-gray-700 dark:text-gray-300">Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {tools.flatMap((t) => (t.errors ?? []).map((err, i) => (
+                                                <tr key={`${t.key}-${i}`} className="border-b border-gray-100 dark:border-gray-700/50">
+                                                    <td className="py-2 px-4 text-gray-900 dark:text-white">{t.label}</td>
+                                                    <td className="py-2 px-4 text-gray-700 dark:text-gray-300 truncate max-w-md" title={err.message}>{err.message}</td>
+                                                    <td className="py-2 px-4 text-right tabular-nums text-red-600 dark:text-red-400">{err.count}</td>
+                                                </tr>
+                                            )))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Recent activity - compact */}
                         <div className="card overflow-hidden">

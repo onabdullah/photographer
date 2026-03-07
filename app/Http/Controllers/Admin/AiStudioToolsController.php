@@ -51,21 +51,60 @@ class AiStudioToolsController extends Controller
             ->pluck('used', 'tool_used')
             ->toArray();
 
+        // Response time stats per tool (avg, min, max, count) — only where processing_time_seconds is set
+        $responseTimeByTool = ImageGeneration::query()
+            ->selectRaw('tool_used, count(*) as cnt, avg(processing_time_seconds) as avg_sec, min(processing_time_seconds) as min_sec, max(processing_time_seconds) as max_sec')
+            ->whereNotNull('processing_time_seconds')
+            ->groupBy('tool_used')
+            ->get()
+            ->keyBy('tool_used')
+            ->toArray();
+
+        // Errors per tool: message + count (failed records with error_message)
+        $errorsByTool = ImageGeneration::query()
+            ->where('status', 'failed')
+            ->whereNotNull('error_message')
+            ->selectRaw('tool_used, error_message, count(*) as cnt')
+            ->groupBy('tool_used', 'error_message')
+            ->orderByDesc('cnt')
+            ->get()
+            ->groupBy('tool_used')
+            ->map(fn ($rows) => $rows->map(fn ($r) => ['message' => $r->error_message, 'count' => (int) $r->cnt])->values()->all())
+            ->toArray();
+
         $tools = [];
         foreach ($toolOrder as $toolKey) {
             $meta = $toolsConfig[$toolKey] ?? ['label' => $toolKey, 'model_name' => '—', 'model_provider' => '—'];
             $prefix = self::APP_STAT_PREFIX[$toolKey] ?? $toolKey;
+            $success = (int) ($appStats[$prefix . '_success_count'] ?? 0);
+            $failed = (int) ($appStats[$prefix . '_failed_count'] ?? 0);
+            $requestsCount = $success + $failed;
+            // Compressor does not use paid API; others use 1 credit per request
+            $credits_used = $toolKey === 'compressor' ? 0 : $requestsCount;
+            $rt = $responseTimeByTool[$toolKey] ?? null;
             $tools[] = [
                 'key' => $toolKey,
                 'label' => $meta['label'],
                 'model_name' => $meta['model_name'],
                 'model_provider' => $meta['model_provider'],
                 'total_completed' => (int) ($totalsByTool[$toolKey] ?? 0),
-                'success_count' => (int) ($appStats[$prefix . '_success_count'] ?? 0),
-                'failed_count' => (int) ($appStats[$prefix . '_failed_count'] ?? 0),
+                'success_count' => $success,
+                'failed_count' => $failed,
                 'used_in_production' => (int) ($usedInProductionByTool[$toolKey] ?? 0),
+                'credits_used' => $credits_used,
+                'requests_count' => $requestsCount,
+                'avg_response_seconds' => $rt ? round((float) $rt['avg_sec'], 2) : null,
+                'min_response_seconds' => $rt ? round((float) $rt['min_sec'], 2) : null,
+                'max_response_seconds' => $rt ? round((float) $rt['max_sec'], 2) : null,
+                'response_time_count' => $rt ? (int) $rt['cnt'] : 0,
+                'errors' => $errorsByTool[$toolKey] ?? [],
             ];
         }
+
+        // Most used tool (by total completed)
+        $mostUsed = collect($tools)->sortByDesc('total_completed')->first();
+        $mostUsedToolKey = $mostUsed && ($mostUsed['total_completed'] ?? 0) > 0 ? $mostUsed['key'] : null;
+        $mostUsedToolLabel = $mostUsed && ($mostUsed['total_completed'] ?? 0) > 0 ? $mostUsed['label'] : null;
 
         $chartDays = 30;
         $snapshots = DB::table('ai_studio_daily_snapshots')
@@ -105,6 +144,8 @@ class AiStudioToolsController extends Controller
             'chartData' => $chartData,
             'recentGenerations' => $recentGenerations,
             'totalApiRequests' => (int) ($appStats['total_api_requests'] ?? 0),
+            'mostUsedToolKey' => $mostUsedToolKey,
+            'mostUsedToolLabel' => $mostUsedToolLabel,
         ]);
     }
 }
