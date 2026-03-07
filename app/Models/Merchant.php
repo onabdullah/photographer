@@ -71,6 +71,14 @@ class Merchant extends Authenticatable implements IShopModel
     }
 
     /**
+     * AI Studio generations for this shop (matched by shop domain = merchant name).
+     */
+    public function imageGenerations()
+    {
+        return $this->hasMany(ImageGeneration::class, 'shop_domain', 'name');
+    }
+
+    /**
      * Get the email logs for the merchant.
      */
     public function emailLogs()

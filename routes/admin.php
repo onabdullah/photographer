@@ -71,8 +71,8 @@ Route::middleware(['auth:admin'])->group(function () {
     // Merchant Management
     Route::get('/merchants', function () {
         $merchants = \App\Models\Merchant::with('plan')
-            ->withCount(['images as images_generated_count' => function ($q) {
-                $q->whereNotNull('generated_image_url');
+            ->withCount(['imageGenerations as images_generated_count' => function ($q) {
+                $q->where('status', 'completed')->whereNotNull('result_image_url');
             }])
             ->latest()
             ->paginate(15);
