@@ -250,7 +250,11 @@ export default function AIStudioToolsIndex({
                                                     const isEnabled = e.target.value === 'enabled';
                                                     router.patch('/admin/ai-studio-tools/settings', { tool_key: t.key, is_enabled: isEnabled }, { preserveScroll: true });
                                                 }}
-                                                className="text-[11px] font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/80 border border-gray-200 dark:border-gray-600 rounded-md py-1.5 pl-2 pr-7 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500"
+                                                className={`min-w-0 text-[10px] font-medium rounded py-1 pl-2 pr-6 cursor-pointer focus:outline-none focus:ring-1 border transition-colors ${
+                                                    t.is_enabled
+                                                        ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25 dark:border-emerald-500/30 focus:ring-emerald-500/30'
+                                                        : 'bg-gray-500/10 dark:bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-400/25 dark:border-gray-500/30 focus:ring-gray-500/30'
+                                                }`}
                                                 aria-label={`${t.label} visibility on store`}
                                             >
                                                 <option value="enabled">Show on store</option>
