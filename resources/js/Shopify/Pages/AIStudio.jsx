@@ -1876,8 +1876,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                     </div>
                   ) : (
                     <div
-                      className="aistudio-gallery"
-                      style={{ gridTemplateColumns: `repeat(${gridColumns}, 1fr)` }}
+                      className="aistudio-gallery aistudio-gallery--masonry"
+                      style={{ ['--gallery-columns']: gridColumns }}
                     >
                       {filtered.map((gen) => (
                         <div key={gen.id} className="aistudio-gallery-card">
