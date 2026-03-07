@@ -1159,6 +1159,7 @@
 .aistudio-gallery-card-checkerboard {
   position: relative;
   width: 100%;
+  min-height: 120px;
   background-image:
     linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
     linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
@@ -1175,6 +1176,34 @@
   width: 100%;
   height: auto;
   vertical-align: bottom;
+}
+
+/* Gallery image skeleton while loading (lazy load) */
+.aistudio-gallery-card-skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    var(--p-color-bg-surface-secondary) 0%,
+    var(--p-color-bg-surface-secondary) 40%,
+    var(--p-color-bg-surface-tertiary) 50%,
+    var(--p-color-bg-surface-secondary) 60%,
+    var(--p-color-bg-surface-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: aistudio-gallery-skeleton-shimmer 1.2s ease-in-out infinite;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.aistudio-gallery-card-image-wrap.is-loaded .aistudio-gallery-card-skeleton {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes aistudio-gallery-skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .aistudio-gallery-card-overlay {

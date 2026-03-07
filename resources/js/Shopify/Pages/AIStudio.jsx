@@ -518,6 +518,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [exportSpecificTool, setExportSpecificTool] = useState('background_remover');
   const [isExporting, setIsExporting] = useState(false);
   const [processingMessageIndex, setProcessingMessageIndex] = useState(0);
+  const [galleryImageLoadedIds, setGalleryImageLoadedIds] = useState(() => new Set());
 
   const showToast = useCallback((message, isError = false) => {
     setToast({ message, isError });
@@ -2022,12 +2023,15 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                     >
                       {filtered.map((gen) => (
                         <div key={gen.id} className="aistudio-gallery-card">
-                          <div className="aistudio-gallery-card-image-wrap">
+                          <div className={`aistudio-gallery-card-image-wrap${galleryImageLoadedIds.has(gen.id) ? ' is-loaded' : ''}`}>
                             <div className="aistudio-gallery-card-checkerboard">
+                              <div className="aistudio-gallery-card-skeleton" aria-hidden="true" />
                               <img
                                 src={gen.result_image_url}
                                 alt=""
                                 loading="lazy"
+                                decoding="async"
+                                onLoad={() => setGalleryImageLoadedIds((prev) => new Set(prev).add(gen.id))}
                                 onError={(e) => {
                                   const img = e.target;
                                   const src = img?.src || gen.result_image_url;
