@@ -38,10 +38,28 @@ import BrowseFromStore from '@/Shopify/Components/BrowseFromStore';
 const AI_TOOLS = [
   { value: 'magic_eraser', label: 'Magic Eraser' },
   { value: 'remove_bg', label: 'Background Remover' },
+  { value: 'compressor', label: 'Image Compressor' },
   { value: 'upscale', label: 'Upscaler' },
   { value: 'enhance', label: 'Image Enhancer' },
   { value: 'lighting', label: 'Lighting Fix' },
 ];
+
+const VALID_TOOLS = ['magic_eraser', 'remove_bg', 'compressor', 'upscale', 'enhance', 'lighting'];
+
+/** Gallery filter: value matches ImageGeneration.tool_used from API (e.g. background_remover) */
+const GALLERY_TOOL_OPTIONS = [
+  { value: 'all', label: 'All tools' },
+  { value: 'magic_eraser', label: 'Magic Eraser' },
+  { value: 'background_remover', label: 'Background Remover' },
+  { value: 'compressor', label: 'Image Compressor' },
+  { value: 'upscaler', label: 'Upscaler' },
+  { value: 'enhance', label: 'Image Enhancer' },
+  { value: 'lighting', label: 'Lighting Fix' },
+];
+
+/** Compressor: 0 = minimal compression (keep size), 100 = maximum compression (smallest file). Maps to quality 95–60. */
+const COMPRESSOR_SLIDER_MIN = 0;
+const COMPRESSOR_SLIDER_MAX = 100;
 
 const ASPECT_RATIOS = [
   { value: 'original', label: 'Original', ratio: '1/1' },
@@ -49,18 +67,6 @@ const ASPECT_RATIOS = [
   { value: '4:3', label: '4:3', ratio: '4/3' },
   { value: '16:9', label: '16:9', ratio: '16/9' },
   { value: '9:16', label: '9:16', ratio: '9/16' },
-];
-
-const VALID_TOOLS = ['magic_eraser', 'remove_bg', 'upscale', 'enhance', 'lighting'];
-
-/** Gallery filter: value matches ImageGeneration.tool_used from API (e.g. background_remover) */
-const GALLERY_TOOL_OPTIONS = [
-  { value: 'all', label: 'All tools' },
-  { value: 'magic_eraser', label: 'Magic Eraser' },
-  { value: 'background_remover', label: 'Background Remover' },
-  { value: 'upscaler', label: 'Upscaler' },
-  { value: 'enhance', label: 'Image Enhancer' },
-  { value: 'lighting', label: 'Lighting Fix' },
 ];
 
 const UPSCALE_SCALE_OPTIONS = [
@@ -470,7 +476,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   const [galleryToolFilter, setGalleryToolFilter] = useState('all');
   const [galleryDateFilter, setGalleryDateFilter] = useState('all');
   const [exportModalOpen, setExportModalOpen] = useState(false);
-  const [lastCompletedTool, setLastCompletedTool] = useState(null); // 'remove_bg' | 'upscale' | 'magic_eraser' | 'enhance' | 'lighting'
+  const [lastCompletedTool, setLastCompletedTool] = useState(null); // 'remove_bg' | 'compressor' | 'upscale' | 'magic_eraser' | 'enhance' | 'lighting'
+  const [compressorLevel, setCompressorLevel] = useState(40); // 0–100: how much to compress (0=minimal, 100=max). Maps to quality 95→60.
   const [lightingPreset, setLightingPreset] = useState('custom');
   const [lightingPromptText, setLightingPromptText] = useState('');
   const [upscaleScale, setUpscaleScale] = useState('4');
@@ -613,6 +620,52 @@ export default function AIStudio({ product, initialImage, initialTool }) {
       setProcessingStatus('error');
     }
   }, [hasValidInput, inputImage, showToast, refetchRecentGenerations]);
+
+  const handleCompress = useCallback(async () => {
+    if (!hasValidInput) return;
+    setProcessingStatus('uploading');
+    setResultImageUrl(null);
+    setJobId(null);
+    showToast('Compressing...');
+    try {
+      const formData = new FormData();
+      if (inputImage.startsWith('blob:')) {
+        const blob = await fetch(inputImage).then((r) => r.blob());
+        formData.append('image', blob, 'upload.png');
+      } else if (inputImage.startsWith('http')) {
+        formData.append('image', inputImage);
+      } else {
+        throw new Error('Invalid image source');
+      }
+      // Map compression level 0–100 to quality 95–60 (higher level = more compression = lower quality)
+      const quality = Math.round(95 - (compressorLevel / 100) * 35);
+      formData.append('quality', Math.max(60, Math.min(95, quality)));
+      const res = await axios.post('/shopify/tools/compress', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 60000,
+      });
+      const { status: resStatus, result_url: resResultUrl, generation_id: resGenId } = res.data;
+      if (resGenId != null) setGenerationId(resGenId);
+      if (resStatus === 'completed' && resResultUrl) {
+        setResultImageUrl(resResultUrl);
+        setProcessingStatus('done');
+        setLastCompletedTool('compressor');
+        showToast('Image compressed');
+        refetchRecentGenerations();
+      } else {
+        throw new Error(res.data.message || 'Compression failed.');
+      }
+    } catch (err) {
+      const data = err.response?.data;
+      const status = err.response?.status;
+      let msg = data?.message || err.message || 'Compression failed.';
+      if (status === 413) msg = 'Image is too large. Use a smaller file or choose from your store.';
+      else if (status === 422) msg = data?.message || 'Image could not be processed. Try a different file.';
+      else if (err.code === 'ECONNABORTED') msg = 'Request timed out. Try a smaller image.';
+      showToast(msg, true);
+      setProcessingStatus('error');
+    }
+  }, [hasValidInput, inputImage, compressorLevel, showToast, refetchRecentGenerations]);
 
   const handleUpscale = useCallback(async () => {
     if (!hasValidInput) return;
@@ -861,8 +914,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
           setResultImageUrl(resResultUrl);
           setProcessingStatus('done');
           setJobId(null);
-          setLastCompletedTool(isMagicEraser ? 'magic_eraser' : isUpscale ? 'upscale' : isEnhance ? 'enhance' : isLighting ? 'lighting' : 'remove_bg');
-          showToast(isMagicEraser ? 'Object erased' : isUpscale ? 'Upscale complete' : isEnhance ? 'Enhance complete' : isLighting ? 'Lighting applied' : 'Background removed');
+          setLastCompletedTool(isMagicEraser ? 'magic_eraser' : isUpscale ? 'upscale' : isEnhance ? 'enhance' : isLighting ? 'lighting' : selectedTool === 'compressor' ? 'compressor' : 'remove_bg');
+          showToast(isMagicEraser ? 'Object erased' : isUpscale ? 'Upscale complete' : isEnhance ? 'Enhance complete' : isLighting ? 'Lighting applied' : selectedTool === 'compressor' ? 'Image compressed' : 'Background removed');
           refetchRecentGenerations();
           return;
         }
@@ -987,6 +1040,10 @@ export default function AIStudio({ product, initialImage, initialTool }) {
       handleRemoveBackground();
       return;
     }
+    if (selectedTool === 'compressor') {
+      handleCompress();
+      return;
+    }
     if (selectedTool === 'upscale') {
       handleUpscale();
       return;
@@ -1003,7 +1060,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
       handleLighting();
       return;
     }
-    showToast('Use Background Remover, Upscaler, Magic Eraser, Image Enhancer, or Lighting Fix.', true);
+    showToast('Select a tool above and provide an image.', true);
   };
 
   const handleDownload = useCallback(() => {
@@ -1100,7 +1157,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
     if (initialTool && VALID_TOOLS.includes(initialTool)) setSelectedTool(initialTool);
   }, [initialTool]);
   useEffect(() => {
-    if (!isRemoveBg && selectedTool !== 'upscale' && selectedTool !== 'magic_eraser' && selectedTool !== 'enhance' && selectedTool !== 'lighting') {
+    if (!isRemoveBg && selectedTool !== 'upscale' && selectedTool !== 'magic_eraser' && selectedTool !== 'enhance' && selectedTool !== 'lighting' && selectedTool !== 'compressor') {
       setResultImageUrl(null);
       setProcessingStatus('idle');
       setJobId(null);
@@ -1349,7 +1406,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                         </InlineStack>
                       </div>
                     </div>
-                  ) : (lastCompletedTool === 'upscale' || lastCompletedTool === 'magic_eraser' || lastCompletedTool === 'enhance' || lastCompletedTool === 'lighting') && resultImageUrl && inputImage ? (
+                  ) : (lastCompletedTool === 'upscale' || lastCompletedTool === 'magic_eraser' || lastCompletedTool === 'enhance' || lastCompletedTool === 'lighting' || lastCompletedTool === 'compressor') && resultImageUrl && inputImage ? (
                     <div className="aistudio-hero-result-container">
                       <div className="aistudio-compare-slider-wrap">
                         <div className="aistudio-compare-labels">
@@ -1552,6 +1609,24 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                         checked={upscaleFaceEnhance}
                         onChange={setUpscaleFaceEnhance}
                       />
+                    </BlockStack>
+                  )}
+
+                  {selectedTool === 'compressor' && (
+                    <BlockStack gap="200">
+                      <RangeSlider
+                        label="Compression level"
+                        value={compressorLevel}
+                        min={COMPRESSOR_SLIDER_MIN}
+                        max={COMPRESSOR_SLIDER_MAX}
+                        output
+                        suffix="%"
+                        onChange={(value) => setCompressorLevel(Number(value))}
+                        helpText="0% = minimal compression (best quality). 100% = maximum size reduction. Dimensions and aspect ratio stay the same."
+                      />
+                      <Text variant="bodySm" tone="subdued" as="p">
+                        {compressorLevel}% — {compressorLevel <= 33 ? 'Light' : compressorLevel <= 66 ? 'Medium' : 'Strong'} compression
+                      </Text>
                     </BlockStack>
                   )}
 
@@ -1760,7 +1835,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                   </BlockStack>
 
                   {/* Advanced instructions (prompt): for future tools; not used by remove_bg, upscale, magic_eraser, enhance, or lighting */}
-                  {!isRemoveBg && selectedTool !== 'upscale' && selectedTool !== 'magic_eraser' && selectedTool !== 'enhance' && selectedTool !== 'lighting' && (
+                  {!isRemoveBg && selectedTool !== 'upscale' && selectedTool !== 'magic_eraser' && selectedTool !== 'enhance' && selectedTool !== 'lighting' && selectedTool !== 'compressor' && (
                     <BlockStack gap="200">
                       <Text variant="bodySm" as="span" tone="subdued">Advanced instructions</Text>
                       <TextField
@@ -1797,10 +1872,10 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                           fullWidth
                           size="large"
                           onClick={handleGenerate}
-                          loading={isProcessing || (isRemoveBg && isScanning) || (selectedTool === 'upscale' && isScanning) || (selectedTool === 'magic_eraser' && isScanning) || (selectedTool === 'enhance' && isScanning) || (selectedTool === 'lighting' && isScanning)}
-                          disabled={!hasValidInput || isProcessing || (isRemoveBg && isScanning) || (selectedTool === 'upscale' && isScanning) || (selectedTool === 'magic_eraser' && (isScanning || !magicEraserHasStrokes)) || (selectedTool === 'enhance' && isScanning) || (selectedTool === 'lighting' && (isScanning || !effectiveLightingPrompt))}
+                          loading={isProcessing || (isRemoveBg && isScanning) || (selectedTool === 'compressor' && isScanning) || (selectedTool === 'upscale' && isScanning) || (selectedTool === 'magic_eraser' && isScanning) || (selectedTool === 'enhance' && isScanning) || (selectedTool === 'lighting' && isScanning)}
+                          disabled={!hasValidInput || isProcessing || (isRemoveBg && isScanning) || (selectedTool === 'compressor' && isScanning) || (selectedTool === 'upscale' && isScanning) || (selectedTool === 'magic_eraser' && (isScanning || !magicEraserHasStrokes)) || (selectedTool === 'enhance' && isScanning) || (selectedTool === 'lighting' && (isScanning || !effectiveLightingPrompt))}
                         >
-                          {selectedTool === 'magic_eraser' ? '✨ Erase Object' : '✨ Generate'}
+                          {selectedTool === 'magic_eraser' ? '✨ Erase Object' : selectedTool === 'compressor' ? '✨ Compress' : '✨ Generate'}
                         </MagicButton>
                         <Text variant="bodySm" tone="subdued">(1 Credit)</Text>
                       </BlockStack>

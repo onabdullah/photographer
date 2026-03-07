@@ -16,6 +16,8 @@ class AppStatsSeeder extends Seeder
             'upscaler_failed_count',
             'magic_eraser_success_count',
             'magic_eraser_failed_count',
+            'compressor_success_count',
+            'compressor_failed_count',
             'enhance_success_count',
             'enhance_failed_count',
             'lighting_success_count',

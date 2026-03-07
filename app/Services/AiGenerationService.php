@@ -35,7 +35,8 @@ class AiGenerationService
     private const IC_LIGHT_MODEL_VERSION = 'zsxkib/ic-light:d41bcb10d8c159868f4cfbd7c6a2ca01484f7d39e4613419d5952c61562f1ba7';
 
     public function __construct(
-        private BackgroundRemoverInterface $backgroundRemover
+        private BackgroundRemoverInterface $backgroundRemover,
+        private ImageCompressorService $imageCompressor
     ) {}
 
     /**
@@ -248,6 +249,9 @@ class AiGenerationService
                 $shopDomain
             );
         }
+        if ($toolUsed === 'compressor') {
+            return $this->startCompressor($payload, $shopDomain);
+        }
 
         throw new \InvalidArgumentException("Unknown tool: {$toolUsed}");
     }
@@ -318,6 +322,68 @@ class AiGenerationService
                 'error_message' => $e->getMessage(),
             ]);
             AppStat::incrementKey('bg_remover_failed_count');
+            throw $e;
+        }
+    }
+
+    /**
+     * Image Compressor: synchronous Laravel-built compression (GD). No polling.
+     *
+     * @param  array{image_url: string, quality?: int, max_width?: int, max_height?: int, format?: 'jpeg'|'png'}  $payload
+     */
+    private function startCompressor(array $payload, string $shopDomain): array
+    {
+        $imageUrl = $payload['image_url'] ?? null;
+        if (! $imageUrl) {
+            throw new \InvalidArgumentException('Missing image_url for compressor.');
+        }
+
+        $generation = ImageGeneration::create([
+            'shop_domain' => $shopDomain,
+            'tool_used' => 'compressor',
+            'api_job_id' => null,
+            'original_image_url' => $imageUrl,
+            'result_image_url' => null,
+            'shopify_product_id' => null,
+            'status' => 'processing',
+            'error_message' => null,
+            'processing_time_seconds' => null,
+        ]);
+
+        try {
+            $options = [];
+            if (isset($payload['quality'])) {
+                $options['quality'] = (int) $payload['quality'];
+            }
+            if (isset($payload['max_width'])) {
+                $options['max_width'] = (int) $payload['max_width'];
+            }
+            if (isset($payload['max_height'])) {
+                $options['max_height'] = (int) $payload['max_height'];
+            }
+            if (! empty($payload['format'])) {
+                $options['format'] = $payload['format'] === 'png' ? 'png' : 'jpeg';
+            }
+            $resultUrl = $this->imageCompressor->compress($imageUrl, $options);
+            $generation->update([
+                'result_image_url' => $resultUrl,
+                'status' => 'completed',
+            ]);
+            AppStat::incrementKey('compressor_success_count');
+            Log::channel('upscaler')->info('Compressor completed', ['generation_id' => $generation->id]);
+            return [
+                'status' => 'completed',
+                'job_id' => null,
+                'result_url' => $resultUrl,
+                'generation_id' => $generation->id,
+            ];
+        } catch (\Throwable $e) {
+            $generation->update([
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+            ]);
+            AppStat::incrementKey('compressor_failed_count');
+            Log::channel('upscaler')->warning('Compressor failed', ['error' => $e->getMessage(), 'generation_id' => $generation->id]);
             throw $e;
         }
     }

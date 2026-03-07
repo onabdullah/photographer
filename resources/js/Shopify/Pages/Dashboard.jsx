@@ -8,6 +8,7 @@ import {
   Sparkles,
   ImageMinus,
   Maximize2,
+  Minimize2,
   Eraser,
   Sun,
   ArrowRight,
@@ -194,6 +195,7 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
                 {[
                   { name: 'Magic Eraser', desc: 'Remove unwanted objects', value: 'magic_eraser', Icon: Eraser },
                   { name: 'Background Remover', desc: 'Clean your image background', value: 'remove_bg', Icon: ImageMinus },
+                  { name: 'Image Compressor', desc: 'Reduce file size, keep quality', value: 'compressor', Icon: Minimize2 },
                   { name: 'Upscaler', desc: 'Increase resolution 4×', value: 'upscale', Icon: Maximize2 },
                   { name: 'Image Enhancer', desc: 'Boost clarity & detail', value: 'enhance', Icon: Sparkles },
                   { name: 'Lighting Fix', desc: 'Adjust exposure & balance', value: 'lighting', Icon: Sun },
