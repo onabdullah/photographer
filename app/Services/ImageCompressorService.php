@@ -8,9 +8,12 @@ use Illuminate\Support\Str;
 
 /**
  * Professional image compression built in Laravel using PHP GD.
+ * No paid or external APIs — runs entirely on your server.
  * Reduces file size by re-encoding with configurable quality. Original dimensions and
  * aspect ratio are preserved unless max_width/max_height are set (resize is proportional).
  * JPEG output uses white background for transparent areas; PNG preserves transparency.
+ *
+ * @return array{url: string, original_size: int, result_size: int} bytes
  */
 class ImageCompressorService
 {
@@ -20,11 +23,12 @@ class ImageCompressorService
     private const MAX_DIMENSION = 4096;
 
     /**
-     * Compress image from URL: fetch, re-encode at given quality, store, return public URL.
+     * Compress image from URL: fetch, re-encode at given quality, store. Returns URL and sizes in bytes.
      *
      * @param  array{quality?: int, max_width?: int, max_height?: int, format?: 'jpeg'|'png'}  $options
+     * @return array{url: string, original_size: int, result_size: int}
      */
-    public function compress(string $imageUrl, array $options = []): string
+    public function compress(string $imageUrl, array $options = []): array
     {
         $quality = (int) ($options['quality'] ?? self::DEFAULT_QUALITY);
         $quality = max(60, min(95, $quality));
@@ -37,6 +41,7 @@ class ImageCompressorService
         if ($binary === null || $binary === '') {
             throw new \RuntimeException('Could not load image. Check the URL or file and try again.');
         }
+        $originalSize = strlen($binary);
 
         $image = @imagecreatefromstring($binary);
         if ($image === false) {
@@ -67,7 +72,13 @@ class ImageCompressorService
             }
 
             $path = $this->saveCompressed($image, $format, $quality);
-            return $this->toPublicUrl($path);
+            $fullPath = Storage::disk('public')->path($path);
+            $resultSize = file_exists($fullPath) ? (int) filesize($fullPath) : 0;
+            return [
+                'url' => $this->toPublicUrl($path),
+                'original_size' => $originalSize,
+                'result_size' => $resultSize,
+            ];
         } finally {
             if (is_resource($image) || $image instanceof \GdImage) {
                 @imagedestroy($image);

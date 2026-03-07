@@ -228,7 +228,10 @@ class AiGenerationService
             throw new \InvalidArgumentException('Missing image_url or shop domain.');
         }
 
-        AppStat::incrementKey('total_api_requests');
+        // Compressor uses built-in GD only — no paid API; do not count toward credits
+        if ($toolUsed !== 'compressor') {
+            AppStat::incrementKey('total_api_requests');
+        }
 
         if ($toolUsed === 'remove_bg') {
             return $this->startBackgroundRemoval($imageUrl, $shopDomain);
@@ -364,7 +367,8 @@ class AiGenerationService
             if (! empty($payload['format'])) {
                 $options['format'] = $payload['format'] === 'png' ? 'png' : 'jpeg';
             }
-            $resultUrl = $this->imageCompressor->compress($imageUrl, $options);
+            $result = $this->imageCompressor->compress($imageUrl, $options);
+            $resultUrl = $result['url'];
             $generation->update([
                 'result_image_url' => $resultUrl,
                 'status' => 'completed',
@@ -376,6 +380,8 @@ class AiGenerationService
                 'job_id' => null,
                 'result_url' => $resultUrl,
                 'generation_id' => $generation->id,
+                'original_size' => $result['original_size'] ?? null,
+                'result_size' => $result['result_size'] ?? null,
             ];
         } catch (\Throwable $e) {
             $generation->update([

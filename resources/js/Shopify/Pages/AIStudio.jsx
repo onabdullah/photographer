@@ -61,6 +61,13 @@ const GALLERY_TOOL_OPTIONS = [
 const COMPRESSOR_SLIDER_MIN = 0;
 const COMPRESSOR_SLIDER_MAX = 100;
 
+function formatBytes(bytes) {
+  if (bytes == null || typeof bytes !== 'number' || bytes < 0) return '—';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 const ASPECT_RATIOS = [
   { value: 'original', label: 'Original', ratio: '1/1' },
   { value: '1:1', label: '1:1', ratio: '1/1' },
@@ -478,6 +485,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [lastCompletedTool, setLastCompletedTool] = useState(null); // 'remove_bg' | 'compressor' | 'upscale' | 'magic_eraser' | 'enhance' | 'lighting'
   const [compressorLevel, setCompressorLevel] = useState(40); // 0–100: how much to compress (0=minimal, 100=max). Maps to quality 95→60.
+  const [inputImageSize, setInputImageSize] = useState(null); // bytes when known (e.g. from file upload)
+  const [compressorSizes, setCompressorSizes] = useState(null); // { original_size, result_size } after compress
   const [lightingPreset, setLightingPreset] = useState('custom');
   const [lightingPromptText, setLightingPromptText] = useState('');
   const [upscaleScale, setUpscaleScale] = useState('4');
@@ -541,6 +550,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
     const file = acceptedFiles[0];
     if (file) {
       setInputImage(URL.createObjectURL(file));
+      setInputImageSize(file.size ?? null);
+      setCompressorSizes(null);
       setResultImageUrl(null);
       setProcessingStatus('idle');
       showToast('Image selected');
@@ -551,6 +562,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
     const file = e.target.files?.[0];
     if (file) {
       setInputImage(URL.createObjectURL(file));
+      setInputImageSize(file.size ?? null);
+      setCompressorSizes(null);
       setResultImageUrl(null);
       setProcessingStatus('idle');
       showToast('Image selected');
@@ -559,6 +572,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
 
   const handleBrowseSelectImage = useCallback((url) => {
     setInputImage(url);
+    setInputImageSize(null);
+    setCompressorSizes(null);
     setBrowseModalOpen(false);
     showToast('Image selected');
   }, [showToast]);
@@ -625,6 +640,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
     if (!hasValidInput) return;
     setProcessingStatus('uploading');
     setResultImageUrl(null);
+    setCompressorSizes(null);
     setJobId(null);
     showToast('Compressing...');
     try {
@@ -644,10 +660,11 @@ export default function AIStudio({ product, initialImage, initialTool }) {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 60000,
       });
-      const { status: resStatus, result_url: resResultUrl, generation_id: resGenId } = res.data;
+      const { status: resStatus, result_url: resResultUrl, generation_id: resGenId, original_size, result_size } = res.data;
       if (resGenId != null) setGenerationId(resGenId);
       if (resStatus === 'completed' && resResultUrl) {
         setResultImageUrl(resResultUrl);
+        setCompressorSizes(original_size != null || result_size != null ? { original_size: original_size ?? null, result_size: result_size ?? null } : null);
         setProcessingStatus('done');
         setLastCompletedTool('compressor');
         showToast('Image compressed');
@@ -1016,6 +1033,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
 
   const handleReset = useCallback(() => {
     setInputImage(null);
+    setInputImageSize(null);
+    setCompressorSizes(null);
     setResultImageUrl(null);
     setProcessingStatus('idle');
     setJobId(null);
@@ -1174,6 +1193,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   useEffect(() => {
     if (processingStatus !== 'error') return;
     setInputImage(null);
+    setInputImageSize(null);
+    setCompressorSizes(null);
     setResultImageUrl(null);
     setJobId(null);
     setLastCompletedTool(null);
@@ -1480,6 +1501,11 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                           </div>
                         </div>
                         <p className="aistudio-compare-hint">Drag the center handle left or right to compare before and after</p>
+                        {lastCompletedTool === 'compressor' && (compressorSizes?.original_size != null || compressorSizes?.result_size != null) && (
+                          <p className="aistudio-compare-hint" style={{ marginTop: 'var(--p-space-200)' }}>
+                            Size: {formatBytes(compressorSizes?.original_size)} → {formatBytes(compressorSizes?.result_size)}
+                          </p>
+                        )}
                       </div>
                       <div className="aistudio-hero-actions aistudio-hero-actions--outside">
                         <InlineStack gap="300">
@@ -1614,6 +1640,11 @@ export default function AIStudio({ product, initialImage, initialTool }) {
 
                   {selectedTool === 'compressor' && (
                     <BlockStack gap="200">
+                      {(inputImageSize != null || compressorSizes?.original_size != null) && (
+                        <Text variant="bodySm" tone="subdued" as="p">
+                          Original size: {formatBytes(inputImageSize ?? compressorSizes?.original_size)}
+                        </Text>
+                      )}
                       <RangeSlider
                         label="Compression level"
                         value={compressorLevel}
@@ -1877,7 +1908,9 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                         >
                           {selectedTool === 'magic_eraser' ? '✨ Erase Object' : selectedTool === 'compressor' ? '✨ Compress' : '✨ Generate'}
                         </MagicButton>
-                        <Text variant="bodySm" tone="subdued">(1 Credit)</Text>
+                        <Text variant="bodySm" tone="subdued">
+                          {selectedTool === 'compressor' ? 'Free — no paid model' : '(1 Credit)'}
+                        </Text>
                       </BlockStack>
                     )}
                   </Box>
