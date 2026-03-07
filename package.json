@@ -27,11 +27,12 @@
   "dependencies": {
     "@shopify/app-bridge-react": "^4.2.10",
     "@shopify/polaris": "^13.9.5",
+    "apexcharts": "^5.10.3",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
     "lucide-react": "^0.565.0",
+    "react-apexcharts": "^2.1.0",
     "react-confetti": "^6.4.0",
-    "react-use": "^17.6.0",
-    "recharts": "^3.8.0"
+    "react-use": "^17.6.0"
   }
 }
