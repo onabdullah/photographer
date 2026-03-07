@@ -41,7 +41,7 @@ const QUICK_GROUPS = [
     { label: 'Cache',   cmds: ['cache:clear', 'config:cache', 'config:clear', 'view:clear', 'route:clear', 'optimize', 'optimize:clear'] },
     { label: 'Info',    cmds: ['about', 'version', 'env', 'route:list --compact', 'schedule:list'] },
     { label: 'Storage', cmds: ['storage:link'] },
-    { label: 'Queue',   cmds: ['queue:restart', 'queue:failed', 'queue:flush'] },
+    { label: 'Queue',   cmds: ['queue:work --once', 'queue:work', 'queue:restart', 'queue:failed', 'queue:flush'] },
 ];
 
 // ── Output line ───────────────────────────────────────────────────────────────
