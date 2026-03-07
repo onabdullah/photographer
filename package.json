@@ -31,6 +31,7 @@
     "jszip": "^3.10.1",
     "lucide-react": "^0.565.0",
     "react-confetti": "^6.4.0",
-    "react-use": "^17.6.0"
+    "react-use": "^17.6.0",
+    "recharts": "^3.8.0"
   }
 }

@@ -8,9 +8,12 @@ use Illuminate\Database\Seeder;
 /**
  * Seeds admin roles and their default permissions.
  *
- * Idempotent: creates roles that don't exist; for existing default roles,
- * merges in any new permissions from AdminRole::ALL_PERMISSIONS that are
- * in the default set but not yet assigned. Existing customizations are preserved.
+ * Idempotent / safe to re-run:
+ * - New role (name not in DB): create it with default permissions.
+ * - Existing role: only ADD permissions that are in the default set but not yet
+ *   in the role; skip already-assigned permissions. Never remove or overwrite
+ *   existing permissions. This way we preserve customizations and only apply
+ *   new permissions when the seeder is updated (e.g. new feature like ai_studio.view).
  */
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -25,7 +28,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'merchants.view', 'merchants.manage',
             'products.view', 'products.manage',
             'ai.view', 'ai.manage',
-            'analytics.view',
+            'analytics.view', 'ai_studio.view',
             'users.view', 'users.manage',
             'roles.view', 'roles.manage',
             'settings.view', 'settings.manage',
@@ -36,7 +39,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'merchants.view', 'merchants.manage',
             'products.view', 'products.manage',
             'ai.view', 'ai.manage',
-            'analytics.view',
+            'analytics.view', 'ai_studio.view',
             'users.view', 'users.manage',
             'roles.view',
             'settings.view',
@@ -46,7 +49,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'merchants.view',
             'products.view',
             'ai.view',
-            'analytics.view',
+            'analytics.view', 'ai_studio.view',
             'users.view',
             'roles.view',
             'settings.view',
@@ -68,18 +71,18 @@ class RolesAndPermissionsSeeder extends Seeder
                 continue;
             }
 
-            // Merge: add any default permission not yet in the role
+            // Only add permissions from default set that are not already in the role (skip existing)
             $current = $role->permissions ?? [];
             $toAdd = array_diff($defaultPerms, $current);
-
-            // Filter to only valid keys (in case we removed a permission from code)
             $toAdd = array_values(array_intersect($toAdd, $allKeys));
 
-            if (! empty($toAdd)) {
-                $role->permissions = array_values(array_unique(array_merge($current, $toAdd)));
-                $role->save();
-                $this->command?->info("Updated role '{$name}': added " . count($toAdd) . ' permission(s)');
+            if (empty($toAdd)) {
+                continue;
             }
+
+            $role->permissions = array_values(array_unique(array_merge($current, $toAdd)));
+            $role->save();
+            $this->command?->info("Updated role '{$name}': added " . count($toAdd) . ' permission(s)');
         }
     }
 }

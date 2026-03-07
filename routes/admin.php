@@ -17,7 +17,7 @@ use Inertia\Inertia;
 */
 
 Route::middleware(['auth:admin'])->group(function () {
-    
+
     // Dashboard - Main admin overview (real stats)
     Route::get('/dashboard', function () {
         $totalMerchants = \App\Models\Merchant::count();
@@ -60,7 +60,7 @@ Route::middleware(['auth:admin'])->group(function () {
                 'recentImages' => $recentImages,
             ],
         ]);
-    })->name('dashboard');
+    })->middleware('admin.permission:dashboard.view')->name('dashboard');
 
     // Merchant Management
     Route::get('/merchants', function () {
@@ -74,75 +74,95 @@ Route::middleware(['auth:admin'])->group(function () {
         return Inertia::render('Admin/Pages/Merchants/Index', [
             'merchants' => $merchants,
         ]);
-    })->name('merchants.index');
+    })->middleware('admin.permission:merchants.view')->name('merchants.index');
 
     Route::get('/merchants/{id}', function ($id) {
         return Inertia::render('Admin/Pages/Merchants/Show', [
             'merchantId' => $id,
         ]);
-    })->name('merchants.show');
+    })->middleware('admin.permission:merchants.view')->name('merchants.show');
 
     // Product Management - View all products across merchants
     Route::get('/products', function () {
         return Inertia::render('Admin/Pages/Products/Index');
-    })->name('products.index');
+    })->middleware('admin.permission:products.view')->name('products.index');
 
     Route::get('/products/{id}', function ($id) {
         return Inertia::render('Admin/Pages/Products/Show', [
             'productId' => $id,
         ]);
-    })->name('products.show');
+    })->middleware('admin.permission:products.view')->name('products.show');
 
     // AI Processing - Monitor all AI jobs
     Route::get('/ai-processing', function () {
         return Inertia::render('Admin/Pages/AIProcessing/Index');
-    })->name('ai-processing.index');
+    })->middleware('admin.permission:ai.view')->name('ai-processing.index');
 
     Route::get('/ai-processing/{id}', function ($id) {
         return Inertia::render('Admin/Pages/AIProcessing/Show', [
             'jobId' => $id,
         ]);
-    })->name('ai-processing.show');
+    })->middleware('admin.permission:ai.view')->name('ai-processing.show');
 
     // Analytics & Reporting
     Route::get('/analytics', function () {
         return Inertia::render('Admin/Pages/Analytics');
-    })->name('analytics');
+    })->middleware('admin.permission:analytics.view')->name('analytics');
+
+    Route::get('/ai-studio-tools', \App\Http\Controllers\Admin\AiStudioToolsController::class)
+        ->middleware('admin.permission:ai_studio.view')
+        ->name('ai-studio-tools');
 
     // System Settings
     Route::get('/settings', function () {
         return Inertia::render('Admin/Pages/Settings');
-    })->name('settings');
+    })->middleware('admin.permission:settings.view')->name('settings');
 
     /*
     |--------------------------------------------------------------------------
     | Artisan Terminal
     |--------------------------------------------------------------------------
     */
-    Route::get('/terminal',     [\App\Http\Controllers\Admin\TerminalController::class, 'index'])->name('terminal');
-    Route::post('/terminal/run',[\App\Http\Controllers\Admin\TerminalController::class, 'run'])->name('terminal.run');
+    Route::get('/terminal', [\App\Http\Controllers\Admin\TerminalController::class, 'index'])
+        ->middleware('admin.permission:developer.terminal')
+        ->name('terminal');
+    Route::post('/terminal/run', [\App\Http\Controllers\Admin\TerminalController::class, 'run'])
+        ->middleware('admin.permission:developer.terminal')
+        ->name('terminal.run');
 
     /*
     |--------------------------------------------------------------------------
     | Role Management
     |--------------------------------------------------------------------------
     */
-    Route::get('/roles',                  [\App\Http\Controllers\Admin\RoleController::class, 'index'])->name('roles.index');
-    Route::get('/roles/create',           [\App\Http\Controllers\Admin\RoleController::class, 'create'])->name('roles.create');
-    Route::post('/roles',                 [\App\Http\Controllers\Admin\RoleController::class, 'store'])->name('roles.store');
-    Route::get('/roles/{adminRole}',      [\App\Http\Controllers\Admin\RoleController::class, 'show'])->name('roles.show');
-    Route::get('/roles/{adminRole}/edit', [\App\Http\Controllers\Admin\RoleController::class, 'edit'])->name('roles.edit');
-    Route::put('/roles/{adminRole}',      [\App\Http\Controllers\Admin\RoleController::class, 'update'])->name('roles.update');
-    Route::delete('/roles/{adminRole}',   [\App\Http\Controllers\Admin\RoleController::class, 'destroy'])->name('roles.destroy');
+    Route::get('/roles', [\App\Http\Controllers\Admin\RoleController::class, 'index'])
+        ->middleware('admin.permission:roles.view')->name('roles.index');
+    Route::get('/roles/create', [\App\Http\Controllers\Admin\RoleController::class, 'create'])
+        ->middleware('admin.permission:roles.manage')->name('roles.create');
+    Route::post('/roles', [\App\Http\Controllers\Admin\RoleController::class, 'store'])
+        ->middleware('admin.permission:roles.manage')->name('roles.store');
+    Route::get('/roles/{adminRole}', [\App\Http\Controllers\Admin\RoleController::class, 'show'])
+        ->middleware('admin.permission:roles.view')->name('roles.show');
+    Route::get('/roles/{adminRole}/edit', [\App\Http\Controllers\Admin\RoleController::class, 'edit'])
+        ->middleware('admin.permission:roles.manage')->name('roles.edit');
+    Route::put('/roles/{adminRole}', [\App\Http\Controllers\Admin\RoleController::class, 'update'])
+        ->middleware('admin.permission:roles.manage')->name('roles.update');
+    Route::delete('/roles/{adminRole}', [\App\Http\Controllers\Admin\RoleController::class, 'destroy'])
+        ->middleware('admin.permission:roles.manage')->name('roles.destroy');
 
     /*
     |--------------------------------------------------------------------------
     | User Management
     |--------------------------------------------------------------------------
     */
-    Route::get('/users',                   [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
-    Route::get('/users/{user}',            [\App\Http\Controllers\Admin\UserController::class, 'show'])->name('users.show');
-    Route::get('/users/{user}/edit',       [\App\Http\Controllers\Admin\UserController::class, 'edit'])->name('users.edit');
-    Route::put('/users/{user}',            [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('users.update');
-    Route::post('/users/{user}/status',    [\App\Http\Controllers\Admin\UserController::class, 'updateStatus'])->name('users.status');
+    Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])
+        ->middleware('admin.permission:users.view')->name('users.index');
+    Route::get('/users/{user}', [\App\Http\Controllers\Admin\UserController::class, 'show'])
+        ->middleware('admin.permission:users.view')->name('users.show');
+    Route::get('/users/{user}/edit', [\App\Http\Controllers\Admin\UserController::class, 'edit'])
+        ->middleware('admin.permission:users.manage')->name('users.edit');
+    Route::put('/users/{user}', [\App\Http\Controllers\Admin\UserController::class, 'update'])
+        ->middleware('admin.permission:users.manage')->name('users.update');
+    Route::post('/users/{user}/status', [\App\Http\Controllers\Admin\UserController::class, 'updateStatus'])
+        ->middleware('admin.permission:users.manage')->name('users.status');
 });

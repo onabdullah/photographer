@@ -26,6 +26,7 @@ import {
     Shield,
     TerminalSquare,
     X,
+    Sparkles,
 } from 'lucide-react';
 
 // ============================================================
@@ -67,6 +68,7 @@ const SECTIONS = [
         id: 'reports',
         label: 'REPORTS',
         items: [
+            { name: 'AI Studio Tools', href: '/admin/ai-studio-tools', icon: Sparkles, permission: 'ai_studio.view' },
             { name: 'Analytics',     href: '/admin/analytics',     icon: BarChart3, permission: 'analytics.view' },
         ],
     },

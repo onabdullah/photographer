@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,7 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        $middleware->alias([
+            'admin.permission' => \App\Http\Middleware\EnsureAdminPermission::class,
+        ]);
+
         $middleware->validateCsrfTokens(except: [
             'shopify/generate-image',
             'shopify/remove-background',
@@ -80,4 +84,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
         });
-    })->create();
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('ai-studio:aggregate-daily')->daily();
+    })
+    ->create();
