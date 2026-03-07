@@ -46,7 +46,7 @@ class ShopifyController extends Controller
             $imageUrl = 'https://via.placeholder.com/600x600?text=Select+a+Product';
         }
 
-        $validTools = ['remove_bg', 'bg_swap', 'upscale', 'magic_eraser', 'enhance', 'lighting'];
+        $validTools = ['remove_bg', 'upscale', 'magic_eraser', 'enhance', 'lighting'];
         $initialTool = $request->input('tool');
         if (! in_array($initialTool, $validTools, true)) {
             $initialTool = 'remove_bg';

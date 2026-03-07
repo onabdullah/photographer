@@ -7,7 +7,6 @@ import {
   HelpCircle,
   Sparkles,
   ImageMinus,
-  Layers,
   Maximize2,
   Eraser,
   Sun,
@@ -194,7 +193,6 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
               <div className="dashboard-tools-grid">
                 {[
                   { name: 'Background Remover', desc: 'Clean your image background', value: 'remove_bg', Icon: ImageMinus },
-                  { name: 'Background Swap', desc: 'Change product scenes', value: 'bg_swap', Icon: Layers },
                   { name: 'Upscaler', desc: 'Increase resolution 4×', value: 'upscale', Icon: Maximize2 },
                   { name: 'Magic Eraser', desc: 'Remove unwanted objects', value: 'magic_eraser', Icon: Eraser },
                   { name: 'Image Enhancer', desc: 'Boost clarity & detail', value: 'enhance', Icon: Sparkles },
@@ -384,7 +382,7 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
                           Your creations will appear here
                         </Text>
                         <Text variant="bodyMd" tone="subdued" as="p">
-                          Use AI Studio to remove backgrounds, swap scenes, and enhance product photos. Everything you create shows up here.
+                          Use AI Studio to remove backgrounds and enhance product photos. Everything you create shows up here.
                         </Text>
                       </BlockStack>
                       <Box paddingBlockStart="200">

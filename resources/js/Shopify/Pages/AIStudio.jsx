@@ -37,18 +37,10 @@ import BrowseFromStore from '@/Shopify/Components/BrowseFromStore';
 
 const AI_TOOLS = [
   { value: 'remove_bg', label: 'Background Remover' },
-  { value: 'bg_swap', label: 'Background Swap' },
   { value: 'upscale', label: 'Upscaler' },
   { value: 'magic_eraser', label: 'Magic Eraser' },
   { value: 'enhance', label: 'Image Enhancer' },
   { value: 'lighting', label: 'Lighting Fix' },
-];
-
-const BG_STYLES = [
-  { value: 'studio', label: 'Studio White' },
-  { value: 'marble', label: 'Marble' },
-  { value: 'nature', label: 'Nature' },
-  { value: 'lifestyle', label: 'Lifestyle' },
 ];
 
 const ASPECT_RATIOS = [
@@ -59,13 +51,12 @@ const ASPECT_RATIOS = [
   { value: '9:16', label: '9:16', ratio: '9/16' },
 ];
 
-const VALID_TOOLS = ['remove_bg', 'bg_swap', 'upscale', 'magic_eraser', 'enhance', 'lighting'];
+const VALID_TOOLS = ['remove_bg', 'upscale', 'magic_eraser', 'enhance', 'lighting'];
 
 /** Gallery filter: value matches ImageGeneration.tool_used from API (e.g. background_remover) */
 const GALLERY_TOOL_OPTIONS = [
   { value: 'all', label: 'All tools' },
   { value: 'background_remover', label: 'Background Remover' },
-  { value: 'bg_swap', label: 'Background Swap' },
   { value: 'upscaler', label: 'Upscaler' },
   { value: 'magic_eraser', label: 'Magic Eraser' },
   { value: 'enhance', label: 'Image Enhancer' },
@@ -202,7 +193,6 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   const [generatedImages, setGeneratedImages] = useState([]);
   const [selectedGeneratedIndex, setSelectedGeneratedIndex] = useState(0);
   const [selectedTool, setSelectedTool] = useState(validInitialTool);
-  const [selectedStyle, setSelectedStyle] = useState('studio');
   const [aspectRatio, setAspectRatio] = useState('original');
   const [prompt, setPrompt] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -1288,25 +1278,6 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                     value={selectedTool}
                     onChange={handleToolChange}
                   />
-
-                  {selectedTool === 'bg_swap' && (
-                    <BlockStack gap="200">
-                      <Text variant="bodySm" as="span" tone="subdued">Style preset</Text>
-                      <InlineStack gap="200" wrap>
-                        {BG_STYLES.map((s) => (
-                          <Button
-                            key={s.value}
-                            variant={selectedStyle === s.value ? 'primary' : 'tertiary'}
-                            size="slim"
-                            onClick={() => setSelectedStyle(s.value)}
-                            pressed={selectedStyle === s.value}
-                          >
-                            {s.label}
-                          </Button>
-                        ))}
-                      </InlineStack>
-                    </BlockStack>
-                  )}
 
                   {selectedTool === 'upscale' && (
                     <BlockStack gap="200">
