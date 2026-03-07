@@ -377,8 +377,11 @@ export default function AIStudioToolsIndex({
                                     Usage over time (30d)
                                 </h3>
                                 {usageByDate.length === 0 ? (
-                                    <div className="h-[180px] flex items-center justify-center text-gray-500 dark:text-gray-400 text-xs">
-                                        No data. Run <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">ai-studio:aggregate-daily --backfill</code>
+                                    <div className="h-[180px] flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 text-xs text-center gap-2 px-2">
+                                        <span>No snapshot data yet.</span>
+                                        <span>Run once to backfill from existing generations:</span>
+                                        <code className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-[11px]">ai-studio:aggregate-daily --backfill</code>
+                                        <span className="text-[10px] opacity-80">Then this chart updates daily via scheduler.</span>
                                     </div>
                                 ) : (
                                     <Chart
