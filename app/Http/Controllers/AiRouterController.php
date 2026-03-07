@@ -43,6 +43,8 @@ class AiRouterController extends Controller
             'main_image'          => 'required',
             'prompt'              => 'nullable|string|max:600',
             'intent'              => 'nullable|string|in:environment,on_human',
+            'aspect_ratio'        => 'nullable|string|in:1:1,4:3,3:4,16:9,9:16',
+            'resolution'          => 'nullable|string|in:1K,2K,4K',
             'reference_images'    => 'nullable|array',
             'reference_images.*'  => 'nullable',
         ]);
@@ -52,19 +54,28 @@ class AiRouterController extends Controller
         try {
             /*
              * ── Universal / Accessories / Backgrounds path ──
-             * Base cost: 2 credits.  With reference images: 4 credits.
+             * Base cost: 2 credits.
+             * Resolution bonus: 2K = +1, 4K = +3.
+             * Reference images: +2 credits.
              * Files land in the files bag, NOT in input() — check with allFiles().
              */
             $uploadedRefs = $request->allFiles()['reference_images'] ?? [];
             $hasRefs = is_array($uploadedRefs) && count(array_filter($uploadedRefs)) > 0;
 
-            $credits = $hasRefs ? 4 : 2;
+            $resolution = strtoupper($request->input('resolution', '1K'));
+            $resolutionBonus = match ($resolution) {
+                '4K'    => 3,
+                '2K'    => 1,
+                default => 0,
+            };
+
+            $credits    = 2 + $resolutionBonus + ($hasRefs ? 2 : 0);
             $newBalance = $this->deductCredits($shopDomain, $credits);
             if ($newBalance === null) {
                 return response()->json(['message' => 'Insufficient credits.'], 402);
             }
 
-            $result = $this->universalService->generateNanoBanana($request, $shopDomain);
+            $result = $this->universalService->generateNanoBanana($request, $shopDomain, $credits);
 
             return response()->json(array_merge($result, [
                 'credits_remaining' => $newBalance,

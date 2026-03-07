@@ -33,7 +33,7 @@ class AiUniversalService
     /* ──────────────────────────────────────────────────────────────
        generateNanoBanana — compose multimodal payload & dispatch
     ────────────────────────────────────────────────────────────── */
-    public function generateNanoBanana(Request $request, string $shopDomain): array
+    public function generateNanoBanana(Request $request, string $shopDomain, int $creditsUsed = 2): array
     {
         $token = config('services.replicate.token');
         if (empty($token)) {
@@ -69,7 +69,7 @@ class AiUniversalService
             'shop_domain'        => $shopDomain,
             'tool_used'          => 'universal_generate',
             'status'             => 'processing',
-            'credits_used'       => $hasRefs ? 4 : 2,
+            'credits_used'       => $creditsUsed,
             'original_image_url' => $productUrl,
         ]);
 
@@ -81,21 +81,28 @@ class AiUniversalService
         }
 
         // Nano Banana 2 Replicate payload — identical structure to Magic Eraser
+        $aspectRatio = $request->input('aspect_ratio', '1:1');
+        $resolution  = strtoupper($request->input('resolution', '1K'));
+
         $payload = [
             'version' => self::NANO_BANANA_2_VERSION,
             'input'   => [
-                'prompt'       => $engineeredPrompt,
-                'image_input'  => $imageInput,
-                'aspect_ratio' => '1:1',
-                'output_format'=> 'jpg',
+                'prompt'        => $engineeredPrompt,
+                'image_input'   => $imageInput,
+                'aspect_ratio'  => $aspectRatio,
+                'resolution'    => $resolution,
+                'output_format' => 'jpg',
             ],
         ];
 
         Log::info('AiUniversal: dispatching Nano Banana 2', [
-            'shop'       => $shopDomain,
-            'intent'     => $intent,
-            'has_refs'   => $hasRefs,
-            'ref_count'  => count($refUrls),
+            'shop'         => $shopDomain,
+            'intent'       => $intent,
+            'aspect_ratio' => $aspectRatio,
+            'resolution'   => $resolution,
+            'has_refs'     => $hasRefs,
+            'ref_count'    => count($refUrls),
+            'credits_used' => $creditsUsed,
         ]);
 
         $response = Http::withToken($token)

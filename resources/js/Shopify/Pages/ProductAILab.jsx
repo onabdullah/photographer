@@ -41,6 +41,20 @@ const INTENT_OPTIONS = [
   { value: 'on_human',    label: 'Place on a Human' },
 ];
 
+const ASPECT_RATIO_OPTIONS = [
+  { value: '1:1',  label: '1:1' },
+  { value: '4:3',  label: '4:3' },
+  { value: '3:4',  label: '3:4' },
+  { value: '16:9', label: '16:9' },
+  { value: '9:16', label: '9:16' },
+];
+
+const RESOLUTION_OPTIONS = [
+  { value: '1K', label: '1K', hint: 'Standard',   extraCredits: 0 },
+  { value: '2K', label: '2K', hint: 'HD',         extraCredits: 1 },
+  { value: '4K', label: '4K', hint: 'Ultra HD',   extraCredits: 3 },
+];
+
 const GALLERY_DATE_OPTIONS = [
   { value: 'all',          label: 'All time' },
   { value: 'today',        label: 'Today' },
@@ -76,6 +90,12 @@ function timeAgo(dateStr) {
   return date.toLocaleDateString();
 }
 
+/** Resolve extra credit cost from resolution value */
+function resolutionExtraCredits(resolution) {
+  const opt = RESOLUTION_OPTIONS.find((o) => o.value === resolution);
+  return opt ? opt.extraCredits : 0;
+}
+
 function MasterpieceIllustration() {
   return (
     <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
@@ -88,6 +108,32 @@ function MasterpieceIllustration() {
       <circle cx="60" cy="60" r="8" fill={TEAL} fillOpacity="0.25" />
       <circle cx="60" cy="60" r="4" fill={TEAL} fillOpacity="0.5" />
     </svg>
+  );
+}
+
+/** Compact pill button used for aspect ratio + resolution selectors */
+function PillButton({ selected, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: '7px 10px',
+        borderRadius: 8,
+        border: `2px solid ${selected ? TEAL : 'var(--p-color-border)'}`,
+        background: selected ? `rgba(70,138,154,0.08)` : 'transparent',
+        color: selected ? TEAL : 'var(--p-color-text)',
+        fontWeight: selected ? 600 : 400,
+        fontSize: 12,
+        cursor: 'pointer',
+        transition: 'all 0.15s ease',
+        textAlign: 'center',
+        lineHeight: 1.2,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -140,6 +186,8 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
   const [credits, setCredits]                     = useState(() => Math.max(0, parseInt(initialCredits, 10) || 0));
   const [productImage, setProductImage]           = useState(null);
   const [intent, setIntent]                       = useState('environment');
+  const [aspectRatio, setAspectRatio]             = useState('1:1');
+  const [resolution, setResolution]               = useState('1K');
   const [scenePrompt, setScenePrompt]             = useState('');
   const [processingStatus, setProcessingStatus]   = useState('idle');
   const [processingMsgIdx, setProcessingMsgIdx]   = useState(0);
@@ -167,13 +215,13 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
   const shopifyAppBridge = (typeof window !== 'undefined' && window.shopify) || null;
 
   /* ── Derived ── */
-  const isScanning    = processingStatus === 'uploading' || processingStatus === 'scanning';
-  const isDone        = processingStatus === 'done';
-  const hasProduct    = Boolean(productImage);
-  const hasPrompt     = scenePrompt.trim().length > 0;
-  const hasRefs       = Boolean(styleRef || faceRef || poseRef);
-  const creditsNeeded = hasRefs ? 4 : 2;
-  const canGenerate   = hasProduct && hasPrompt && !isScanning;
+  const isScanning     = processingStatus === 'uploading' || processingStatus === 'scanning';
+  const isDone         = processingStatus === 'done';
+  const hasProduct     = Boolean(productImage);
+  const hasPrompt      = scenePrompt.trim().length > 0;
+  const hasRefs        = Boolean(styleRef || faceRef || poseRef);
+  const creditsNeeded  = 2 + resolutionExtraCredits(resolution) + (hasRefs ? 2 : 0);
+  const canGenerate    = hasProduct && hasPrompt && !isScanning;
   const remainingAfter = Math.max(0, credits - creditsNeeded);
   const processingLabel = PROCESSING_MESSAGES[processingMsgIdx % PROCESSING_MESSAGES.length];
 
@@ -229,7 +277,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
       }
       pollCount.current += 1;
       try {
-        const res = await axios.get(`/shopify/api/ai-studio/job/${jobId}?tool=universal_generate`);
+        const res = await axios.get(`/shopify/api/ai-studio/job/${jobId}`);
         const data = res.data;
         if (data.credits_remaining != null) setCredits(data.credits_remaining);
         if (data.status === 'done' && data.result_image_url) {
@@ -252,7 +300,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
     return () => { if (pollRef.current) clearTimeout(pollRef.current); };
   }, [processingStatus, jobId]);
 
-  /* ── Dropzone handlers ── */
+  /* ── Dropzone handler ── */
   const handleProductDrop = useCallback((_all, accepted) => {
     const file = accepted[0];
     if (file) setProductImage(URL.createObjectURL(file));
@@ -279,7 +327,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
 
   /* ── Generate ── */
   const handleGenerate = async () => {
-    if (!hasProduct) { showToast('Please upload or select a product image first.'); return; }
+    if (!hasProduct) { showToast('Please upload a product image first.'); return; }
     if (!hasPrompt)  { showToast('Please describe the scene you want to create.'); return; }
     if (credits < creditsNeeded) {
       showToast(`Not enough credits. This action costs ${creditsNeeded} credits.`, true);
@@ -291,6 +339,8 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
       form.append('product_category', 'universal');
       form.append('intent', intent);
       form.append('prompt', scenePrompt);
+      form.append('aspect_ratio', aspectRatio);
+      form.append('resolution', resolution);
 
       const productBlob = await fetch(productImage).then((r) => r.blob());
       form.append('main_image', productBlob, 'product.png');
@@ -384,12 +434,15 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
           )}
 
           <Layout>
-            {/* ── Hero Canvas (left) ── */}
+            {/* ──────────────────────────────────────────────────────
+                Output Window (left) — pure output, no input preview
+            ────────────────────────────────────────────────────── */}
             <Layout.Section>
               <Card padding="0" className="aistudio-hero-card">
                 <div className={`aistudio-hero-canvas${isScanning ? ' aistudio-hero-canvas--processing' : ''}`}>
 
                   {isScanning ? (
+                    /* Scanning animation — shows the product as backdrop */
                     <div className="aistudio-scanning">
                       <div className="premium-scanning-wrapper">
                         <img src={productImage} alt="" className="premium-scanning-img" />
@@ -400,19 +453,31 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                     </div>
 
                   ) : isDone && resultImageUrl ? (
-                    <div className="aistudio-output-wrap">
-                      <div className="aistudio-output-checkerboard">
-                        <img
-                          src={resultImageUrl}
-                          alt="Generated scene"
-                          className="aistudio-output-img"
-                        />
+                    /* Result */
+                    <div className="aistudio-hero-result-container">
+                      <div className="aistudio-hero-result-wrap">
+                        <div className="aistudio-result-checkerboard aistudio-result-image-wrap">
+                          <img
+                            src={resultImageUrl}
+                            alt="Generated scene"
+                            className="aistudio-hero-result-img"
+                            onError={(e) => {
+                              const img = e.target;
+                              const src = img?.src || resultImageUrl;
+                              let path = src;
+                              try { if (typeof src === 'string' && src.startsWith('http')) path = new URL(src).pathname; } catch { /* ignore */ }
+                              if (path?.startsWith('/storage/') && typeof window !== 'undefined') {
+                                img.src = window.location.origin + path;
+                              }
+                            }}
+                          />
+                        </div>
                       </div>
-                      <div className="aistudio-output-actions">
-                        <Tooltip content="Download">
+                      <div className="aistudio-hero-actions aistudio-hero-actions--outside">
+                        <InlineStack gap="300">
                           <Button
-                            icon={ExportIcon}
-                            accessibilityLabel="Download"
+                            variant="primary"
+                            size="medium"
                             onClick={() => {
                               const a = document.createElement('a');
                               a.href = resultImageUrl;
@@ -421,12 +486,12 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                               document.body.appendChild(a); a.click(); document.body.removeChild(a);
                               showToast('Download started');
                             }}
-                          />
-                        </Tooltip>
-                        <Tooltip content="Save to Shopify Product Media">
+                          >
+                            Download
+                          </Button>
                           <Button
-                            icon={ImageIcon}
-                            accessibilityLabel="Save to Shopify Product Media"
+                            variant="secondary"
+                            size="medium"
                             onClick={async () => {
                               const shopify = shopifyAppBridge;
                               if (!shopify?.resourcePicker) {
@@ -446,26 +511,15 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                                 showToast(err.response?.data?.message || err.message || 'Failed.', true);
                               }
                             }}
-                          />
-                        </Tooltip>
-                      </div>
-                    </div>
-
-                  ) : hasProduct ? (
-                    /* Product preview while idle */
-                    <div className="aistudio-scanning">
-                      <div className="premium-scanning-wrapper">
-                        <img src={productImage} alt="Product" className="premium-scanning-img" />
-                        <div
-                          className="premium-scanning-badge"
-                          style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
-                        >
-                          Ready — describe your scene and generate
-                        </div>
+                          >
+                            Save to Product
+                          </Button>
+                        </InlineStack>
                       </div>
                     </div>
 
                   ) : (
+                    /* Empty state */
                     <div className="aistudio-empty-state">
                       <div className="aistudio-empty-state-icon">
                         <MasterpieceIllustration />
@@ -480,13 +534,15 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
               </Card>
             </Layout.Section>
 
-            {/* ── Command Center (right) ── */}
+            {/* ──────────────────────────────────────────────────────
+                Control Panel (right)
+            ────────────────────────────────────────────────────── */}
             <Layout.Section variant="oneThird">
               <Card>
                 <BlockStack gap="400">
                   <Text as="h2" variant="headingMd">Product AI Lab (VTO)</Text>
 
-                  {/* Step 1 – Product */}
+                  {/* Step 1 – Select Product */}
                   <BlockStack gap="200">
                     <Text variant="bodySm" tone="subdued" as="p">Step 1 — Select Product</Text>
                     {productImage ? (
@@ -518,46 +574,27 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                   {/* Step 2 – Intent */}
                   <BlockStack gap="200">
                     <Text variant="bodySm" tone="subdued" as="p">Step 2 — Choose Intent</Text>
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: 8,
-                      }}
-                    >
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                       {INTENT_OPTIONS.map((opt) => (
-                        <button
+                        <PillButton
                           key={opt.value}
-                          type="button"
+                          selected={intent === opt.value}
                           onClick={() => setIntent(opt.value)}
-                          style={{
-                            padding: '10px 8px',
-                            borderRadius: 8,
-                            border: `2px solid ${intent === opt.value ? TEAL : 'var(--p-color-border)'}`,
-                            background: intent === opt.value ? `rgba(70,138,154,0.08)` : 'transparent',
-                            color: intent === opt.value ? TEAL : 'var(--p-color-text)',
-                            fontWeight: intent === opt.value ? 600 : 400,
-                            fontSize: 13,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                            textAlign: 'center',
-                            lineHeight: 1.3,
-                          }}
                         >
                           {opt.value === 'environment' ? '🌄' : '🧑'}&nbsp;{opt.label}
-                        </button>
+                        </PillButton>
                       ))}
                     </div>
                     {intent === 'on_human' && (
                       <Text variant="bodySm" tone="subdued" as="p">
-                        AI will mask the product and place it on a human model in a natural setting.
+                        AI will place the product on a human model in a natural setting.
                       </Text>
                     )}
                   </BlockStack>
 
                   {/* Step 3 – Scene description */}
                   <TextField
-                    label="Describe the scene"
+                    label="Step 3 — Describe the scene"
                     value={scenePrompt}
                     onChange={setScenePrompt}
                     placeholder={
@@ -572,7 +609,47 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                     helpText="Be specific — the AI reads every detail."
                   />
 
-                  {/* Pro Drawer toggle */}
+                  {/* Step 4 – Aspect Ratio */}
+                  <BlockStack gap="200">
+                    <Text variant="bodySm" tone="subdued" as="p">Step 4 — Aspect Ratio</Text>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {ASPECT_RATIO_OPTIONS.map((opt) => (
+                        <PillButton
+                          key={opt.value}
+                          selected={aspectRatio === opt.value}
+                          onClick={() => setAspectRatio(opt.value)}
+                        >
+                          {opt.label}
+                        </PillButton>
+                      ))}
+                    </div>
+                  </BlockStack>
+
+                  {/* Step 5 – Resolution */}
+                  <BlockStack gap="200">
+                    <Text variant="bodySm" tone="subdued" as="p">Step 5 — Resolution</Text>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                      {RESOLUTION_OPTIONS.map((opt) => (
+                        <PillButton
+                          key={opt.value}
+                          selected={resolution === opt.value}
+                          onClick={() => setResolution(opt.value)}
+                        >
+                          <span style={{ fontWeight: 700 }}>{opt.label}</span>
+                          <br />
+                          <span style={{ fontSize: 10, opacity: 0.75 }}>{opt.hint}</span>
+                          {opt.extraCredits > 0 && (
+                            <>
+                              <br />
+                              <span style={{ fontSize: 10, color: ORANGE }}>+{opt.extraCredits} cr</span>
+                            </>
+                          )}
+                        </PillButton>
+                      ))}
+                    </div>
+                  </BlockStack>
+
+                  {/* References (Optional) */}
                   <Box>
                     <button
                       type="button"
@@ -608,12 +685,11 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                       )}
                     </button>
 
-                    {/* Reference Drawer */}
                     {drawerOpen && (
                       <Box paddingBlockStart="300">
                         <BlockStack gap="300">
                           <Text variant="bodySm" tone="subdued" as="p">
-                            Reference images shape the AI's output — all are optional.
+                            Reference images shape the AI's output — all are optional. Adding references costs +2 credits.
                           </Text>
                           <div
                             style={{
@@ -645,12 +721,6 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                               onRemove={() => setPoseRef(null)}
                             />
                           </div>
-                          {hasRefs && (
-                            <Text variant="bodySm" as="p" tone="subdued">
-                              References detected — generation cost is{' '}
-                              <strong style={{ color: ORANGE }}>4 credits</strong>.
-                            </Text>
-                          )}
                         </BlockStack>
                       </Box>
                     )}
@@ -679,10 +749,19 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                           </Text>
                           <Text variant="bodySm" tone="subdued" as="p">
                             This action uses:{' '}
-                            <strong className="tabular-nums" style={{ color: hasRefs ? ORANGE : 'inherit' }}>
+                            <strong
+                              className="tabular-nums"
+                              style={{ color: (hasRefs || resolution !== '1K') ? ORANGE : 'inherit' }}
+                            >
                               {creditsNeeded} credit{creditsNeeded !== 1 ? 's' : ''}
                             </strong>
-                            {hasRefs && <Text as="span" variant="bodySm" tone="subdued"> (refs active)</Text>}
+                            {(hasRefs || resolution !== '1K') && (
+                              <Text as="span" variant="bodySm" tone="subdued">
+                                {' '}(base 2
+                                {resolution !== '1K' ? ` + ${resolutionExtraCredits(resolution)} ${resolution} res` : ''}
+                                {hasRefs ? ' + 2 refs' : ''})
+                              </Text>
+                            )}
                           </Text>
                           <Text variant="bodySm" tone="subdued" as="p">
                             Remaining after: <strong className="tabular-nums">{remainingAfter.toLocaleString()}</strong>
