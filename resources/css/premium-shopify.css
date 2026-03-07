@@ -762,8 +762,31 @@
   max-width: 100%;
   position: relative;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   background: var(--p-color-bg-surface-secondary);
+}
+.aistudio-compare-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 12px 8px;
+  position: relative;
+  z-index: 5;
+}
+.aistudio-compare-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.aistudio-compare-label-before { margin-right: auto; }
+.aistudio-compare-label-after { margin-left: auto; }
+.aistudio-compare-hint {
+  font-size: 12px;
+  color: var(--p-color-text-subdued);
+  text-align: center;
+  margin: 10px 0 0;
+  padding: 0 12px;
 }
 .aistudio-compare-slider {
   position: relative;
@@ -772,6 +795,8 @@
   aspect-ratio: 1;
   max-width: 100%;
   margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
 }
 .aistudio-compare-slider .aistudio-compare-before,
 .aistudio-compare-slider .aistudio-compare-after {
@@ -789,14 +814,13 @@
   object-fit: contain;
   pointer-events: none;
 }
+/* Wide hit area (32px) so the divider is easy to grab; visible line in center */
 .aistudio-compare-divider {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 2px;
-  margin-left: -1px;
-  background: #fff;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.35);
+  width: 32px;
+  margin-left: -16px;
   z-index: 10;
   cursor: ew-resize;
   display: flex;
@@ -805,28 +829,45 @@
   transition: left 0.05s linear;
   -webkit-tap-highlight-color: transparent;
 }
+.aistudio-compare-divider::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+}
 .aistudio-compare-divider:focus-visible {
   outline: 2px solid var(--premium-teal);
   outline-offset: 2px;
+}
+.aistudio-compare-divider:hover .aistudio-compare-handle {
+  border-color: var(--premium-teal);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 .aistudio-compare-handle {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  min-height: 52px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  border: 3px solid var(--premium-teal);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.22);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  color: #4a4a4a;
+  gap: 3px;
+  color: var(--premium-teal);
   pointer-events: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .aistudio-compare-handle svg {
   flex-shrink: 0;

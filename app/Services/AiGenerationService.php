@@ -407,13 +407,18 @@ class AiGenerationService
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
         $maskInput = $this->imageUrlToReplicateInput($maskUrl);
         $prompt = $payload['prompt'] ?? 'Remove the object in the masked region and seamlessly fill the background.';
+        $aspectRatio = $payload['aspect_ratio'] ?? 'match_input_image';
+        $resolution = $payload['resolution'] ?? '1K';
+        $outputFormat = $payload['output_format'] ?? 'jpg';
 
         $apiPayload = [
             'version' => self::NANO_BANANA_2_MODEL_VERSION,
             'input' => [
                 'prompt' => $prompt,
                 'image_input' => [$imageInput, $maskInput],
-                'aspect_ratio' => 'match_input_image',
+                'aspect_ratio' => $aspectRatio,
+                'resolution' => $resolution,
+                'output_format' => $outputFormat,
             ],
         ];
 

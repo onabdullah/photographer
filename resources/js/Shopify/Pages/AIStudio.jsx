@@ -147,6 +147,29 @@ const LIGHTING_PRESETS = [
 
 const MAGIC_ERASER_DEFAULT_PROMPT = 'Remove the object in the masked region and seamlessly fill the background.';
 
+const MAGIC_ERASER_ASPECT_RATIOS = [
+  { value: 'match_input_image', label: 'Match input image' },
+  { value: '1:1', label: '1:1' },
+  { value: '4:3', label: '4:3' },
+  { value: '3:4', label: '3:4' },
+  { value: '16:9', label: '16:9' },
+  { value: '9:16', label: '9:16' },
+  { value: '2:3', label: '2:3' },
+  { value: '3:2', label: '3:2' },
+];
+
+const MAGIC_ERASER_RESOLUTIONS = [
+  { value: '512', label: '512px (fastest)' },
+  { value: '1K', label: '1K (default)' },
+  { value: '2K', label: '2K' },
+  { value: '4K', label: '4K (highest quality)' },
+];
+
+const MAGIC_ERASER_OUTPUT_FORMATS = [
+  { value: 'jpg', label: 'JPG' },
+  { value: 'png', label: 'PNG' },
+];
+
 const GALLERY_DATE_OPTIONS = [
   { value: 'all', label: 'All time' },
   { value: 'today', label: 'Today' },
@@ -218,6 +241,9 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   const [enhanceScale, setEnhanceScale] = useState('2');
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
   const [magicEraserPrompt, setMagicEraserPrompt] = useState(MAGIC_ERASER_DEFAULT_PROMPT);
+  const [magicEraserAspectRatio, setMagicEraserAspectRatio] = useState('match_input_image');
+  const [magicEraserResolution, setMagicEraserResolution] = useState('1K');
+  const [magicEraserOutputFormat, setMagicEraserOutputFormat] = useState('jpg');
   const [magicEraserHasStrokes, setMagicEraserHasStrokes] = useState(false);
   const [magicEraserCursorPos, setMagicEraserCursorPos] = useState({ x: -100, y: -100 });
   const [magicEraserCursorVisible, setMagicEraserCursorVisible] = useState(false);
@@ -519,6 +545,9 @@ export default function AIStudio({ product, initialImage, initialTool }) {
       formData.append('mask_base64', maskBase64);
       const promptToSend = (magicEraserPrompt && magicEraserPrompt.trim()) ? magicEraserPrompt.trim() : MAGIC_ERASER_DEFAULT_PROMPT;
       formData.append('prompt', promptToSend);
+      formData.append('aspect_ratio', magicEraserAspectRatio);
+      formData.append('resolution', magicEraserResolution);
+      formData.append('output_format', magicEraserOutputFormat);
       const res = await axios.post('/shopify/tools/magic-eraser', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -545,7 +574,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
       showToast(msg, true);
       setProcessingStatus('error');
     }
-  }, [hasValidInput, inputImage, selectedTool, magicEraserHasStrokes, magicEraserPrompt, showToast, refetchRecentGenerations]);
+  }, [hasValidInput, inputImage, selectedTool, magicEraserHasStrokes, magicEraserPrompt, magicEraserAspectRatio, magicEraserResolution, magicEraserOutputFormat, showToast, refetchRecentGenerations]);
 
   useEffect(() => {
     if (processingStatus !== 'scanning' || !jobId) return;
@@ -1118,6 +1147,10 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                   ) : (lastCompletedTool === 'upscale' || lastCompletedTool === 'magic_eraser' || lastCompletedTool === 'enhance' || lastCompletedTool === 'lighting') && resultImageUrl && inputImage ? (
                     <div className="aistudio-hero-result-container">
                       <div className="aistudio-compare-slider-wrap">
+                        <div className="aistudio-compare-labels">
+                          <span className="aistudio-compare-label aistudio-compare-label-before">Before</span>
+                          <span className="aistudio-compare-label aistudio-compare-label-after">After</span>
+                        </div>
                         <div className="aistudio-compare-slider">
                           <div className="aistudio-compare-before" style={{ clipPath: `inset(0 ${100 - compareSliderPosition}% 0 0)` }}>
                             <img src={inputImage} alt="Before" />
@@ -1168,7 +1201,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                             aria-valuenow={compareSliderPosition}
                             aria-valuemin={0}
                             aria-valuemax={100}
-                            aria-label="Before / After comparison"
+                            aria-label="Before / After comparison — drag to compare"
                             tabIndex={0}
                             onKeyDown={(e) => {
                               const step = e.key === 'ArrowLeft' ? -2 : e.key === 'ArrowRight' ? 2 : 0;
@@ -1179,11 +1212,12 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                             }}
                           >
                             <span className="aistudio-compare-handle">
-                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden><path d="M12 6L8 10L12 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden><path d="M8 6L12 10L8 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M14 8L10 12L14 16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M10 8L14 12L10 16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                             </span>
                           </div>
                         </div>
+                        <p className="aistudio-compare-hint">Drag the center handle left or right to compare before and after</p>
                       </div>
                       <div className="aistudio-hero-actions aistudio-hero-actions--outside">
                         <InlineStack gap="300">
@@ -1335,6 +1369,25 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                         suffix="px"
                         onChange={(value) => setMagicEraserBrushSize(Number(value))}
                         helpText="Draw over the object you want to remove"
+                      />
+                      <Select
+                        label="Aspect ratio"
+                        options={MAGIC_ERASER_ASPECT_RATIOS}
+                        value={magicEraserAspectRatio}
+                        onChange={setMagicEraserAspectRatio}
+                      />
+                      <Select
+                        label="Resolution"
+                        options={MAGIC_ERASER_RESOLUTIONS}
+                        value={magicEraserResolution}
+                        onChange={setMagicEraserResolution}
+                        helpText="Higher resolution takes longer"
+                      />
+                      <Select
+                        label="Output format"
+                        options={MAGIC_ERASER_OUTPUT_FORMATS}
+                        value={magicEraserOutputFormat}
+                        onChange={setMagicEraserOutputFormat}
                       />
                       <Button
                         variant="secondary"

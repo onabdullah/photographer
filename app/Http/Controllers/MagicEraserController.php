@@ -52,6 +52,15 @@ class MagicEraserController extends Controller
             if ($request->filled('prompt')) {
                 $payload['prompt'] = $request->input('prompt');
             }
+            if ($request->filled('aspect_ratio')) {
+                $payload['aspect_ratio'] = $request->input('aspect_ratio');
+            }
+            if ($request->filled('resolution')) {
+                $payload['resolution'] = $request->input('resolution');
+            }
+            if ($request->filled('output_format')) {
+                $payload['output_format'] = $request->input('output_format');
+            }
             $result = $this->aiGenerationService->startGeneration('magic_eraser', $payload, $shopDomain);
             return response()->json($result);
         } catch (\Throwable $e) {
