@@ -544,7 +544,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
 
                   {/* Step 1 – Select Product */}
                   <BlockStack gap="200">
-                    <Text variant="bodySm" tone="subdued" as="p">Step 1 — Select Product</Text>
+                    <Text variant="bodySm" tone="subdued" as="p">Select Product</Text>
                     {productImage ? (
                       <BlockStack gap="200">
                         <div className="aistudio-panel-thumb aistudio-panel-thumb-checkerboard" style={{ borderRadius: 8, overflow: 'hidden' }}>
@@ -573,7 +573,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
 
                   {/* Step 2 – Intent */}
                   <BlockStack gap="200">
-                    <Text variant="bodySm" tone="subdued" as="p">Step 2 — Choose Intent</Text>
+                    <Text variant="bodySm" tone="subdued" as="p">Choose Intent</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                       {INTENT_OPTIONS.map((opt) => (
                         <PillButton
@@ -594,7 +594,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
 
                   {/* Step 3 – Scene description */}
                   <TextField
-                    label="Step 3 — Describe the scene"
+                    label="Describe the scene"
                     value={scenePrompt}
                     onChange={setScenePrompt}
                     placeholder={
@@ -611,7 +611,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
 
                   {/* Step 4 – Aspect Ratio */}
                   <BlockStack gap="200">
-                    <Text variant="bodySm" tone="subdued" as="p">Step 4 — Aspect Ratio</Text>
+                    <Text variant="bodySm" tone="subdued" as="p">Aspect Ratio</Text>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                       {ASPECT_RATIO_OPTIONS.map((opt) => (
                         <PillButton
