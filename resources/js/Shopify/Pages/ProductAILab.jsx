@@ -29,6 +29,7 @@ import axios from 'axios';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import MagicButton from '@/Shopify/Components/MagicButton';
+import BrowseFromStore from '@/Shopify/Components/BrowseFromStore';
 
 /* ─────────────────────────────────────────────────────────────────
    Constants
@@ -129,7 +130,6 @@ function PillButton({ selected, onClick, children }) {
         transition: 'all 0.15s ease',
         textAlign: 'center',
         lineHeight: 1.2,
-        whiteSpace: 'nowrap',
       }}
     >
       {children}
@@ -200,6 +200,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
   const [galleryToolFilter, setGalleryToolFilter] = useState('all');
   const [galleryDateFilter, setGalleryDateFilter] = useState('all');
   const [exportModalOpen, setExportModalOpen]     = useState(false);
+  const [browseModalOpen, setBrowseModalOpen]     = useState(false);
   const [exportType, setExportType]               = useState('flat');
   const [isExporting, setIsExporting]             = useState(false);
   const [galleryLoadedIds, setGalleryLoadedIds]   = useState(() => new Set());
@@ -305,6 +306,12 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
     const file = accepted[0];
     if (file) setProductImage(URL.createObjectURL(file));
   }, []);
+
+  const handleBrowseSelectImage = useCallback((url) => {
+    setProductImage(url);
+    setBrowseModalOpen(false);
+    showToast('Image selected');
+  }, [showToast]);
 
   const makeRefDropHandler = (setter) => (_all, accepted) => {
     const file = accepted[0];
@@ -520,8 +527,8 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
 
                   ) : (
                     /* Empty state */
-                    <div className="aistudio-empty-state">
-                      <div className="aistudio-empty-state-icon">
+                    <div className="aistudio-hero-empty">
+                      <div className="aistudio-hero-empty-illustration">
                         <MasterpieceIllustration />
                       </div>
                       <Text as="h2" variant="headingLg">Your product scene awaits</Text>
@@ -555,19 +562,24 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                         </Button>
                       </BlockStack>
                     ) : (
-                      <DropZone
-                        accept="image/*"
-                        type="image"
-                        allowMultiple={false}
-                        onDrop={handleProductDrop}
-                        label="Select Product"
-                        labelHidden
-                      >
-                        <DropZone.FileUpload
-                          actionTitle="Drop or click to upload product"
-                          actionHint="PNG, JPG or WebP — max 15 MB"
-                        />
-                      </DropZone>
+                      <BlockStack gap="200">
+                        <DropZone
+                          accept="image/*"
+                          type="image"
+                          allowMultiple={false}
+                          onDrop={handleProductDrop}
+                          label="Select Product"
+                          labelHidden
+                        >
+                          <DropZone.FileUpload
+                            actionTitle="Drop or click to upload product"
+                            actionHint="PNG, JPG or WebP — max 15 MB"
+                          />
+                        </DropZone>
+                        <Button variant="plain" size="slim" fullWidth onClick={() => setBrowseModalOpen(true)}>
+                          Browse from Store
+                        </Button>
+                      </BlockStack>
                     )}
                   </BlockStack>
 
@@ -606,7 +618,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                     autoComplete="off"
                     characterCount={scenePrompt.length}
                     maxLength={600}
-                    helpText="Be specific — the AI reads every detail."
+                    helpText="Be specific, the AI reads every detail."
                   />
 
                   {/* Step 4 – Aspect Ratio */}
@@ -935,6 +947,12 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
           </Modal>
         </BlockStack>
       </Page>
+
+      <BrowseFromStore
+        open={browseModalOpen}
+        onClose={() => setBrowseModalOpen(false)}
+        onSelectImage={handleBrowseSelectImage}
+      />
     </ShopifyLayout>
   );
 }

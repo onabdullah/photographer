@@ -470,6 +470,30 @@ function creditsForResolution(resolution) {
   return 1;
 }
 
+function PillButton({ selected, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: '7px 10px',
+        borderRadius: 8,
+        border: `2px solid ${selected ? TEAL : 'var(--p-color-border)'}`,
+        background: selected ? `rgba(70,138,154,0.08)` : 'transparent',
+        color: selected ? TEAL : 'var(--p-color-text)',
+        fontWeight: selected ? 600 : 400,
+        fontSize: 12,
+        cursor: 'pointer',
+        transition: 'all 0.15s ease',
+        textAlign: 'center',
+        lineHeight: 1.2,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function AIStudio({ product, initialImage, initialTool, enabledTools: enabledToolsProp, credits: initialCredits = 0 }) {
   const enabledTools = Array.isArray(enabledToolsProp) && enabledToolsProp.length > 0
     ? enabledToolsProp
@@ -1701,19 +1725,42 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                         onChange={(value) => setMagicEraserBrushSize(Number(value))}
                         helpText="Draw over the object you want to remove"
                       />
-                      <Select
-                        label="Aspect ratio"
-                        options={MAGIC_ERASER_ASPECT_RATIOS}
-                        value={magicEraserAspectRatio}
-                        onChange={setMagicEraserAspectRatio}
-                      />
-                      <Select
-                        label="Resolution"
-                        options={MAGIC_ERASER_RESOLUTIONS}
-                        value={magicEraserResolution}
-                        onChange={setMagicEraserResolution}
-                        helpText="Higher resolution takes longer"
-                      />
+                      <BlockStack gap="200">
+                        <Text variant="bodySm" tone="subdued" as="p">Aspect ratio</Text>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {MAGIC_ERASER_ASPECT_RATIOS.map((opt) => (
+                            <PillButton
+                              key={opt.value}
+                              selected={magicEraserAspectRatio === opt.value}
+                              onClick={() => setMagicEraserAspectRatio(opt.value)}
+                            >
+                              {opt.value === 'match_input_image' ? 'Match' : opt.label}
+                            </PillButton>
+                          ))}
+                        </div>
+                      </BlockStack>
+                      <BlockStack gap="200">
+                        <Text variant="bodySm" tone="subdued" as="p">Resolution</Text>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                          {MAGIC_ERASER_RESOLUTIONS.map((opt) => (
+                            <PillButton
+                              key={opt.value}
+                              selected={magicEraserResolution === opt.value}
+                              onClick={() => setMagicEraserResolution(opt.value)}
+                            >
+                              <span style={{ fontWeight: 700 }}>{opt.value}</span>
+                              <br />
+                              <span style={{ fontSize: 10, opacity: 0.75 }}>
+                                {opt.value === '4K' ? 'Ultra HD' : opt.value === '2K' ? 'HD' : 'Standard'}
+                              </span>
+                              <br />
+                              <span style={{ fontSize: 10, color: '#FF7A30' }}>
+                                {opt.value === '4K' ? '4 cr' : opt.value === '2K' ? '2 cr' : '1 cr'}
+                              </span>
+                            </PillButton>
+                          ))}
+                        </div>
+                      </BlockStack>
                       <Select
                         label="Output format"
                         options={MAGIC_ERASER_OUTPUT_FORMATS}
@@ -2095,14 +2142,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                                         showToast(err.response?.data?.message || err.message || 'Failed to add to product.', true);
                                       }
                                     }}
-                                  />
-                                </Tooltip>
-                                <Tooltip content="Add Background">
-                                  <Button
-                                    size="slim"
-                                    icon={ImageMagicIcon}
-                                    accessibilityLabel="Add Background"
-                                    onClick={() => showToast('✨ Generate AI Background — coming soon')}
                                   />
                                 </Tooltip>
                               </InlineStack>
