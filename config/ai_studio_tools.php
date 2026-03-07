@@ -48,10 +48,17 @@ return [
             'model_provider' => 'Replicate',
             'estimated_rate_per_image_usd' => 0.0025,
         ],
+        'universal_generate' => [
+            'label' => 'Product AI Lab (VTO)',
+            'model_name' => 'Nano Banana 2 (Google Gemini)',
+            'model_provider' => 'Google',
+            'estimated_rate_per_image_usd' => 0.067,
+        ],
     ],
 
     /** Tool keys used in snapshots and ImageGeneration (order for UI). */
     'tool_order' => [
+        'universal_generate',
         'magic_eraser',
         'background_remover',
         'compressor',

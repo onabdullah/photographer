@@ -170,8 +170,8 @@ export default function AIStudioToolsIndex({
 
     return (
         <AdminLayout
-            title="AI Studio Tools"
-            breadcrumbs={[{ label: 'Reports' }, { label: 'AI Studio Tools' }]}
+            title="AI Tools Analysis"
+            breadcrumbs={[{ label: 'Reports' }, { label: 'AI Tools Analysis' }]}
         >
             <div className="space-y-4">
                 {/* Main tabs: Overview | Models */}

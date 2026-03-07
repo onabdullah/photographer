@@ -67,7 +67,7 @@ const SECTIONS = [
         id: 'reports',
         label: 'REPORTS',
         items: [
-            { name: 'AI Studio Tools', href: '/admin/ai-studio-tools', icon: Sparkles, permission: 'ai_studio.view' },
+            { name: 'AI Tools Analysis', href: '/admin/ai-studio-tools', icon: Sparkles, permission: 'ai_studio.view' },
             { name: 'Analytics',     href: '/admin/analytics',     icon: BarChart3, permission: 'analytics.view' },
         ],
     },

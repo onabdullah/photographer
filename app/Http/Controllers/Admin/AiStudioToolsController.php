@@ -14,6 +14,7 @@ class AiStudioToolsController extends Controller
 {
     /** Map tool_used to AppStat key prefix (e.g. background_remover -> bg_remover). */
     private const APP_STAT_PREFIX = [
+        'universal_generate' => 'universal_generate',
         'background_remover' => 'bg_remover',
         'magic_eraser' => 'magic_eraser',
         'compressor' => 'compressor',
@@ -29,6 +30,7 @@ class AiStudioToolsController extends Controller
 
         $appStats = AppStat::whereIn('key', [
             'total_api_requests',
+            'universal_generate_success_count', 'universal_generate_failed_count',
             'bg_remover_success_count', 'bg_remover_failed_count',
             'magic_eraser_success_count', 'magic_eraser_failed_count',
             'compressor_success_count', 'compressor_failed_count',
@@ -180,7 +182,7 @@ class AiStudioToolsController extends Controller
     public function updateToolSetting(Request $request)
     {
         $request->validate([
-            'tool_key' => 'required|string|in:magic_eraser,background_remover,compressor,upscaler,enhance,lighting',
+            'tool_key' => 'required|string|in:universal_generate,magic_eraser,background_remover,compressor,upscaler,enhance,lighting',
             'is_enabled' => 'required|boolean',
         ]);
 

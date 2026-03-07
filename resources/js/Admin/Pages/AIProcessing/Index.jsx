@@ -4,6 +4,7 @@ import { Link, router } from '@inertiajs/react';
 import { Zap, ImageIcon, Filter } from 'lucide-react';
 
 const TOOL_LABELS = {
+    universal_generate: 'Product AI Lab (VTO)',
     magic_eraser: 'Magic Eraser',
     background_remover: 'Background Remover',
     compressor: 'Image Compressor',
