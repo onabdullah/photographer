@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'shopify/generate-image',
             'shopify/remove-background',
+            'shopify/tools/compress',
             'shopify/tools/upscale',
             'shopify/tools/enhance',
             'shopify/tools/magic-eraser',
