@@ -161,6 +161,11 @@ class AiStudioToolsController extends Controller
             }
         }
 
+        $tab = $request->input('tab', 'overview');
+        if (! in_array($tab, ['overview', 'models'], true)) {
+            $tab = 'overview';
+        }
+
         return Inertia::render('Admin/Pages/AIStudioTools/Index', [
             'tools' => $tools,
             'chartData' => $chartData,
@@ -168,6 +173,7 @@ class AiStudioToolsController extends Controller
             'totalApiRequests' => (int) ($appStats['total_api_requests'] ?? 0),
             'mostUsedToolKey' => $mostUsedToolKey,
             'mostUsedToolLabel' => $mostUsedToolLabel,
+            'initialTab' => $tab,
         ]);
     }
 

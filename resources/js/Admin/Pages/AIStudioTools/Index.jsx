@@ -34,9 +34,13 @@ export default function AIStudioToolsIndex({
     totalApiRequests = 0,
     mostUsedToolKey = null,
     mostUsedToolLabel = null,
+    initialTab = 'overview',
 }) {
     const [selectedTool, setSelectedTool] = useState('all');
-    const [mainTab, setMainTab] = useState('overview'); // 'overview' | 'models'
+    const [mainTab, setMainTab] = useState(initialTab === 'models' ? 'models' : 'overview');
+    useEffect(() => {
+        setMainTab(initialTab === 'models' ? 'models' : 'overview');
+    }, [initialTab]);
 
     const toolOptions = useMemo(() => {
         const opts = [{ key: 'all', label: 'All tools' }];

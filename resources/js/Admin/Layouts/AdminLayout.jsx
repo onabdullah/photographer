@@ -100,7 +100,9 @@ const SECTIONS = [
 ];
 
 const QUICK_ACTIONS = [
-    { name: 'New Merchant',  href: '/admin/merchants/create', icon: Plus, permission: 'merchants.manage' },
+    { name: 'New Merchant',     href: '/admin/merchants/create',        icon: Plus,    permission: 'merchants.manage' },
+    { name: 'View Models',      href: '/admin/ai-studio-tools?tab=models', icon: Sparkles, permission: 'ai_studio.view' },
+    { name: 'Magic Eraser',     href: '/admin/ai-processing?tool=magic_eraser', icon: Zap, permission: 'ai.view' },
 ];
 
 // ============================================================
