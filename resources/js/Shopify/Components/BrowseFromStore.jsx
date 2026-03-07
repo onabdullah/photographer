@@ -203,7 +203,6 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
               <img
                 src={product.image || PLACEHOLDER_IMG}
                 alt={product.title ? `Product: ${product.title}` : ''}
-                loading="lazy"
                 onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
               />
             </div>
@@ -265,8 +264,6 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
             <img
               src={url}
               alt={`Product image ${i + 1}`}
-              loading="lazy"
-              referrerPolicy="no-referrer"
               onError={(e) => { e.target.src = PLACEHOLDER_IMG; e.target.alt = 'Image unavailable'; }}
             />
           </button>
