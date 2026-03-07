@@ -19,14 +19,14 @@ class AiGenerationService
 {
     private const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
 
-    /** nightmareai/real-esrgan – image, scale (2–10), face_enhance */
-    private const UPSCALER_MODEL_VERSION = 'nightmareai/real-esrgan:279a18ae4f30c9d3636516918d76c8c8262a9bc7c415fe90a88087c78c9ebbef';
+    /**
+     * SUPIR – photorealistic upscale & enhance (replaces Real-ESRGAN + GFPGAN).
+     * zust-ai/supir: image, upscale, min_size, model_name. Yields photorealistic details vs plastic/smooth look.
+     */
+    private const SUPIR_MODEL_VERSION = 'zust-ai/supir:9daf6d19556db0fd6e347a7a5cae7d4a68cf25486266ca3e6dc82618f0a2e0b9';
 
-    /** LaMa inpainting: image + mask (white = erase, black = keep). twn39/lama returns output URL; allenhooo/lama often returns output null. */
-    private const LAMA_MODEL_VERSION = 'twn39/lama:2b91ca2340801c2a5be745612356fac36a17f698354a07f48a62d564d3b3a7a0';
-
-    /** tencentarc/gfpgan – face/quality enhancement: img, version (v1.4, v1.3, RestoreFormer), scale (1 or 2). */
-    private const ENHANCER_MODEL_VERSION = 'tencentarc/gfpgan:0fbacf7afc6c144e5be9767cff80f25aff23e52b0708f17e20f9879b2f21516c';
+    /** Flux.1 Fill [pro] – inpainting: image, mask, prompt. Photorealistic fill for magic eraser. */
+    private const FLUX_FILL_MODEL_VERSION = 'black-forest-labs/flux-fill-pro:b23335a86ed317e5a35eb1be11bbf8f8985f9fdf12c53484ecf930d734095f74';
 
     /** zsxkib/ic-light – AI relighting: subject_image, prompt. Latest version. */
     private const IC_LIGHT_MODEL_VERSION = 'zsxkib/ic-light:d41bcb10d8c159868f4cfbd7c6a2ca01484f7d39e4613419d5952c61562f1ba7';
@@ -328,26 +328,26 @@ class AiGenerationService
 
         $imageUrl = $payload['image_url'];
         $scale = (int) ($payload['scale'] ?? 4);
-        $faceEnhance = (bool) ($payload['face_enhance'] ?? false);
+        $scale = max(2, min(4, $scale)); // SUPIR typically 2 or 4
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
 
         $apiPayload = [
-            'version' => self::UPSCALER_MODEL_VERSION,
+            'version' => self::SUPIR_MODEL_VERSION,
             'input' => [
                 'image' => $imageInput,
-                'scale' => $scale,
-                'face_enhance' => $faceEnhance,
+                'upscale' => $scale,
+                'min_size' => 1024,
+                'model_name' => 'SUPIR-v0F', // high generalization, high quality
             ],
         ];
 
-        Log::channel('upscaler')->info('Upscaler create prediction', [
+        Log::channel('upscaler')->info('Upscaler (SUPIR) create prediction', [
             'shop_domain' => $shopDomain,
             'scale' => $scale,
-            'face_enhance' => $faceEnhance,
         ]);
 
         $response = Http::withToken($token)
-            ->timeout(30)
+            ->timeout(45)
             ->post(self::REPLICATE_API, $apiPayload);
 
         $statusCode = $response->status();
@@ -403,22 +403,24 @@ class AiGenerationService
 
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
         $maskInput = $this->imageUrlToReplicateInput($maskUrl);
+        $prompt = $payload['prompt'] ?? 'seamless background repair, photorealistic';
 
         $apiPayload = [
-            'version' => self::LAMA_MODEL_VERSION,
+            'version' => self::FLUX_FILL_MODEL_VERSION,
             'input' => [
                 'image' => $imageInput,
                 'mask' => $maskInput,
+                'prompt' => $prompt,
             ],
         ];
 
-        Log::channel('magic_eraser')->info('Magic eraser create prediction', [
+        Log::channel('magic_eraser')->info('Magic eraser (Flux Fill) create prediction', [
             'shop_domain' => $shopDomain,
         ]);
 
         $response = Http::withToken($token)
-            ->withHeaders(['Prefer' => 'wait=60'])
-            ->timeout(70)
+            ->withHeaders(['Prefer' => 'wait=90'])
+            ->timeout(95)
             ->post(self::REPLICATE_API, $apiPayload);
 
         $statusCode = $response->status();
@@ -527,27 +529,28 @@ class AiGenerationService
             throw new \InvalidArgumentException('Missing image_url for enhance.');
         }
 
-        $version = $payload['version'] ?? 'v1.4';
         $scale = (int) ($payload['scale'] ?? 2);
+        $scale = max(2, min(4, $scale));
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
 
         $apiPayload = [
-            'version' => self::ENHANCER_MODEL_VERSION,
+            'version' => self::SUPIR_MODEL_VERSION,
             'input' => [
-                'img' => $imageInput,
-                'version' => $version,
-                'scale' => $scale,
+                'image' => $imageInput,
+                'upscale' => $scale,
+                'min_size' => 1024,
+                'model_name' => 'SUPIR-v0F',
+                'a_prompt' => 'sharp, detailed, photorealistic, high quality, natural skin texture, fine details',
             ],
         ];
 
-        Log::channel('upscaler')->info('Enhancer create prediction', [
+        Log::channel('upscaler')->info('Enhancer (SUPIR) create prediction', [
             'shop_domain' => $shopDomain,
-            'version' => $version,
             'scale' => $scale,
         ]);
 
         $response = Http::withToken($token)
-            ->timeout(30)
+            ->timeout(45)
             ->post(self::REPLICATE_API, $apiPayload);
 
         $statusCode = $response->status();
@@ -706,13 +709,16 @@ class AiGenerationService
 
         try {
             $url = self::REPLICATE_API . '/' . $jobId;
-            $response = Http::withToken($token)->timeout(15)->get($url);
+            $response = Http::withToken($token)->timeout(25)->get($url);
             $data = $response->json() ?? [];
             $status = $data['status'] ?? '';
 
             if ($status === 'succeeded') {
                 $output = $data['output'] ?? null;
-                $resultUrl = is_string($output) ? $output : (is_array($output) ? ($output['url'] ?? $output[0] ?? null) : null);
+                $resultUrl = $this->extractResultUrlFromReplicateOutput($output);
+                if ($resultUrl === null && is_array($output)) {
+                    $resultUrl = is_string($output[0] ?? null) ? $output[0] : ($output['url'] ?? null);
+                }
 
                 if ($resultUrl && $generation) {
                     $storedUrl = $this->storeProcessedImageFromUrl($resultUrl, 'upscale');
@@ -777,11 +783,11 @@ class AiGenerationService
 
         try {
             $url = self::REPLICATE_API . '/' . $jobId;
-            $response = Http::withToken($token)->timeout(15)->get($url);
+            $response = Http::withToken($token)->timeout(25)->get($url);
             $data = $response->json() ?? [];
             $status = $data['status'] ?? '';
 
-            Log::channel('magic_eraser')->info('Magic eraser poll', ['job_id' => $jobId, 'status' => $status]);
+            Log::channel('magic_eraser')->info('Magic eraser (Flux Fill) poll', ['job_id' => $jobId, 'status' => $status]);
 
             if ($status === 'succeeded') {
                 $output = $data['output'] ?? null;
@@ -878,15 +884,15 @@ class AiGenerationService
 
         try {
             $url = self::REPLICATE_API . '/' . $jobId;
-            $response = Http::withToken($token)->timeout(15)->get($url);
+            $response = Http::withToken($token)->timeout(25)->get($url);
             $data = $response->json() ?? [];
             $status = $data['status'] ?? '';
 
             if ($status === 'succeeded') {
                 $output = $data['output'] ?? null;
-                $resultUrl = is_string($output) ? $output : (is_array($output) ? ($output['url'] ?? $output[0] ?? null) : null);
+                $resultUrl = $this->extractResultUrlFromReplicateOutput($output);
                 if ($resultUrl === null && is_array($output)) {
-                    $resultUrl = $this->extractResultUrlFromReplicateOutput($output);
+                    $resultUrl = is_string($output[0] ?? null) ? $output[0] : ($output['url'] ?? null);
                 }
                 if ($resultUrl === null) {
                     $resultUrl = $this->extractFirstUrlFromArray($data);
