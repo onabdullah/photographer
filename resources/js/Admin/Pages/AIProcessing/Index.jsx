@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { Link, router } from '@inertiajs/react';
 import { Zap, ImageIcon, Filter } from 'lucide-react';
@@ -39,6 +40,7 @@ export default function AIProcessingIndex({
     const { tool: toolFilter = 'all', store: storeFilter = '', type: typeFilter = 'all', date_from: dateFrom = '', date_to: dateTo = '', usage: usageFilter = 'all' } = filters;
     const paginator = masterpieces;
     const items = paginator?.data ?? [];
+    const [loadedIds, setLoadedIds] = useState(() => new Set());
 
     const baseParams = {
         tool: toolFilter,
@@ -181,14 +183,19 @@ export default function AIProcessingIndex({
                                         key={gen.id}
                                         className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
                                     >
-                                        <div className="aspect-square relative bg-gray-100 dark:bg-gray-700">
+                                        <div className={`aiprocessing-card-image-wrap aspect-square relative bg-gray-100 dark:bg-gray-700 ${loadedIds.has(gen.id) ? 'is-loaded' : ''}`}>
                                             {gen.result_image_url ? (
-                                                <img
-                                                    src={gen.result_image_url}
-                                                    alt=""
-                                                    className="w-full h-full object-cover"
-                                                    loading="lazy"
-                                                />
+                                                <>
+                                                    <div className="aiprocessing-card-skeleton" aria-hidden="true" />
+                                                    <img
+                                                        src={gen.result_image_url}
+                                                        alt=""
+                                                        className="absolute inset-0 w-full h-full object-cover"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        onLoad={() => setLoadedIds((prev) => new Set(prev).add(gen.id))}
+                                                    />
+                                                </>
                                             ) : (
                                                 <span className="text-xs text-gray-400 flex items-center justify-center h-full">—</span>
                                             )}

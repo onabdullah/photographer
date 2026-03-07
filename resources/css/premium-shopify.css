@@ -1206,6 +1206,43 @@
   100% { background-position: -200% 0; }
 }
 
+/* Admin AI Processing gallery — lazy load skeleton */
+.aiprocessing-card-image-wrap {
+  position: relative;
+  overflow: hidden;
+}
+.aiprocessing-card-skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 0%,
+    #e5e7eb 40%,
+    #d1d5db 50%,
+    #e5e7eb 60%,
+    #e5e7eb 100%
+  );
+  background-size: 200% 100%;
+  animation: aistudio-gallery-skeleton-shimmer 1.2s ease-in-out infinite;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.dark .aiprocessing-card-skeleton {
+  background: linear-gradient(
+    90deg,
+    #374151 0%,
+    #374151 40%,
+    #4b5563 50%,
+    #374151 60%,
+    #374151 100%
+  );
+  background-size: 200% 100%;
+}
+.aiprocessing-card-image-wrap.is-loaded .aiprocessing-card-skeleton {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .aistudio-gallery-card-overlay {
   position: absolute;
   inset: 0;
