@@ -25,7 +25,7 @@ class RolesAndPermissionsSeeder extends Seeder
         'Super Admin' => ['*'],
         'Admin' => [
             'dashboard.view',
-            'merchants.view', 'merchants.manage',
+            'merchants.view', 'merchants.manage', 'merchants.edit_credits',
             'products.view', 'products.manage',
             'ai.view', 'ai.manage',
             'analytics.view', 'ai_studio.view',
@@ -37,7 +37,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ],
         'Manager' => [
             'dashboard.view',
-            'merchants.view', 'merchants.manage',
+            'merchants.view', 'merchants.manage', 'merchants.edit_credits',
             'products.view', 'products.manage',
             'ai.view', 'ai.manage',
             'analytics.view', 'ai_studio.view',

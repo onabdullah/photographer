@@ -8,7 +8,7 @@ export default function MerchantsIndex({ merchants }) {
     const items     = paginator?.data ?? [];
     const { auth } = usePage().props;
     const permissions = auth?.user?.permissions ?? [];
-    const canManage = permissions.includes('*') || permissions.includes('merchants.manage');
+    const canEditCredits = permissions.includes('*') || permissions.includes('merchants.edit_credits');
 
     const [editingCredits, setEditingCredits] = useState(null); // { id, store_name, value }
     const [creditsInput, setCreditsInput] = useState('');
@@ -101,7 +101,7 @@ export default function MerchantsIndex({ merchants }) {
                                         >
                                             <span className="inline-flex items-center justify-end gap-1.5 w-full">
                                                 {Number(m.ai_credits_balance ?? 0).toLocaleString()}
-                                                {canManage && (
+                                                {canEditCredits && (
                                                     <button
                                                         type="button"
                                                         onClick={() => openEditCredits(m)}

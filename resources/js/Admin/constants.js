@@ -8,8 +8,9 @@ export const ALL_PERMISSIONS = {
         'dashboard.view':    'Dashboard View',
     },
     'MERCHANTS': {
-        'merchants.view':    'Merchants View',
-        'merchants.manage':  'Merchants Manage',
+        'merchants.view':        'Merchants View',
+        'merchants.manage':      'Merchants Manage',
+        'merchants.edit_credits': 'Merchants Edit Credits',
     },
     'PRODUCTS': {
         'products.view':     'Products View',

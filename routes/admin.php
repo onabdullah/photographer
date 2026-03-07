@@ -89,7 +89,7 @@ Route::middleware(['auth:admin'])->group(function () {
     })->middleware('admin.permission:merchants.view')->name('merchants.show');
 
     Route::patch('/merchants/{id}/credits', [\App\Http\Controllers\Admin\MerchantController::class, 'updateCredits'])
-        ->middleware('admin.permission:merchants.manage')
+        ->middleware('admin.permission:merchants.edit_credits')
         ->name('merchants.update-credits');
 
     // Product Management - View all products across merchants
