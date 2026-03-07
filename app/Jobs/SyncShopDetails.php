@@ -43,28 +43,29 @@ class SyncShopDetails implements ShouldQueue
         $shop = $this->shop;
 
         try {
-            // Fetch shop details from Shopify API
+            // Fetch shop details from Shopify API (GET /admin/shop.json returns { "shop": { "name", "shop_owner", ... } })
             $response = $shop->api()->rest('GET', '/admin/shop.json');
-            
-            if ($response['errors']) {
-                Log::error("SyncShopDetails: API Error fetching shop details", $response['errors']);
+
+            if (! empty($response['errors'])) {
+                Log::error('SyncShopDetails: API Error fetching shop details', ['errors' => $response['errors']]);
                 return;
             }
 
-            $shopData = $response['body']['shop'] ?? $response['body'];
+            $body = $response['body'] ?? [];
+            $shopData = $body['shop'] ?? $body;
             if (empty($shopData) || ! is_array($shopData)) {
-                Log::warning('SyncShopDetails: Unexpected shop API response structure', ['response' => $response]);
+                Log::warning('SyncShopDetails: Unexpected shop API response structure', ['body_keys' => is_array($body) ? array_keys($body) : gettype($body)]);
                 return;
             }
 
-            // Update Merchant record with store name, shop owner, country (and email)
+            // Update Merchant record with exact store name and owner from Shopify
             $shop->email = $shopData['email'] ?? $shop->email;
-            $shop->store_name = $shopData['name'] ?? null;
-            $shop->shop_owner = $shopData['shop_owner'] ?? null;
-            $shop->country = $shopData['country_name'] ?? $shopData['country'] ?? null;
+            $shop->store_name = isset($shopData['name']) ? (string) $shopData['name'] : $shop->store_name;
+            $shop->shop_owner = isset($shopData['shop_owner']) ? (string) $shopData['shop_owner'] : $shop->shop_owner;
+            $shop->country = $shopData['country_name'] ?? $shopData['country'] ?? $shop->country;
             $shop->save();
 
-            Log::info("SyncShopDetails: Updated shop details for {$shop->name}");
+            Log::info("SyncShopDetails: Updated shop details for {$shop->name}", ['store_name' => $shop->store_name, 'shop_owner' => $shop->shop_owner]);
 
         } catch (\Exception $e) {
             Log::error("SyncShopDetails: Exception fetching shop details - " . $e->getMessage());

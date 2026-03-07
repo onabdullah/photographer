@@ -79,7 +79,7 @@ export default function MerchantsIndex({ merchants }) {
                                         className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
                                     >
                                         <td className="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-gray-900 dark:text-white">
-                                            {m.store_name || '—'}
+                                            {m.store_name || m.name || '—'}
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
                                             {m.name}
@@ -88,7 +88,7 @@ export default function MerchantsIndex({ merchants }) {
                                             {m.email || '—'}
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                            {m.shop_owner || '—'}
+                                            {m.shop_owner || m.email || '—'}
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-4">
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">

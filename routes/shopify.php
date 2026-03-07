@@ -17,7 +17,7 @@ use Inertia\Inertia;
 |
 */
 
-Route::middleware(['verify.shopify'])->group(function () {
+Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMissing::class])->group(function () {
 
     // Dashboard
     Route::get('/', [\App\Http\Controllers\DashboardController::class, 'dashboard'])->name('dashboard');
