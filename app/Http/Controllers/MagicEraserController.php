@@ -7,9 +7,9 @@ use App\Services\AiGenerationService;
 use Illuminate\Http\Request;
 
 /**
- * Magic Eraser (object removal / inpainting) – Replicate LaMa.
+ * Magic Eraser (object removal / inpainting) – Replicate Nano Banana 2 (Gemini 3.1 Flash Image).
  * Thin controller: auth + validation, delegates to AiGenerationService.
- * Expects image (file or URL) and mask_base64 (PNG: white = erase, black = keep).
+ * Expects image (file or URL) and mask_base64 (PNG: white = erase, black = keep). Optional: prompt.
  */
 class MagicEraserController extends Controller
 {
@@ -49,6 +49,9 @@ class MagicEraserController extends Controller
                 'image_url' => $imageUrl,
                 'mask_base64' => $maskBase64,
             ];
+            if ($request->filled('prompt')) {
+                $payload['prompt'] = $request->input('prompt');
+            }
             $result = $this->aiGenerationService->startGeneration('magic_eraser', $payload, $shopDomain);
             return response()->json($result);
         } catch (\Throwable $e) {

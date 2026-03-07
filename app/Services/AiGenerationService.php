@@ -25,8 +25,11 @@ class AiGenerationService
      */
     private const SUPIR_MODEL_VERSION = 'zust-ai/supir:9daf6d19556db0fd6e347a7a5cae7d4a68cf25486266ca3e6dc82618f0a2e0b9';
 
-    /** Flux.1 Fill [pro] – inpainting: image, mask, prompt. Photorealistic fill for magic eraser. */
-    private const FLUX_FILL_MODEL_VERSION = 'black-forest-labs/flux-fill-pro:b23335a86ed317e5a35eb1be11bbf8f8985f9fdf12c53484ecf930d734095f74';
+    /**
+     * Nano Banana 2 (Gemini 3.1 Flash Image) – inpainting/object removal.
+     * image_input: [base image, mask]; prompt describes removal. Pixel-perfect outside mask.
+     */
+    private const NANO_BANANA_2_MODEL_VERSION = 'google/nano-banana-2:71516450bdbeafc41df33ad538bc8cc6a90f80038a563b1260531c02d694f4fd';
 
     /** zsxkib/ic-light – AI relighting: subject_image, prompt. Latest version. */
     private const IC_LIGHT_MODEL_VERSION = 'zsxkib/ic-light:d41bcb10d8c159868f4cfbd7c6a2ca01484f7d39e4613419d5952c61562f1ba7';
@@ -403,18 +406,18 @@ class AiGenerationService
 
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
         $maskInput = $this->imageUrlToReplicateInput($maskUrl);
-        $prompt = $payload['prompt'] ?? 'seamless background repair, photorealistic';
+        $prompt = $payload['prompt'] ?? 'Remove the object in the masked region and seamlessly fill the background.';
 
         $apiPayload = [
-            'version' => self::FLUX_FILL_MODEL_VERSION,
+            'version' => self::NANO_BANANA_2_MODEL_VERSION,
             'input' => [
-                'image' => $imageInput,
-                'mask' => $maskInput,
                 'prompt' => $prompt,
+                'image_input' => [$imageInput, $maskInput],
+                'aspect_ratio' => 'match_input_image',
             ],
         ];
 
-        Log::channel('magic_eraser')->info('Magic eraser (Flux Fill) create prediction', [
+        Log::channel('magic_eraser')->info('Magic eraser (Nano Banana 2) create prediction', [
             'shop_domain' => $shopDomain,
         ]);
 
@@ -787,7 +790,7 @@ class AiGenerationService
             $data = $response->json() ?? [];
             $status = $data['status'] ?? '';
 
-            Log::channel('magic_eraser')->info('Magic eraser (Flux Fill) poll', ['job_id' => $jobId, 'status' => $status]);
+            Log::channel('magic_eraser')->info('Magic eraser (Nano Banana 2) poll', ['job_id' => $jobId, 'status' => $status]);
 
             if ($status === 'succeeded') {
                 $output = $data['output'] ?? null;

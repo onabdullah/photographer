@@ -55,7 +55,7 @@ Route::middleware(['verify.shopify'])->group(function () {
     Route::post('/tools/enhance', [\App\Http\Controllers\ImageEnhancerController::class, 'enhance'])->name('tools.enhance');
     Route::get('/tools/enhance-job/{jobId}', [\App\Http\Controllers\ImageEnhancerController::class, 'enhanceJobStatus'])->name('tools.enhance-job');
 
-    // Magic Eraser (inpainting; Replicate LaMa; image + mask)
+    // Magic Eraser (inpainting; Replicate Nano Banana 2; image + mask)
     Route::post('/tools/magic-eraser', [\App\Http\Controllers\MagicEraserController::class, 'magicEraser'])->name('tools.magic-eraser');
     Route::get('/tools/magic-eraser-job/{jobId}', [\App\Http\Controllers\MagicEraserController::class, 'magicEraserJobStatus'])->name('tools.magic-eraser-job');
 

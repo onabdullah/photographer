@@ -145,6 +145,8 @@ const LIGHTING_PRESETS = [
   { value: 'luxury_glossy', label: 'Luxury Glossy', prompt: 'Luxury glossy style: polished, premium reflections. Magazine finish. Subject sharp; only lighting quality and sheen.' },
 ];
 
+const MAGIC_ERASER_DEFAULT_PROMPT = 'Remove the object in the masked region and seamlessly fill the background.';
+
 const GALLERY_DATE_OPTIONS = [
   { value: 'all', label: 'All time' },
   { value: 'today', label: 'Today' },
@@ -215,6 +217,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
   const [enhanceVersion, setEnhanceVersion] = useState('v1.4');
   const [enhanceScale, setEnhanceScale] = useState('2');
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
+  const [magicEraserPrompt, setMagicEraserPrompt] = useState(MAGIC_ERASER_DEFAULT_PROMPT);
   const [magicEraserHasStrokes, setMagicEraserHasStrokes] = useState(false);
   const [magicEraserCursorPos, setMagicEraserCursorPos] = useState({ x: -100, y: -100 });
   const [magicEraserCursorVisible, setMagicEraserCursorVisible] = useState(false);
@@ -514,6 +517,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
         throw new Error('Invalid image source');
       }
       formData.append('mask_base64', maskBase64);
+      const promptToSend = (magicEraserPrompt && magicEraserPrompt.trim()) ? magicEraserPrompt.trim() : MAGIC_ERASER_DEFAULT_PROMPT;
+      formData.append('prompt', promptToSend);
       const res = await axios.post('/shopify/tools/magic-eraser', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -540,7 +545,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
       showToast(msg, true);
       setProcessingStatus('error');
     }
-  }, [hasValidInput, inputImage, selectedTool, magicEraserHasStrokes, showToast, refetchRecentGenerations]);
+  }, [hasValidInput, inputImage, selectedTool, magicEraserHasStrokes, magicEraserPrompt, showToast, refetchRecentGenerations]);
 
   useEffect(() => {
     if (processingStatus !== 'scanning' || !jobId) return;
@@ -1313,6 +1318,14 @@ export default function AIStudio({ product, initialImage, initialTool }) {
 
                   {selectedTool === 'magic_eraser' && (
                     <BlockStack gap="200">
+                      <TextField
+                        label="Instructions for masked area"
+                        value={magicEraserPrompt}
+                        onChange={setMagicEraserPrompt}
+                        placeholder={MAGIC_ERASER_DEFAULT_PROMPT}
+                        helpText="Edit to describe what should appear in the erased area (e.g. seamless background, specific content)"
+                        autoComplete="off"
+                      />
                       <RangeSlider
                         label="Brush size"
                         value={magicEraserBrushSize}
