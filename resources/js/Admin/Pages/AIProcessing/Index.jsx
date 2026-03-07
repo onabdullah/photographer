@@ -1,6 +1,6 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
-import { Link } from '@inertiajs/react';
-import { Zap, ImageIcon } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { Zap, ImageIcon, Filter } from 'lucide-react';
 
 const TOOL_LABELS = {
     magic_eraser: 'Magic Eraser',
@@ -20,9 +20,40 @@ function toolLabel(key) {
     return TOOL_LABELS[key] || key;
 }
 
-export default function AIProcessingIndex({ categories = [], masterpieces, toolFilter = 'all' }) {
+function buildQuery(params) {
+    const q = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+        if (v != null && v !== '' && v !== 'all') q.set(k, v);
+    });
+    const s = q.toString();
+    return s ? `?${s}` : '';
+}
+
+export default function AIProcessingIndex({
+    categories = [],
+    stores = [],
+    fileTypeOptions = [],
+    masterpieces,
+    filters = {},
+}) {
+    const { tool: toolFilter = 'all', store: storeFilter = '', type: typeFilter = 'all', date_from: dateFrom = '', date_to: dateTo = '', usage: usageFilter = 'all' } = filters;
     const paginator = masterpieces;
     const items = paginator?.data ?? [];
+
+    const baseParams = {
+        tool: toolFilter,
+        store: storeFilter,
+        type: typeFilter,
+        date_from: dateFrom,
+        date_to: dateTo,
+        usage: usageFilter,
+    };
+
+    const toolHref = (toolKey) =>
+        `/admin/ai-processing${buildQuery({ ...baseParams, tool: toolKey === 'all' ? undefined : toolKey })}`;
+
+    const filterHref = (key, value) =>
+        `/admin/ai-processing${buildQuery({ ...baseParams, [key]: value || undefined })}`;
 
     return (
         <AdminLayout
@@ -37,12 +68,12 @@ export default function AIProcessingIndex({ categories = [], masterpieces, toolF
                     </span>
                 </div>
 
-                {/* Category tabs */}
+                {/* Category tabs (tool) */}
                 <div className="flex flex-wrap gap-2">
                     {categories.map((cat) => (
                         <Link
                             key={cat.key}
-                            href={cat.key === 'all' ? '/admin/ai-processing' : `/admin/ai-processing?tool=${cat.key}`}
+                            href={toolHref(cat.key)}
                             className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                                 toolFilter === cat.key
                                     ? 'bg-primary-600 text-white'
@@ -52,6 +83,79 @@ export default function AIProcessingIndex({ categories = [], masterpieces, toolF
                             {cat.label}
                         </Link>
                     ))}
+                </div>
+
+                {/* Filters: Store, Type, Date, Usage */}
+                <div className="card p-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            <Filter size={14} />
+                            Filters
+                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <label className="text-xs text-gray-500 dark:text-gray-400">Store</label>
+                            <select
+                                className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white py-1.5 px-2.5 min-w-[140px]"
+                                value={storeFilter}
+                                onChange={(e) => router.get(filterHref('store', e.target.value))}
+                            >
+                                <option value="">All stores</option>
+                                {stores.map((s) => (
+                                    <option key={s} value={s}>{s}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <label className="text-xs text-gray-500 dark:text-gray-400">Type</label>
+                            <select
+                                className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white py-1.5 px-2.5 min-w-[100px]"
+                                value={typeFilter}
+                                onChange={(e) => router.get(filterHref('type', e.target.value))}
+                            >
+                                {fileTypeOptions.map((opt) => (
+                                    <option key={opt.key} value={opt.key}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <label className="text-xs text-gray-500 dark:text-gray-400">From</label>
+                            <input
+                                type="date"
+                                className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white py-1.5 px-2.5"
+                                value={dateFrom}
+                                onChange={(e) => router.get(filterHref('date_from', e.target.value))}
+                            />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <label className="text-xs text-gray-500 dark:text-gray-400">To</label>
+                            <input
+                                type="date"
+                                className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white py-1.5 px-2.5"
+                                value={dateTo}
+                                onChange={(e) => router.get(filterHref('date_to', e.target.value))}
+                            />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <label className="text-xs text-gray-500 dark:text-gray-400">Usage</label>
+                            <select
+                                className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white py-1.5 px-2.5 min-w-[120px]"
+                                value={usageFilter}
+                                onChange={(e) => router.get(filterHref('usage', e.target.value))}
+                            >
+                                <option value="all">All</option>
+                                <option value="downloaded">Downloaded</option>
+                                <option value="on_product">On product</option>
+                            </select>
+                        </div>
+                        {(storeFilter || typeFilter !== 'all' || dateFrom || dateTo || usageFilter !== 'all') && (
+                            <Link
+                                href="/admin/ai-processing"
+                                className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                            >
+                                Clear filters
+                            </Link>
+                        )}
+                    </div>
                 </div>
 
                 {/* Gallery grid */}
