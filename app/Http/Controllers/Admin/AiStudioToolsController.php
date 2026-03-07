@@ -96,11 +96,16 @@ class AiStudioToolsController extends Controller
             // All tools use 1 credit per image (including compressor)
             $credits_used = $requestsCount;
             $rt = $responseTimeByTool[$toolKey] ?? null;
+            $ratePerImageUsd = (float) ($meta['estimated_rate_per_image_usd'] ?? 0);
+            $consumedUsd = round($credits_used * $ratePerImageUsd, 4);
+
             $tools[] = [
                 'key' => $toolKey,
                 'label' => $meta['label'],
                 'model_name' => $meta['model_name'],
                 'model_provider' => $meta['model_provider'],
+                'estimated_rate_per_image_usd' => $ratePerImageUsd,
+                'consumed_usd' => $consumedUsd,
                 'is_enabled' => $toolSettings[$toolKey] ?? true,
                 'total_completed' => (int) ($totalsByTool[$toolKey] ?? 0),
                 'success_count' => $success,

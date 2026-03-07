@@ -243,7 +243,17 @@ export default function AIStudioToolsIndex({
                                                 <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.used_in_production?.toLocaleString() ?? 0}</p>
                                             </div>
                                         </div>
-                                        <div className="flex justify-end pt-2">
+                                        <div className="flex items-center justify-between gap-2 pt-2 flex-wrap">
+                                            <div className="flex items-center gap-3 text-[10px] text-gray-500 dark:text-gray-400">
+                                                <span className="font-medium tabular-nums">
+                                                    {t.estimated_rate_per_image_usd != null && t.estimated_rate_per_image_usd > 0
+                                                        ? `~$${Number(t.estimated_rate_per_image_usd).toFixed(4)}/img`
+                                                        : '$0/img'}
+                                                </span>
+                                                <span className="font-medium tabular-nums">
+                                                    Consumed: {t.consumed_usd != null && t.consumed_usd > 0 ? `$${Number(t.consumed_usd).toFixed(2)}` : '$0'}
+                                                </span>
+                                            </div>
                                             <select
                                                 value={t.is_enabled ? 'enabled' : 'disabled'}
                                                 onChange={(e) => {
