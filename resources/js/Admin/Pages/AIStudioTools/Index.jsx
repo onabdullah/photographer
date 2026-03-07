@@ -1,6 +1,7 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
+import { router } from '@inertiajs/react';
 import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag } from 'lucide-react';
 
 const TOOL_COLORS = [
@@ -67,6 +68,32 @@ export default function AIStudioToolsIndex({
         if (selectedTool === 'all') return recentGenerations;
         return recentGenerations.filter((g) => g.tool_used === selectedTool);
     }, [recentGenerations, selectedTool]);
+
+    const [activitySearch, setActivitySearch] = useState('');
+    const [activityStatusFilter, setActivityStatusFilter] = useState('all'); // 'all' | 'on_product' | 'downloaded' | 'ready'
+
+    const getActivityStatusLabel = (gen) => {
+        const onProduct = !!gen.has_product;
+        const downloaded = !!gen.has_downloaded;
+        if (onProduct && downloaded) return 'On product · Downloaded';
+        if (onProduct) return 'On product';
+        if (downloaded) return 'Downloaded';
+        return 'Ready';
+    };
+
+    const filteredRecentForTable = useMemo(() => {
+        let list = filteredRecent;
+        const search = (activitySearch || '').trim().toLowerCase();
+        if (search) {
+            list = list.filter((g) => (g.shop_domain || '').toLowerCase().includes(search));
+        }
+        if (activityStatusFilter !== 'all') {
+            if (activityStatusFilter === 'on_product') list = list.filter((g) => g.has_product);
+            else if (activityStatusFilter === 'downloaded') list = list.filter((g) => g.has_downloaded);
+            else if (activityStatusFilter === 'ready') list = list.filter((g) => !g.has_product && !g.has_downloaded);
+        }
+        return list;
+    }, [filteredRecent, activitySearch, activityStatusFilter]);
 
     const toolLabel = (key) => tools.find((t) => t.key === key)?.label || key;
 
@@ -177,16 +204,36 @@ export default function AIStudioToolsIndex({
                                         style={{ backgroundColor: TOOL_COLORS[index % TOOL_COLORS.length] }}
                                     />
                                     <div className="p-4 flex-1 flex flex-col gap-3">
-                                        <div>
-                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                {t.label}
-                                            </h3>
-                                            <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400 line-clamp-2" title={t.model_name}>
-                                                {t.model_name}
-                                            </p>
-                                            <p className="mt-1 text-[11px] font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wide">
-                                                {t.model_provider}
-                                            </p>
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                    {t.label}
+                                                </h3>
+                                                <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400 line-clamp-2" title={t.model_name}>
+                                                    {t.model_name}
+                                                </p>
+                                                <p className="mt-1 text-[11px] font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wide">
+                                                    {t.model_provider}
+                                                </p>
+                                            </div>
+                                            <span className="flex-shrink-0 text-lg font-bold tabular-nums text-gray-900 dark:text-white" title="Credits used">
+                                                {(t.credits_used ?? 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2 py-2 border-t border-gray-100 dark:border-gray-700/80">
+                                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Show on store</span>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!t.is_enabled}
+                                                    onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        router.patch('/admin/ai-studio-tools/settings', { tool_key: t.key, is_enabled: checked }, { preserveScroll: true });
+                                                    }}
+                                                    className="sr-only peer"
+                                                />
+                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-500/30 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-500 peer-checked:bg-primary-600" />
+                                            </label>
                                         </div>
                                         <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700/80 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                                             <div>
@@ -209,9 +256,6 @@ export default function AIStudioToolsIndex({
                                                 <p className="text-gray-500 dark:text-gray-400">In production</p>
                                                 <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.used_in_production?.toLocaleString() ?? 0}</p>
                                             </div>
-                                        </div>
-                                        <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                                            Credits used: <span className="font-medium text-gray-700 dark:text-gray-300 tabular-nums">{(t.credits_used ?? 0).toLocaleString()}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -512,14 +556,37 @@ export default function AIStudioToolsIndex({
                             </div>
                         )}
 
-                        {/* Recent activity - compact */}
+                        {/* Recent activity - compact, with search and filters */}
                         <div className="card overflow-hidden">
-                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
+                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center gap-3">
                                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Recent activity</h2>
+                                <div className="flex flex-wrap items-center gap-2 ml-auto">
+                                    <input
+                                        type="search"
+                                        placeholder="Search by shop…"
+                                        value={activitySearch}
+                                        onChange={(e) => setActivitySearch(e.target.value)}
+                                        className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs px-2.5 py-1.5 min-w-[140px] focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        aria-label="Search by shop"
+                                    />
+                                    <select
+                                        value={activityStatusFilter}
+                                        onChange={(e) => setActivityStatusFilter(e.target.value)}
+                                        className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs px-2.5 py-1.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        aria-label="Filter by status"
+                                    >
+                                        <option value="all">All statuses</option>
+                                        <option value="on_product">On product</option>
+                                        <option value="downloaded">Downloaded</option>
+                                        <option value="ready">Ready</option>
+                                    </select>
+                                </div>
                             </div>
                             <div className="overflow-x-auto">
-                                {filteredRecent.length === 0 ? (
-                                    <div className="px-4 py-6 text-center text-xs text-gray-500 dark:text-gray-400">No recent generations</div>
+                                {filteredRecentForTable.length === 0 ? (
+                                    <div className="px-4 py-6 text-center text-xs text-gray-500 dark:text-gray-400">
+                                        {filteredRecent.length === 0 ? 'No recent generations' : 'No matches for search or filter'}
+                                    </div>
                                 ) : (
                                     <table className="w-full text-sm">
                                         <thead>
@@ -532,31 +599,37 @@ export default function AIStudioToolsIndex({
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {filteredRecent.map((gen) => (
-                                                <tr key={gen.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                                    <td className="py-2 px-4 text-gray-900 dark:text-white font-medium">{gen.shop_domain || '—'}</td>
-                                                    <td className="py-2 px-4 text-gray-700 dark:text-gray-300">{toolLabel(gen.tool_used)}</td>
-                                                    <td className="py-2 px-4 text-gray-600 dark:text-gray-400">{formatDate(gen.updated_at)}</td>
-                                                    <td className="py-2 px-4">
-                                                        {gen.result_image_url ? (
-                                                            <a href={gen.result_image_url} target="_blank" rel="noopener noreferrer" className="block w-10 h-10 rounded border border-gray-200 dark:border-gray-600 overflow-hidden bg-gray-100 dark:bg-gray-700">
-                                                                <img src={gen.result_image_url} alt="" className="w-full h-full object-cover" />
-                                                            </a>
-                                                        ) : (
-                                                            <span className="text-gray-400">—</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="py-2 px-4">
-                                                        {gen.has_product ? (
-                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-                                                                On product
+                                            {filteredRecentForTable.map((gen) => {
+                                                const statusLabel = getActivityStatusLabel(gen);
+                                                const isOnProduct = !!gen.has_product;
+                                                const isDownloaded = !!gen.has_downloaded;
+                                                const statusCls = isOnProduct
+                                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                                    : isDownloaded
+                                                        ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300'
+                                                        : 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300';
+                                                return (
+                                                    <tr key={gen.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                        <td className="py-2 px-4 text-gray-900 dark:text-white font-medium">{gen.shop_domain || '—'}</td>
+                                                        <td className="py-2 px-4 text-gray-700 dark:text-gray-300">{toolLabel(gen.tool_used)}</td>
+                                                        <td className="py-2 px-4 text-gray-600 dark:text-gray-400">{formatDate(gen.updated_at)}</td>
+                                                        <td className="py-2 px-4">
+                                                            {gen.result_image_url ? (
+                                                                <a href={gen.result_image_url} target="_blank" rel="noopener noreferrer" className="block w-10 h-10 rounded border border-gray-200 dark:border-gray-600 overflow-hidden bg-gray-100 dark:bg-gray-700">
+                                                                    <img src={gen.result_image_url} alt="" className="w-full h-full object-cover" />
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-gray-400">—</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-2 px-4">
+                                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${statusCls}`}>
+                                                                {statusLabel}
                                                             </span>
-                                                        ) : (
-                                                            <span className="text-gray-400 text-xs">—</span>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 )}

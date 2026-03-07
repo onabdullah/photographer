@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsCurrentShop;
 use App\Http\Traits\UsesShopifyTokenExchange;
+use App\Models\AiStudioToolSetting;
 use App\Models\ImageGeneration;
 use Illuminate\Http\Request;
 
@@ -65,6 +66,10 @@ class DashboardController extends Controller
         });
 
         $activePlan = $shop->plan ? $shop->plan->name : 'Free Trial';
+        $enabledTools = AiStudioToolSetting::enabledStoreValues();
+        if (empty($enabledTools)) {
+            $enabledTools = ['magic_eraser', 'remove_bg', 'compressor', 'upscale', 'enhance', 'lighting'];
+        }
 
         return \Inertia\Inertia::render('Shopify/Dashboard', [
             'shopName' => $shop->name ?? 'Shop',
@@ -73,6 +78,7 @@ class DashboardController extends Controller
             'totalProducts' => $totalProducts,
             'activePlan' => $activePlan,
             'recentGenerations' => $recentGenerations,
+            'enabledTools' => $enabledTools,
         ]);
     }
 

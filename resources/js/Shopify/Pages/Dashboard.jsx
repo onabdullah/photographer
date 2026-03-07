@@ -33,7 +33,10 @@ function timeAgo(dateStr) {
   return date.toLocaleDateString();
 }
 
-export default function Dashboard({ shopName, credits, totalGenerated, totalProducts: initialProducts, activePlan, recentGenerations = [] }) {
+const ALL_TOOL_VALUES = ['magic_eraser', 'remove_bg', 'compressor', 'upscale', 'enhance', 'lighting'];
+
+export default function Dashboard({ shopName, credits, totalGenerated, totalProducts: initialProducts, activePlan, recentGenerations = [], enabledTools }) {
+  const enabled = Array.isArray(enabledTools) && enabledTools.length > 0 ? enabledTools : ALL_TOOL_VALUES;
   const [totalProducts, setTotalProducts] = useState(initialProducts);
 
   useEffect(() => {
@@ -199,7 +202,9 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
                   { name: 'Upscaler', desc: 'Increase resolution 4×', value: 'upscale', Icon: Maximize2 },
                   { name: 'Image Enhancer', desc: 'Boost clarity & detail', value: 'enhance', Icon: Sparkles },
                   { name: 'Lighting Fix', desc: 'Adjust exposure & balance', value: 'lighting', Icon: Sun },
-                ].map(({ name, desc, value, Icon }) => (
+                ]
+                  .filter((t) => enabled.includes(t.value))
+                  .map(({ name, desc, value, Icon }) => (
                   <Card key={name}>
                     <button
                       type="button"

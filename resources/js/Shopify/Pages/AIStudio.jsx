@@ -463,8 +463,12 @@ function MasterpieceIllustration() {
   );
 }
 
-export default function AIStudio({ product, initialImage, initialTool }) {
-  const validInitialTool = initialTool && VALID_TOOLS.includes(initialTool) ? initialTool : 'magic_eraser';
+export default function AIStudio({ product, initialImage, initialTool, enabledTools: enabledToolsProp }) {
+  const enabledTools = Array.isArray(enabledToolsProp) && enabledToolsProp.length > 0
+    ? enabledToolsProp
+    : VALID_TOOLS;
+  const toolOptions = AI_TOOLS.filter((t) => enabledTools.includes(t.value));
+  const validInitialTool = initialTool && enabledTools.includes(initialTool) ? initialTool : (enabledTools[0] ?? 'magic_eraser');
   const [inputImage, setInputImage] = useState(initialImage || null);
   const [generatedImages, setGeneratedImages] = useState([]);
   const [selectedGeneratedIndex, setSelectedGeneratedIndex] = useState(0);
@@ -1176,8 +1180,8 @@ export default function AIStudio({ product, initialImage, initialTool }) {
     setMagicEraserHasStrokes(false);
   }, []);
   useEffect(() => {
-    if (initialTool && VALID_TOOLS.includes(initialTool)) setSelectedTool(initialTool);
-  }, [initialTool]);
+    if (initialTool && enabledTools.includes(initialTool)) setSelectedTool(initialTool);
+  }, [initialTool, enabledTools]);
   useEffect(() => {
     if (!isRemoveBg && selectedTool !== 'upscale' && selectedTool !== 'magic_eraser' && selectedTool !== 'enhance' && selectedTool !== 'lighting' && selectedTool !== 'compressor') {
       setResultImageUrl(null);
@@ -1618,7 +1622,7 @@ export default function AIStudio({ product, initialImage, initialTool }) {
                   <Select
                     label=""
                     labelHidden
-                    options={AI_TOOLS}
+                    options={toolOptions}
                     value={selectedTool}
                     onChange={handleToolChange}
                   />

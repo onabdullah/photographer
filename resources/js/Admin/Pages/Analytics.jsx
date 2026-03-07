@@ -333,7 +333,7 @@ export default function Analytics({
                             <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                 <AlertTriangle size={14} className="text-amber-500" />
                                 Recent failures
-                            </h2>
+                </h2>
                             <Link href="/admin/ai-studio-tools" className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1">
                                 AI Studio report <ExternalLink size={12} />
                             </Link>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AiStudioToolSetting;
 use App\Models\AppStat;
 use App\Models\ImageGeneration;
 use Illuminate\Http\Request;
@@ -79,6 +80,12 @@ class AiStudioToolsController extends Controller
             ->map(fn ($rows) => $rows->map(fn ($r) => ['message' => $r->error_message, 'count' => (int) $r->cnt])->values()->all())
             ->toArray();
 
+        try {
+            $toolSettings = AiStudioToolSetting::whereIn('tool_key', $toolOrder)->pluck('is_enabled', 'tool_key')->toArray();
+        } catch (\Throwable $e) {
+            $toolSettings = [];
+        }
+
         $tools = [];
         foreach ($toolOrder as $toolKey) {
             $meta = $toolsConfig[$toolKey] ?? ['label' => $toolKey, 'model_name' => '—', 'model_provider' => '—'];
@@ -94,6 +101,7 @@ class AiStudioToolsController extends Controller
                 'label' => $meta['label'],
                 'model_name' => $meta['model_name'],
                 'model_provider' => $meta['model_provider'],
+                'is_enabled' => $toolSettings[$toolKey] ?? true,
                 'total_completed' => (int) ($totalsByTool[$toolKey] ?? 0),
                 'success_count' => $success,
                 'failed_count' => $failed,
@@ -131,11 +139,12 @@ class AiStudioToolsController extends Controller
         $recentGenerations = ImageGeneration::query()
             ->whereNotNull('result_image_url')
             ->orderByDesc('updated_at')
-            ->limit(20)
-            ->get(['id', 'shop_domain', 'tool_used', 'result_image_url', 'shopify_product_id', 'created_at', 'updated_at'])
+            ->limit(50)
+            ->get(['id', 'shop_domain', 'tool_used', 'result_image_url', 'shopify_product_id', 'downloaded_at', 'created_at', 'updated_at'])
             ->map(function ($gen) {
                 $arr = $gen->toArray();
                 $arr['has_product'] = ! empty($gen->shopify_product_id);
+                $arr['has_downloaded'] = ! empty($gen->downloaded_at);
                 return $arr;
             })
             ->toArray();
@@ -155,5 +164,20 @@ class AiStudioToolsController extends Controller
             'mostUsedToolKey' => $mostUsedToolKey,
             'mostUsedToolLabel' => $mostUsedToolLabel,
         ]);
+    }
+
+    public function updateToolSetting(Request $request)
+    {
+        $request->validate([
+            'tool_key' => 'required|string|in:magic_eraser,background_remover,compressor,upscaler,enhance,lighting',
+            'is_enabled' => 'required|boolean',
+        ]);
+
+        AiStudioToolSetting::updateOrCreate(
+            ['tool_key' => $request->input('tool_key')],
+            ['is_enabled' => $request->boolean('is_enabled')]
+        );
+
+        return redirect()->back();
     }
 }

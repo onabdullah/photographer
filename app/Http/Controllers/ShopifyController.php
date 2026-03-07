@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsCurrentShop;
+use App\Models\AiStudioToolSetting;
 use Illuminate\Http\Request;
 
 class ShopifyController extends Controller
@@ -46,16 +47,20 @@ class ShopifyController extends Controller
             $imageUrl = 'https://via.placeholder.com/600x600?text=Select+a+Product';
         }
 
-        $validTools = ['magic_eraser', 'remove_bg', 'compressor', 'upscale', 'enhance', 'lighting'];
+        $enabledTools = AiStudioToolSetting::enabledStoreValues();
+        if (empty($enabledTools)) {
+            $enabledTools = ['magic_eraser', 'remove_bg', 'compressor', 'upscale', 'enhance', 'lighting'];
+        }
         $initialTool = $request->input('tool');
-        if (! in_array($initialTool, $validTools, true)) {
-            $initialTool = 'magic_eraser';
+        if (! in_array($initialTool, $enabledTools, true)) {
+            $initialTool = $enabledTools[0] ?? 'magic_eraser';
         }
 
         return \Inertia\Inertia::render('Shopify/AIStudio', [
             'product' => $product,
             'initialImage' => $imageUrl,
             'initialTool' => $initialTool,
+            'enabledTools' => $enabledTools,
         ]);
     }
 

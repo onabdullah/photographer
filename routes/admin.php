@@ -118,6 +118,9 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('/ai-studio-tools', \App\Http\Controllers\Admin\AiStudioToolsController::class)
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools');
+    Route::patch('/ai-studio-tools/settings', [\App\Http\Controllers\Admin\AiStudioToolsController::class, 'updateToolSetting'])
+        ->middleware('admin.permission:ai_studio.view')
+        ->name('ai-studio-tools.settings');
 
     // System Settings
     Route::get('/settings', function () {
