@@ -21,7 +21,8 @@ return [
             'label' => 'Magic Eraser',
             'model_name' => 'Google Nano Banana 2 (Gemini 3.1 Flash Image)',
             'model_provider' => 'Replicate',
-            'estimated_rate_per_image_usd' => 0.003,
+            // Nano Banana 2: 1K $0.067, 2K $0.101, 4K $0.151 per image (Replicate pricing)
+            'estimated_rate_per_image_usd' => 0.067,
         ],
         'compressor' => [
             'label' => 'Image Compressor',
