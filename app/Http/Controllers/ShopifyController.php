@@ -195,9 +195,9 @@ class ShopifyController extends Controller
     }
 
     /**
-     * Render Fashion AI Lab page (Virtual Try-On for apparel).
+     * Render Product AI Lab (VTO) page (Universal products & accessories via Nano Banana 2).
      */
-    public function fashionAILab(Request $request)
+    public function productAILab(Request $request)
     {
         $shop = $this->currentShop($request);
         if (! $shop) {
@@ -206,24 +206,7 @@ class ShopifyController extends Controller
 
         $credits = (int) ($shop->ai_credits_balance ?? 0);
 
-        return \Inertia\Inertia::render('Shopify/FashionAILab', [
-            'credits' => $credits,
-        ]);
-    }
-
-    /**
-     * Render Product AI Studio page (Universal products & accessories via Nano Banana 2).
-     */
-    public function productAIStudio(Request $request)
-    {
-        $shop = $this->currentShop($request);
-        if (! $shop) {
-            abort(403, 'Shop not authenticated');
-        }
-
-        $credits = (int) ($shop->ai_credits_balance ?? 0);
-
-        return \Inertia\Inertia::render('Shopify/ProductAIStudio', [
+        return \Inertia\Inertia::render('Shopify/ProductAILab', [
             'credits' => $credits,
         ]);
     }
