@@ -39,20 +39,20 @@ class AuthenticatedSessionController extends Controller
             $request->session()->put('2fa:user_id', $user->id);
             Auth::guard('admin')->logout();
             $request->session()->regenerate();
-            return redirect()->route('login.two-factor');
+            return redirect()->route('login.two-factor', [], 303);
         }
 
         if ($user) {
             LoginLogService::logSuccess($request, $user);
         }
         $request->session()->regenerate();
-        return redirect()->route('admin.dashboard');
+        return redirect()->route('admin.dashboard', [], 303);
     }
 
     public function showTwoFactorChallenge(Request $request): Response|RedirectResponse
     {
         if (! $request->session()->has('2fa:user_id')) {
-            return redirect()->route('login');
+            return redirect()->route('login', [], 303);
         }
         return Inertia::render('Auth/TwoFactorChallenge');
     }
@@ -61,19 +61,19 @@ class AuthenticatedSessionController extends Controller
     {
         $userId = $request->session()->get('2fa:user_id');
         if (! $userId) {
-            return redirect()->route('login')->with('error', 'Session expired. Please log in again.');
+            return redirect()->route('login', [], 303)->with('error', 'Session expired. Please log in again.');
         }
         $user = User::find($userId);
         if (! $user) {
             $request->session()->forget('2fa:user_id');
-            return redirect()->route('login')->with('error', 'Invalid session.');
+            return redirect()->route('login', [], 303)->with('error', 'Invalid session.');
         }
         $request->validate(['code' => 'required|string|size:6']);
         $code = preg_replace('/\D/', '', $request->input('code'));
         $secret = $user->two_factor_secret;
         if (! $secret) {
             $request->session()->forget('2fa:user_id');
-            return redirect()->route('login')->with('error', 'Two-factor is not enabled.');
+            return redirect()->route('login', [], 303)->with('error', 'Two-factor is not enabled.');
         }
         $google2fa = new Google2FA;
         if (! $google2fa->verifyKey($secret, $code)) {
@@ -83,7 +83,7 @@ class AuthenticatedSessionController extends Controller
         Auth::guard('admin')->login($user);
         LoginLogService::logSuccess($request, $user);
         $request->session()->regenerate();
-        return redirect()->route('admin.dashboard');
+        return redirect()->route('admin.dashboard', [], 303);
     }
 
     /**
@@ -92,11 +92,12 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('admin')->logout();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('login', [], 303);
     }
 }

@@ -333,7 +333,7 @@ class SettingsController extends Controller
             abort(403, 'Unauthenticated.');
         }
         if ($user->hasTwoFactorEnabled()) {
-            return redirect()->route('admin.settings')->with('error', 'Two-factor authentication is already enabled.');
+            return redirect()->route('admin.settings', [], 303)->with('error', 'Two-factor authentication is already enabled.');
         }
         $google2fa = new Google2FA;
         $secret = $google2fa->generateSecretKey(32);
@@ -343,7 +343,7 @@ class SettingsController extends Controller
         $request->session()->put('two_factor_qr_url', $qrCodeUrl);
         $request->session()->put('two_factor_secret', $secret);
 
-        return redirect()->route('admin.settings', ['tab' => 'security']);
+        return redirect()->route('admin.settings', ['tab' => 'security'], 303);
     }
 
     /** Confirm 2FA with a one-time code and enable it. */
@@ -355,20 +355,20 @@ class SettingsController extends Controller
         }
         $secret = $request->session()->get('two_factor_pending_secret');
         if (! $secret) {
-            return redirect()->route('admin.settings', ['tab' => 'security'])->with('error', 'Please start 2FA setup again.');
+            return redirect()->route('admin.settings', ['tab' => 'security'], 303)->with('error', 'Please start 2FA setup again.');
         }
         $valid = $request->validate(['code' => 'required|string|size:6']);
         $code = preg_replace('/\D/', '', $valid['code']);
         $google2fa = new Google2FA;
         if (! $google2fa->verifyKey($secret, $code)) {
-            return redirect()->route('admin.settings', ['tab' => 'security'])->with('error', 'Invalid or expired code. Try again.');
+            return redirect()->route('admin.settings', ['tab' => 'security'], 303)->with('error', 'Invalid or expired code. Try again.');
         }
         $request->session()->forget(['two_factor_pending_secret', 'two_factor_qr_url', 'two_factor_secret']);
         $user->update([
             'two_factor_secret' => $secret,
             'two_factor_confirmed_at' => now(),
         ]);
-        return redirect()->route('admin.settings', ['tab' => 'security'])->with('success', 'Two-factor authentication is now enabled.');
+        return redirect()->route('admin.settings', ['tab' => 'security'], 303)->with('success', 'Two-factor authentication is now enabled.');
     }
 
     /** Disable 2FA. Requires current password. */
@@ -393,7 +393,7 @@ class SettingsController extends Controller
             'two_factor_confirmed_at' => null,
         ]);
         $request->session()->forget(['two_factor_pending_secret', 'two_factor_qr_url', 'two_factor_secret']);
-        return redirect()->route('admin.settings', ['tab' => 'security'])->with('success', 'Two-factor authentication has been disabled.');
+        return redirect()->route('admin.settings', ['tab' => 'security'], 303)->with('success', 'Two-factor authentication has been disabled.');
     }
 
     public function storeSmtp(Request $request)
