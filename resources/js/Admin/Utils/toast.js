@@ -1,9 +1,11 @@
 /**
- * Admin panel toasts (Sonner).
- * Use for immediate feedback; flash messages from redirects are shown automatically in AdminLayout.
+ * Admin panel toasts (Radix UI Toast), shown bottom-right.
+ * Flash messages from redirects are shown automatically via AdminToastProvider.
  *
- * import { toast } from '@/Admin/utils/toast';
- * toast.success('Saved');
- * toast.error('Something went wrong');
+ * For imperative toasts from a component, use the hook:
+ *   import { useAdminToast } from '@/Admin/Components/AdminToast';
+ *   const toast = useAdminToast();
+ *   toast.success('Saved');
+ *   toast.error('Something went wrong');
  */
-export { toast } from 'sonner';
+export { useAdminToast } from '@/Admin/Components/AdminToast';

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, usePage } from '@inertiajs/react';
-import { Toaster, toast } from 'sonner';
+import { AdminToastProvider } from '@/Admin/Components/AdminToast';
 import {
     LayoutDashboard,
     Store,
@@ -558,28 +558,10 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
     };
 
     const user = props.auth?.user;
-    const lastFlashRef = useRef({ success: null, error: null });
-
-    // Global flash → Sonner toast (once per message; for redirects after create/edit/delete)
-    useEffect(() => {
-        const success = typeof props.flash?.success === 'function' ? props.flash.success() : props.flash?.success;
-        const error = typeof props.flash?.error === 'function' ? props.flash.error() : props.flash?.error;
-        if (success && success !== lastFlashRef.current.success) {
-            toast.success(success);
-            lastFlashRef.current.success = success;
-            lastFlashRef.current.error = null;
-        }
-        if (error && error !== lastFlashRef.current.error) {
-            toast.error(error);
-            lastFlashRef.current.error = error;
-            lastFlashRef.current.success = null;
-        }
-        if (!success && !error) lastFlashRef.current = { success: null, error: null };
-    }, [props.flash]);
 
     return (
+        <AdminToastProvider flash={props.flash}>
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
-            <Toaster position="top-right" richColors closeButton />
 
             {/* ══════════════════════════════════════════════════
                 TOP BAND  —  fixed, full-width, h-9 (36px)
@@ -841,5 +823,6 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 )}
             </div>
         </div>
+        </AdminToastProvider>
     );
 }
