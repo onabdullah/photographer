@@ -118,7 +118,7 @@ class AiUniversalService
                 $errorDetail = $response->json('detail') ?? $response->body();
                 $errorMsg    = 'Nano Banana 2 API error: ' . (is_string($errorDetail) && $errorDetail !== '' ? $errorDetail : ('HTTP ' . $response->status()));
                 Log::error('Nano Banana 2 API error', ['status' => $response->status(), 'body' => $response->body()]);
-                $generation->update(['status' => 'failed', 'error_message' => $errorMsg]);
+                $generation->update(['status' => 'failed', 'error_message' => $errorMsg, 'processing_time_seconds' => round($generation->created_at->diffInSeconds(now(), true), 4)]);
                 AppStat::incrementKey('universal_generate_failed_count');
                 throw new \RuntimeException($errorMsg);
             }
@@ -128,7 +128,7 @@ class AiUniversalService
             $status = $data['status'] ?? '';
 
             if (! $jobId) {
-                $generation->update(['status' => 'failed', 'error_message' => 'Replicate did not return a job ID.']);
+                $generation->update(['status' => 'failed', 'error_message' => 'Replicate did not return a job ID.', 'processing_time_seconds' => round($generation->created_at->diffInSeconds(now(), true), 4)]);
                 AppStat::incrementKey('universal_generate_failed_count');
                 throw new \RuntimeException('Replicate did not return a job ID.');
             }
@@ -142,7 +142,7 @@ class AiUniversalService
                 if ($outputUrl) {
                     $stored    = $this->downloadAndStore($outputUrl, $token, 'universal');
                     $outputUrl = $stored ?? $outputUrl;
-                    $generation->update(['status' => 'completed', 'result_image_url' => $outputUrl]);
+                    $generation->update(['status' => 'completed', 'result_image_url' => $outputUrl, 'processing_time_seconds' => round($generation->created_at->diffInSeconds(now(), true), 4)]);
                     AppStat::incrementKey('universal_generate_success_count');
                     return [
                         'status'           => 'done',
@@ -155,7 +155,7 @@ class AiUniversalService
             if (in_array($status, ['failed', 'canceled'], true)) {
                 $error    = $data['error'] ?? 'Nano Banana 2 job failed.';
                 $errorMsg = is_string($error) ? $error : 'Nano Banana 2 job failed.';
-                $generation->update(['status' => 'failed', 'error_message' => $errorMsg]);
+                $generation->update(['status' => 'failed', 'error_message' => $errorMsg, 'processing_time_seconds' => round($generation->created_at->diffInSeconds(now(), true), 4)]);
                 AppStat::incrementKey('universal_generate_failed_count');
                 throw new \RuntimeException($errorMsg);
             }
@@ -173,8 +173,9 @@ class AiUniversalService
             // Only mark failed if still in processing state (specific paths above already set it)
             if ($generation->status === 'processing') {
                 $generation->update([
-                    'status'        => 'failed',
-                    'error_message' => $e->getMessage() ?: 'Unexpected error during generation.',
+                    'status'                   => 'failed',
+                    'error_message'            => $e->getMessage() ?: 'Unexpected error during generation.',
+                    'processing_time_seconds'  => round($generation->created_at->diffInSeconds(now(), true), 4),
                 ]);
                 AppStat::incrementKey('universal_generate_failed_count');
             }
@@ -214,7 +215,11 @@ class AiUniversalService
                 $outputUrl = $stored ?? $outputUrl;
             }
             if ($generation) {
-                $generation->update(['status' => 'completed', 'result_image_url' => $outputUrl]);
+                $generation->update([
+                    'status'                  => 'completed',
+                    'result_image_url'        => $outputUrl,
+                    'processing_time_seconds' => round($generation->created_at->diffInSeconds(now(), true), 4),
+                ]);
                 AppStat::incrementKey('universal_generate_success_count');
             }
             return [
@@ -227,8 +232,9 @@ class AiUniversalService
         if (in_array($status, ['failed', 'canceled'], true)) {
             $error = $data['error'] ?? 'Nano Banana 2 job failed.';
             $generation?->update([
-                'status'        => 'failed',
-                'error_message' => is_string($error) ? $error : json_encode($error),
+                'status'                  => 'failed',
+                'error_message'           => is_string($error) ? $error : json_encode($error),
+                'processing_time_seconds' => $generation ? round($generation->created_at->diffInSeconds(now(), true), 4) : null,
             ]);
             AppStat::incrementKey('universal_generate_failed_count');
             return ['status' => 'error', 'message' => is_string($error) ? $error : 'Job failed.'];
