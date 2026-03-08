@@ -1,8 +1,8 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { usePage, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAdminToast } from '@/Admin/Components/AdminToast';
-import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, TrendingUp, AlertCircle, ShieldOff } from 'lucide-react';
+import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, Check, TrendingUp, AlertCircle, ShieldOff } from 'lucide-react';
 
 const PURPOSE_LABELS = {
     support: 'Support',
@@ -29,6 +29,7 @@ export default function Settings() {
     const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, recentMailLogs = [], mailOverviewStats = null, canManageSmtp = false } = usePage().props;
     const toast = useAdminToast();
     const [activeTab, setActiveTab] = useState('general');
+    const [copiedId, setCopiedId] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [testId, setTestId] = useState(null);
@@ -113,10 +114,26 @@ export default function Settings() {
         });
     };
 
-    const copyError = (text) => {
+    const copyError = (text, id = 'copy') => {
         if (!text) return;
-        navigator.clipboard.writeText(text).then(() => toast.success('Error copied')).catch(() => {});
+        navigator.clipboard.writeText(text).then(() => {
+            toast.success('Error copied');
+            setCopiedId(id);
+            window.setTimeout(() => setCopiedId(null), 2000);
+        }).catch(() => {});
     };
+
+    useEffect(() => {
+        const onEscape = (e) => {
+            if (e.key !== 'Escape') return;
+            if (testId) { setTestId(null); setTestEmail(''); }
+            if (editingId) cancelEdit();
+        };
+        if (testId || editingId) {
+            document.addEventListener('keydown', onEscape);
+            return () => document.removeEventListener('keydown', onEscape);
+        }
+    }, [testId, editingId]);
 
     return (
         <AdminLayout
@@ -236,13 +253,13 @@ export default function Settings() {
                                                         </p>
                                                         <button
                                                             type="button"
-                                                            onClick={() => copyError(mailOverviewStats.top_error?.message_full ?? mailOverviewStats.top_error?.message)}
-                                                            className="flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                                                            onClick={() => copyError(mailOverviewStats.top_error?.message_full ?? mailOverviewStats.top_error?.message, 'top-error')}
+                                                            className="flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-80"
                                                             title="Copy error"
-                                                            aria-label="Copy top error message"
+                                                            aria-label={copiedId === 'top-error' ? 'Copied' : 'Copy top error message'}
                                                         >
-                                                            <Copy size={12} aria-hidden />
-                                                            Copy
+                                                            {copiedId === 'top-error' ? <Check size={12} aria-hidden className="text-green-600 dark:text-green-400" /> : <Copy size={12} aria-hidden />}
+                                                            {copiedId === 'top-error' ? 'Copied' : 'Copy'}
                                                         </button>
                                                     </div>
                                                 ) : (
@@ -427,70 +444,6 @@ export default function Settings() {
                                                 style={{ backgroundColor: SMTP_CARD_COLORS[index % SMTP_CARD_COLORS.length], opacity: 0.35 }}
                                             />
                                             <div className="p-4 flex-1 flex flex-col gap-3">
-                                            {editingId === s.id ? (
-                                                <form onSubmit={handleEditSubmit} className="space-y-4">
-                                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Edit SMTP</h3>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Label</label>
-                                                    <input type="text" value={editForm.data.name} onChange={(e) => editForm.setData('name', e.target.value)} className="form-input w-full" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Purpose</label>
-                                                    <select value={editForm.data.purpose} onChange={(e) => editForm.setData('purpose', e.target.value)} className="form-input w-full">
-                                                        {Object.entries(smtpPurposes).map(([value, label]) => (
-                                                            <option key={value} value={value}>{label}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Host *</label>
-                                                    <input type="text" value={editForm.data.host} onChange={(e) => editForm.setData('host', e.target.value)} className="form-input w-full" required />
-                                                </div>
-                                                <div className="flex gap-4">
-                                                    <div className="flex-1">
-                                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Port</label>
-                                                        <input type="number" min={1} max={65535} value={editForm.data.port} onChange={(e) => editForm.setData('port', parseInt(e.target.value, 10) || 587)} className="form-input w-full" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Encryption</label>
-                                                        <select value={editForm.data.encryption ?? ''} onChange={(e) => editForm.setData('encryption', e.target.value || null)} className="form-input w-full">
-                                                            {Object.entries(smtpEncryptionOptions).map(([value, label]) => (
-                                                                <option key={value === null ? 'none' : value} value={value ?? ''}>{label}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
-                                                    <input type="text" value={editForm.data.username} onChange={(e) => editForm.setData('username', e.target.value)} className="form-input w-full" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                                                    <input type="password" value={editForm.data.password} onChange={(e) => editForm.setData('password', e.target.value)} className="form-input w-full" placeholder="Leave blank to keep existing" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From address *</label>
-                                                    <input type="email" value={editForm.data.from_address} onChange={(e) => editForm.setData('from_address', e.target.value)} className="form-input w-full" required />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From name</label>
-                                                    <input type="text" value={editForm.data.from_name} onChange={(e) => editForm.setData('from_name', e.target.value)} className="form-input w-full" />
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" checked={editForm.data.is_active} onChange={(e) => editForm.setData('is_active', e.target.checked)} className="rounded border-gray-300 dark:border-gray-600" />
-                                                    <span className="text-sm text-gray-700 dark:text-gray-300">Active for this purpose</span>
-                                                </label>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button type="submit" disabled={editForm.processing} className="btn btn-primary">Save</button>
-                                                <button type="button" onClick={cancelEdit} className="btn btn-secondary">Cancel</button>
-                                                </div>
-                                                </form>
-                                            ) : (
-                                                <>
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="min-w-0">
                                                             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{s.name || PURPOSE_LABELS[s.purpose] || s.purpose}</h3>
@@ -498,9 +451,13 @@ export default function Settings() {
                                                             <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">{s.host}:{s.port}</p>
                                                             <div className="mt-1 flex flex-wrap gap-1">
                                                                 <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{PURPOSE_LABELS[s.purpose] || s.purpose}</span>
-                                                                {s.is_active && (
+                                                                {s.is_active ? (
                                                                     <span className="text-xs px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 flex items-center gap-1">
                                                                         <CheckCircle size={12} /> Active
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-xs px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-600/50 text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                                                                        Inactive
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -554,8 +511,6 @@ export default function Settings() {
                                                         Delete
                                                     </button>
                                                     </div>
-                                                </>
-                                            )}
                                             </div>
                                         </div>
                                     ))}
@@ -592,13 +547,13 @@ export default function Settings() {
                                                                     <p className="flex-1 min-w-0 text-red-600 dark:text-red-400 truncate text-xs" title={log.error_message}>{log.error_message}</p>
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => copyError(log.error_message)}
-                                                                        className="flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                                                                        onClick={() => copyError(log.error_message, `log-${log.id}`)}
+                                                                        className="flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-80"
                                                                         title="Copy error"
-                                                                        aria-label="Copy error message"
+                                                                        aria-label={copiedId === `log-${log.id}` ? 'Copied' : 'Copy error message'}
                                                                     >
-                                                                        <Copy size={12} aria-hidden />
-                                                                        Copy
+                                                                        {copiedId === `log-${log.id}` ? <Check size={12} aria-hidden className="text-green-600 dark:text-green-400" /> : <Copy size={12} aria-hidden />}
+                                                                        {copiedId === `log-${log.id}` ? 'Copied' : 'Copy'}
                                                                     </button>
                                                                 </div>
                                                             )}
@@ -618,8 +573,14 @@ export default function Settings() {
             </div>
 
             {testId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="test-smtp-title">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="test-smtp-title"
+                    onClick={(e) => e.target === e.currentTarget && (setTestId(null), setTestEmail(''))}
+                >
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
                         <h3 id="test-smtp-title" className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Send test email</h3>
                         <form onSubmit={handleTest} className="space-y-4">
                             <div>
@@ -636,6 +597,82 @@ export default function Settings() {
                             <div className="flex gap-2">
                                 <button type="submit" className="btn btn-primary">Send test</button>
                                 <button type="button" onClick={() => { setTestId(null); setTestEmail(''); }} className="btn btn-secondary">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {editingId && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="edit-smtp-title"
+                    onClick={(e) => e.target === e.currentTarget && cancelEdit()}
+                >
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+                        <h3 id="edit-smtp-title" className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Edit SMTP configuration</h3>
+                        <form onSubmit={handleEditSubmit} className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="form-label">Label (optional)</label>
+                                    <input type="text" value={editForm.data.name} onChange={(e) => editForm.setData('name', e.target.value)} className="form-input w-full" placeholder="e.g. Support Mailgun" />
+                                </div>
+                                <div>
+                                    <label className="form-label">Purpose</label>
+                                    <select value={editForm.data.purpose} onChange={(e) => editForm.setData('purpose', e.target.value)} className="form-input w-full">
+                                        {Object.entries(smtpPurposes).map(([value, label]) => (
+                                            <option key={value} value={value}>{label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="form-label">Host *</label>
+                                    <input type="text" value={editForm.data.host} onChange={(e) => editForm.setData('host', e.target.value)} className="form-input w-full" placeholder="smtp.example.com" required />
+                                    {editForm.errors.host && <p className="form-error">{editForm.errors.host}</p>}
+                                </div>
+                                <div>
+                                    <label className="form-label">Port</label>
+                                    <input type="number" min={1} max={65535} value={editForm.data.port} onChange={(e) => editForm.setData('port', parseInt(e.target.value, 10) || 587)} className="form-input w-full" />
+                                </div>
+                                <div>
+                                    <label className="form-label">Encryption</label>
+                                    <select value={editForm.data.encryption ?? ''} onChange={(e) => editForm.setData('encryption', e.target.value || null)} className="form-input w-full">
+                                        {Object.entries(smtpEncryptionOptions).map(([value, label]) => (
+                                            <option key={value === null ? 'none' : value} value={value ?? ''}>{label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="form-label">Username</label>
+                                    <input type="text" value={editForm.data.username} onChange={(e) => editForm.setData('username', e.target.value)} className="form-input w-full" autoComplete="off" />
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="form-label">Password</label>
+                                    <input type="password" value={editForm.data.password} onChange={(e) => editForm.setData('password', e.target.value)} className="form-input w-full" placeholder="Leave blank to keep existing" autoComplete="new-password" />
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="form-label">From address *</label>
+                                    <input type="email" value={editForm.data.from_address} onChange={(e) => editForm.setData('from_address', e.target.value)} className="form-input w-full" required />
+                                    {editForm.errors.from_address && <p className="form-error">{editForm.errors.from_address}</p>}
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="form-label">From name</label>
+                                    <input type="text" value={editForm.data.from_name} onChange={(e) => editForm.setData('from_name', e.target.value)} className="form-input w-full" />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 pt-1">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={editForm.data.is_active} onChange={(e) => editForm.setData('is_active', e.target.checked)} className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500" />
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">Set as active for this purpose</span>
+                                </label>
+                            </div>
+                            <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                <button type="submit" disabled={editForm.processing} className="btn btn-primary">
+                                    {editForm.processing ? 'Saving…' : 'Save'}
+                                </button>
+                                <button type="button" onClick={cancelEdit} className="btn btn-secondary">Cancel</button>
                             </div>
                         </form>
                     </div>
