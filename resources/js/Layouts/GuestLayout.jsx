@@ -1,13 +1,38 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
+import { Sun, Moon } from 'lucide-react';
 
 export default function GuestLayout({ children }) {
+    const [theme, setTheme] = useState('light');
+
+    useEffect(() => {
+        const stored = typeof window !== 'undefined' && localStorage.getItem('theme');
+        const systemDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const resolved = stored === 'dark' || stored === 'light' ? stored : (systemDark ? 'dark' : 'light');
+        setTheme(resolved);
+        if (typeof document !== 'undefined') {
+            document.documentElement.classList.toggle('dark', resolved === 'dark');
+        }
+    }, []);
+
+    const toggleTheme = () => {
+        const next = theme === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+        document.documentElement.classList.toggle('dark', next === 'dark');
+        localStorage.setItem('theme', next);
+    };
+
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-8">
-            <div className="absolute inset-0 overflow-hidden pointer-events-none aria-hidden">
-                <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-primary-200/30 dark:bg-primary-900/20 blur-3xl" />
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-secondary-200/20 dark:bg-secondary-900/10 blur-3xl" />
-            </div>
+            <button
+                type="button"
+                onClick={toggleTheme}
+                className="fixed top-4 right-4 z-20 flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+                {theme === 'dark' ? <Sun size={20} aria-hidden /> : <Moon size={20} aria-hidden />}
+            </button>
 
             <Link
                 href="/"
@@ -22,7 +47,6 @@ export default function GuestLayout({ children }) {
 
             <div className="relative z-10 w-full max-w-md">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-200/80 dark:border-gray-700 overflow-hidden">
-                    <div className="h-1 w-full bg-gradient-to-r from-primary-500 to-secondary-500" aria-hidden />
                     <div className="p-6 sm:p-8">
                         {children}
                     </div>

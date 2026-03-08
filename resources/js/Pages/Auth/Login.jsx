@@ -23,12 +23,9 @@ export default function Login({ status, canResetPassword }) {
         <GuestLayout>
             <Head title="Log in" />
 
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white text-center">
                 Log in
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Sign in to your admin account.
-            </p>
 
             {status && (
                 <div className="mt-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 px-4 py-3 text-sm text-green-800 dark:text-green-300">
