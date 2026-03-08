@@ -199,16 +199,6 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
               </div>
               {showProductAILab && (
                 <div className="dashboard-tools-vto-wrap">
-                  <div className="dashboard-vto-marketing">
-                    <Text as="p" variant="bodySm" fontWeight="semibold" tone="subdued" className="dashboard-vto-tagline">
-                      Star feature — boost sales with pro photos in minutes
-                    </Text>
-                    <ul className="dashboard-vto-benefits" aria-hidden>
-                      <li>No photo shoots or models</li>
-                      <li>Lifestyle scenes &amp; virtual try-on</li>
-                      <li>Scroll-stopping imagery that converts</li>
-                    </ul>
-                  </div>
                   <div className="dashboard-vto-card-border">
                     <Card>
                     <button

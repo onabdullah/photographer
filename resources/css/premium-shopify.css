@@ -1911,39 +1911,48 @@ body.ai-browse-modal-open .Polaris-Backdrop {
   margin-bottom: var(--space-md);
 }
 
-/* Same neon border animation as Product AI Lab tool page during processing */
+/* Same spinning conic-gradient border as output window during image processing */
 .dashboard-vto-card-border {
+  position: relative;
+  overflow: hidden;
   border-radius: 12px;
-  animation: aistudio-neon-border 2.4s ease-in-out infinite;
+  padding: 3px;
+  box-sizing: border-box;
+}
+
+.dashboard-vto-card-border::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 65%,
+    var(--premium-teal) 75%,
+    var(--premium-orange) 90%,
+    var(--premium-teal) 100%
+  );
+  animation: premium-scanning-spin 2s linear infinite;
+  z-index: 0;
+}
+
+.dashboard-vto-card-border::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: var(--p-color-bg-surface);
+  border-radius: 9px;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .dashboard-vto-card-border .Polaris-LegacyCard {
-  border-radius: 12px;
+  position: relative;
+  z-index: 2;
+  border-radius: 9px;
   overflow: hidden;
-}
-
-.dashboard-vto-marketing {
-  margin-bottom: var(--space-sm);
-}
-
-.dashboard-vto-tagline {
-  margin: 0 0 6px 0;
-  color: var(--premium-teal);
-}
-
-.dashboard-vto-benefits {
-  margin: 0;
-  padding: 0 0 0 1.1em;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: var(--p-color-text-subdued);
-}
-
-.dashboard-vto-benefits li {
-  margin-bottom: 2px;
-}
-.dashboard-vto-benefits li:last-child {
-  margin-bottom: 0;
 }
 
 .dashboard-tools-vto-wrap .Polaris-LegacyCard {
