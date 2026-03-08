@@ -562,9 +562,6 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
               <Card>
                 <BlockStack gap="400">
                   <Text as="h2" variant="headingMd">Create scenes that sell</Text>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    Place your product in any environment or on a model. One prompt, pro results.
-                  </Text>
 
                   {/* Step 1 – Select Product */}
                   <BlockStack gap="200">
