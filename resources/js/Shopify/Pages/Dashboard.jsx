@@ -200,30 +200,32 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
               {showProductAILab && (
                 <div className="dashboard-tools-vto-wrap">
                   <div className="dashboard-vto-card-border">
-                    <Card>
-                    <button
-                    type="button"
-                    className="dashboard-tool-card dashboard-tool-card-vto"
-                    onClick={() => router.visit('/shopify/product-ai-lab')}
-                    aria-label="Product AI Lab (VTO): Generate full product photos with AI. Open Product AI Lab."
-                    title="Product AI Lab (VTO)"
-                  >
-                    <span className="dashboard-tool-icon dashboard-tool-icon-vto">
-                      <Shirt size={28} strokeWidth={1.75} aria-hidden />
-                    </span>
-                    <span className="dashboard-tool-content">
-                      <Text variant="headingMd" fontWeight="bold" as="span" className="dashboard-tool-name">
-                        Product AI Lab (VTO)
-                      </Text>
-                      <Text variant="bodyMd" tone="subdued" as="span" className="dashboard-tool-desc">
-                        Turn any product into stunning lifestyle photos — virtual try-on, custom backgrounds, and scenes that sell. No studio needed.
-                      </Text>
-                    </span>
-                    <span className="dashboard-tool-arrow" aria-hidden>
-                      <ArrowRight size={20} strokeWidth={2} />
-                    </span>
-                  </button>
-                  </Card>
+                    <div className="dashboard-vto-card-inner">
+                      <Card>
+                        <button
+                          type="button"
+                          className="dashboard-tool-card dashboard-tool-card-vto"
+                          onClick={() => router.visit('/shopify/product-ai-lab')}
+                          aria-label="Product AI Lab (VTO): Generate full product photos with AI. Open Product AI Lab."
+                          title="Product AI Lab (VTO)"
+                        >
+                          <span className="dashboard-tool-icon dashboard-tool-icon-vto">
+                            <Shirt size={28} strokeWidth={1.75} aria-hidden />
+                          </span>
+                          <span className="dashboard-tool-content">
+                            <Text variant="headingMd" fontWeight="bold" as="span" className="dashboard-tool-name">
+                              Product AI Lab (VTO)
+                            </Text>
+                            <Text variant="bodyMd" tone="subdued" as="span" className="dashboard-tool-desc">
+                              Turn any product into stunning lifestyle photos — virtual try-on, custom backgrounds, and scenes that sell. No studio needed.
+                            </Text>
+                          </span>
+                          <span className="dashboard-tool-arrow" aria-hidden>
+                            <ArrowRight size={20} strokeWidth={2} />
+                          </span>
+                        </button>
+                      </Card>
+                    </div>
                   </div>
                 </div>
               )}

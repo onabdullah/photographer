@@ -1948,17 +1948,23 @@ body.ai-browse-modal-open .Polaris-Backdrop {
   pointer-events: none;
 }
 
-.dashboard-vto-card-border .Polaris-LegacyCard {
+/* Inner wrapper: ensures card content always on top of spinning border, visible */
+.dashboard-vto-card-inner {
   position: relative;
   z-index: 2;
   border-radius: 9px;
+  background: var(--p-color-bg-surface);
   overflow: hidden;
 }
 
-.dashboard-tools-vto-wrap .Polaris-LegacyCard {
+.dashboard-vto-card-inner .Polaris-LegacyCard,
+.dashboard-vto-card-inner [class*='Card'] {
   padding: 0;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 9px;
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
 
 /* Settings page – sticky save bar (no Frame/ContextualSaveBar) */
