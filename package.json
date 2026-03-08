@@ -33,6 +33,7 @@
     "lucide-react": "^0.565.0",
     "react-apexcharts": "^2.1.0",
     "react-confetti": "^6.4.0",
-    "react-use": "^17.6.0"
+    "react-use": "^17.6.0",
+    "sonner": "^2.0.7"
   }
 }

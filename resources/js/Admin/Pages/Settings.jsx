@@ -10,7 +10,7 @@ const PURPOSE_LABELS = {
 };
 
 export default function Settings() {
-    const { flash, smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, canManageSmtp = false, canManageSettings = false } = usePage().props;
+    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, canManageSmtp = false, canManageSettings = false } = usePage().props;
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [testId, setTestId] = useState(null);
@@ -102,17 +102,6 @@ export default function Settings() {
             centerHeader
         >
             <div className="max-w-4xl space-y-6">
-                {flash?.success && (
-                    <div className="rounded-xl p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" role="alert">
-                        <p className="text-sm text-green-800 dark:text-green-300">{flash.success}</p>
-                    </div>
-                )}
-                {flash?.error && (
-                    <div className="rounded-xl p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800" role="alert">
-                        <p className="text-sm text-red-800 dark:text-red-300">{flash.error}</p>
-                    </div>
-                )}
-
                 {/* Section: Global Configuration — visible to anyone with Settings View */}
                 <div className="card">
                     <div className="flex items-start gap-4">
