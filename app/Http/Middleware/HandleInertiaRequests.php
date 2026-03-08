@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\AiStudioToolSetting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -33,7 +34,7 @@ class HandleInertiaRequests extends Middleware
             ? $request->user('admin')
             : $request->user();
 
-        return [
+        $shared = [
             ...parent::share($request),
             'auth' => [
                 'user' => $user ? [
@@ -50,5 +51,12 @@ class HandleInertiaRequests extends Middleware
                 'error'   => fn () => $request->session()->get('error'),
             ],
         ];
+
+        // Shopify app: whether Product AI Lab (VTO) is visible (admin "Show on store" vs "Hidden")
+        if ($request->routeIs('shopify.*')) {
+            $shared['showProductAILab'] = (bool) (AiStudioToolSetting::where('tool_key', 'universal_generate')->value('is_enabled') ?? true);
+        }
+
+        return $shared;
     }
 }

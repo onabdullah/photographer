@@ -47,6 +47,13 @@ class AiStudioToolsController extends Controller
             ->pluck('total', 'tool_used')
             ->toArray();
 
+        $failedByTool = ImageGeneration::query()
+            ->selectRaw('tool_used, count(*) as total')
+            ->where('status', 'failed')
+            ->groupBy('tool_used')
+            ->pluck('total', 'tool_used')
+            ->toArray();
+
         $usedInProductionByTool = ImageGeneration::query()
             ->selectRaw('tool_used, count(*) as used')
             ->whereNotNull('shopify_product_id')
@@ -92,10 +99,10 @@ class AiStudioToolsController extends Controller
         foreach ($toolOrder as $toolKey) {
             $meta = $toolsConfig[$toolKey] ?? ['label' => $toolKey, 'model_name' => '—', 'model_provider' => '—'];
             $prefix = self::APP_STAT_PREFIX[$toolKey] ?? $toolKey;
-            $success = (int) ($appStats[$prefix . '_success_count'] ?? 0);
-            $failed = (int) ($appStats[$prefix . '_failed_count'] ?? 0);
-            $requestsCount = $success + $failed;
-            // All tools use 1 credit per image (including compressor)
+            // Use ImageGeneration as source of truth so Runs / Success / Failed / Consumed stay in sync
+            $successFromDb = (int) ($totalsByTool[$toolKey] ?? 0);
+            $failedFromDb = (int) ($failedByTool[$toolKey] ?? 0);
+            $requestsCount = $successFromDb + $failedFromDb;
             $credits_used = $requestsCount;
             $rt = $responseTimeByTool[$toolKey] ?? null;
             $ratePerImageUsd = (float) ($meta['estimated_rate_per_image_usd'] ?? 0);
@@ -109,9 +116,9 @@ class AiStudioToolsController extends Controller
                 'estimated_rate_per_image_usd' => $ratePerImageUsd,
                 'consumed_usd' => $consumedUsd,
                 'is_enabled' => $toolSettings[$toolKey] ?? true,
-                'total_completed' => (int) ($totalsByTool[$toolKey] ?? 0),
-                'success_count' => $success,
-                'failed_count' => $failed,
+                'total_completed' => $successFromDb,
+                'success_count' => $successFromDb,
+                'failed_count' => $failedFromDb,
                 'used_in_production' => (int) ($usedInProductionByTool[$toolKey] ?? 0),
                 'downloaded_count' => (int) ($downloadedByTool[$toolKey] ?? 0),
                 'credits_used' => $credits_used,

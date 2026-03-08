@@ -241,7 +241,7 @@ export default function AIStudioToolsIndex({
                                         <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700/80 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                                             <div>
                                                 <p className="text-gray-500 dark:text-gray-400">Runs</p>
-                                                <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.total_completed?.toLocaleString() ?? 0}</p>
+                                                <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{(t.requests_count ?? t.total_completed ?? 0).toLocaleString()}</p>
                                             </div>
                                             <div>
                                                 <p className="text-gray-500 dark:text-gray-400">Success</p>

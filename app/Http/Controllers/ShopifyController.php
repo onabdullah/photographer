@@ -196,12 +196,18 @@ class ShopifyController extends Controller
 
     /**
      * Render Product AI Lab (VTO) page (Universal products & accessories via Nano Banana 2).
+     * Redirects to dashboard when the tool is hidden in admin.
      */
     public function productAILab(Request $request)
     {
         $shop = $this->currentShop($request);
         if (! $shop) {
             abort(403, 'Shop not authenticated');
+        }
+
+        $visible = AiStudioToolSetting::where('tool_key', 'universal_generate')->value('is_enabled');
+        if ($visible === false) {
+            return redirect()->route('shopify.dashboard');
         }
 
         $credits = (int) ($shop->ai_credits_balance ?? 0);
