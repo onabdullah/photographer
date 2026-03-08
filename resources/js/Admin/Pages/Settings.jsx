@@ -1,7 +1,7 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { usePage, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle } from 'lucide-react';
+import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders } from 'lucide-react';
 
 const PURPOSE_LABELS = {
     support: 'Support',
@@ -9,8 +9,14 @@ const PURPOSE_LABELS = {
     general: 'General',
 };
 
+const TABS = [
+    { key: 'general', label: 'General', icon: Sliders },
+    { key: 'smtp', label: 'SMTP', icon: Mail },
+];
+
 export default function Settings() {
-    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, canManageSmtp = false, canManageSettings = false } = usePage().props;
+    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, canManageSmtp = false } = usePage().props;
+    const [activeTab, setActiveTab] = useState('general');
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [testId, setTestId] = useState(null);
@@ -99,57 +105,95 @@ export default function Settings() {
         <AdminLayout
             title="System Settings"
             breadcrumbs={[{ label: 'Settings' }]}
-            centerHeader
         >
-            <div className="max-w-4xl space-y-6">
-                {/* Section: Global Configuration — visible to anyone with Settings View */}
-                <div className="card">
-                    <div className="flex items-start gap-4">
-                        <div className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex-shrink-0">
-                            <SettingsIcon size={20} className="text-gray-600 dark:text-gray-400" />
-                        </div>
-                        <div>
-                            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                                Global Configuration
-                            </h2>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                System-wide settings. Additional sections appear below based on your permissions.
-                            </p>
-                        </div>
-                    </div>
+            <div className="space-y-4">
+                {/* Tabs: same pattern as AI Tools Analysis */}
+                <div className="flex flex-wrap gap-1 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    {TABS.map(({ key, label, icon: Icon }) => (
+                        <button
+                            key={key}
+                            type="button"
+                            onClick={() => setActiveTab(key)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                activeTab === key
+                                    ? 'bg-primary-600 text-white'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                        >
+                            <Icon size={16} />
+                            {label}
+                        </button>
+                    ))}
                 </div>
 
-                {/* Section: SMTP — visible only with Settings SMTP permission */}
-                {canManageSmtp && (
-                    <div className="card">
-                        <div className="flex items-center justify-between gap-4 flex-wrap">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex-shrink-0">
-                                    <Mail size={20} className="text-primary-600 dark:text-primary-400" />
-                                </div>
-                                <div>
-                                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                                        SMTP configurations
+                {activeTab === 'general' && (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <SettingsIcon size={18} className="text-gray-500 dark:text-gray-400" />
+                            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                Global configuration
+                            </h2>
+                        </div>
+                        <div className="card overflow-hidden">
+                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
+                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    System settings
+                                </h2>
+                            </div>
+                            <div className="p-4">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    System-wide settings. Use the tabs above to manage SMTP and other sections. More sections will appear here as they are added.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'smtp' && (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Mail size={18} className="text-gray-500 dark:text-gray-400" />
+                            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                SMTP configurations
+                            </h2>
+                        </div>
+
+                        {!canManageSmtp && (
+                            <div className="card overflow-hidden">
+                                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                                    <Mail size={16} className="text-gray-500 dark:text-gray-400" />
+                                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                        Mail settings
                                     </h2>
+                                </div>
+                                <div className="p-4">
                                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        Add multiple configs by purpose (Support, Marketing, General). Only one active per purpose. Test before saving.
+                                        You do not have permission to view or manage SMTP settings. Contact an administrator if you need access.
                                     </p>
                                 </div>
                             </div>
-                            {!showAddForm && (
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddForm(true)}
-                                    className="btn btn-primary inline-flex items-center gap-2"
-                                >
-                                    <Plus size={18} />
-                                    Add SMTP
-                                </button>
-                            )}
-                        </div>
+                        )}
 
-                        {showAddForm && (
-                            <form onSubmit={handleAddSubmit} className="mt-6 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 space-y-4">
+                        {canManageSmtp && (
+                            <div className="card overflow-hidden">
+                                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
+                                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                        Mail configs by purpose
+                                    </h2>
+                                    {!showAddForm && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAddForm(true)}
+                                            className="btn btn-primary inline-flex items-center gap-2 text-xs"
+                                        >
+                                            <Plus size={16} />
+                                            Add SMTP
+                                        </button>
+                                    )}
+                                </div>
+
+                                {showAddForm && (
+                            <form onSubmit={handleAddSubmit} className="mx-4 mb-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 space-y-4">
                                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">New SMTP configuration</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
@@ -275,17 +319,17 @@ export default function Settings() {
                             </form>
                         )}
 
-                        <div className="mt-6 space-y-3">
-                            {smtpSettings.length === 0 && !showAddForm && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400">No SMTP configurations yet. Click “Add SMTP” to add one.</p>
-                            )}
-                            {smtpSettings.map((s) => (
-                                <div
-                                    key={s.id}
-                                    className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800/50"
-                                >
-                                    {editingId === s.id ? (
-                                        <form onSubmit={handleEditSubmit} className="space-y-4">
+                                <div className="p-4 pt-0 space-y-3">
+                                    {smtpSettings.length === 0 && !showAddForm && (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">No SMTP configurations yet. Click “Add SMTP” to add one.</p>
+                                    )}
+                                    {smtpSettings.map((s) => (
+                                        <div
+                                            key={s.id}
+                                            className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800/50"
+                                        >
+                                            {editingId === s.id ? (
+                                                <form onSubmit={handleEditSubmit} className="space-y-4">
                                             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Edit SMTP</h3>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
@@ -344,10 +388,10 @@ export default function Settings() {
                                             <div className="flex gap-2">
                                                 <button type="submit" disabled={editForm.processing} className="btn btn-primary">Save</button>
                                                 <button type="button" onClick={cancelEdit} className="btn btn-secondary">Cancel</button>
-                                            </div>
-                                        </form>
-                                    ) : (
-                                        <>
+                                                </div>
+                                                </form>
+                                            ) : (
+                                                <>
                                             <div className="flex flex-wrap items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="font-medium text-gray-900 dark:text-white">{s.name || PURPOSE_LABELS[s.purpose] || s.purpose}</span>
@@ -390,29 +434,13 @@ export default function Settings() {
                                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                                                 {s.host}:{s.port} · From: {s.from_address}
                                             </p>
-                                        </>
-                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {!canManageSmtp && (
-                    <div className="card border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex-shrink-0">
-                                <Mail size={20} className="text-gray-500 dark:text-gray-400" />
                             </div>
-                            <div>
-                                <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                                    SMTP configurations
-                                </h2>
-                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    You do not have permission to view or manage SMTP settings. Contact an administrator if you need access.
-                                </p>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 )}
             </div>
