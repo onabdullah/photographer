@@ -62,19 +62,19 @@ const SECTIONS = [
         ],
     },
     {
-        id: 'teams',
-        label: 'TEAM',
-        items: [
-            { name: 'Users',         href: '/admin/users',         icon: Users,    permission: 'users.view' },
-            { name: 'Roles',         href: '/admin/roles',         icon: Shield,   permission: 'roles.view' },
-        ],
-    },
-    {
         id: 'reports',
         label: 'REPORTS',
         items: [
             { name: 'AI Tools Analysis', href: '/admin/ai-studio-tools', icon: Sparkles, permission: 'ai_studio.view' },
             { name: 'Analytics',     href: '/admin/analytics',     icon: BarChart3, permission: 'analytics.view' },
+        ],
+    },
+    {
+        id: 'teams',
+        label: 'TEAM',
+        items: [
+            { name: 'Users',         href: '/admin/users',         icon: Users,    permission: 'users.view' },
+            { name: 'Roles',         href: '/admin/roles',         icon: Shield,   permission: 'roles.view' },
         ],
     },
     {
