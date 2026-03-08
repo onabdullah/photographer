@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Admin\AiModelVisibilityMail;
 use App\Models\AiStudioToolSetting;
 use App\Models\AppStat;
 use App\Models\ImageGeneration;
+use App\Services\MailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -189,14 +191,35 @@ class AiStudioToolsController extends Controller
     public function updateToolSetting(Request $request)
     {
         $request->validate([
-            'tool_key' => 'required|string|in:universal_generate,magic_eraser,background_remover,compressor,upscaler,enhance,lighting',
+            'tool_key'   => 'required|string|in:universal_generate,magic_eraser,background_remover,compressor,upscaler,enhance,lighting',
             'is_enabled' => 'required|boolean',
         ]);
 
+        $toolKey   = $request->input('tool_key');
+        $isEnabled = $request->boolean('is_enabled');
+
         AiStudioToolSetting::updateOrCreate(
-            ['tool_key' => $request->input('tool_key')],
-            ['is_enabled' => $request->boolean('is_enabled')]
+            ['tool_key' => $toolKey],
+            ['is_enabled' => $isEnabled]
         );
+
+        $admin = $request->user('admin');
+        if ($admin) {
+            $smtp = MailService::resolveSmtp();
+            if ($smtp && $admin->email) {
+                $label   = AiModelVisibilityMail::TOOL_LABELS[$toolKey] ?? $toolKey;
+                $subject = $label . ' ' . ($isEnabled ? 'Shown on Store' : 'Hidden from Store') . ' — ' . config('app.name');
+                MailService::send($admin->email, new AiModelVisibilityMail(
+                    user: $admin,
+                    fromAddress: $smtp->from_address,
+                    fromName: $smtp->from_name,
+                    toolKey: $toolKey,
+                    visible: $isEnabled,
+                    ip: $request->ip(),
+                    userAgent: $request->userAgent() ?? 'Unknown',
+                ), $subject);
+            }
+        }
 
         return redirect()->back()->with('success', 'Tool setting updated.');
     }
