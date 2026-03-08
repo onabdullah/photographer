@@ -63,7 +63,7 @@ const SECTIONS = [
     },
     {
         id: 'teams',
-        label: 'TEAMS',
+        label: 'TEAM MANAGEMENT',
         items: [
             { name: 'Users',         href: '/admin/users',         icon: Users,    permission: 'users.view' },
             { name: 'Roles',         href: '/admin/roles',         icon: Shield,   permission: 'roles.view' },
