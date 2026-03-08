@@ -35,18 +35,24 @@ class HandleInertiaRequests extends Middleware
             ? $request->user('admin')
             : $request->user();
 
+        try {
+            $authUser = $user ? [
+                'id'          => $user->id,
+                'name'        => $user->name,
+                'email'       => $user->email,
+                'role'        => $user->role ?? 'super_admin',
+                'permissions' => $user->permissions ?? ['*'],
+            ] : null;
+        } catch (\Throwable) {
+            $authUser = null;
+        }
+
         $shared = [
             ...parent::share($request),
             // Expose token for frontend; app.jsx injects it into every non-GET Inertia request (permanent 419 fix).
             'csrf_token' => fn () => csrf_token(),
             'auth' => [
-                'user' => $user ? [
-                    'id'          => $user->id,
-                    'name'        => $user->name,
-                    'email'       => $user->email,
-                    'role'        => $user->role ?? 'super_admin',
-                    'permissions' => $user->permissions ?? ['*'],
-                ] : null,
+                'user' => $authUser,
             ],
             'appEnv' => config('app.env'),
             'flash' => [
@@ -57,14 +63,25 @@ class HandleInertiaRequests extends Middleware
 
         // Shopify app: whether Product AI Lab (VTO) is visible (admin "Show on store" vs "Hidden")
         if ($request->routeIs('shopify.*')) {
-            $shared['showProductAILab'] = (bool) (AiStudioToolSetting::where('tool_key', 'universal_generate')->value('is_enabled') ?? true);
+            try {
+                $shared['showProductAILab'] = (bool) (AiStudioToolSetting::where('tool_key', 'universal_generate')->value('is_enabled') ?? true);
+            } catch (\Throwable) {
+                $shared['showProductAILab'] = true;
+            }
         }
 
-        // Branding: logo and app name used app-wide (admin layout, login, etc.)
-        $shared['branding'] = [
-            'app_name' => SiteSetting::get(SiteSetting::KEY_APP_NAME, config('app.name')),
-            'app_logo_url' => SiteSetting::getAppLogoUrl(),
-        ];
+        // Branding: logo and app name used app-wide (admin layout, login, etc.). Never throw so login/guest pages always load.
+        try {
+            $shared['branding'] = [
+                'app_name' => SiteSetting::get(SiteSetting::KEY_APP_NAME, config('app.name')),
+                'app_logo_url' => SiteSetting::getAppLogoUrl(),
+            ];
+        } catch (\Throwable) {
+            $shared['branding'] = [
+                'app_name' => config('app.name', 'Laravel'),
+                'app_logo_url' => null,
+            ];
+        }
 
         return $shared;
     }

@@ -4,6 +4,7 @@ import './bootstrap';
 import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
+import { Component } from 'react';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -22,6 +23,41 @@ router.on('before', (event) => {
         event.detail.visit.data = { ...(data || {}), _token: token };
     }
 });
+
+// When a visit fails (network, 500, invalid response), force full reload so user sees server-rendered page instead of white screen
+const fallbackToFullLoad = (event) => {
+    const url = event.detail?.visit?.url ?? (typeof window !== 'undefined' ? window.location.href : null);
+    if (url && typeof window !== 'undefined') window.location.href = url;
+};
+router.on('error', fallbackToFullLoad);
+router.on('exception', fallbackToFullLoad);
+
+// Root error boundary: if any page component throws, show message + refresh instead of white screen
+class InertiaErrorBoundary extends Component {
+    state = { hasError: false };
+
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">Something went wrong.</p>
+                    <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700"
+                    >
+                        Refresh page
+                    </button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -49,8 +85,11 @@ createInertiaApp({
 
     setup({ el, App, props }) {
         const root = createRoot(el);
-
-        root.render(<App {...props} />);
+        root.render(
+            <InertiaErrorBoundary>
+                <App {...props} />
+            </InertiaErrorBoundary>
+        );
     },
     progress: {
         color: '#4B5563',
