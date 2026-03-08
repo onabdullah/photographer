@@ -2,7 +2,7 @@ import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { usePage, router, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { useAdminToast } from '@/Admin/Components/AdminToast';
-import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, Check, TrendingUp, AlertCircle, ShieldOff } from 'lucide-react';
+import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, Check, TrendingUp, AlertCircle, ShieldOff, Image as ImageIcon, Shield, KeyRound } from 'lucide-react';
 
 const PURPOSE_LABELS = {
     support: 'Support',
@@ -26,7 +26,7 @@ function formatSentAt(iso) {
 }
 
 export default function Settings() {
-    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, recentMailLogs = [], mailOverviewStats = null, canManageSmtp = false } = usePage().props;
+    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, recentMailLogs = [], mailOverviewStats = null, canManageSmtp = false, canManageSettings = false, general = {} } = usePage().props;
     const toast = useAdminToast();
     const [activeTab, setActiveTab] = useState('general');
     const [copiedId, setCopiedId] = useState(null);
@@ -59,6 +59,17 @@ export default function Settings() {
         from_address: '',
         from_name: '',
         is_active: false,
+    });
+
+    const generalForm = useForm({
+        app_name: general.app_name ?? '',
+        logo: null,
+    });
+
+    const passwordForm = useForm({
+        current_password: '',
+        password: '',
+        password_confirmation: '',
     });
 
     const startEdit = (s) => {
@@ -114,6 +125,23 @@ export default function Settings() {
         });
     };
 
+    const handleGeneralSubmit = (e) => {
+        e.preventDefault();
+        generalForm.post(route('admin.settings.general.update'), {
+            preserveScroll: true,
+            forceFormData: true,
+            onSuccess: () => generalForm.setData('logo', null),
+        });
+    };
+
+    const handlePasswordSubmit = (e) => {
+        e.preventDefault();
+        passwordForm.put(route('admin.settings.password.update'), {
+            preserveScroll: true,
+            onSuccess: () => passwordForm.reset(),
+        });
+    };
+
     const copyError = (text, id = 'copy') => {
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
@@ -161,23 +189,176 @@ export default function Settings() {
                 </div>
 
                 {activeTab === 'general' && (
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            <SettingsIcon size={18} className="text-gray-500 dark:text-gray-400" />
-                            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                Global configuration
-                            </h2>
-                        </div>
+                    <div className="space-y-6">
+                        {/* Branding */}
                         <div className="card overflow-hidden">
-                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
+                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                                <ImageIcon size={18} className="text-primary-600 dark:text-primary-400" />
                                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                    System settings
+                                    Branding
                                 </h2>
                             </div>
                             <div className="p-4">
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    System-wide settings. Use the tabs above to manage SMTP and other sections. More sections will appear here as they are added.
+                                {canManageSettings ? (
+                                    <form onSubmit={handleGeneralSubmit} className="space-y-4">
+                                        <div className="flex flex-col sm:flex-row gap-6 items-start">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 overflow-hidden">
+                                                    {general.app_logo_url ? (
+                                                        <img src={general.app_logo_url} alt="App logo" className="w-full h-full object-contain" />
+                                                    ) : generalForm.data.logo ? (
+                                                        <img src={URL.createObjectURL(generalForm.data.logo)} alt="Preview" className="w-full h-full object-contain" />
+                                                    ) : (
+                                                        <ImageIcon size={32} className="text-gray-400 dark:text-gray-500" />
+                                                    )}
+                                                </div>
+                                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-primary-600 dark:hover:text-primary-400">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+                                                        className="sr-only"
+                                                        onChange={(e) => generalForm.setData('logo', e.target.files?.[0] ?? null)}
+                                                    />
+                                                    Change logo
+                                                </label>
+                                            </div>
+                                            <div className="flex-1 min-w-0 space-y-4">
+                                                <div>
+                                                    <label htmlFor="app_name" className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        App name
+                                                    </label>
+                                                    <input
+                                                        id="app_name"
+                                                        type="text"
+                                                        value={generalForm.data.app_name}
+                                                        onChange={(e) => generalForm.setData('app_name', e.target.value)}
+                                                        className="form-input w-full"
+                                                        placeholder="e.g. My Admin"
+                                                    />
+                                                    {(generalForm.errors.app_name || generalForm.errors.logo) && (
+                                                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                                                            {generalForm.errors.app_name || generalForm.errors.logo}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    Logo is used in the admin panel. Recommended: square image, max 2 MB. Formats: JPEG, PNG, GIF, WebP, SVG.
+                                                </p>
+                                                <button
+                                                    type="submit"
+                                                    disabled={generalForm.processing}
+                                                    className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                                                >
+                                                    {generalForm.processing ? 'Saving…' : 'Save branding'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 overflow-hidden">
+                                            {general.app_logo_url ? (
+                                                <img src={general.app_logo_url} alt="App logo" className="w-full h-full object-contain" />
+                                            ) : (
+                                                <ImageIcon size={24} className="text-gray-400" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{general.app_name || '—'}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">You don’t have permission to edit branding.</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Password */}
+                        <div className="card overflow-hidden">
+                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                                <KeyRound size={18} className="text-primary-600 dark:text-primary-400" />
+                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    Password
+                                </h2>
+                            </div>
+                            <div className="p-4">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Change your account password. Use a strong, unique password.
                                 </p>
+                                <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
+                                    <div>
+                                        <label htmlFor="current_password" className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Current password
+                                        </label>
+                                        <input
+                                            id="current_password"
+                                            type="password"
+                                            value={passwordForm.data.current_password}
+                                            onChange={(e) => passwordForm.setData('current_password', e.target.value)}
+                                            className="form-input w-full"
+                                            autoComplete="current-password"
+                                        />
+                                        {passwordForm.errors.current_password && (
+                                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordForm.errors.current_password}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label htmlFor="new_password" className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            New password
+                                        </label>
+                                        <input
+                                            id="new_password"
+                                            type="password"
+                                            value={passwordForm.data.password}
+                                            onChange={(e) => passwordForm.setData('password', e.target.value)}
+                                            className="form-input w-full"
+                                            autoComplete="new-password"
+                                        />
+                                        {passwordForm.errors.password && (
+                                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordForm.errors.password}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label htmlFor="password_confirmation" className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Confirm new password
+                                        </label>
+                                        <input
+                                            id="password_confirmation"
+                                            type="password"
+                                            value={passwordForm.data.password_confirmation}
+                                            onChange={(e) => passwordForm.setData('password_confirmation', e.target.value)}
+                                            className="form-input w-full"
+                                            autoComplete="new-password"
+                                        />
+                                        {passwordForm.errors.password_confirmation && (
+                                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordForm.errors.password_confirmation}</p>
+                                        )}
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={passwordForm.processing}
+                                        className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                                    >
+                                        {passwordForm.processing ? 'Updating…' : 'Update password'}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        {/* Two-factor authentication */}
+                        <div className="card overflow-hidden">
+                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                                <Shield size={18} className="text-primary-600 dark:text-primary-400" />
+                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    Two-factor authentication
+                                </h2>
+                            </div>
+                            <div className="p-4">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                                    Add an extra layer of security by requiring a second factor (e.g. an authenticator app code) when signing in.
+                                </p>
+                                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 text-sm">
+                                    <span>Coming soon</span>
+                                </div>
                             </div>
                         </div>
                     </div>

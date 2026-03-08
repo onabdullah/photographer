@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\SmtpTestMail;
 use App\Models\MailLog;
+use App\Models\SiteSetting;
 use App\Models\SmtpSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 
 class SettingsController extends Controller
@@ -126,6 +130,9 @@ class SettingsController extends Controller
                 ->all();
         }
 
+        $appName = SiteSetting::get(SiteSetting::KEY_APP_NAME, config('app.name'));
+        $appLogoUrl = SiteSetting::getAppLogoUrl();
+
         return Inertia::render('Admin/Pages/Settings', [
             'smtpSettings' => $smtpSettings,
             'smtpPurposes' => $smtpPurposes,
@@ -134,7 +141,70 @@ class SettingsController extends Controller
             'mailOverviewStats' => $mailOverviewStats,
             'canManageSmtp' => $canManageSmtp,
             'canManageSettings' => $canManageSettings,
+            'general' => [
+                'app_name' => $appName,
+                'app_logo_url' => $appLogoUrl,
+            ],
         ]);
+    }
+
+    /** Update general settings (logo, app name). Requires settings.manage. */
+    public function updateGeneral(Request $request)
+    {
+        $user = auth()->guard('admin')->user();
+        if (! $user || ! $user->can('settings.manage')) {
+            abort(403, 'You do not have permission to manage general settings.');
+        }
+
+        $valid = $request->validate([
+            'app_name' => 'nullable|string|max:128',
+            'logo' => 'nullable|image|mimes:jpeg,png,gif,webp,svg|max:2048',
+        ]);
+
+        if (array_key_exists('app_name', $valid)) {
+            SiteSetting::set(SiteSetting::KEY_APP_NAME, $valid['app_name'] ?: null);
+        }
+
+        if ($request->hasFile('logo')) {
+            $dir = 'site';
+            $file = $request->file('logo');
+            $ext = $file->getClientOriginalExtension() ?: 'png';
+            $path = $file->storeAs($dir, 'logo.' . $ext, 'public');
+            $oldPath = SiteSetting::get(SiteSetting::KEY_APP_LOGO);
+            if ($oldPath && $oldPath !== $path) {
+                Storage::disk('public')->delete($oldPath);
+            }
+            SiteSetting::set(SiteSetting::KEY_APP_LOGO, $path);
+        }
+
+        return redirect()->route('admin.settings')->with('success', 'General settings updated.');
+    }
+
+    /** Update the authenticated admin user's password. */
+    public function updatePassword(Request $request)
+    {
+        $user = auth()->guard('admin')->user();
+        if (! $user) {
+            abort(403, 'Unauthenticated.');
+        }
+
+        $valid = $request->validate([
+            'current_password' => [
+                'required',
+                function (string $attr, $value, \Closure $fail) use ($user) {
+                    if (! Hash::check($value, $user->getAuthPassword())) {
+                        $fail(__('The current password is incorrect.'));
+                    }
+                },
+            ],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $user->update([
+            'password' => Hash::make($valid['password']),
+        ]);
+
+        return redirect()->route('admin.settings')->with('success', 'Password updated.');
     }
 
     public function storeSmtp(Request $request)

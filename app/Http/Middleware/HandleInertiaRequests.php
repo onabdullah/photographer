@@ -36,6 +36,8 @@ class HandleInertiaRequests extends Middleware
 
         $shared = [
             ...parent::share($request),
+            // Expose token for frontend; app.jsx injects it into every non-GET Inertia request (permanent 419 fix).
+            'csrf_token' => fn () => csrf_token(),
             'auth' => [
                 'user' => $user ? [
                     'id'          => $user->id,

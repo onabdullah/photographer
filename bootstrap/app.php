@@ -45,6 +45,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // 419 (CSRF mismatch): redirect back with message instead of raw error page; no overhead on success path.
+        $exceptions->respond(function (Response $response, Request $request) {
+            if ($response->getStatusCode() === 419) {
+                return redirect()->back()->with('error', 'The page expired. Please try again.');
+            }
+            return $response;
+        });
         $exceptions->render(function (MissingAuthUrlException $e, Request $request) {
             try {
                 $shopDomainValue = $request->get('shop') ?: $request->user()?->getDomain();

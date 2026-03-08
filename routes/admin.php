@@ -152,6 +152,11 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::post('/settings/smtp/test', [\App\Http\Controllers\Admin\SettingsController::class, 'testSmtp'])
         ->middleware('admin.permission:settings.smtp')->name('settings.smtp.test');
 
+    Route::post('/settings/general', [\App\Http\Controllers\Admin\SettingsController::class, 'updateGeneral'])
+        ->middleware('admin.permission:settings.manage')->name('settings.general.update');
+    Route::put('/settings/password', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePassword'])
+        ->name('settings.password.update');
+
     /*
     |--------------------------------------------------------------------------
     | Artisan Terminal
