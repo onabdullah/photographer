@@ -312,7 +312,7 @@ export default function Settings() {
                 {activeTab === 'security' && (
                     <div className="flex flex-col lg:flex-row gap-4">
                         {/* Left: policy, password, 2FA */}
-                        <div className="w-full lg:w-[40%] lg:min-w-0 space-y-6">
+                        <div className="w-full lg:w-1/2 lg:min-w-0 space-y-6">
                             {canManageSettings && (
                                 <div className="card overflow-hidden">
                                     <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
@@ -389,7 +389,7 @@ export default function Settings() {
                         </div>
 
                         {/* Right: login log stats + logs */}
-                        <div className="w-full lg:w-[60%] lg:min-w-0 space-y-4">
+                        <div className="w-full lg:w-1/2 lg:min-w-0 space-y-4">
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="card flex items-center gap-2 p-3">
                                     <div className="rounded-lg p-1.5 bg-primary-50 dark:bg-primary-900/20">
@@ -434,21 +434,17 @@ export default function Settings() {
                                     <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Login logs</h2>
                                 </div>
                                 <div className="p-2 border-b border-gray-100 dark:border-gray-700">
-                                    <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); router.get(route('admin.settings'), { tab: 'security', log_status: fd.get('log_status') || undefined, log_email: fd.get('log_email') || undefined, log_ip: fd.get('log_ip') || undefined, log_date_from: fd.get('log_date_from') || undefined, log_date_to: fd.get('log_date_to') || undefined }, { preserveState: true }); }} className="space-y-2">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <select name="log_status" className="form-input text-xs w-24" defaultValue={logFilters.log_status ?? ''}>
-                                                <option value="">All</option>
-                                                <option value="success">Success</option>
-                                                <option value="failed">Failed</option>
-                                            </select>
-                                            <input type="text" name="log_email" placeholder="Email" className="form-input text-xs w-28" defaultValue={logFilters.log_email ?? ''} />
-                                            <input type="text" name="log_ip" placeholder="IP" className="form-input text-xs w-24" defaultValue={logFilters.log_ip ?? ''} />
-                                            <button type="submit" className="px-2 py-1 rounded bg-primary-600 text-white text-xs font-medium hover:bg-primary-700">Filter</button>
-                                        </div>
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <input type="date" name="log_date_from" className="form-input text-xs w-28" defaultValue={logFilters.log_date_from ?? ''} />
-                                            <input type="date" name="log_date_to" className="form-input text-xs w-28" defaultValue={logFilters.log_date_to ?? ''} />
-                                        </div>
+                                    <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); router.get(route('admin.settings'), { tab: 'security', log_status: fd.get('log_status') || undefined, log_email: fd.get('log_email') || undefined, log_ip: fd.get('log_ip') || undefined, log_date_from: fd.get('log_date_from') || undefined, log_date_to: fd.get('log_date_to') || undefined }, { preserveState: true }); }} className="flex flex-wrap items-center gap-2">
+                                        <select name="log_status" className="form-input text-xs w-20" defaultValue={logFilters.log_status ?? ''}>
+                                            <option value="">All</option>
+                                            <option value="success">Success</option>
+                                            <option value="failed">Failed</option>
+                                        </select>
+                                        <input type="text" name="log_email" placeholder="Email" className="form-input text-xs w-24 min-w-0" defaultValue={logFilters.log_email ?? ''} />
+                                        <input type="text" name="log_ip" placeholder="IP" className="form-input text-xs w-24 min-w-0" defaultValue={logFilters.log_ip ?? ''} />
+                                        <input type="date" name="log_date_from" className="form-input text-xs w-28" defaultValue={logFilters.log_date_from ?? ''} />
+                                        <input type="date" name="log_date_to" className="form-input text-xs w-28" defaultValue={logFilters.log_date_to ?? ''} />
+                                        <button type="submit" className="px-2 py-1 rounded bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 whitespace-nowrap">Filter</button>
                                     </form>
                                 </div>
                                 <div className="max-h-[320px] overflow-y-auto">
