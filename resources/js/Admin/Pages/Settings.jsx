@@ -415,6 +415,7 @@ export default function Settings() {
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="min-w-0">
                                                             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{s.name || PURPOSE_LABELS[s.purpose] || s.purpose}</h3>
+                                                            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">From: {s.from_address}</p>
                                                             <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">{s.host}:{s.port}</p>
                                                             <div className="mt-1 flex flex-wrap gap-1">
                                                                 <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{PURPOSE_LABELS[s.purpose] || s.purpose}</span>
@@ -446,9 +447,7 @@ export default function Settings() {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex flex-wrap items-center justify-between gap-2 mt-auto pt-2">
-                                                        <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate max-w-full">From: {s.from_address}</p>
-                                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                                    <div className="flex flex-wrap items-center justify-end gap-1 mt-auto pt-2">
                                                     <button type="button" onClick={() => startEdit(s)} className="btn btn-secondary btn-sm inline-flex items-center gap-1" title="Edit">
                                                         <Pencil size={14} />
                                                         Edit
@@ -475,7 +474,6 @@ export default function Settings() {
                                                         <Trash2 size={14} />
                                                         Delete
                                                     </button>
-                                                </div>
                                                     </div>
                                                 </>
                                             )}
