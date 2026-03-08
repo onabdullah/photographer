@@ -12,12 +12,12 @@
         .greeting { font-size: 16px; color: #111827; margin-bottom: 20px; }
         .badge-show { display: inline-block; background-color: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.25); color: #15803d; font-size: 14px; font-weight: 700; padding: 10px 24px; border-radius: 8px; margin: 4px 0 20px; }
         .badge-hide { display: inline-block; background-color: rgba(255, 122, 48, 0.1); border: 1px solid rgba(255, 122, 48, 0.3); color: #c2440e; font-size: 14px; font-weight: 700; padding: 10px 24px; border-radius: 8px; margin: 4px 0 20px; }
-        .details { background-color: rgba(70, 138, 154, 0.06); border: 1px solid rgba(70, 138, 154, 0.15); padding: 20px 24px; border-radius: 8px; margin: 24px 0; }
-        .details table { width: 100%; border-collapse: collapse; }
-        .details td { padding: 7px 0; font-size: 14px; vertical-align: top; }
-        .details td:first-child { color: #6b7280; width: 130px; }
-        .details td:last-child { color: #111827; font-weight: 500; word-break: break-all; }
-        .details tr + tr td { border-top: 1px solid rgba(70, 138, 154, 0.1); }
+        .details { background-color: rgba(70, 138, 154, 0.06); border: 1px solid rgba(70, 138, 154, 0.15); border-radius: 8px; margin: 24px 0; overflow: hidden; }
+        .detail-row { padding: 12px 24px; }
+        .detail-row + .detail-row { border-top: 1px solid rgba(70, 138, 154, 0.12); }
+        .detail-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px; }
+        .detail-value { font-size: 14px; font-weight: 500; color: #111827; line-height: 1.5; word-break: break-word; overflow-wrap: break-word; }
+        .detail-value.muted { font-size: 12px; font-weight: 400; color: #6b7280; }
         .status-show { display: inline-block; background-color: rgba(34, 197, 94, 0.1); color: #15803d; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 4px; }
         .status-hide { display: inline-block; background-color: rgba(255, 122, 48, 0.1); color: #c2440e; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 4px; }
         .notice-show { background-color: rgba(70, 138, 154, 0.06); border-left: 3px solid #468A9A; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 24px 0 0; }
@@ -54,38 +54,37 @@
             @endif
 
             <div class="details">
-                <table>
-                    <tr>
-                        <td>Tool</td>
-                        <td>{{ $toolLabel }}</td>
-                    </tr>
-                    <tr>
-                        <td>Action</td>
-                        <td>
-                            @if($visible)
-                                <span class="status-show">Shown on Store</span>
-                            @else
-                                <span class="status-hide">Hidden from Store</span>
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Changed By</td>
-                        <td>{{ $user->name }} ({{ $user->email }})</td>
-                    </tr>
-                    <tr>
-                        <td>IP Address</td>
-                        <td>{{ $ip }}</td>
-                    </tr>
-                    <tr>
-                        <td>Browser / Device</td>
-                        <td style="font-size: 12px; color: #6b7280; font-weight: 400;">{{ $userAgent }}</td>
-                    </tr>
-                    <tr>
-                        <td>Changed At</td>
-                        <td>{{ $changedAt }}</td>
-                    </tr>
-                </table>
+                <div class="detail-row">
+                    <div class="detail-label">Tool</div>
+                    <div class="detail-value">{{ $toolLabel }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Action</div>
+                    <div class="detail-value">
+                        @if($visible)
+                            <span class="status-show">Shown on Store</span>
+                        @else
+                            <span class="status-hide">Hidden from Store</span>
+                        @endif
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Changed By</div>
+                    <div class="detail-value">{{ $user->name }}</div>
+                    <div class="detail-value muted">{{ $user->email }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">IP Address</div>
+                    <div class="detail-value">{{ $ip }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Browser / Device</div>
+                    <div class="detail-value muted">{{ $userAgent }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Changed At</div>
+                    <div class="detail-value">{{ $changedAt }}</div>
+                </div>
             </div>
 
             @if($visible)
