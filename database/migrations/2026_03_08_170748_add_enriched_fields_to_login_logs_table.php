@@ -8,6 +8,30 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // If the table doesn't exist yet, create it with all columns (including
+        // the enriched ones). If it already exists (local dev), add only the
+        // missing columns so existing data is preserved.
+        if (! Schema::hasTable('login_logs')) {
+            Schema::create('login_logs', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+                $table->string('email', 255)->index();
+                $table->string('ip_address', 45)->index();
+                $table->text('user_agent')->nullable();
+                $table->string('status', 16)->index();
+                $table->string('event_type', 20)->default('login')->index();
+                $table->string('location', 255)->nullable();
+                $table->string('country', 100)->nullable();
+                $table->string('city', 100)->nullable();
+                $table->string('browser', 100)->nullable();
+                $table->string('os', 100)->nullable();
+                $table->string('device_type', 20)->nullable();
+                $table->unsignedTinyInteger('risk_percentage')->default(0);
+                $table->timestamps();
+            });
+            return;
+        }
+
         Schema::table('login_logs', function (Blueprint $table) {
             if (! Schema::hasColumn('login_logs', 'event_type')) {
                 $table->string('event_type', 20)->default('login')->index()->after('status');
@@ -32,8 +56,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('login_logs', function (Blueprint $table) {
-            $table->dropColumn(['event_type', 'country', 'city', 'browser', 'os', 'device_type']);
-        });
+        Schema::dropIfExists('login_logs');
     }
 };
+

@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Table may already exist if the enriched migration ran first (date order).
+        if (Schema::hasTable('login_logs')) {
+            return;
+        }
+
         Schema::create('login_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
