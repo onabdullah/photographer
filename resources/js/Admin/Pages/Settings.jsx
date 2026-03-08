@@ -312,7 +312,7 @@ export default function Settings() {
                 {activeTab === 'security' && (
                     <div className="flex flex-col lg:flex-row gap-4">
                         {/* Left: policy, password, 2FA */}
-                        <div className="flex-1 min-w-0 space-y-6">
+                        <div className="w-full lg:w-[40%] lg:min-w-0 space-y-6">
                             {canManageSettings && (
                                 <div className="card overflow-hidden">
                                     <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
@@ -389,7 +389,7 @@ export default function Settings() {
                         </div>
 
                         {/* Right: login log stats + logs */}
-                        <div className="w-full lg:flex-1 lg:min-w-0 space-y-4">
+                        <div className="w-full lg:w-[60%] lg:min-w-0 space-y-4">
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="card flex items-center gap-2 p-3">
                                     <div className="rounded-lg p-1.5 bg-primary-50 dark:bg-primary-900/20">
