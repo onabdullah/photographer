@@ -72,9 +72,6 @@ export function AdminToastProvider({ flash, children }) {
                         }}
                         className={`admin-toast-root admin-toast-root--${t.type}`}
                     >
-                        <Toast.Title className="admin-toast-title">
-                            {t.type === 'success' ? 'Success' : 'Error'}
-                        </Toast.Title>
                         <Toast.Description className="admin-toast-description">
                             {t.message}
                         </Toast.Description>
@@ -82,7 +79,7 @@ export function AdminToastProvider({ flash, children }) {
                             className="admin-toast-close"
                             aria-label="Close"
                         >
-                            <X size={14} strokeWidth={2} />
+                            <X size={12} strokeWidth={2} aria-hidden />
                         </Toast.Close>
                     </Toast.Root>
                 ))}

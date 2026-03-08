@@ -18,6 +18,6 @@ class MerchantController extends Controller
         $merchant->ai_credits_balance = (int) $request->input('ai_credits_balance');
         $merchant->save();
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Credits updated.');
     }
 }

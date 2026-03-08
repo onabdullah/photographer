@@ -198,6 +198,6 @@ class AiStudioToolsController extends Controller
             ['is_enabled' => $request->boolean('is_enabled')]
         );
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Tool setting updated.');
     }
 }
