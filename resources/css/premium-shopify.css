@@ -522,10 +522,6 @@
   padding: 0 !important;
 }
 
-.aistudio-hero-card--processing {
-  overflow: visible;
-}
-
 .aistudio-hero-canvas {
   width: 100%;
   min-height: 480px;
@@ -573,26 +569,6 @@
   animation: aistudio-neon-border 2.4s ease-in-out infinite;
   border-radius: 12px;
   overflow: hidden;
-}
-
-/* Outer wrapper so neon border glow is not clipped (Product AI Lab) */
-.aistudio-hero-canvas-outer {
-  display: block;
-}
-
-.aistudio-hero-canvas-outer--processing {
-  padding: 4px;
-  border-radius: 14px;
-  animation: aistudio-neon-border 2.4s ease-in-out infinite;
-  overflow: visible;
-}
-
-.aistudio-hero-canvas-outer--processing .aistudio-hero-canvas--processing {
-  animation: none;
-}
-
-.aistudio-hero-canvas-outer--processing .aistudio-hero-canvas {
-  border-radius: 12px;
 }
 
 /* Empty state – custom illustration + copy in hero */
@@ -1933,6 +1909,17 @@ body.ai-browse-modal-open .Polaris-Backdrop {
 
 .dashboard-tools-vto-wrap {
   margin-bottom: var(--space-md);
+}
+
+/* Same neon border animation as Product AI Lab tool page during processing */
+.dashboard-vto-card-border {
+  border-radius: 12px;
+  animation: aistudio-neon-border 2.4s ease-in-out infinite;
+}
+
+.dashboard-vto-card-border .Polaris-LegacyCard {
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .dashboard-vto-marketing {

@@ -462,12 +462,11 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                 Output Window (left) — pure output, no input preview
             ────────────────────────────────────────────────────── */}
             <Layout.Section>
-              <Card padding="0" className={`aistudio-hero-card${isScanning ? ' aistudio-hero-card--processing' : ''}`}>
-                <div className={isScanning ? 'aistudio-hero-canvas-outer aistudio-hero-canvas-outer--processing' : ''}>
-                  <div className={`aistudio-hero-canvas${isScanning ? ' aistudio-hero-canvas--processing' : ''}`}>
+              <Card padding="0" className="aistudio-hero-card">
+                <div className={`aistudio-hero-canvas${isScanning ? ' aistudio-hero-canvas--processing' : ''}`}>
 
                   {isScanning ? (
-                    /* Scanning animation — shows the product as backdrop + neon border */
+                    /* Scanning animation — shows the product as backdrop */
                     <div className="aistudio-scanning">
                       <div className="premium-scanning-wrapper">
                         <img src={productImage} alt="" className="premium-scanning-img" />
@@ -568,7 +567,6 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                       </Text>
                     </div>
                   )}
-                  </div>
                 </div>
               </Card>
             </Layout.Section>

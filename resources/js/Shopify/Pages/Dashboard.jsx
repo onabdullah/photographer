@@ -209,7 +209,8 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
                       <li>Scroll-stopping imagery that converts</li>
                     </ul>
                   </div>
-                  <Card>
+                  <div className="dashboard-vto-card-border">
+                    <Card>
                     <button
                     type="button"
                     className="dashboard-tool-card dashboard-tool-card-vto"
@@ -233,6 +234,7 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
                     </span>
                   </button>
                   </Card>
+                  </div>
                 </div>
               )}
               <div className="dashboard-tools-grid">
