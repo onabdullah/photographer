@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { FlashToaster } from '@/Components/GlobalToast';
 import { Link, usePage } from '@inertiajs/react';
-import { AdminToastProvider } from '@/Admin/Components/AdminToast';
 import {
     LayoutDashboard,
     Store,
@@ -567,7 +567,8 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
     const user = props.auth?.user;
 
     return (
-        <AdminToastProvider flash={props.flash}>
+        <>
+        <FlashToaster />
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
 
             {/* ══════════════════════════════════════════════════
@@ -835,6 +836,6 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 )}
             </div>
         </div>
-        </AdminToastProvider>
+        </>
     );
 }

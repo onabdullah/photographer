@@ -2,8 +2,10 @@ import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
+import { TOAST_EVENT_ERROR } from '@/Components/GlobalToast';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useEffect, useRef } from 'react';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -11,6 +13,16 @@ export default function Login({ status, canResetPassword }) {
         password: '',
         remember: false,
     });
+    const lastErrorRef = useRef(null);
+
+    useEffect(() => {
+        const msg = errors.email || errors.password;
+        if (msg && msg !== lastErrorRef.current) {
+            lastErrorRef.current = msg;
+            window.dispatchEvent(new CustomEvent(TOAST_EVENT_ERROR, { detail: { message: msg } }));
+        }
+        if (!msg) lastErrorRef.current = null;
+    }, [errors.email, errors.password]);
 
     const submit = (e) => {
         e.preventDefault();

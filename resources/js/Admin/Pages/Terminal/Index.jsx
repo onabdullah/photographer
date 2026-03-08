@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
+import { TOAST_EVENT_ERROR } from '@/Components/GlobalToast';
 import {
     Terminal as TerminalIcon,
     ScrollText,
@@ -190,21 +191,30 @@ function TerminalContent({ phpVersion, laravelVersion, appEnv, appName }) {
                         ? `Server error (${res.status}). Check the Laravel log.`
                         : `Unexpected response (${res.status}). ${text.slice(0, 200) || 'No body.'}`;
                 push({ type: 'error', content: msg });
+                window.dispatchEvent(new CustomEvent(TOAST_EVENT_ERROR, { detail: { message: msg } }));
                 return;
             }
             let data;
             try {
                 data = JSON.parse(text);
             } catch {
-                push({ type: 'error', content: `Invalid JSON from server: ${text.slice(0, 200)}` });
+                const msg = `Invalid JSON from server: ${text.slice(0, 200)}`;
+                push({ type: 'error', content: msg });
+                window.dispatchEvent(new CustomEvent(TOAST_EVENT_ERROR, { detail: { message: msg } }));
                 return;
             }
             if (data.error === 'confirm_required') { setConfirm({ cmd, message: data.message }); return; }
-            if (data.error) push({ type: 'error', content: data.error });
-            else push({ type: 'result', content: stripAnsi(data.output ?? ''), exitCode: data.exit_code ?? 0, duration: data.duration ?? 0 });
+            if (data.error) {
+                push({ type: 'error', content: data.error });
+                window.dispatchEvent(new CustomEvent(TOAST_EVENT_ERROR, { detail: { message: data.error } }));
+                return;
+            }
+            push({ type: 'result', content: stripAnsi(data.output ?? ''), exitCode: data.exit_code ?? 0, duration: data.duration ?? 0 });
         } catch (err) {
             setEntries((prev) => prev.filter((e) => e.type !== 'running'));
-            push({ type: 'error', content: `Network error: ${err.message}` });
+            const msg = `Network error: ${err.message}`;
+            push({ type: 'error', content: msg });
+            window.dispatchEvent(new CustomEvent(TOAST_EVENT_ERROR, { detail: { message: msg } }));
         } finally {
             setRunning(false);
             setTimeout(() => inputRef.current?.focus(), 50);

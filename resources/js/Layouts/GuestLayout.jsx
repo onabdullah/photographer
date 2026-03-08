@@ -1,4 +1,5 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import { FlashToaster } from '@/Components/GlobalToast';
 import { Link, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
@@ -28,6 +29,7 @@ export default function GuestLayout({ children }) {
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-8">
+            <FlashToaster />
             <button
                 type="button"
                 onClick={toggleTheme}

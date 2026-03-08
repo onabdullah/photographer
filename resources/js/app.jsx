@@ -5,6 +5,7 @@ import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { Component } from 'react';
+import { GlobalToastProvider, TOAST_EVENT_ERROR } from '@/Components/GlobalToast';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -24,13 +25,15 @@ router.on('before', (event) => {
     }
 });
 
-// When a visit fails (network, 500, invalid response), force full reload so user sees server-rendered page instead of white screen
-const fallbackToFullLoad = (event) => {
-    const url = event.detail?.visit?.url ?? (typeof window !== 'undefined' ? window.location.href : null);
-    if (url && typeof window !== 'undefined') window.location.href = url;
+// When a visit fails, show toast and stay on current page (no blank full reload)
+const showErrorToast = (event) => {
+    const msg = event.detail?.message ?? event.detail?.error ?? 'Something went wrong. Please try again.';
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(TOAST_EVENT_ERROR, { detail: { message: msg } }));
+    }
 };
-router.on('error', fallbackToFullLoad);
-router.on('exception', fallbackToFullLoad);
+router.on('error', showErrorToast);
+router.on('exception', showErrorToast);
 
 // Root error boundary: if any page component throws, show message + refresh instead of white screen
 class InertiaErrorBoundary extends Component {
@@ -87,7 +90,9 @@ createInertiaApp({
         const root = createRoot(el);
         root.render(
             <InertiaErrorBoundary>
-                <App {...props} />
+                <GlobalToastProvider>
+                    <App {...props} />
+                </GlobalToastProvider>
             </InertiaErrorBoundary>
         );
     },
