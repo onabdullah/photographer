@@ -19,7 +19,7 @@ class LoginLogService
             return ['location' => 'Local', 'country' => null, 'city' => null];
         }
         try {
-            $response = Http::timeout(2)->get("http://ip-api.com/json/{$ip}?fields=city,regionName,country");
+                $response = Http::timeout(2)->get("http://ip-api.com/json/{$ip}?fields=city,regionName,country");
             if ($response->successful()) {
                 $data     = $response->json();
                 $city     = $data['city']       ?? null;
