@@ -1,7 +1,7 @@
 import ShopifyLayout from '@/Shopify/Layouts/ShopifyLayout';
 import { Page, Layout, Card, Text, BlockStack, InlineGrid, Button, InlineStack, Box, Icon } from '@shopify/polaris';
 import { ImageIcon } from '@shopify/polaris-icons';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
   Wand2,
   HelpCircle,
@@ -12,6 +12,7 @@ import {
   Eraser,
   Sun,
   ArrowRight,
+  Shirt,
 } from 'lucide-react';
 import MagicButton from '@/Shopify/Components/MagicButton';
 import { useState, useEffect } from 'react';
@@ -36,6 +37,8 @@ function timeAgo(dateStr) {
 const ALL_TOOL_VALUES = ['magic_eraser', 'remove_bg', 'compressor', 'upscale', 'enhance', 'lighting'];
 
 export default function Dashboard({ shopName, credits, totalGenerated, totalProducts: initialProducts, activePlan, recentGenerations = [], enabledTools }) {
+  const { props } = usePage();
+  const showProductAILab = props.showProductAILab !== false;
   const enabled = Array.isArray(enabledTools) && enabledTools.length > 0 ? enabledTools : ALL_TOOL_VALUES;
   const [totalProducts, setTotalProducts] = useState(initialProducts);
 
@@ -191,9 +194,47 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
               <div className="dashboard-tools-header">
                 <h2 className="dashboard-tools-heading">All Tools</h2>
                 <Text variant="bodyMd" tone="subdued" as="p" className="dashboard-tools-subtitle">
-                  Professional AI tools to edit, enhance, and optimize your product photos. Click any tool to open it in AI Studio.
+                  Professional AI tools to edit, enhance, and optimize your product photos. Click any tool to open it in AI Studio or Product AI Lab.
                 </Text>
               </div>
+              {showProductAILab && (
+                <div className="dashboard-tools-vto-wrap">
+                  <div className="dashboard-vto-marketing">
+                    <Text as="p" variant="bodySm" fontWeight="semibold" tone="subdued" className="dashboard-vto-tagline">
+                      Star feature — boost sales with pro photos in minutes
+                    </Text>
+                    <ul className="dashboard-vto-benefits" aria-hidden>
+                      <li>No photo shoots or models</li>
+                      <li>Lifestyle scenes &amp; virtual try-on</li>
+                      <li>Scroll-stopping imagery that converts</li>
+                    </ul>
+                  </div>
+                  <Card>
+                    <button
+                    type="button"
+                    className="dashboard-tool-card dashboard-tool-card-vto"
+                    onClick={() => router.visit('/shopify/product-ai-lab')}
+                    aria-label="Product AI Lab (VTO): Generate full product photos with AI. Open Product AI Lab."
+                    title="Product AI Lab (VTO)"
+                  >
+                    <span className="dashboard-tool-icon dashboard-tool-icon-vto">
+                      <Shirt size={28} strokeWidth={1.75} aria-hidden />
+                    </span>
+                    <span className="dashboard-tool-content">
+                      <Text variant="headingMd" fontWeight="bold" as="span" className="dashboard-tool-name">
+                        Product AI Lab (VTO)
+                      </Text>
+                      <Text variant="bodyMd" tone="subdued" as="span" className="dashboard-tool-desc">
+                        Turn any product into stunning lifestyle photos — virtual try-on, custom backgrounds, and scenes that sell. No studio needed.
+                      </Text>
+                    </span>
+                    <span className="dashboard-tool-arrow" aria-hidden>
+                      <ArrowRight size={20} strokeWidth={2} />
+                    </span>
+                  </button>
+                  </Card>
+                </div>
+              )}
               <div className="dashboard-tools-grid">
                 {[
                   { name: 'Magic Eraser', desc: 'Remove unwanted objects', value: 'magic_eraser', Icon: Eraser },

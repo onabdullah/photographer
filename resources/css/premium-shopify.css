@@ -478,6 +478,39 @@
   }
 }
 
+/* Product AI Lab (VTO) – marketing strip on page */
+.vto-marketing-strip {
+  padding: var(--space-sm) 0;
+}
+
+.vto-marketing-headline {
+  margin: 0 0 6px 0;
+  color: var(--premium-teal);
+  font-size: 1rem;
+}
+
+.vto-marketing-sub {
+  margin: 0 0 10px 0;
+  line-height: 1.45;
+  max-width: 56ch;
+}
+
+.vto-marketing-benefits {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--p-color-text-subdued);
+}
+
+.vto-marketing-benefits li {
+  margin-bottom: 3px;
+}
+
+.vto-marketing-benefits li:last-child {
+  margin-bottom: 0;
+}
+
 /* ==========================================================================
    AI Studio – World-class editor workspace (Hero left, Command right)
    Banana AI / Midjourney-style: hero canvas + compact control panel
@@ -1840,6 +1873,72 @@ body.ai-browse-modal-open .Polaris-Backdrop {
 .dashboard-tool-card:focus-visible .dashboard-tool-arrow {
   color: var(--premium-orange);
   transform: translateX(2px);
+}
+
+/* Product AI Lab (VTO) – featured big card in All Tools */
+.dashboard-tool-card-vto {
+  height: auto;
+  min-height: 100px;
+  padding: var(--space-lg) var(--space-xl);
+  gap: var(--space-lg);
+  background: linear-gradient(135deg, rgba(70, 138, 154, 0.06) 0%, rgba(255, 122, 48, 0.06) 100%);
+}
+
+.dashboard-tool-card-vto:hover {
+  background: linear-gradient(135deg, rgba(70, 138, 154, 0.1) 0%, rgba(255, 122, 48, 0.1) 100%);
+}
+
+.dashboard-tool-card-vto .dashboard-tool-content {
+  gap: 4px;
+}
+
+.dashboard-tool-card-vto .dashboard-tool-name {
+  font-size: 1.125rem;
+}
+
+.dashboard-tool-card-vto .dashboard-tool-desc {
+  font-size: 0.875rem;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.dashboard-tool-icon-vto {
+  width: 56px;
+  height: 56px;
+}
+
+.dashboard-tools-vto-wrap {
+  margin-bottom: var(--space-md);
+}
+
+.dashboard-vto-marketing {
+  margin-bottom: var(--space-sm);
+}
+
+.dashboard-vto-tagline {
+  margin: 0 0 6px 0;
+  color: var(--premium-teal);
+}
+
+.dashboard-vto-benefits {
+  margin: 0;
+  padding: 0 0 0 1.1em;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--p-color-text-subdued);
+}
+
+.dashboard-vto-benefits li {
+  margin-bottom: 2px;
+}
+.dashboard-vto-benefits li:last-child {
+  margin-bottom: 0;
+}
+
+.dashboard-tools-vto-wrap .Polaris-LegacyCard {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
 }
 
 /* Settings page – sticky save bar (no Frame/ContextualSaveBar) */

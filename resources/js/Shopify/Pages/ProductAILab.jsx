@@ -421,9 +421,25 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
     <ShopifyLayout>
       <Page
         title="Product AI Lab (VTO)"
-        subtitle="Place any product in stunning environments. Powered by Nano Banana 2."
+        subtitle="Turn product shots into scroll-stopping imagery — no studio, no models, just results that sell."
       >
         <BlockStack gap="400">
+          {/* Marketing value strip — grab the user */}
+          <Card>
+            <div className="vto-marketing-strip">
+              <Text as="p" variant="headingSm" fontWeight="bold" className="vto-marketing-headline">
+                Sell more with pro photos in minutes
+              </Text>
+              <Text as="p" variant="bodySm" tone="subdued" className="vto-marketing-sub">
+                Create lifestyle scenes, virtual try-on, and custom backgrounds. No photo shoots — just upload your product, describe the scene, and let AI do the rest.
+              </Text>
+              <ul className="vto-marketing-benefits" aria-hidden>
+                <li>Increase conversions with imagery that stands out</li>
+                <li>Lifestyle &amp; on-model shots without a studio</li>
+                <li>Consistent, on-brand visuals in seconds</li>
+              </ul>
+            </div>
+          </Card>
           {/* Toast */}
           {toast && createPortal(
             <div
@@ -547,7 +563,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                       </div>
                       <Text as="h2" variant="headingLg">Your product scene awaits</Text>
                       <Text as="p" variant="bodyMd" tone="subdued">
-                        Upload your product, describe the environment, and let the AI compose it.
+                        Upload your product, describe the scene you want — lifestyle, on-model, or custom background — and get pro-quality imagery in minutes. No studio needed.
                       </Text>
                     </div>
                   )}
@@ -561,7 +577,10 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
             <Layout.Section variant="oneThird">
               <Card>
                 <BlockStack gap="400">
-                  <Text as="h2" variant="headingMd">Product AI Lab (VTO)</Text>
+                  <Text as="h2" variant="headingMd">Create scenes that sell</Text>
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    Place your product in any environment or on a model. One prompt, pro results.
+                  </Text>
 
                   {/* Step 1 – Select Product */}
                   <BlockStack gap="200">
