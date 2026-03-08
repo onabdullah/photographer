@@ -59,6 +59,12 @@ const SECTIONS = [
         items: [
             { name: 'Merchants',     href: '/admin/merchants',     icon: Store,    permission: 'merchants.view' },
             { name: 'AI Processing', href: '/admin/ai-processing', icon: Zap,      permission: 'ai.view'        },
+        ],
+    },
+    {
+        id: 'teams',
+        label: 'TEAMS',
+        items: [
             { name: 'Users',         href: '/admin/users',         icon: Users,    permission: 'users.view' },
             { name: 'Roles',         href: '/admin/roles',         icon: Shield,   permission: 'roles.view' },
         ],
