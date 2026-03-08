@@ -37,6 +37,7 @@ export const ALL_PERMISSIONS = {
     'SYSTEM SETTINGS': {
         'settings.view':     'Settings View',
         'settings.manage':   'Settings Manage',
+        'settings.smtp':     'Settings SMTP (configure mail)',
     },
     'DEVELOPER': {
         'developer.terminal': 'Artisan Terminal',

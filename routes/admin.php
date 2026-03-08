@@ -138,10 +138,19 @@ Route::middleware(['auth:admin'])->group(function () {
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools.settings');
 
-    // System Settings
-    Route::get('/settings', function () {
-        return Inertia::render('Admin/Pages/Settings');
-    })->middleware('admin.permission:settings.view')->name('settings');
+    // System Settings (SMTP: super_admin only, enforced in controller)
+    Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])
+        ->middleware('admin.permission:settings.view')->name('settings');
+    Route::post('/settings/smtp', [\App\Http\Controllers\Admin\SettingsController::class, 'storeSmtp'])
+        ->middleware('admin.permission:settings.smtp')->name('settings.smtp.store');
+    Route::put('/settings/smtp/{smtpSetting}', [\App\Http\Controllers\Admin\SettingsController::class, 'updateSmtp'])
+        ->middleware('admin.permission:settings.smtp')->name('settings.smtp.update');
+    Route::delete('/settings/smtp/{smtpSetting}', [\App\Http\Controllers\Admin\SettingsController::class, 'destroySmtp'])
+        ->middleware('admin.permission:settings.smtp')->name('settings.smtp.destroy');
+    Route::post('/settings/smtp/{smtpSetting}/active', [\App\Http\Controllers\Admin\SettingsController::class, 'setActiveSmtp'])
+        ->middleware('admin.permission:settings.smtp')->name('settings.smtp.set-active');
+    Route::post('/settings/smtp/test', [\App\Http\Controllers\Admin\SettingsController::class, 'testSmtp'])
+        ->middleware('admin.permission:settings.smtp')->name('settings.smtp.test');
 
     /*
     |--------------------------------------------------------------------------

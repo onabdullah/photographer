@@ -1,9 +1,99 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
-import { usePage } from '@inertiajs/react';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { usePage, router, useForm } from '@inertiajs/react';
+import { useState } from 'react';
+import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle } from 'lucide-react';
+
+const PURPOSE_LABELS = {
+    support: 'Support',
+    marketing: 'Marketing',
+    general: 'General',
+};
 
 export default function Settings() {
-    const { flash } = usePage().props;
+    const { flash, smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, canManageSmtp = false, canManageSettings = false } = usePage().props;
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [testId, setTestId] = useState(null);
+    const [testEmail, setTestEmail] = useState('');
+
+    const addForm = useForm({
+        name: '',
+        purpose: 'support',
+        host: '',
+        port: 587,
+        encryption: 'tls',
+        username: '',
+        password: '',
+        from_address: '',
+        from_name: '',
+        is_active: false,
+    });
+
+    const editForm = useForm({
+        name: '',
+        purpose: 'support',
+        host: '',
+        port: 587,
+        encryption: 'tls',
+        username: '',
+        password: '',
+        from_address: '',
+        from_name: '',
+        is_active: false,
+    });
+
+    const startEdit = (s) => {
+        setEditingId(s.id);
+        editForm.setData({
+            name: s.name || '',
+            purpose: s.purpose,
+            host: s.host,
+            port: s.port,
+            encryption: s.encryption ?? '',
+            username: s.username || '',
+            password: '',
+            from_address: s.from_address,
+            from_name: s.from_name || '',
+            is_active: s.is_active,
+        });
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        editForm.reset();
+    };
+
+    const handleAddSubmit = (e) => {
+        e.preventDefault();
+        addForm.post(route('admin.settings.smtp.store'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                addForm.reset();
+                setShowAddForm(false);
+            },
+        });
+    };
+
+    const handleEditSubmit = (e) => {
+        e.preventDefault();
+        if (!editingId) return;
+        editForm.put(route('admin.settings.smtp.update', editingId), {
+            preserveScroll: true,
+            onSuccess: () => cancelEdit(),
+        });
+    };
+
+    const handleTest = (e) => {
+        e.preventDefault();
+        if (!testId || !testEmail.trim()) return;
+        router.post(route('admin.settings.smtp.test'), { id: testId, test_email: testEmail.trim() }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setTestId(null);
+                setTestEmail('');
+            },
+        });
+    };
 
     return (
         <AdminLayout
@@ -11,9 +101,7 @@ export default function Settings() {
             breadcrumbs={[{ label: 'Settings' }]}
             centerHeader
         >
-            <div className="max-w-3xl space-y-6">
-
-                {/* Flash messages */}
+            <div className="max-w-4xl space-y-6">
                 {flash?.success && (
                     <div className="rounded-xl p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" role="alert">
                         <p className="text-sm text-green-800 dark:text-green-300">{flash.success}</p>
@@ -25,7 +113,7 @@ export default function Settings() {
                     </div>
                 )}
 
-                {/* Placeholder for future settings */}
+                {/* Section: Global Configuration — visible to anyone with Settings View */}
                 <div className="card">
                     <div className="flex items-start gap-4">
                         <div className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex-shrink-0">
@@ -36,13 +124,334 @@ export default function Settings() {
                                 Global Configuration
                             </h2>
                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                Additional system-wide settings will appear here.
+                                System-wide settings. Additional sections appear below based on your permissions.
                             </p>
                         </div>
                     </div>
                 </div>
 
+                {/* Section: SMTP — visible only with Settings SMTP permission */}
+                {canManageSmtp && (
+                    <div className="card">
+                        <div className="flex items-center justify-between gap-4 flex-wrap">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex-shrink-0">
+                                    <Mail size={20} className="text-primary-600 dark:text-primary-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                                        SMTP configurations
+                                    </h2>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Add multiple configs by purpose (Support, Marketing, General). Only one active per purpose. Test before saving.
+                                    </p>
+                                </div>
+                            </div>
+                            {!showAddForm && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddForm(true)}
+                                    className="btn btn-primary inline-flex items-center gap-2"
+                                >
+                                    <Plus size={18} />
+                                    Add SMTP
+                                </button>
+                            )}
+                        </div>
+
+                        {showAddForm && (
+                            <form onSubmit={handleAddSubmit} className="mt-6 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">New SMTP configuration</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Label (optional)</label>
+                                        <input
+                                            type="text"
+                                            value={addForm.data.name}
+                                            onChange={(e) => addForm.setData('name', e.target.value)}
+                                            className="form-input w-full"
+                                            placeholder="e.g. Support Mailgun"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Purpose</label>
+                                        <select
+                                            value={addForm.data.purpose}
+                                            onChange={(e) => addForm.setData('purpose', e.target.value)}
+                                            className="form-input w-full"
+                                        >
+                                            {Object.entries(smtpPurposes).map(([value, label]) => (
+                                                <option key={value} value={value}>{label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Host *</label>
+                                        <input
+                                            type="text"
+                                            value={addForm.data.host}
+                                            onChange={(e) => addForm.setData('host', e.target.value)}
+                                            className="form-input w-full"
+                                            placeholder="smtp.example.com"
+                                            required
+                                        />
+                                        {addForm.errors.host && <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{addForm.errors.host}</p>}
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="flex-1">
+                                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Port</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={65535}
+                                                value={addForm.data.port}
+                                                onChange={(e) => addForm.setData('port', parseInt(e.target.value, 10) || 587)}
+                                                className="form-input w-full"
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Encryption</label>
+                                            <select
+                                                value={addForm.data.encryption ?? ''}
+                                                onChange={(e) => addForm.setData('encryption', e.target.value || null)}
+                                                className="form-input w-full"
+                                            >
+                                                {Object.entries(smtpEncryptionOptions).map(([value, label]) => (
+                                                    <option key={value === null ? 'none' : value} value={value ?? ''}>{label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                                        <input
+                                            type="text"
+                                            value={addForm.data.username}
+                                            onChange={(e) => addForm.setData('username', e.target.value)}
+                                            className="form-input w-full"
+                                            autoComplete="off"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                                        <input
+                                            type="password"
+                                            value={addForm.data.password}
+                                            onChange={(e) => addForm.setData('password', e.target.value)}
+                                            className="form-input w-full"
+                                            autoComplete="new-password"
+                                            placeholder="Leave blank when editing to keep existing"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From address *</label>
+                                        <input
+                                            type="email"
+                                            value={addForm.data.from_address}
+                                            onChange={(e) => addForm.setData('from_address', e.target.value)}
+                                            className="form-input w-full"
+                                            required
+                                        />
+                                        {addForm.errors.from_address && <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{addForm.errors.from_address}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From name</label>
+                                        <input
+                                            type="text"
+                                            value={addForm.data.from_name}
+                                            onChange={(e) => addForm.setData('from_name', e.target.value)}
+                                            className="form-input w-full"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={addForm.data.is_active}
+                                            onChange={(e) => addForm.setData('is_active', e.target.checked)}
+                                            className="rounded border-gray-300 dark:border-gray-600"
+                                        />
+                                        <span className="text-sm text-gray-700 dark:text-gray-300">Set as active for this purpose</span>
+                                    </label>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button type="submit" disabled={addForm.processing} className="btn btn-primary">
+                                        {addForm.processing ? 'Adding…' : 'Add configuration'}
+                                    </button>
+                                    <button type="button" onClick={() => { setShowAddForm(false); addForm.reset(); }} className="btn btn-secondary">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        <div className="mt-6 space-y-3">
+                            {smtpSettings.length === 0 && !showAddForm && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">No SMTP configurations yet. Click “Add SMTP” to add one.</p>
+                            )}
+                            {smtpSettings.map((s) => (
+                                <div
+                                    key={s.id}
+                                    className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800/50"
+                                >
+                                    {editingId === s.id ? (
+                                        <form onSubmit={handleEditSubmit} className="space-y-4">
+                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Edit SMTP</h3>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Label</label>
+                                                    <input type="text" value={editForm.data.name} onChange={(e) => editForm.setData('name', e.target.value)} className="form-input w-full" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Purpose</label>
+                                                    <select value={editForm.data.purpose} onChange={(e) => editForm.setData('purpose', e.target.value)} className="form-input w-full">
+                                                        {Object.entries(smtpPurposes).map(([value, label]) => (
+                                                            <option key={value} value={value}>{label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Host *</label>
+                                                    <input type="text" value={editForm.data.host} onChange={(e) => editForm.setData('host', e.target.value)} className="form-input w-full" required />
+                                                </div>
+                                                <div className="flex gap-4">
+                                                    <div className="flex-1">
+                                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Port</label>
+                                                        <input type="number" min={1} max={65535} value={editForm.data.port} onChange={(e) => editForm.setData('port', parseInt(e.target.value, 10) || 587)} className="form-input w-full" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Encryption</label>
+                                                        <select value={editForm.data.encryption ?? ''} onChange={(e) => editForm.setData('encryption', e.target.value || null)} className="form-input w-full">
+                                                            {Object.entries(smtpEncryptionOptions).map(([value, label]) => (
+                                                                <option key={value === null ? 'none' : value} value={value ?? ''}>{label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                                                    <input type="text" value={editForm.data.username} onChange={(e) => editForm.setData('username', e.target.value)} className="form-input w-full" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                                                    <input type="password" value={editForm.data.password} onChange={(e) => editForm.setData('password', e.target.value)} className="form-input w-full" placeholder="Leave blank to keep existing" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From address *</label>
+                                                    <input type="email" value={editForm.data.from_address} onChange={(e) => editForm.setData('from_address', e.target.value)} className="form-input w-full" required />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From name</label>
+                                                    <input type="text" value={editForm.data.from_name} onChange={(e) => editForm.setData('from_name', e.target.value)} className="form-input w-full" />
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input type="checkbox" checked={editForm.data.is_active} onChange={(e) => editForm.setData('is_active', e.target.checked)} className="rounded border-gray-300 dark:border-gray-600" />
+                                                    <span className="text-sm text-gray-700 dark:text-gray-300">Active for this purpose</span>
+                                                </label>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button type="submit" disabled={editForm.processing} className="btn btn-primary">Save</button>
+                                                <button type="button" onClick={cancelEdit} className="btn btn-secondary">Cancel</button>
+                                            </div>
+                                        </form>
+                                    ) : (
+                                        <>
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-medium text-gray-900 dark:text-white">{s.name || PURPOSE_LABELS[s.purpose] || s.purpose}</span>
+                                                    <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{PURPOSE_LABELS[s.purpose] || s.purpose}</span>
+                                                    {s.is_active && (
+                                                        <span className="text-xs px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 flex items-center gap-1">
+                                                            <CheckCircle size={12} /> Active
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <button type="button" onClick={() => startEdit(s)} className="btn btn-secondary btn-sm inline-flex items-center gap-1" title="Edit">
+                                                        <Pencil size={14} />
+                                                        Edit
+                                                    </button>
+                                                    <button type="button" onClick={() => { setTestId(s.id); setTestEmail(''); }} className="btn btn-secondary btn-sm inline-flex items-center gap-1" title="Send test email">
+                                                        <Send size={14} />
+                                                        Test
+                                                    </button>
+                                                    {!s.is_active && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => router.post(route('admin.settings.smtp.set-active', s.id), {}, { preserveScroll: true })}
+                                                            className="btn btn-secondary btn-sm"
+                                                        >
+                                                            Set active
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { if (confirm('Remove this SMTP configuration?')) router.delete(route('admin.settings.smtp.destroy', s.id), { preserveScroll: true }); }}
+                                                        className="btn btn-secondary btn-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 inline-flex items-center gap-1"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                {s.host}:{s.port} · From: {s.from_address}
+                                            </p>
+                                        </>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {!canManageSmtp && (
+                    <div className="card border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex-shrink-0">
+                                <Mail size={20} className="text-gray-500 dark:text-gray-400" />
+                            </div>
+                            <div>
+                                <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                                    SMTP configurations
+                                </h2>
+                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    You do not have permission to view or manage SMTP settings. Contact an administrator if you need access.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {testId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="test-smtp-title">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+                        <h3 id="test-smtp-title" className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Send test email</h3>
+                        <form onSubmit={handleTest} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
+                                <input
+                                    type="email"
+                                    value={testEmail}
+                                    onChange={(e) => setTestEmail(e.target.value)}
+                                    className="form-input w-full"
+                                    placeholder="email@example.com"
+                                    required
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <button type="submit" className="btn btn-primary">Send test</button>
+                                <button type="button" onClick={() => { setTestId(null); setTestEmail(''); }} className="btn btn-secondary">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </AdminLayout>
     );
 }

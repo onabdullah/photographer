@@ -45,6 +45,7 @@ class AdminRole extends Model
         'SYSTEM SETTINGS' => [
             'settings.view'     => 'Settings View',
             'settings.manage'   => 'Settings Manage',
+            'settings.smtp'     => 'Settings SMTP (configure mail)',
         ],
         'DEVELOPER' => [
             'developer.terminal'=> 'Artisan Terminal',

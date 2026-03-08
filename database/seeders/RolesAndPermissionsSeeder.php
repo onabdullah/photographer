@@ -32,7 +32,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'finance.view',
             'users.view', 'users.manage',
             'roles.view', 'roles.manage',
-            'settings.view', 'settings.manage',
+            'settings.view', 'settings.manage', 'settings.smtp',
             'developer.terminal',
         ],
         'Manager' => [
