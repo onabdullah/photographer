@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Mail\WelcomeInstallMail;
+use App\Mail\Shopify\WelcomeInstallMail;
 use App\Models\EmailLog;
 use App\Models\Merchant;
 use App\Services\MailService;

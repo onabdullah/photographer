@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Mail\SmtpTestMail;
+use App\Mail\Admin\SmtpTestMail;
 use App\Models\LoginLog;
 use App\Models\MailLog;
 use App\Models\SiteSetting;

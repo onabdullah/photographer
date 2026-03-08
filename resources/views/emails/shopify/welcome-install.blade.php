@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #374151; background-color: #F9FAFB; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .header { background: #468A9A; color: white; padding: 40px 30px; text-align: center; }
+        .header p { margin: 8px 0 0; font-size: 15px; opacity: 0.9; }
+        .content { background-color: #ffffff; padding: 40px 30px; }
+        .greeting { font-size: 16px; color: #111827; margin-bottom: 20px; }
+        .credits-badge { display: inline-block; background-color: rgba(255, 122, 48, 0.1); border: 1px solid rgba(255, 122, 48, 0.25); color: #c2440e; font-size: 14px; font-weight: 700; padding: 10px 24px; border-radius: 8px; margin: 16px 0; }
+        .details { background-color: rgba(70, 138, 154, 0.06); border: 1px solid rgba(70, 138, 154, 0.15); padding: 20px 24px; border-radius: 8px; margin: 24px 0; }
+        .details p { margin: 8px 0; font-size: 14px; color: #374151; }
+        .details p strong { color: #111827; }
+        .feature-icon { font-size: 22px; margin-bottom: 8px; }
+        .feature-title { font-size: 13px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+        .feature-desc { font-size: 12px; color: #6b7280; line-height: 1.5; }
+        .button { display: inline-block; padding: 14px 36px; background: #468A9A; color: white !important; text-decoration: none; border-radius: 8px; margin: 8px 0 24px; font-weight: 600; font-size: 15px; }
+        .signature { margin-top: 12px; color: #6b7280; line-height: 1.5; }
+        .footer { background-color: #F9FAFB; border-top: 1px solid #e5e7eb; padding: 24px 30px; text-align: center; font-size: 13px; color: #6B7280; line-height: 1.6; }
+        h1 { margin: 0 0 4px; font-size: 28px; font-weight: 700; }
+        p { margin: 12px 0; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        {{-- ── HEADER ── --}}
+        <div class="header">
+            @if($appLogoUrl)
+                <img src="{{ $appLogoUrl }}" alt="{{ $appName }}" style="max-height: 44px; width: auto; display: inline-block; margin-bottom: 16px;"><br>
+            @endif
+            <h1>Welcome to {{ $appName }}</h1>
+            <p>Your store is all set up and ready to go.</p>
+        </div>
+
+        {{-- ── CONTENT ── --}}
+        <div class="content">
+            <p class="greeting">
+                Hello
+                @php
+                    $displayName = $shopName;
+                    $displayName = preg_replace('/\.myshopify\.com$/i', '', $displayName);
+                    $displayName = Str::title(str_replace(['-', '_', '.'], ' ', $displayName));
+                @endphp
+                <strong>{{ $displayName }}</strong>,
+            </p>
+
+            <p>Thank you for installing <strong>{{ $appName }}</strong>. You're now equipped with AI-powered tools to elevate your product photography — no editing skills required.</p>
+
+            {{-- Credits badge --}}
+            <div style="text-align: center; margin: 20px 0;">
+                <span class="credits-badge">🎁 &nbsp;{{ $creditsGranted }} Free AI Credits Added to Your Account</span>
+            </div>
+
+            {{-- Features --}}
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0 0;">
+                <tr>
+                    <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
+                        <div class="feature-icon">🖼️</div>
+                        <div class="feature-title">AI Image Enhancement</div>
+                        <div class="feature-desc">Sharpen, denoise, and colour-correct product images automatically.</div>
+                    </td>
+                    <td width="4%"></td>
+                    <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
+                        <div class="feature-icon">🔍</div>
+                        <div class="feature-title">Image Upscaler</div>
+                        <div class="feature-desc">Upscale low-res photos up to 4× without losing detail.</div>
+                    </td>
+                </tr>
+                <tr><td colspan="3" style="height:12px;"></td></tr>
+                <tr>
+                    <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
+                        <div class="feature-icon">✏️</div>
+                        <div class="feature-title">Magic Eraser</div>
+                        <div class="feature-desc">Remove unwanted objects or watermarks from any product photo.</div>
+                    </td>
+                    <td width="4%"></td>
+                    <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
+                        <div class="feature-icon">💡</div>
+                        <div class="feature-title">Lighting Fix</div>
+                        <div class="feature-desc">Balance exposure and fix harsh shadows for a studio-quality look.</div>
+                    </td>
+                </tr>
+            </table>
+
+            {{-- Getting started --}}
+            <div class="details" style="margin-top: 24px;">
+                <p style="margin: 0 0 16px; font-size: 13px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 0.8px;">Quick Start — 3 Steps</p>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td width="30" valign="top" style="padding-top:2px;">
+                            <div style="width:26px;height:26px;background-color:#468A9A;color:white;border-radius:50%;text-align:center;line-height:26px;font-size:12px;font-weight:800;">1</div>
+                        </td>
+                        <td style="padding-left:12px;font-size:14px;color:#374151;line-height:1.55;padding-bottom:12px;">
+                            <strong style="color:#111827;">Open the app</strong> from your Shopify admin sidebar under <em>Apps → {{ $appName }}</em>.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="30" valign="top" style="padding-top:2px;">
+                            <div style="width:26px;height:26px;background-color:#468A9A;color:white;border-radius:50%;text-align:center;line-height:26px;font-size:12px;font-weight:800;">2</div>
+                        </td>
+                        <td style="padding-left:12px;font-size:14px;color:#374151;line-height:1.55;padding-bottom:12px;">
+                            <strong style="color:#111827;">Upload a product photo</strong> or browse your existing Shopify product images.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="30" valign="top" style="padding-top:2px;">
+                            <div style="width:26px;height:26px;background-color:#468A9A;color:white;border-radius:50%;text-align:center;line-height:26px;font-size:12px;font-weight:800;">3</div>
+                        </td>
+                        <td style="padding-left:12px;font-size:14px;color:#374151;line-height:1.55;">
+                            <strong style="color:#111827;">Pick an AI tool</strong>, apply it with one click, and save the result back to your store.
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            {{-- CTA --}}
+            <div style="text-align: center;">
+                <a href="{{ url('/') }}" class="button">Open {{ $appName }} →</a>
+            </div>
+
+            <div class="signature">
+                <p style="margin: 4px 0;">Regards,</p>
+                <p style="margin: 4px 0; font-weight: 600; color: #111827;">The {{ $appName }} Team</p>
+            </div>
+        </div>
+
+        {{-- ── FOOTER ── --}}
+        <div class="footer">
+            @php $footerText = \App\Models\SiteSetting::get(\App\Models\SiteSetting::KEY_FOOTER_TEXT); @endphp
+            @if($footerText)
+                <p style="margin: 4px 0;">{{ $footerText }}</p>
+            @else
+                <p style="margin: 4px 0;">You're receiving this email because you recently installed <strong>{{ $appName }}</strong> on your Shopify store.</p>
+            @endif
+
+            @php $socialLinks = \App\Models\SiteSetting::getSocialLinks(); @endphp
+            @if(!empty($socialLinks))
+                <p style="margin: 12px 0 4px;">
+                    @foreach($socialLinks as $platform => $url)
+                        <a href="{{ $url }}" target="_blank" style="display:inline-block;margin:0 6px;font-size:12px;color:#468A9A;text-decoration:none;">{{ ucfirst($platform) }}</a>
+                    @endforeach
+                </p>
+            @endif
+
+            <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">&copy; {{ date('Y') }} {{ $appName }}. All rights reserved.</p>
+        </div>
+
+    </div>
+</body>
+</html>
