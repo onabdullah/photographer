@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -90,6 +90,19 @@ class TerminalController extends Controller
 
     public function run(Request $request)
     {
+        try {
+            return $this->executeRun($request);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error'   => 'Server error: ' . $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+            ], 500);
+        }
+    }
+
+    private function executeRun(Request $request)
+    {
         if (! $this->userCanAccessTerminal($request)) {
             return response()->json(['error' => 'Permission denied. You need developer.terminal access.'], 403);
         }
@@ -140,15 +153,10 @@ class TerminalController extends Controller
             ], 200);
         }
 
-        // ── Execute inside the current PHP process — zero child process ─────────
-        // We bypass the Artisan facade (whose alias 'artisan' is only bound during
-        // CLI bootstrap) and use app()->make() with the concrete ConsoleKernel class.
-        //
-        // Production guard bypass: commands like `migrate` and `db:seed` use
-        // ConfirmableTrait which calls app()->environment() === 'production' and
-        // cancels in non-interactive mode unless --force is passed.  Since the admin
-        // has already authenticated to reach this terminal, we temporarily report the
-        // env as non-production so the confirmation is skipped, then restore it.
+        // ── Execute via Artisan facade (works in web context; Kernel is bound to contract) ──
+        // Production guard bypass: commands like `migrate` and `db:seed` skip confirmation in
+        // non-interactive mode when env is production; we temporarily set env to local so
+        // the command runs, then restore it.
         $start = microtime(true);
 
         $wasProduction = app()->isProduction();
@@ -156,13 +164,12 @@ class TerminalController extends Controller
             config(['app.env' => 'local']);
         }
 
-        try {
-            /** @var ConsoleKernel $kernel */
-            $kernel = app()->make(ConsoleKernel::class);
+        $output   = '';
+        $exitCode = 0;
 
+        try {
             $buffered = new BufferedOutput();
-            // array_slice($parts, 1) drops the command name (index 0)
-            $exitCode = $kernel->call(
+            $exitCode = Artisan::call(
                 $baseName,
                 $this->parseParams(array_slice($parts, 1)),
                 $buffered,
@@ -172,13 +179,12 @@ class TerminalController extends Controller
             $output   = 'Exception: ' . $e->getMessage() . "\n";
             $exitCode = 1;
         } finally {
-            // Always restore the real environment, even if the command throws
             if ($wasProduction) {
                 config(['app.env' => 'production']);
             }
         }
 
-        $duration  = round((microtime(true) - $start) * 1000);
+        $duration = round((microtime(true) - $start) * 1000);
 
         return response()->json([
             'output'    => $output ?: "(no output)\n",
