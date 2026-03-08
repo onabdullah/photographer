@@ -389,7 +389,7 @@ export default function Settings() {
                         </div>
 
                         {/* Right: login log stats + logs */}
-                        <div className="w-full lg:w-[380px] flex-shrink-0 space-y-4">
+                        <div className="w-full lg:flex-1 lg:min-w-0 space-y-4">
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="card flex items-center gap-2 p-3">
                                     <div className="rounded-lg p-1.5 bg-primary-50 dark:bg-primary-900/20">
