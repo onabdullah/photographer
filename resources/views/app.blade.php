@@ -26,7 +26,7 @@
         @include('shopify-app::partials.token_handler')
         @endif
 
-        {{-- Manrope + Patrick Hand (admin) + Inter/Plus Jakarta Sans (Shopify app) --}}
+        {{-- Fonts: preconnect for faster DNS; display=swap avoids blocking render --}}
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Patrick+Hand&display=swap" rel="stylesheet">

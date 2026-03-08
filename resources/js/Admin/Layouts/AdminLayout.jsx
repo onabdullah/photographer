@@ -161,6 +161,7 @@ function NavItem({ name, href, icon: Icon, isActive, iconOnly, badge, badgeColor
     return (
         <Link
             href={href}
+            prefetch
             title={iconOnly ? name : undefined}
             aria-label={iconOnly ? name : undefined}
             className={[
@@ -255,6 +256,7 @@ function CollapsibleNavItem({ name, icon: Icon, badge, badgeColor, children, ico
                             <Link
                                 key={child.href}
                                 href={child.href}
+                                prefetch
                                 className="flex items-center px-2.5 py-1.5 mx-1 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
                                 <ChildIcon size={14} className="mr-2 flex-shrink-0 text-gray-400 dark:text-gray-500" />
@@ -378,6 +380,7 @@ function Breadcrumbs({ crumbs }) {
             {/* "Home" always links to the dashboard */}
             <Link
                 href="/admin/dashboard"
+                prefetch
                 className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
             >
                 Home
@@ -389,6 +392,7 @@ function Breadcrumbs({ crumbs }) {
                     {crumb.href && i !== last ? (
                         <Link
                             href={crumb.href}
+                            prefetch
                             className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                         >
                             {crumb.label}
@@ -420,6 +424,7 @@ function DeveloperPanel({ iconOnly }) {
             <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 flex justify-center py-2">
                 <Link
                     href="/admin/terminal"
+                    prefetch
                     title="Developer"
                     className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 dark:text-gray-500 hover:text-primary-500 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
@@ -438,6 +443,7 @@ function DeveloperPanel({ iconOnly }) {
                      style={{ background: 'rgba(0,0,0,0.02)' }}>
                     <Link
                         href="/admin/terminal"
+                        prefetch
                         className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
                     >
                         <TerminalSquare size={15}
@@ -702,6 +708,7 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                                 <Link
                                     key={action.href}
                                     href={action.href}
+                                    prefetch
                                     className="flex items-center gap-2 mx-2 px-2.5 py-2 rounded-md text-xs font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-700 dark:hover:text-primary-300 transition-colors min-h-[32px]"
                                 >
                                     <Plus size={11} className="flex-shrink-0 text-secondary-500" />
@@ -749,6 +756,7 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                         </div>
                         <Link
                             href="/admin/dashboard"
+                            prefetch
                             className="flex-shrink-0 text-xs font-bold text-secondary-700 dark:text-secondary-300 tracking-wide animate-blink-slow hover:opacity-100 hover:animate-none"
                         >
                             click here to exit
