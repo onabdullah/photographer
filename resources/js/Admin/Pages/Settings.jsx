@@ -14,7 +14,6 @@ const TABS = [
     { key: 'general', label: 'General', icon: Sliders },
     { key: 'security', label: 'System Security', icon: Lock },
     { key: 'smtp', label: 'SMTP', icon: Mail },
-    { key: 'logs', label: 'Logs', icon: FileText },
 ];
 
 const SMTP_CARD_COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b'];
@@ -30,7 +29,7 @@ function formatSentAt(iso) {
 const SOCIAL_KEYS = ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube'];
 
 export default function Settings() {
-    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, recentMailLogs = [], mailOverviewStats = null, canManageSmtp = false, canManageSettings = false, general = {}, security = {}, loginLogs = { data: [] }, logFilters = {}, two_factor_qr_url = null, two_factor_secret = null } = usePage().props;
+    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, recentMailLogs = [], mailOverviewStats = null, canManageSmtp = false, canManageSettings = false, general = {}, security = {}, loginLogs = { data: [] }, loginLogStats = {}, logFilters = {}, two_factor_qr_url = null, two_factor_secret = null } = usePage().props;
     const toast = useAdminToast();
     const [activeTab, setActiveTab] = useState(() => {
         const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
@@ -42,7 +41,7 @@ export default function Settings() {
     useEffect(() => {
         const u = new URL(pageUrl, window.location.origin);
         const t = u.searchParams.get('tab');
-        if (t && ['general', 'security', 'smtp', 'logs'].includes(t)) setActiveTab(t);
+        if (t && ['general', 'security', 'smtp'].includes(t)) setActiveTab(t);
     }, [pageUrl]);
     const [copiedId, setCopiedId] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
@@ -311,81 +310,184 @@ export default function Settings() {
                 )}
 
                 {activeTab === 'security' && (
-                    <div className="space-y-6">
-                        {/* Password policy */}
-                        {canManageSettings && (
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        {/* Left: policy, password, 2FA */}
+                        <div className="flex-1 min-w-0 space-y-6">
+                            {canManageSettings && (
+                                <div className="card overflow-hidden">
+                                    <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                                        <Lock size={18} className="text-primary-600 dark:text-primary-400" />
+                                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Password policy</h2>
+                                    </div>
+                                    <div className="p-4">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Require password change after this many days (0 = no expiry).</p>
+                                        <form onSubmit={(e) => { e.preventDefault(); securityForm.put(route('admin.settings.security.update'), { preserveScroll: true }); }} className="flex flex-wrap items-end gap-3">
+                                            <div className="min-w-[120px]">
+                                                <label htmlFor="password_expiry_days" className="form-label block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Days</label>
+                                                <input id="password_expiry_days" type="number" min={0} max={365} value={securityForm.data.password_expiry_days} onChange={(e) => securityForm.setData('password_expiry_days', e.target.value)} className="form-input w-full" />
+                                            </div>
+                                            <button type="submit" disabled={securityForm.processing} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50">Save</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="card overflow-hidden">
-                                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
-                                    <Lock size={18} className="text-primary-600 dark:text-primary-400" />
-                                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Password policy</h2>
+                                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2 flex-wrap">
+                                    <KeyRound size={18} className="text-primary-600 dark:text-primary-400" />
+                                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Password</h2>
+                                    {security.is_default_password && <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200">Default password — change recommended</span>}
+                                    {security.password_change_required && !security.is_default_password && <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200">Change required</span>}
+                                    {security.password_updated_at && !security.password_change_required && <span className="text-xs text-gray-500 dark:text-gray-400">Last changed: {new Date(security.password_updated_at).toLocaleDateString()}</span>}
                                 </div>
                                 <div className="p-4">
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Require password change after this many days (0 = no expiry).</p>
-                                    <form onSubmit={(e) => { e.preventDefault(); securityForm.put(route('admin.settings.security.update'), { preserveScroll: true }); }} className="flex flex-wrap items-end gap-3">
-                                        <div className="min-w-[120px]">
-                                            <label htmlFor="password_expiry_days" className="form-label block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Days</label>
-                                            <input id="password_expiry_days" type="number" min={0} max={365} value={securityForm.data.password_expiry_days} onChange={(e) => securityForm.setData('password_expiry_days', e.target.value)} className="form-input w-full" />
-                                        </div>
-                                        <button type="submit" disabled={securityForm.processing} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50">Save</button>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Change your account password. Use a strong, unique password.</p>
+                                    <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
+                                        <div><label htmlFor="current_password" className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current password</label><input id="current_password" type="password" value={passwordForm.data.current_password} onChange={(e) => passwordForm.setData('current_password', e.target.value)} className="form-input w-full" autoComplete="current-password" />{passwordForm.errors.current_password && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordForm.errors.current_password}</p>}</div>
+                                        <div><label htmlFor="new_password" className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New password</label><input id="new_password" type="password" value={passwordForm.data.password} onChange={(e) => passwordForm.setData('password', e.target.value)} className="form-input w-full" autoComplete="new-password" />{passwordForm.errors.password && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordForm.errors.password}</p>}</div>
+                                        <div><label htmlFor="password_confirmation" className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm new password</label><input id="password_confirmation" type="password" value={passwordForm.data.password_confirmation} onChange={(e) => passwordForm.setData('password_confirmation', e.target.value)} className="form-input w-full" autoComplete="new-password" />{passwordForm.errors.password_confirmation && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordForm.errors.password_confirmation}</p>}</div>
+                                        <button type="submit" disabled={passwordForm.processing} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">{passwordForm.processing ? 'Updating…' : 'Update password'}</button>
                                     </form>
                                 </div>
                             </div>
-                        )}
 
-                        {/* Password status & change */}
-                        <div className="card overflow-hidden">
-                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2 flex-wrap">
-                                <KeyRound size={18} className="text-primary-600 dark:text-primary-400" />
-                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Password</h2>
-                                {security.is_default_password && <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200">Default password — change recommended</span>}
-                                {security.password_change_required && !security.is_default_password && <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200">Change required</span>}
-                                {security.password_updated_at && !security.password_change_required && <span className="text-xs text-gray-500 dark:text-gray-400">Last changed: {new Date(security.password_updated_at).toLocaleDateString()}</span>}
-                            </div>
-                            <div className="p-4">
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Change your account password. Use a strong, unique password.</p>
-                                <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
-                                    <div><label htmlFor="current_password" className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current password</label><input id="current_password" type="password" value={passwordForm.data.current_password} onChange={(e) => passwordForm.setData('current_password', e.target.value)} className="form-input w-full" autoComplete="current-password" />{passwordForm.errors.current_password && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordForm.errors.current_password}</p>}</div>
-                                    <div><label htmlFor="new_password" className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New password</label><input id="new_password" type="password" value={passwordForm.data.password} onChange={(e) => passwordForm.setData('password', e.target.value)} className="form-input w-full" autoComplete="new-password" />{passwordForm.errors.password && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordForm.errors.password}</p>}</div>
-                                    <div><label htmlFor="password_confirmation" className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm new password</label><input id="password_confirmation" type="password" value={passwordForm.data.password_confirmation} onChange={(e) => passwordForm.setData('password_confirmation', e.target.value)} className="form-input w-full" autoComplete="new-password" />{passwordForm.errors.password_confirmation && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordForm.errors.password_confirmation}</p>}</div>
-                                    <button type="submit" disabled={passwordForm.processing} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">{passwordForm.processing ? 'Updating…' : 'Update password'}</button>
-                                </form>
+                            <div className="card overflow-hidden">
+                                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                                    <Shield size={18} className="text-primary-600 dark:text-primary-400" />
+                                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Two-factor authentication</h2>
+                                    {security.two_fa_enabled && <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200">Enabled</span>}
+                                </div>
+                                <div className="p-4 space-y-4">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Add an extra layer of security by requiring a code from your authenticator app when signing in.</p>
+                                    {security.two_fa_enabled ? (
+                                        <form onSubmit={(e) => { e.preventDefault(); router.post(route('admin.settings.two-factor.disable'), { current_password: twoFactorDisablePassword }, { preserveScroll: true, onSuccess: () => setTwoFactorDisablePassword('') }); }} className="space-y-3 max-w-md">
+                                            <label className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300">Disable 2FA (enter current password)</label>
+                                            <input type="password" value={twoFactorDisablePassword} onChange={(e) => setTwoFactorDisablePassword(e.target.value)} className="form-input w-full" placeholder="Current password" autoComplete="current-password" />
+                                            <button type="submit" disabled={!twoFactorDisablePassword.trim()} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50">Disable 2FA</button>
+                                        </form>
+                                    ) : two_factor_qr_url ? (
+                                        <div className="space-y-3">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">Scan the QR code with your authenticator app, then enter the 6-digit code below.</p>
+                                            <div className="flex flex-wrap gap-4 items-start">
+                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(two_factor_qr_url)}`} alt="QR code" className="w-[180px] h-[180px] border border-gray-200 dark:border-gray-600 rounded-lg" />
+                                                <div className="flex-1 min-w-[200px]">
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Or enter this secret manually: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{two_factor_secret || '—'}</code></p>
+                                                    <form onSubmit={(e) => { e.preventDefault(); router.post(route('admin.settings.two-factor.confirm'), { code: twoFactorCode }, { preserveScroll: true, onSuccess: () => setTwoFactorCode('') }); }} className="space-y-2">
+                                                        <input type="text" inputMode="numeric" maxLength={6} value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className="form-input w-full text-center text-lg tracking-widest font-mono" placeholder="000000" />
+                                                        <button type="submit" disabled={twoFactorCode.length !== 6} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50">Confirm and enable 2FA</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={(e) => { e.preventDefault(); router.post(route('admin.settings.two-factor.setup'), {}, { preserveScroll: true }); }}>
+                                            <button type="submit" className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">Enable two-factor authentication</button>
+                                        </form>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Two-factor authentication */}
-                        <div className="card overflow-hidden">
-                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
-                                <Shield size={18} className="text-primary-600 dark:text-primary-400" />
-                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Two-factor authentication</h2>
-                                {security.two_fa_enabled && <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200">Enabled</span>}
+                        {/* Right: login log stats + logs */}
+                        <div className="w-full lg:w-[380px] flex-shrink-0 space-y-4">
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="card flex items-center gap-2 p-3">
+                                    <div className="rounded-lg p-1.5 bg-primary-50 dark:bg-primary-900/20">
+                                        <FileText size={14} className="text-primary-600 dark:text-primary-400" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total logins</p>
+                                        <p className="text-base font-bold text-gray-900 dark:text-white tabular-nums">{loginLogStats.total?.toLocaleString() ?? 0}</p>
+                                    </div>
+                                </div>
+                                <div className="card flex items-center gap-2 p-3">
+                                    <div className="rounded-lg p-1.5 bg-green-50 dark:bg-green-900/20">
+                                        <CheckCircle size={14} className="text-green-600 dark:text-green-400" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Success</p>
+                                        <p className="text-base font-bold text-green-700 dark:text-green-400 tabular-nums">{loginLogStats.success?.toLocaleString() ?? 0}</p>
+                                    </div>
+                                </div>
+                                <div className="card flex items-center gap-2 p-3">
+                                    <div className="rounded-lg p-1.5 bg-red-50 dark:bg-red-900/20">
+                                        <AlertCircle size={14} className="text-red-600 dark:text-red-400" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Failed</p>
+                                        <p className="text-base font-bold text-red-600 dark:text-red-400 tabular-nums">{loginLogStats.failed?.toLocaleString() ?? 0}</p>
+                                    </div>
+                                </div>
+                                <div className="card flex items-center gap-2 p-3">
+                                    <div className="rounded-lg p-1.5 bg-amber-50 dark:bg-amber-900/20">
+                                        <Shield size={14} className="text-amber-600 dark:text-amber-400" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">High risk</p>
+                                        <p className="text-base font-bold text-amber-700 dark:text-amber-400 tabular-nums">{loginLogStats.high_risk?.toLocaleString() ?? 0}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="p-4 space-y-4">
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Add an extra layer of security by requiring a code from your authenticator app when signing in.</p>
-                                {security.two_fa_enabled ? (
-                                    <form onSubmit={(e) => { e.preventDefault(); router.post(route('admin.settings.two-factor.disable'), { current_password: twoFactorDisablePassword }, { preserveScroll: true, onSuccess: () => setTwoFactorDisablePassword('') }); }} className="space-y-3 max-w-md">
-                                        <label className="form-label block text-sm font-medium text-gray-700 dark:text-gray-300">Disable 2FA (enter current password)</label>
-                                        <input type="password" value={twoFactorDisablePassword} onChange={(e) => setTwoFactorDisablePassword(e.target.value)} className="form-input w-full" placeholder="Current password" autoComplete="current-password" />
-                                        <button type="submit" disabled={!twoFactorDisablePassword.trim()} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50">Disable 2FA</button>
+                            <div className="card overflow-hidden lg:sticky lg:top-4">
+                                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                                    <FileText size={16} className="text-gray-500 dark:text-gray-400" />
+                                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Login logs</h2>
+                                </div>
+                                <div className="p-2 border-b border-gray-100 dark:border-gray-700">
+                                    <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); router.get(route('admin.settings'), { tab: 'security', log_status: fd.get('log_status') || undefined, log_email: fd.get('log_email') || undefined, log_ip: fd.get('log_ip') || undefined, log_date_from: fd.get('log_date_from') || undefined, log_date_to: fd.get('log_date_to') || undefined }, { preserveState: true }); }} className="space-y-2">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <select name="log_status" className="form-input text-xs w-24" defaultValue={logFilters.log_status ?? ''}>
+                                                <option value="">All</option>
+                                                <option value="success">Success</option>
+                                                <option value="failed">Failed</option>
+                                            </select>
+                                            <input type="text" name="log_email" placeholder="Email" className="form-input text-xs w-28" defaultValue={logFilters.log_email ?? ''} />
+                                            <input type="text" name="log_ip" placeholder="IP" className="form-input text-xs w-24" defaultValue={logFilters.log_ip ?? ''} />
+                                            <button type="submit" className="px-2 py-1 rounded bg-primary-600 text-white text-xs font-medium hover:bg-primary-700">Filter</button>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <input type="date" name="log_date_from" className="form-input text-xs w-28" defaultValue={logFilters.log_date_from ?? ''} />
+                                            <input type="date" name="log_date_to" className="form-input text-xs w-28" defaultValue={logFilters.log_date_to ?? ''} />
+                                        </div>
                                     </form>
-                                ) : two_factor_qr_url ? (
-                                    <div className="space-y-3">
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white">Scan the QR code with your authenticator app, then enter the 6-digit code below.</p>
-                                        <div className="flex flex-wrap gap-4 items-start">
-                                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(two_factor_qr_url)}`} alt="QR code" className="w-[180px] h-[180px] border border-gray-200 dark:border-gray-600 rounded-lg" />
-                                            <div className="flex-1 min-w-[200px]">
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Or enter this secret manually: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{two_factor_secret || '—'}</code></p>
-                                                <form onSubmit={(e) => { e.preventDefault(); router.post(route('admin.settings.two-factor.confirm'), { code: twoFactorCode }, { preserveScroll: true, onSuccess: () => setTwoFactorCode('') }); }} className="space-y-2">
-                                                    <input type="text" inputMode="numeric" maxLength={6} value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className="form-input w-full text-center text-lg tracking-widest font-mono" placeholder="000000" />
-                                                    <button type="submit" disabled={twoFactorCode.length !== 6} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50">Confirm and enable 2FA</button>
-                                                </form>
-                                            </div>
+                                </div>
+                                <div className="max-h-[320px] overflow-y-auto">
+                                    <table className="w-full text-xs">
+                                        <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800/95 border-b border-gray-100 dark:border-gray-700">
+                                            <tr>
+                                                <th className="text-left py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400">Time</th>
+                                                <th className="text-left py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400">Email</th>
+                                                <th className="text-left py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400">Status</th>
+                                                <th className="text-left py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400">Risk</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {(loginLogs.data || []).length === 0 ? (
+                                                <tr><td colSpan={4} className="py-4 px-2 text-center text-gray-500 dark:text-gray-400">No login logs yet.</td></tr>
+                                            ) : (
+                                                (loginLogs.data || []).map((log) => (
+                                                    <tr key={log.id} className="border-b border-gray-100 dark:border-gray-700/70 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                        <td className="py-1.5 px-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">{new Date(log.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                                                        <td className="py-1.5 px-2 font-medium text-gray-900 dark:text-white truncate max-w-[100px]" title={log.email}>{log.email}</td>
+                                                        <td className="py-1.5 px-2">
+                                                            <span className={`px-1 py-0.5 rounded font-medium ${log.status === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>{log.status}</span>
+                                                        </td>
+                                                        <td className="py-1.5 px-2"><span className={log.risk_percentage >= 70 ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-600 dark:text-gray-400'}>{log.risk_percentage}%</span></td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {loginLogs.prev_page_url || loginLogs.next_page_url ? (
+                                    <div className="px-2 py-1.5 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2 text-xs">
+                                        <span className="text-gray-500 dark:text-gray-400">Page {loginLogs.current_page ?? 1} of {loginLogs.last_page ?? 1}</span>
+                                        <div className="flex gap-2">
+                                            {loginLogs.prev_page_url && <Link href={loginLogs.prev_page_url} className="text-primary-600 dark:text-primary-400 hover:underline">Prev</Link>}
+                                            {loginLogs.next_page_url && <Link href={loginLogs.next_page_url} className="text-primary-600 dark:text-primary-400 hover:underline">Next</Link>}
                                         </div>
                                     </div>
-                                ) : (
-                                    <form onSubmit={(e) => { e.preventDefault(); router.post(route('admin.settings.two-factor.setup')); }}>
-                                        <button type="submit" className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">Enable two-factor authentication</button>
-                                    </form>
-                                )}
+                                ) : null}
                             </div>
                         </div>
                     </div>
@@ -776,77 +878,6 @@ export default function Settings() {
                             </div>
                             </div>
                         )}
-                    </div>
-                )}
-
-                {activeTab === 'logs' && (
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            <FileText size={18} className="text-gray-500 dark:text-gray-400" />
-                            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Login logs</h2>
-                        </div>
-                        <div className="card overflow-hidden">
-                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filters</span>
-                                <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); router.get(route('admin.settings'), { tab: 'logs', log_status: fd.get('log_status') || undefined, log_email: fd.get('log_email') || undefined, log_ip: fd.get('log_ip') || undefined, log_date_from: fd.get('log_date_from') || undefined, log_date_to: fd.get('log_date_to') || undefined }, { preserveState: true }); }} className="flex flex-wrap items-center gap-2">
-                                    <select name="log_status" className="form-input text-sm w-auto" defaultValue={logFilters.log_status ?? ''}>
-                                        <option value="">All statuses</option>
-                                        <option value="success">Success</option>
-                                        <option value="failed">Failed</option>
-                                    </select>
-                                    <input type="text" name="log_email" placeholder="Email" className="form-input text-sm w-40" defaultValue={logFilters.log_email ?? ''} />
-                                    <input type="text" name="log_ip" placeholder="IP" className="form-input text-sm w-32" defaultValue={logFilters.log_ip ?? ''} />
-                                    <input type="date" name="log_date_from" className="form-input text-sm w-auto" defaultValue={logFilters.log_date_from ?? ''} />
-                                    <input type="date" name="log_date_to" className="form-input text-sm w-auto" defaultValue={logFilters.log_date_to ?? ''} />
-                                    <button type="submit" className="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">Apply</button>
-                                </form>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                                            <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">Time</th>
-                                            <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">Email</th>
-                                            <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">Status</th>
-                                            <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">IP</th>
-                                            <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">Location</th>
-                                            <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">Risk</th>
-                                            <th className="text-left py-2 px-3 font-medium text-gray-700 dark:text-gray-300">User agent</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {(loginLogs.data || []).length === 0 ? (
-                                            <tr><td colSpan={7} className="py-6 px-3 text-center text-gray-500 dark:text-gray-400">No login logs yet.</td></tr>
-                                        ) : (
-                                            (loginLogs.data || []).map((log) => (
-                                                <tr key={log.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                                                    <td className="py-2 px-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
-                                                    <td className="py-2 px-3 font-medium text-gray-900 dark:text-white">{log.email}</td>
-                                                    <td className="py-2 px-3">
-                                                        <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${log.status === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>{log.status}</span>
-                                                    </td>
-                                                    <td className="py-2 px-3 font-mono text-gray-700 dark:text-gray-300">{log.ip_address}</td>
-                                                    <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{log.location || '—'}</td>
-                                                    <td className="py-2 px-3">
-                                                        <span className={`tabular-nums font-medium ${log.risk_percentage >= 70 ? 'text-red-600 dark:text-red-400' : log.risk_percentage >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-600 dark:text-gray-400'}`}>{log.risk_percentage}%</span>
-                                                    </td>
-                                                    <td className="py-2 px-3 text-gray-500 dark:text-gray-400 max-w-[200px] truncate" title={log.user_agent || ''}>{log.user_agent || '—'}</td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {loginLogs.prev_page_url || loginLogs.next_page_url ? (
-                                <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">Page {loginLogs.current_page ?? 1} of {loginLogs.last_page ?? 1}</span>
-                                    <div className="flex gap-2">
-                                        {loginLogs.prev_page_url && <Link href={loginLogs.prev_page_url} className="text-sm text-primary-600 dark:text-primary-400 hover:underline">Previous</Link>}
-                                        {loginLogs.next_page_url && <Link href={loginLogs.next_page_url} className="text-sm text-primary-600 dark:text-primary-400 hover:underline">Next</Link>}
-                                    </div>
-                                </div>
-                            ) : null}
-                        </div>
                     </div>
                 )}
             </div>

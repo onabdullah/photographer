@@ -180,6 +180,14 @@ class SettingsController extends Controller
             ];
         });
 
+        $loginLogStats = [
+            'total' => LoginLog::count(),
+            'success' => (int) LoginLog::where('status', LoginLog::STATUS_SUCCESS)->count(),
+            'failed' => (int) LoginLog::where('status', LoginLog::STATUS_FAILED)->count(),
+            'high_risk' => (int) LoginLog::where('risk_percentage', '>=', 70)->count(),
+            'last_24h' => (int) LoginLog::where('created_at', '>=', now()->subDay())->count(),
+        ];
+
         return Inertia::render('Admin/Pages/Settings', [
             'smtpSettings' => $smtpSettings,
             'smtpPurposes' => $smtpPurposes,
@@ -202,6 +210,7 @@ class SettingsController extends Controller
                 'two_fa_enabled' => $twoFaEnabled,
             ],
             'loginLogs' => $loginLogs,
+            'loginLogStats' => $loginLogStats,
             'logFilters' => [
                 'log_status' => $request->input('log_status'),
                 'log_email' => $request->input('log_email'),
@@ -328,12 +337,13 @@ class SettingsController extends Controller
         }
         $google2fa = new Google2FA;
         $secret = $google2fa->generateSecretKey(32);
-        $request->session()->put('two_factor_pending_secret', $secret);
         $appName = SiteSetting::get(SiteSetting::KEY_APP_NAME, config('app.name'));
         $qrCodeUrl = $google2fa->getQRCodeUrl($appName, $user->email, $secret);
-        return redirect()->route('admin.settings', ['tab' => 'security'])
-            ->with('two_factor_qr_url', $qrCodeUrl)
-            ->with('two_factor_secret', $secret);
+        $request->session()->put('two_factor_pending_secret', $secret);
+        $request->session()->put('two_factor_qr_url', $qrCodeUrl);
+        $request->session()->put('two_factor_secret', $secret);
+
+        return redirect()->route('admin.settings', ['tab' => 'security']);
     }
 
     /** Confirm 2FA with a one-time code and enable it. */
