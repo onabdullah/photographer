@@ -36,11 +36,24 @@ class SettingsController extends Controller
         $smtpPurposes = [];
         $smtpEncryptionOptions = [];
         $recentMailLogs = [];
+        $mailOverviewStats = null;
         if ($canManageSmtp) {
             $purposes = SmtpSetting::purposes();
             $smtpPurposes = $purposes;
             $smtpEncryptionOptions = SmtpSetting::encryptionOptions();
             $settings = SmtpSetting::orderBy('purpose')->orderBy('name')->get();
+
+            $totalSent = MailLog::count();
+            $totalFailed = (int) MailLog::where('status', MailLog::STATUS_FAILED)->count();
+            $totalSuccess = (int) MailLog::where('status', MailLog::STATUS_SENT)->count();
+            $errorPct = $totalSent > 0 ? round(($totalFailed / $totalSent) * 100, 1) : 0;
+            $topError = MailLog::where('status', MailLog::STATUS_FAILED)
+                ->whereNotNull('error_message')
+                ->selectRaw('error_message, count(*) as cnt')
+                ->groupBy('error_message')
+                ->orderByDesc('cnt')
+                ->first();
+
             $smtpSettings = $settings->map(function (SmtpSetting $s) {
                 $successCount = $s->mailLogs()->where('status', MailLog::STATUS_SENT)->count();
                 $failedCount = $s->mailLogs()->where('status', MailLog::STATUS_FAILED)->count();
@@ -63,6 +76,34 @@ class SettingsController extends Controller
                     'avg_sent_time_ms' => $avgMs !== null ? (int) round($avgMs) : null,
                 ];
             })->values()->all();
+
+            $bestSmtpEntry = collect($smtpSettings)
+                ->filter(fn ($s) => ($s['total_sent'] ?? 0) > 0)
+                ->map(fn ($s) => [
+                    'label' => $s['name'] ?: ($purposes[$s['purpose']] ?? $s['purpose']),
+                    'success_rate' => (int) round((($s['success_count'] ?? 0) / $s['total_sent']) * 100),
+                    'total' => $s['total_sent'],
+                ])
+                ->sortByDesc('success_rate')
+                ->first();
+
+            $mailOverviewStats = [
+                'total_sent' => $totalSent,
+                'total_success' => $totalSuccess,
+                'total_failed' => $totalFailed,
+                'blocked' => $totalFailed,
+                'error_percentage' => $errorPct,
+                'top_error' => $topError ? [
+                    'message' => \Str::limit($topError->error_message, 80),
+                    'count' => (int) $topError->cnt,
+                ] : null,
+                'best_smtp' => $bestSmtpEntry ? [
+                    'label' => $bestSmtpEntry['label'],
+                    'success_rate' => $bestSmtpEntry['success_rate'],
+                    'total' => $bestSmtpEntry['total'],
+                ] : null,
+            ];
+
             $recentMailLogs = MailLog::with('smtpSetting')
                 ->latest('sent_at')
                 ->take(50)
@@ -89,6 +130,7 @@ class SettingsController extends Controller
             'smtpPurposes' => $smtpPurposes,
             'smtpEncryptionOptions' => $smtpEncryptionOptions,
             'recentMailLogs' => $recentMailLogs,
+            'mailOverviewStats' => $mailOverviewStats,
             'canManageSmtp' => $canManageSmtp,
             'canManageSettings' => $canManageSettings,
         ]);

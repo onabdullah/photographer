@@ -1,7 +1,8 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { usePage, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox } from 'lucide-react';
+import { useAdminToast } from '@/Admin/Components/AdminToast';
+import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, TrendingUp, AlertCircle, ShieldOff } from 'lucide-react';
 
 const PURPOSE_LABELS = {
     support: 'Support',
@@ -25,7 +26,8 @@ function formatSentAt(iso) {
 }
 
 export default function Settings() {
-    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, recentMailLogs = [], canManageSmtp = false } = usePage().props;
+    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, recentMailLogs = [], mailOverviewStats = null, canManageSmtp = false } = usePage().props;
+    const toast = useAdminToast();
     const [activeTab, setActiveTab] = useState('general');
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -111,6 +113,11 @@ export default function Settings() {
         });
     };
 
+    const copyError = (text) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => toast.success('Error copied')).catch(() => {});
+    };
+
     return (
         <AdminLayout
             title="System Settings"
@@ -185,7 +192,63 @@ export default function Settings() {
                         )}
 
                         {canManageSmtp && (
-                            <div className="flex flex-col lg:flex-row gap-4">
+                            <div className="space-y-4">
+                                {/* Mini stats: overall performance */}
+                                {mailOverviewStats && (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                                        <div className="card flex items-center gap-3 p-3">
+                                            <div className="rounded-lg p-2 bg-primary-50 dark:bg-primary-900/20">
+                                                <Mail size={16} className="text-primary-600 dark:text-primary-400" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Sent</p>
+                                                <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{mailOverviewStats.total_sent?.toLocaleString() ?? 0}</p>
+                                            </div>
+                                        </div>
+                                        <div className="card flex items-center gap-3 p-3">
+                                            <div className="rounded-lg p-2 bg-red-50 dark:bg-red-900/20">
+                                                <AlertCircle size={16} className="text-red-600 dark:text-red-400" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Error %</p>
+                                                <p className="text-lg font-bold text-red-600 dark:text-red-400 tabular-nums">{mailOverviewStats.error_percentage ?? 0}%</p>
+                                            </div>
+                                        </div>
+                                        <div className="card flex items-center gap-3 p-3">
+                                            <div className="rounded-lg p-2 bg-amber-50 dark:bg-amber-900/20">
+                                                <ShieldOff size={16} className="text-amber-600 dark:text-amber-400" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Blocked</p>
+                                                <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{(mailOverviewStats.blocked ?? 0).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="card flex items-center gap-3 p-3 col-span-2 sm:col-span-1 lg:col-span-1 min-w-0">
+                                            <div className="rounded-lg p-2 bg-gray-100 dark:bg-gray-700/50 flex-shrink-0">
+                                                <AlertCircle size={16} className="text-gray-600 dark:text-gray-400" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Top error</p>
+                                                <p className="text-xs font-semibold text-gray-900 dark:text-white truncate" title={mailOverviewStats.top_error?.message}>
+                                                    {mailOverviewStats.top_error ? `${mailOverviewStats.top_error.message} (×${mailOverviewStats.top_error.count})` : '—'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="card flex items-center gap-3 p-3 col-span-2 sm:col-span-1 lg:col-span-1 min-w-0">
+                                            <div className="rounded-lg p-2 bg-green-50 dark:bg-green-900/20 flex-shrink-0">
+                                                <TrendingUp size={16} className="text-green-600 dark:text-green-400" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Best SMTP</p>
+                                                <p className="text-xs font-semibold text-green-700 dark:text-green-400 truncate" title={mailOverviewStats.best_smtp ? `${mailOverviewStats.best_smtp.label} ${mailOverviewStats.best_smtp.success_rate}%` : null}>
+                                                    {mailOverviewStats.best_smtp ? `${mailOverviewStats.best_smtp.label} (${mailOverviewStats.best_smtp.success_rate}%)` : '—'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex flex-col lg:flex-row gap-4">
                                 {/* Left: cards + add form */}
                                 <div className="flex-1 min-w-0 space-y-4">
                                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -509,7 +572,19 @@ export default function Settings() {
                                                                 {log.duration_ms != null && <span className="tabular-nums">{log.duration_ms}ms</span>}
                                                             </div>
                                                             {log.error_message && (
-                                                                <p className="mt-1 text-red-600 dark:text-red-400 truncate" title={log.error_message}>{log.error_message}</p>
+                                                                <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                                                                    <p className="flex-1 min-w-0 text-red-600 dark:text-red-400 truncate text-xs" title={log.error_message}>{log.error_message}</p>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => copyError(log.error_message)}
+                                                                        className="flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                                                                        title="Copy error"
+                                                                        aria-label="Copy error message"
+                                                                    >
+                                                                        <Copy size={12} aria-hidden />
+                                                                        Copy
+                                                                    </button>
+                                                                </div>
                                                             )}
                                                             {log.smtp_label && <p className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500 truncate">{log.smtp_label}</p>}
                                                         </li>
@@ -519,6 +594,7 @@ export default function Settings() {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                         )}
                     </div>
