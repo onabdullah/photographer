@@ -95,6 +95,7 @@ class SettingsController extends Controller
                 'error_percentage' => $errorPct,
                 'top_error' => $topError ? [
                     'message' => \Str::limit($topError->error_message, 80),
+                    'message_full' => $topError->error_message,
                     'count' => (int) $topError->cnt,
                 ] : null,
                 'best_smtp' => $bestSmtpEntry ? [

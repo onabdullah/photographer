@@ -227,11 +227,27 @@ export default function Settings() {
                                             <div className="rounded-lg p-2 bg-gray-100 dark:bg-gray-700/50 flex-shrink-0">
                                                 <AlertCircle size={16} className="text-gray-600 dark:text-gray-400" />
                                             </div>
-                                            <div className="min-w-0">
+                                            <div className="min-w-0 flex-1">
                                                 <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Top error</p>
-                                                <p className="text-xs font-semibold text-gray-900 dark:text-white truncate" title={mailOverviewStats.top_error?.message}>
-                                                    {mailOverviewStats.top_error ? `${mailOverviewStats.top_error.message} (×${mailOverviewStats.top_error.count})` : '—'}
-                                                </p>
+                                                {mailOverviewStats.top_error ? (
+                                                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                                        <p className="text-xs font-semibold text-gray-900 dark:text-white truncate min-w-0" title={mailOverviewStats.top_error.message_full ?? mailOverviewStats.top_error.message}>
+                                                            {mailOverviewStats.top_error.message} (×{mailOverviewStats.top_error.count})
+                                                        </p>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => copyError(mailOverviewStats.top_error?.message_full ?? mailOverviewStats.top_error?.message)}
+                                                            className="flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                                                            title="Copy error"
+                                                            aria-label="Copy top error message"
+                                                        >
+                                                            <Copy size={12} aria-hidden />
+                                                            Copy
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs font-semibold text-gray-900 dark:text-white">—</p>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="card flex items-center gap-3 p-3 col-span-2 sm:col-span-1 lg:col-span-1 min-w-0">
