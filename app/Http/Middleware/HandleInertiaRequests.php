@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\AiStudioToolSetting;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -58,6 +59,12 @@ class HandleInertiaRequests extends Middleware
         if ($request->routeIs('shopify.*')) {
             $shared['showProductAILab'] = (bool) (AiStudioToolSetting::where('tool_key', 'universal_generate')->value('is_enabled') ?? true);
         }
+
+        // Branding: logo and app name used app-wide (admin layout, login, etc.)
+        $shared['branding'] = [
+            'app_name' => SiteSetting::get(SiteSetting::KEY_APP_NAME, config('app.name')),
+            'app_logo_url' => SiteSetting::getAppLogoUrl(),
+        ];
 
         return $shared;
     }

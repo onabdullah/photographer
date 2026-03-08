@@ -19,6 +19,12 @@ class SiteSetting extends Model
 
     public const KEY_APP_LOGO = 'app_logo';
 
+    public const KEY_FOOTER_TEXT = 'footer_text';
+
+    public const KEY_SOCIAL_LINKS = 'social_links'; // JSON: { facebook?, twitter?, instagram?, linkedin?, youtube? }
+
+    public const KEY_PASSWORD_EXPIRY_DAYS = 'password_expiry_days'; // 0 = no expiry
+
     /**
      * Get a setting value by key.
      */
@@ -51,5 +57,26 @@ class SiteSetting extends Model
         }
 
         return Storage::disk('public')->exists($path) ? Storage::disk('public')->url($path) : null;
+    }
+
+    public static function getSocialLinks(): array
+    {
+        $raw = static::get(self::KEY_SOCIAL_LINKS);
+        if (! $raw) {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    public static function setSocialLinks(array $links): void
+    {
+        static::set(self::KEY_SOCIAL_LINKS, json_encode($links));
+    }
+
+    public static function getPasswordExpiryDays(): int
+    {
+        $v = static::get(self::KEY_PASSWORD_EXPIRY_DAYS);
+        return $v !== null && $v !== '' ? (int) $v : 0;
     }
 }

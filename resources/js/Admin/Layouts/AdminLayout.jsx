@@ -504,6 +504,7 @@ function DeveloperPanel({ iconOnly }) {
  */
 export default function AdminLayout({ children, title, subtitle, breadcrumbs, headerActions, centerHeader = false, fullHeight = false }) {
     const { url, props } = usePage();
+    const branding = props?.branding || null;
     const { can, role }  = usePermissions();
 
     // ── Theme ────────────────────────────────────────────────
@@ -581,16 +582,19 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                     </button>
                 )}
 
-                {/* ── Brand: logo tile + name ── */}
+                {/* ── Brand: logo + name (from Settings > General) ── */}
                 <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* Solid primary tile — no gradient */}
-                    <div className="w-6 h-6 rounded-md bg-primary-600 flex items-center justify-center flex-shrink-0">
-                        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white" fill="currentColor" aria-hidden="true">
-                            <path d="M12 3a9 9 0 110 18A9 9 0 0112 3zm0 2a7 7 0 100 14A7 7 0 0012 5zm-1 3h2v5h3l-4 4-4-4h3V8z" />
-                        </svg>
-                    </div>
+                    {branding?.app_logo_url ? (
+                        <img src={branding.app_logo_url} alt="" className="w-6 h-6 rounded-md object-contain flex-shrink-0" />
+                    ) : (
+                        <div className="w-6 h-6 rounded-md bg-primary-600 flex items-center justify-center flex-shrink-0">
+                            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white" fill="currentColor" aria-hidden="true">
+                                <path d="M12 3a9 9 0 110 18A9 9 0 0112 3zm0 2a7 7 0 100 14A7 7 0 0012 5zm-1 3h2v5h3l-4 4-4-4h3V8z" />
+                            </svg>
+                        </div>
+                    )}
                     <span className="font-brand text-[15px] leading-none text-gray-900 dark:text-white hidden sm:block">
-                        PhotoAdmin
+                        {branding?.app_name || 'PhotoAdmin'}
                     </span>
                 </div>
 
@@ -817,7 +821,7 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 {!fullHeight && (
                     <footer className="px-6 py-1.5 border-t border-gray-200 dark:border-gray-700/50">
                         <p className="text-xs text-gray-400 dark:text-gray-600 text-center">
-                            &copy; {new Date().getFullYear()} PhotoAdmin &mdash; Built by Muhammad Abdullah
+                            &copy; {new Date().getFullYear()} {branding?.app_name || 'PhotoAdmin'} &mdash; Built by Muhammad Abdullah
                         </p>
                     </footer>
                 )}

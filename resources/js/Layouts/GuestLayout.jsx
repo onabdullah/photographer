@@ -1,9 +1,12 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 
 export default function GuestLayout({ children }) {
+    const { branding } = usePage().props;
+    const appName = branding?.app_name || 'PhotoAdmin';
+    const appLogoUrl = branding?.app_logo_url;
     const [theme, setTheme] = useState('light');
 
     useEffect(() => {
@@ -39,9 +42,13 @@ export default function GuestLayout({ children }) {
                 className="relative z-10 flex flex-col items-center gap-2 mb-8 no-underline group"
                 aria-label="Home"
             >
-                <ApplicationLogo className="h-14 w-14 text-primary-600 dark:text-primary-400 transition-colors group-hover:text-primary-700 dark:group-hover:text-primary-300" />
+                {appLogoUrl ? (
+                    <img src={appLogoUrl} alt="" className="h-14 w-14 object-contain transition-opacity group-hover:opacity-90" />
+                ) : (
+                    <ApplicationLogo className="h-14 w-14 text-primary-600 dark:text-primary-400 transition-colors group-hover:text-primary-700 dark:group-hover:text-primary-300" />
+                )}
                 <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
-                    PhotoAdmin
+                    {appName}
                 </span>
             </Link>
 
@@ -52,7 +59,7 @@ export default function GuestLayout({ children }) {
                     </div>
                 </div>
                 <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-                    &copy; {new Date().getFullYear()} PhotoAdmin. Built for Shopify.
+                    &copy; {new Date().getFullYear()} {appName}. Built for Shopify.
                 </p>
             </div>
         </div>

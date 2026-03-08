@@ -57,6 +57,9 @@ class User extends Authenticatable
         'admin_role_id',
         'status',
         'last_login_at',
+        'password_updated_at',
+        'two_factor_secret',
+        'two_factor_confirmed_at',
     ];
 
     public function adminRole()
@@ -67,15 +70,29 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
     ];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'last_login_at'     => 'datetime',
-            'password'          => 'hashed',
+            'email_verified_at'         => 'datetime',
+            'last_login_at'             => 'datetime',
+            'password_updated_at'       => 'datetime',
+            'two_factor_confirmed_at'   => 'datetime',
+            'two_factor_secret'         => 'encrypted',
+            'password'                  => 'hashed',
         ];
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return ! empty($this->two_factor_secret) && $this->two_factor_confirmed_at !== null;
+    }
+
+    public function loginLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LoginLog::class);
     }
 
     /**

@@ -156,6 +156,14 @@ Route::middleware(['auth:admin'])->group(function () {
         ->middleware('admin.permission:settings.manage')->name('settings.general.update');
     Route::put('/settings/password', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePassword'])
         ->name('settings.password.update');
+    Route::put('/settings/security', [\App\Http\Controllers\Admin\SettingsController::class, 'updateSecurity'])
+        ->middleware('admin.permission:settings.manage')->name('settings.security.update');
+    Route::post('/settings/two-factor/setup', [\App\Http\Controllers\Admin\SettingsController::class, 'twoFactorSetup'])
+        ->name('settings.two-factor.setup');
+    Route::post('/settings/two-factor/confirm', [\App\Http\Controllers\Admin\SettingsController::class, 'twoFactorConfirm'])
+        ->name('settings.two-factor.confirm');
+    Route::post('/settings/two-factor/disable', [\App\Http\Controllers\Admin\SettingsController::class, 'twoFactorDisable'])
+        ->name('settings.two-factor.disable');
 
     /*
     |--------------------------------------------------------------------------

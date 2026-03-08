@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\SmtpTestMail;
+use App\Models\LoginLog;
 use App\Models\MailLog;
 use App\Models\SiteSetting;
 use App\Models\SmtpSetting;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use PragmaRX\Google2FA\Google2FA;
 
 class SettingsController extends Controller
 {
@@ -132,6 +134,51 @@ class SettingsController extends Controller
 
         $appName = SiteSetting::get(SiteSetting::KEY_APP_NAME, config('app.name'));
         $appLogoUrl = SiteSetting::getAppLogoUrl();
+        $footerText = SiteSetting::get(SiteSetting::KEY_FOOTER_TEXT);
+        $socialLinks = SiteSetting::getSocialLinks();
+        $passwordExpiryDays = SiteSetting::getPasswordExpiryDays();
+
+        $currentUser = $user ? $user->loadMissing([]) : null;
+        $passwordUpdatedAt = $currentUser?->password_updated_at?->toIso8601String();
+        $isDefaultPassword = $currentUser && $currentUser->password_updated_at === null;
+        $passwordChangeRequired = false;
+        if ($currentUser && $passwordExpiryDays > 0 && $currentUser->password_updated_at) {
+            $expiresAt = $currentUser->password_updated_at->addDays($passwordExpiryDays);
+            $passwordChangeRequired = $expiresAt->isPast();
+        } elseif ($isDefaultPassword) {
+            $passwordChangeRequired = true;
+        }
+        $twoFaEnabled = $currentUser?->hasTwoFactorEnabled() ?? false;
+
+        $loginLogsQuery = LoginLog::query()->latest();
+        if ($request->filled('log_status')) {
+            $loginLogsQuery->where('status', $request->input('log_status'));
+        }
+        if ($request->filled('log_email')) {
+            $loginLogsQuery->where('email', 'like', '%' . $request->input('log_email') . '%');
+        }
+        if ($request->filled('log_ip')) {
+            $loginLogsQuery->where('ip_address', 'like', '%' . $request->input('log_ip') . '%');
+        }
+        if ($request->filled('log_date_from')) {
+            $loginLogsQuery->whereDate('created_at', '>=', $request->input('log_date_from'));
+        }
+        if ($request->filled('log_date_to')) {
+            $loginLogsQuery->whereDate('created_at', '<=', $request->input('log_date_to'));
+        }
+        $loginLogs = $loginLogsQuery->paginate(20)->withQueryString()->through(function (LoginLog $log) {
+            return [
+                'id' => $log->id,
+                'user_id' => $log->user_id,
+                'email' => $log->email,
+                'ip_address' => $log->ip_address,
+                'user_agent' => $log->user_agent,
+                'status' => $log->status,
+                'location' => $log->location,
+                'risk_percentage' => $log->risk_percentage,
+                'created_at' => $log->created_at->toIso8601String(),
+            ];
+        });
 
         return Inertia::render('Admin/Pages/Settings', [
             'smtpSettings' => $smtpSettings,
@@ -144,7 +191,26 @@ class SettingsController extends Controller
             'general' => [
                 'app_name' => $appName,
                 'app_logo_url' => $appLogoUrl,
+                'footer_text' => $footerText,
+                'social_links' => $socialLinks,
             ],
+            'security' => [
+                'password_expiry_days' => $passwordExpiryDays,
+                'password_updated_at' => $passwordUpdatedAt,
+                'is_default_password' => $isDefaultPassword,
+                'password_change_required' => $passwordChangeRequired,
+                'two_fa_enabled' => $twoFaEnabled,
+            ],
+            'loginLogs' => $loginLogs,
+            'logFilters' => [
+                'log_status' => $request->input('log_status'),
+                'log_email' => $request->input('log_email'),
+                'log_ip' => $request->input('log_ip'),
+                'log_date_from' => $request->input('log_date_from'),
+                'log_date_to' => $request->input('log_date_to'),
+            ],
+            'two_factor_qr_url' => $request->session()->get('two_factor_qr_url'),
+            'two_factor_secret' => $request->session()->get('two_factor_secret'),
         ]);
     }
 
@@ -159,10 +225,37 @@ class SettingsController extends Controller
         $valid = $request->validate([
             'app_name' => 'nullable|string|max:128',
             'logo' => 'nullable|image|mimes:jpeg,png,gif,webp,svg|max:2048',
+            'footer_text' => 'nullable|string|max:500',
+            'social_links' => 'nullable',
+            'social_links_json' => 'nullable|string',
         ]);
+        $socialLinks = [];
+        $raw = $request->input('social_links_json') ?: $request->input('social_links');
+        if (is_string($raw)) {
+            $decoded = is_string($raw) && (str_starts_with(trim($raw), '{') || str_starts_with(trim($raw), '[')) ? json_decode($raw, true) : null;
+            if (is_array($decoded)) {
+                foreach ($decoded as $k => $v) {
+                    if (is_string($v) && $v !== '' && filter_var($v, FILTER_VALIDATE_URL)) {
+                        $socialLinks[$k] = $v;
+                    }
+                }
+            }
+        } elseif (is_array($raw)) {
+            foreach ($raw as $k => $v) {
+                if (is_string($v) && $v !== '' && filter_var($v, FILTER_VALIDATE_URL)) {
+                    $socialLinks[$k] = $v;
+                }
+            }
+        }
 
         if (array_key_exists('app_name', $valid)) {
             SiteSetting::set(SiteSetting::KEY_APP_NAME, $valid['app_name'] ?: null);
+        }
+        if (array_key_exists('footer_text', $valid)) {
+            SiteSetting::set(SiteSetting::KEY_FOOTER_TEXT, $valid['footer_text'] ?: null);
+        }
+        if ($request->has('social_links') || $request->has('social_links_json')) {
+            SiteSetting::setSocialLinks($socialLinks);
         }
 
         if ($request->hasFile('logo')) {
@@ -202,9 +295,95 @@ class SettingsController extends Controller
 
         $user->update([
             'password' => Hash::make($valid['password']),
+            'password_updated_at' => now(),
         ]);
 
         return redirect()->route('admin.settings')->with('success', 'Password updated.');
+    }
+
+    /** Update security policy (password expiry days). Requires settings.manage. */
+    public function updateSecurity(Request $request)
+    {
+        $user = auth()->guard('admin')->user();
+        if (! $user || ! $user->can('settings.manage')) {
+            abort(403, 'You do not have permission to manage security settings.');
+        }
+        $valid = $request->validate([
+            'password_expiry_days' => 'nullable|integer|min:0|max:365',
+        ]);
+        $days = isset($valid['password_expiry_days']) ? (int) $valid['password_expiry_days'] : 0;
+        SiteSetting::set(SiteSetting::KEY_PASSWORD_EXPIRY_DAYS, (string) $days);
+        return redirect()->route('admin.settings')->with('success', 'Security settings updated.');
+    }
+
+    /** Start 2FA setup: generate secret and return QR URL. Requires authenticated user. */
+    public function twoFactorSetup(Request $request)
+    {
+        $user = auth()->guard('admin')->user();
+        if (! $user) {
+            abort(403, 'Unauthenticated.');
+        }
+        if ($user->hasTwoFactorEnabled()) {
+            return redirect()->route('admin.settings')->with('error', 'Two-factor authentication is already enabled.');
+        }
+        $google2fa = new Google2FA;
+        $secret = $google2fa->generateSecretKey(32);
+        $request->session()->put('two_factor_pending_secret', $secret);
+        $appName = SiteSetting::get(SiteSetting::KEY_APP_NAME, config('app.name'));
+        $qrCodeUrl = $google2fa->getQRCodeUrl($appName, $user->email, $secret);
+        return redirect()->route('admin.settings', ['tab' => 'security'])
+            ->with('two_factor_qr_url', $qrCodeUrl)
+            ->with('two_factor_secret', $secret);
+    }
+
+    /** Confirm 2FA with a one-time code and enable it. */
+    public function twoFactorConfirm(Request $request)
+    {
+        $user = auth()->guard('admin')->user();
+        if (! $user) {
+            abort(403, 'Unauthenticated.');
+        }
+        $secret = $request->session()->get('two_factor_pending_secret');
+        if (! $secret) {
+            return redirect()->route('admin.settings', ['tab' => 'security'])->with('error', 'Please start 2FA setup again.');
+        }
+        $valid = $request->validate(['code' => 'required|string|size:6']);
+        $code = preg_replace('/\D/', '', $valid['code']);
+        $google2fa = new Google2FA;
+        if (! $google2fa->verifyKey($secret, $code)) {
+            return redirect()->route('admin.settings', ['tab' => 'security'])->with('error', 'Invalid or expired code. Try again.');
+        }
+        $request->session()->forget(['two_factor_pending_secret', 'two_factor_qr_url', 'two_factor_secret']);
+        $user->update([
+            'two_factor_secret' => $secret,
+            'two_factor_confirmed_at' => now(),
+        ]);
+        return redirect()->route('admin.settings', ['tab' => 'security'])->with('success', 'Two-factor authentication is now enabled.');
+    }
+
+    /** Disable 2FA. Requires current password. */
+    public function twoFactorDisable(Request $request)
+    {
+        $user = auth()->guard('admin')->user();
+        if (! $user) {
+            abort(403, 'Unauthenticated.');
+        }
+        $request->validate([
+            'current_password' => [
+                'required',
+                function (string $attr, $value, \Closure $fail) use ($user) {
+                    if (! Hash::check($value, $user->getAuthPassword())) {
+                        $fail(__('The current password is incorrect.'));
+                    }
+                },
+            ],
+        ]);
+        $user->update([
+            'two_factor_secret' => null,
+            'two_factor_confirmed_at' => null,
+        ]);
+        $request->session()->forget(['two_factor_pending_secret', 'two_factor_qr_url', 'two_factor_secret']);
+        return redirect()->route('admin.settings', ['tab' => 'security'])->with('success', 'Two-factor authentication has been disabled.');
     }
 
     public function storeSmtp(Request $request)
