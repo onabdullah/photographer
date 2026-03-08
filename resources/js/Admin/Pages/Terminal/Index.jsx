@@ -168,18 +168,37 @@ function TerminalContent({ phpVersion, laravelVersion, appEnv, appName }) {
         setRunning(true); setInput(''); setHistIdx(-1);
         setHistory((h) => [cmd, ...h.filter((x) => x !== cmd)].slice(0, 100));
         try {
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
             const res = await fetch('/admin/terminal/run', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                    'X-CSRF-TOKEN': csrfMeta?.getAttribute('content') ?? '',
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify({ command: cmd, force }),
             });
-            const data = await res.json();
+            const contentType = res.headers.get('Content-Type') ?? '';
+            const text = await res.text();
             setEntries((prev) => prev.filter((e) => e.type !== 'running'));
+            if (!contentType.includes('application/json') || !text.trim()) {
+                const msg = res.status === 419
+                    ? 'Session expired (419). Refresh the page and try again.'
+                    : res.status >= 500
+                        ? `Server error (${res.status}). Check the Laravel log.`
+                        : `Unexpected response (${res.status}). ${text.slice(0, 200) || 'No body.'}`;
+                push({ type: 'error', content: msg });
+                return;
+            }
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                push({ type: 'error', content: `Invalid JSON from server: ${text.slice(0, 200)}` });
+                return;
+            }
             if (data.error === 'confirm_required') { setConfirm({ cmd, message: data.message }); return; }
             if (data.error) push({ type: 'error', content: data.error });
             else push({ type: 'result', content: stripAnsi(data.output ?? ''), exitCode: data.exit_code ?? 0, duration: data.duration ?? 0 });
