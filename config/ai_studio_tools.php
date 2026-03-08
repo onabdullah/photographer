@@ -19,7 +19,7 @@ return [
         ],
         'magic_eraser' => [
             'label' => 'Magic Eraser',
-            'model_name' => 'Google Nano Banana 2 (Gemini 3.1 Flash Image)',
+            'model_name' => 'Nano Banana 2 (Google Gemini)',
             'model_provider' => 'Replicate',
             // Nano Banana 2: 1K $0.067, 2K $0.101, 4K $0.151 per image (Replicate pricing)
             'estimated_rate_per_image_usd' => 0.067,
@@ -51,7 +51,7 @@ return [
         'universal_generate' => [
             'label' => 'Product AI Lab (VTO)',
             'model_name' => 'Nano Banana 2 (Google Gemini)',
-            'model_provider' => 'Google',
+            'model_provider' => 'Replicate',
             'estimated_rate_per_image_usd' => 0.067,
         ],
     ],
