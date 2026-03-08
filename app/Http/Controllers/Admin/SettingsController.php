@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\Admin\SmtpTestMail;
+use App\Mail\Admin\TwoFactorDisabledMail;
+use App\Mail\Admin\TwoFactorEnabledMail;
+use App\Services\MailService;
 use App\Models\LoginLog;
 use App\Models\MailLog;
 use App\Models\SiteSetting;
@@ -379,6 +382,15 @@ class SettingsController extends Controller
             'two_factor_secret' => $secret,
             'two_factor_confirmed_at' => now(),
         ]);
+        $smtp = MailService::resolveSmtp();
+        if ($smtp && $user->email) {
+            MailService::send($user->email, new TwoFactorEnabledMail(
+                user: $user,
+                fromAddress: $smtp->from_address,
+                fromName: $smtp->from_name,
+                ip: $request->ip(),
+            ), 'Two-Factor Authentication Enabled — ' . config('app.name'));
+        }
         return redirect()->route('admin.settings', ['tab' => 'security'], 303)->with('success', 'Two-factor authentication is now enabled.');
     }
 
@@ -404,6 +416,15 @@ class SettingsController extends Controller
             'two_factor_confirmed_at' => null,
         ]);
         $request->session()->forget(['two_factor_pending_secret', 'two_factor_qr_url', 'two_factor_secret']);
+        $smtp = MailService::resolveSmtp();
+        if ($smtp && $user->email) {
+            MailService::send($user->email, new TwoFactorDisabledMail(
+                user: $user,
+                fromAddress: $smtp->from_address,
+                fromName: $smtp->from_name,
+                ip: $request->ip(),
+            ), 'Two-Factor Authentication Disabled — ' . config('app.name'));
+        }
         return redirect()->route('admin.settings', ['tab' => 'security'], 303)->with('success', 'Two-factor authentication has been disabled.');
     }
 
