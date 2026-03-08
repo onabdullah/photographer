@@ -19,24 +19,18 @@ class LoginLogService
             return ['location' => 'Local', 'country' => null, 'city' => null];
         }
         try {
-            // ipapi.co supports both IPv4 and IPv6 natively over HTTPS (free tier: 30k/day)
-            $response = Http::timeout(3)
-                ->withHeaders(['Accept' => 'application/json'])
-                ->get("https://ipapi.co/{$ip}/json/");
+            $response = Http::timeout(2)->get("http://ip-api.com/json/{$ip}?fields=city,regionName,country");
             if ($response->successful()) {
-                $data = $response->json();
-                // ipapi.co returns {"error":true,"reason":"..."} for invalid IPs
-                if (! ($data['error'] ?? false)) {
-                    $city    = $data['city']         ?? null;
-                    $region  = $data['region']       ?? null;
-                    $country = $data['country_name'] ?? null;
-                    $parts   = array_filter([$city, $region, $country]);
-                    return [
-                        'location' => implode(', ', $parts) ?: 'Unknown',
-                        'country'  => $country,
-                        'city'     => $city,
-                    ];
-                }
+                $data     = $response->json();
+                $city     = $data['city']       ?? null;
+                $region   = $data['regionName'] ?? null;
+                $country  = $data['country']    ?? null;
+                $parts    = array_filter([$city, $region, $country]);
+                return [
+                    'location' => implode(', ', $parts) ?: 'Unknown',
+                    'country'  => $country,
+                    'city'     => $city,
+                ];
             }
         } catch (\Throwable) {
             // ignore – location is non-critical

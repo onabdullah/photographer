@@ -51,15 +51,6 @@ function LoginLogDetailModal({ log, onClose }) {
             ? 'text-amber-600 dark:text-amber-400'
             : 'text-green-600 dark:text-green-400';
 
-    const [ipCopied, setIpCopied] = useState(false);
-    const copyIp = () => {
-        if (!log.ip_address) return;
-        navigator.clipboard.writeText(log.ip_address).then(() => {
-            setIpCopied(true);
-            setTimeout(() => setIpCopied(false), 1800);
-        });
-    };
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
@@ -115,18 +106,7 @@ function LoginLogDetailModal({ log, onClose }) {
                             <div className="grid grid-cols-2 gap-2.5">
                                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
                                     <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">IP Address</p>
-                                    <div className="flex items-start gap-1.5">
-                                        <p className="text-xs font-mono text-gray-900 dark:text-white break-all leading-relaxed min-w-0 flex-1">{log.ip_address || '—'}</p>
-                                        {log.ip_address && (
-                                            <button
-                                                onClick={copyIp}
-                                                title={ipCopied ? 'Copied!' : 'Copy IP'}
-                                                className="flex-shrink-0 mt-0.5 p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                            >
-                                                {ipCopied ? <Check size={11} className="text-green-500" /> : <Copy size={11} />}
-                                            </button>
-                                        )}
-                                    </div>
+                                    <p className="text-sm font-mono text-gray-900 dark:text-white">{log.ip_address || '—'}</p>
                                 </div>
                                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
                                     <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Location</p>
@@ -697,7 +677,7 @@ export default function Settings() {
                                                                 {log.email}
                                                             </td>
                                                             <td className="py-2 px-2 max-w-[110px]">
-                                                                <p className="font-mono text-xs text-gray-700 dark:text-gray-300 truncate" title={log.ip_address || '—'}>{log.ip_address || '—'}</p>
+                                                                <p className="font-mono text-gray-700 dark:text-gray-300 truncate">{log.ip_address || '—'}</p>
                                                                 <p className="text-gray-400 dark:text-gray-500 truncate" title={location}>{location}</p>
                                                             </td>
                                                             <td className="py-2 px-2 max-w-[120px]">
