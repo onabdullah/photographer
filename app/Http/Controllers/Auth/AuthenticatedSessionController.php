@@ -91,6 +91,12 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::guard('admin')->user() ?? Auth::guard('web')->user();
+
+        if ($user) {
+            LoginLogService::logLogout($request, $user);
+        }
+
         Auth::guard('admin')->logout();
         Auth::guard('web')->logout();
 

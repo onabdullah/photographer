@@ -14,8 +14,14 @@ return new class extends Migration
             $table->string('email', 255)->index();
             $table->string('ip_address', 45)->index();
             $table->text('user_agent')->nullable();
-            $table->string('status', 16)->index(); // success, failed
-            $table->string('location', 255)->nullable();
+            $table->string('status', 16)->index();       // success, failed
+            $table->string('event_type', 20)->default('login')->index(); // login, logout
+            $table->string('location', 255)->nullable(); // combined city, region, country
+            $table->string('country', 100)->nullable();
+            $table->string('city', 100)->nullable();
+            $table->string('browser', 100)->nullable();  // e.g. "Chrome 120.0"
+            $table->string('os', 100)->nullable();       // e.g. "Windows 10"
+            $table->string('device_type', 20)->nullable(); // Desktop, Mobile, Tablet
             $table->unsignedTinyInteger('risk_percentage')->default(0); // 0-100
             $table->timestamps();
         });

@@ -43,7 +43,11 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         if (! Auth::guard('admin')->attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            LoginLogService::logFailed($this, $this->input('email'));
+            try {
+                LoginLogService::logFailed($this, $this->input('email'));
+            } catch (\Throwable) {
+                // Logging must never block the authentication response
+            }
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

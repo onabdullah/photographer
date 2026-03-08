@@ -2,7 +2,7 @@ import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { usePage, router, useForm, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { useAdminToast } from '@/Admin/Components/AdminToast';
-import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, Check, TrendingUp, AlertCircle, ShieldOff, Image as ImageIcon, Shield, KeyRound, Lock, FileText } from 'lucide-react';
+import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, Check, TrendingUp, AlertCircle, ShieldOff, Image as ImageIcon, Shield, KeyRound, Lock, FileText, X, LogOut, Globe, Monitor, LogIn } from 'lucide-react';
 
 const PURPOSE_LABELS = {
     support: 'Support',
@@ -28,6 +28,148 @@ function formatSentAt(iso) {
 
 const SOCIAL_KEYS = ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube'];
 
+function LoginLogDetailModal({ log, onClose }) {
+    if (!log) return null;
+
+    const isLogout  = log.event_type === 'logout';
+    const isFailed  = log.status === 'failed';
+    const eventLabel = isLogout ? 'Logout' : isFailed ? 'Login Failed' : 'Login Success';
+    const eventBadgeCls = isLogout
+        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+        : isFailed
+            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+            : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+    const EventIcon = isLogout ? LogOut : isFailed ? AlertCircle : CheckCircle;
+
+    const location = [log.city, log.country].filter(Boolean).join(', ') || log.location || '—';
+    const riskPct  = log.risk_percentage ?? 0;
+    const riskLabel = riskPct >= 70 ? 'High' : riskPct >= 40 ? 'Medium' : 'Low';
+    const riskBarCls = riskPct >= 70 ? 'bg-red-500' : riskPct >= 40 ? 'bg-amber-500' : 'bg-green-500';
+    const riskTextCls = riskPct >= 70
+        ? 'text-red-600 dark:text-red-400'
+        : riskPct >= 40
+            ? 'text-amber-600 dark:text-amber-400'
+            : 'text-green-600 dark:text-green-400';
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+            <div
+                className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3 flex-shrink-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${eventBadgeCls}`}>
+                            <EventIcon size={12} />
+                            {eventLabel}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                            {new Date(log.created_at).toLocaleString(undefined, {
+                                year: 'numeric', month: 'short', day: 'numeric',
+                                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                            })}
+                        </span>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="flex-shrink-0 p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        aria-label="Close"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                {/* Scrollable body */}
+                <div className="overflow-y-auto">
+                    <div className="p-6 space-y-5">
+
+                        {/* Identity */}
+                        <section>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Identity</h3>
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Email</p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white break-all">{log.email || '—'}</p>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">User ID</p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{log.user_id ? `#${log.user_id}` : 'Unknown'}</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Network */}
+                        <section>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Network</h3>
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">IP Address</p>
+                                    <p className="text-sm font-mono text-gray-900 dark:text-white">{log.ip_address || '—'}</p>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Location</p>
+                                    <p className="text-sm text-gray-900 dark:text-white">{location}</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Device & Browser */}
+                        <section>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Device &amp; Browser</h3>
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Browser</p>
+                                    <p className="text-sm text-gray-900 dark:text-white">{log.browser || '—'}</p>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Operating System</p>
+                                    <p className="text-sm text-gray-900 dark:text-white">{log.os || '—'}</p>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Device Type</p>
+                                    <p className="text-sm text-gray-900 dark:text-white">{log.device_type || '—'}</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Risk */}
+                        {!isLogout && (
+                            <section>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Risk Assessment</h3>
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{riskLabel} Risk</span>
+                                        <span className={`text-sm font-bold tabular-nums ${riskTextCls}`}>{riskPct}%</span>
+                                    </div>
+                                    <div className="w-full h-2.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full ${riskBarCls}`}
+                                            style={{ width: `${riskPct}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Raw User Agent */}
+                        {log.user_agent && (
+                            <section>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Raw User Agent</h3>
+                                <p className="text-xs font-mono text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 break-all leading-relaxed">
+                                    {log.user_agent}
+                                </p>
+                            </section>
+                        )}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function Settings() {
     const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, recentMailLogs = [], mailOverviewStats = null, canManageSmtp = false, canManageSettings = false, general = {}, security = {}, loginLogs = { data: [] }, loginLogStats = {}, logFilters = {}, two_factor_qr_url = null, two_factor_secret = null } = usePage().props;
     const toast = useAdminToast();
@@ -37,6 +179,7 @@ export default function Settings() {
     });
     const [twoFactorCode, setTwoFactorCode] = useState('');
     const [twoFactorDisablePassword, setTwoFactorDisablePassword] = useState('');
+    const [selectedLog, setSelectedLog] = useState(null);
     const pageUrl = usePage().url;
     useEffect(() => {
         const u = new URL(pageUrl, window.location.origin);
@@ -390,13 +533,14 @@ export default function Settings() {
 
                         {/* Right: login log stats + logs */}
                         <div className="w-full lg:w-1/2 lg:min-w-0 space-y-4">
+                            {/* Stats grid */}
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="card flex items-center gap-2 p-3">
                                     <div className="rounded-lg p-1.5 bg-primary-50 dark:bg-primary-900/20">
                                         <FileText size={14} className="text-primary-600 dark:text-primary-400" />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total logins</p>
+                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total events</p>
                                         <p className="text-base font-bold text-gray-900 dark:text-white tabular-nums">{loginLogStats.total?.toLocaleString() ?? 0}</p>
                                     </div>
                                 </div>
@@ -405,7 +549,7 @@ export default function Settings() {
                                         <CheckCircle size={14} className="text-green-600 dark:text-green-400" />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Success</p>
+                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Successful logins</p>
                                         <p className="text-base font-bold text-green-700 dark:text-green-400 tabular-nums">{loginLogStats.success?.toLocaleString() ?? 0}</p>
                                     </div>
                                 </div>
@@ -414,73 +558,155 @@ export default function Settings() {
                                         <AlertCircle size={14} className="text-red-600 dark:text-red-400" />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Failed</p>
+                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Failed attempts</p>
                                         <p className="text-base font-bold text-red-600 dark:text-red-400 tabular-nums">{loginLogStats.failed?.toLocaleString() ?? 0}</p>
                                     </div>
                                 </div>
                                 <div className="card flex items-center gap-2 p-3">
+                                    <div className="rounded-lg p-1.5 bg-blue-50 dark:bg-blue-900/20">
+                                        <LogOut size={14} className="text-blue-600 dark:text-blue-400" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Logouts</p>
+                                        <p className="text-base font-bold text-blue-700 dark:text-blue-400 tabular-nums">{loginLogStats.logout?.toLocaleString() ?? 0}</p>
+                                    </div>
+                                </div>
+                                <div className="card col-span-2 flex items-center gap-2 p-3">
                                     <div className="rounded-lg p-1.5 bg-amber-50 dark:bg-amber-900/20">
                                         <Shield size={14} className="text-amber-600 dark:text-amber-400" />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">High risk</p>
+                                        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">High risk events</p>
                                         <p className="text-base font-bold text-amber-700 dark:text-amber-400 tabular-nums">{loginLogStats.high_risk?.toLocaleString() ?? 0}</p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="card overflow-hidden lg:sticky lg:top-4">
-                                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
-                                    <FileText size={16} className="text-gray-500 dark:text-gray-400" />
-                                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Login logs</h2>
+
+                            {/* Log table */}
+                            <div className="card overflow-hidden">
+                                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <FileText size={16} className="text-gray-500 dark:text-gray-400" />
+                                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Access logs</h2>
+                                    </div>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">Click any row for details</span>
                                 </div>
+
+                                {/* Filters */}
                                 <div className="p-2 border-b border-gray-100 dark:border-gray-700">
-                                    <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); router.get(route('admin.settings'), { tab: 'security', log_status: fd.get('log_status') || undefined, log_email: fd.get('log_email') || undefined, log_ip: fd.get('log_ip') || undefined, log_date_from: fd.get('log_date_from') || undefined, log_date_to: fd.get('log_date_to') || undefined }, { preserveState: true }); }} className="flex flex-wrap items-center gap-2">
-                                        <select name="log_status" className="form-input text-xs w-20" defaultValue={logFilters.log_status ?? ''}>
-                                            <option value="">All</option>
+                                    <form
+                                        onSubmit={(e) => {
+                                            e.preventDefault();
+                                            const fd = new FormData(e.target);
+                                            router.get(route('admin.settings'), {
+                                                tab: 'security',
+                                                log_event_type: fd.get('log_event_type') || undefined,
+                                                log_status: fd.get('log_status') || undefined,
+                                                log_email: fd.get('log_email') || undefined,
+                                                log_ip: fd.get('log_ip') || undefined,
+                                                log_date_from: fd.get('log_date_from') || undefined,
+                                                log_date_to: fd.get('log_date_to') || undefined,
+                                            }, { preserveState: true });
+                                        }}
+                                        className="flex flex-wrap items-center gap-2"
+                                    >
+                                        <select name="log_event_type" className="form-input text-xs w-24" defaultValue={logFilters.log_event_type ?? ''}>
+                                            <option value="">All events</option>
+                                            <option value="login">Login</option>
+                                            <option value="logout">Logout</option>
+                                        </select>
+                                        <select name="log_status" className="form-input text-xs w-24" defaultValue={logFilters.log_status ?? ''}>
+                                            <option value="">Any status</option>
                                             <option value="success">Success</option>
                                             <option value="failed">Failed</option>
                                         </select>
-                                        <input type="text" name="log_email" placeholder="Email" className="form-input text-xs w-24 min-w-0" defaultValue={logFilters.log_email ?? ''} />
+                                        <input type="text" name="log_email" placeholder="Email" className="form-input text-xs w-28 min-w-0" defaultValue={logFilters.log_email ?? ''} />
                                         <input type="text" name="log_ip" placeholder="IP" className="form-input text-xs w-24 min-w-0" defaultValue={logFilters.log_ip ?? ''} />
                                         <input type="date" name="log_date_from" className="form-input text-xs w-28" defaultValue={logFilters.log_date_from ?? ''} />
                                         <input type="date" name="log_date_to" className="form-input text-xs w-28" defaultValue={logFilters.log_date_to ?? ''} />
                                         <button type="submit" className="px-2 py-1 rounded bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 whitespace-nowrap">Filter</button>
                                     </form>
                                 </div>
-                                <div className="max-h-[320px] overflow-y-auto">
+
+                                {/* Table */}
+                                <div className="max-h-[380px] overflow-y-auto">
                                     <table className="w-full text-xs">
                                         <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800/95 border-b border-gray-100 dark:border-gray-700">
                                             <tr>
-                                                <th className="text-left py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400">Time</th>
-                                                <th className="text-left py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400">Email</th>
-                                                <th className="text-left py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400">Status</th>
-                                                <th className="text-left py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400">Risk</th>
+                                                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Event</th>
+                                                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Time</th>
+                                                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Email</th>
+                                                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">IP / Location</th>
+                                                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Browser / OS</th>
+                                                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Risk</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {(loginLogs.data || []).length === 0 ? (
-                                                <tr><td colSpan={4} className="py-4 px-2 text-center text-gray-500 dark:text-gray-400">No login logs yet.</td></tr>
+                                                <tr>
+                                                    <td colSpan={6} className="py-6 px-2 text-center text-gray-400 dark:text-gray-500">No access logs yet.</td>
+                                                </tr>
                                             ) : (
-                                                (loginLogs.data || []).map((log) => (
-                                                    <tr key={log.id} className="border-b border-gray-100 dark:border-gray-700/70 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                                        <td className="py-1.5 px-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">{new Date(log.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                                                        <td className="py-1.5 px-2 font-medium text-gray-900 dark:text-white truncate max-w-[100px]" title={log.email}>{log.email}</td>
-                                                        <td className="py-1.5 px-2">
-                                                            <span className={`px-1 py-0.5 rounded font-medium ${log.status === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>{log.status}</span>
-                                                        </td>
-                                                        <td className="py-1.5 px-2"><span className={log.risk_percentage >= 70 ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-600 dark:text-gray-400'}>{log.risk_percentage}%</span></td>
-                                                    </tr>
-                                                ))
+                                                (loginLogs.data || []).map((log) => {
+                                                    const isLogout = log.event_type === 'logout';
+                                                    const isFailed = log.status === 'failed';
+                                                    const badgeCls = isLogout
+                                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                                                        : isFailed
+                                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                                            : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+                                                    const EvtIcon = isLogout ? LogOut : isFailed ? AlertCircle : LogIn;
+                                                    const location = [log.city, log.country].filter(Boolean).join(', ') || log.location || '—';
+                                                    return (
+                                                        <tr
+                                                            key={log.id}
+                                                            className="border-b border-gray-100 dark:border-gray-700/60 hover:bg-primary-50/60 dark:hover:bg-primary-900/10 cursor-pointer transition-colors"
+                                                            onClick={() => setSelectedLog(log)}
+                                                            title="Click for details"
+                                                        >
+                                                            <td className="py-2 px-2">
+                                                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-medium ${badgeCls}`}>
+                                                                    <EvtIcon size={10} />
+                                                                    <span>{isLogout ? 'Logout' : isFailed ? 'Failed' : 'Login'}</span>
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-2 px-2 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                                {new Date(log.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                            </td>
+                                                            <td className="py-2 px-2 font-medium text-gray-900 dark:text-white max-w-[120px] truncate" title={log.email}>
+                                                                {log.email}
+                                                            </td>
+                                                            <td className="py-2 px-2 max-w-[110px]">
+                                                                <p className="font-mono text-gray-700 dark:text-gray-300 truncate">{log.ip_address || '—'}</p>
+                                                                <p className="text-gray-400 dark:text-gray-500 truncate" title={location}>{location}</p>
+                                                            </td>
+                                                            <td className="py-2 px-2 max-w-[120px]">
+                                                                <p className="text-gray-700 dark:text-gray-300 truncate" title={log.browser}>{log.browser || '—'}</p>
+                                                                <p className="text-gray-400 dark:text-gray-500 truncate" title={log.os}>{log.os || '—'}</p>
+                                                            </td>
+                                                            <td className="py-2 px-2">
+                                                                {isLogout ? (
+                                                                    <span className="text-gray-400 dark:text-gray-500">—</span>
+                                                                ) : (
+                                                                    <span className={`font-medium ${log.risk_percentage >= 70 ? 'text-red-600 dark:text-red-400' : log.risk_percentage >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                                        {log.risk_percentage}%
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
                                             )}
                                         </tbody>
                                     </table>
                                 </div>
+
                                 {loginLogs.prev_page_url || loginLogs.next_page_url ? (
-                                    <div className="px-2 py-1.5 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2 text-xs">
+                                    <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2 text-xs">
                                         <span className="text-gray-500 dark:text-gray-400">Page {loginLogs.current_page ?? 1} of {loginLogs.last_page ?? 1}</span>
                                         <div className="flex gap-2">
-                                            {loginLogs.prev_page_url && <Link href={loginLogs.prev_page_url} className="text-primary-600 dark:text-primary-400 hover:underline">Prev</Link>}
-                                            {loginLogs.next_page_url && <Link href={loginLogs.next_page_url} className="text-primary-600 dark:text-primary-400 hover:underline">Next</Link>}
+                                            {loginLogs.prev_page_url && <Link href={loginLogs.prev_page_url} className="text-primary-600 dark:text-primary-400 hover:underline">← Prev</Link>}
+                                            {loginLogs.next_page_url && <Link href={loginLogs.next_page_url} className="text-primary-600 dark:text-primary-400 hover:underline">Next →</Link>}
                                         </div>
                                     </div>
                                 ) : null}
@@ -488,6 +714,9 @@ export default function Settings() {
                         </div>
                     </div>
                 )}
+
+                {/* Log detail modal */}
+                {selectedLog && <LoginLogDetailModal log={selectedLog} onClose={() => setSelectedLog(null)} />}
 
                 {activeTab === 'smtp' && (
                     <div className="space-y-4">

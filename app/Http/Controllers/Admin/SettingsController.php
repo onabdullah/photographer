@@ -154,6 +154,9 @@ class SettingsController extends Controller
         if ($request->filled('log_status')) {
             $loginLogsQuery->where('status', $request->input('log_status'));
         }
+        if ($request->filled('log_event_type')) {
+            $loginLogsQuery->where('event_type', $request->input('log_event_type'));
+        }
         if ($request->filled('log_email')) {
             $loginLogsQuery->where('email', 'like', '%' . $request->input('log_email') . '%');
         }
@@ -168,24 +171,31 @@ class SettingsController extends Controller
         }
         $loginLogs = $loginLogsQuery->paginate(20)->withQueryString()->through(function (LoginLog $log) {
             return [
-                'id' => $log->id,
-                'user_id' => $log->user_id,
-                'email' => $log->email,
-                'ip_address' => $log->ip_address,
-                'user_agent' => $log->user_agent,
-                'status' => $log->status,
-                'location' => $log->location,
-                'risk_percentage' => $log->risk_percentage,
-                'created_at' => $log->created_at->toIso8601String(),
+                'id'               => $log->id,
+                'user_id'          => $log->user_id,
+                'email'            => $log->email,
+                'ip_address'       => $log->ip_address,
+                'user_agent'       => $log->user_agent,
+                'status'           => $log->status,
+                'event_type'       => $log->event_type ?? 'login',
+                'location'         => $log->location,
+                'country'          => $log->country,
+                'city'             => $log->city,
+                'browser'          => $log->browser,
+                'os'               => $log->os,
+                'device_type'      => $log->device_type,
+                'risk_percentage'  => $log->risk_percentage,
+                'created_at'       => $log->created_at->toIso8601String(),
             ];
         });
 
         $loginLogStats = [
-            'total' => LoginLog::count(),
-            'success' => (int) LoginLog::where('status', LoginLog::STATUS_SUCCESS)->count(),
-            'failed' => (int) LoginLog::where('status', LoginLog::STATUS_FAILED)->count(),
+            'total'     => LoginLog::count(),
+            'success'   => (int) LoginLog::where('status', LoginLog::STATUS_SUCCESS)->where('event_type', LoginLog::EVENT_LOGIN)->count(),
+            'failed'    => (int) LoginLog::where('status', LoginLog::STATUS_FAILED)->count(),
+            'logout'    => (int) LoginLog::where('event_type', LoginLog::EVENT_LOGOUT)->count(),
             'high_risk' => (int) LoginLog::where('risk_percentage', '>=', 70)->count(),
-            'last_24h' => (int) LoginLog::where('created_at', '>=', now()->subDay())->count(),
+            'last_24h'  => (int) LoginLog::where('created_at', '>=', now()->subDay())->count(),
         ];
 
         return Inertia::render('Admin/Pages/Settings', [
@@ -212,11 +222,12 @@ class SettingsController extends Controller
             'loginLogs' => $loginLogs,
             'loginLogStats' => $loginLogStats,
             'logFilters' => [
-                'log_status' => $request->input('log_status'),
-                'log_email' => $request->input('log_email'),
-                'log_ip' => $request->input('log_ip'),
-                'log_date_from' => $request->input('log_date_from'),
-                'log_date_to' => $request->input('log_date_to'),
+                'log_status'     => $request->input('log_status'),
+                'log_event_type' => $request->input('log_event_type'),
+                'log_email'      => $request->input('log_email'),
+                'log_ip'         => $request->input('log_ip'),
+                'log_date_from'  => $request->input('log_date_from'),
+                'log_date_to'    => $request->input('log_date_to'),
             ],
             'two_factor_qr_url' => $request->session()->get('two_factor_qr_url'),
             'two_factor_secret' => $request->session()->get('two_factor_secret'),

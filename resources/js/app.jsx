@@ -9,21 +9,9 @@ import { GlobalToastProvider, TOAST_EVENT_ERROR } from '@/Components/GlobalToast
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-// Permanent CSRF fix: Inertia does not send the token by default. We inject it once per non-GET
-// request. Single cached DOM read at load; no work on GET; one token merge per mutation — negligible cost.
-const csrfMeta = typeof document !== 'undefined' ? document.querySelector('meta[name="csrf-token"]') : null;
-router.on('before', (event) => {
-    const method = (event.detail?.visit?.method || 'get').toLowerCase();
-    if (method === 'get') return;
-    const token = csrfMeta?.getAttribute('content');
-    if (!token) return;
-    const data = event.detail.visit.data;
-    if (data instanceof FormData) {
-        data.append('_token', token);
-    } else {
-        event.detail.visit.data = { ...(data || {}), _token: token };
-    }
-});
+// Inertia v2 sends X-XSRF-TOKEN from the cookie on every non-GET request automatically.
+// No manual CSRF injection needed — that would require reading the meta tag which can be
+// stale after logout (session invalidation regenerates the token without a full page reload).
 
 // When a visit fails, show toast and stay on current page (no blank full reload)
 const showErrorToast = (event) => {
@@ -33,7 +21,12 @@ const showErrorToast = (event) => {
     }
 };
 router.on('error', showErrorToast);
-router.on('exception', showErrorToast);
+// Prevent Inertia replacing the page with a raw 500 HTML response (white screen).
+// Show a toast instead and stay on the current page.
+router.on('exception', (event) => {
+    event.preventDefault();
+    showErrorToast(event);
+});
 
 // Root error boundary: if any page component throws, show message + refresh instead of white screen
 class InertiaErrorBoundary extends Component {
