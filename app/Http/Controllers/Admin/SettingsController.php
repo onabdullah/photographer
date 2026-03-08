@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\SmtpTestMail;
+use App\Models\MailLog;
 use App\Models\SmtpSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
@@ -34,8 +35,17 @@ class SettingsController extends Controller
         $smtpSettings = [];
         $smtpPurposes = [];
         $smtpEncryptionOptions = [];
+        $recentMailLogs = [];
         if ($canManageSmtp) {
-            $smtpSettings = SmtpSetting::orderBy('purpose')->orderBy('name')->get()->map(function (SmtpSetting $s) {
+            $purposes = SmtpSetting::purposes();
+            $smtpPurposes = $purposes;
+            $smtpEncryptionOptions = SmtpSetting::encryptionOptions();
+            $settings = SmtpSetting::orderBy('purpose')->orderBy('name')->get();
+            $smtpSettings = $settings->map(function (SmtpSetting $s) {
+                $successCount = $s->mailLogs()->where('status', MailLog::STATUS_SENT)->count();
+                $failedCount = $s->mailLogs()->where('status', MailLog::STATUS_FAILED)->count();
+                $totalSent = $successCount + $failedCount;
+                $avgMs = $s->mailLogs()->whereNotNull('duration_ms')->avg('duration_ms');
                 return [
                     'id' => $s->id,
                     'name' => $s->name,
@@ -47,16 +57,38 @@ class SettingsController extends Controller
                     'from_address' => $s->from_address,
                     'from_name' => $s->from_name,
                     'is_active' => $s->is_active,
+                    'total_sent' => (int) $totalSent,
+                    'success_count' => (int) $successCount,
+                    'failed_count' => (int) $failedCount,
+                    'avg_sent_time_ms' => $avgMs !== null ? (int) round($avgMs) : null,
                 ];
             })->values()->all();
-            $smtpPurposes = SmtpSetting::purposes();
-            $smtpEncryptionOptions = SmtpSetting::encryptionOptions();
+            $recentMailLogs = MailLog::with('smtpSetting')
+                ->latest('sent_at')
+                ->take(50)
+                ->get()
+                ->map(function (MailLog $log) use ($purposes) {
+                    $smtp = $log->smtpSetting;
+                    $label = $smtp ? ($smtp->name ?: ($purposes[$smtp->purpose] ?? $smtp->purpose)) : '—';
+                    return [
+                        'id' => $log->id,
+                        'to_address' => $log->to_address,
+                        'status' => $log->status,
+                        'sent_at' => $log->sent_at->toIso8601String(),
+                        'duration_ms' => $log->duration_ms,
+                        'error_message' => $log->error_message,
+                        'smtp_label' => $label,
+                    ];
+                })
+                ->values()
+                ->all();
         }
 
         return Inertia::render('Admin/Pages/Settings', [
             'smtpSettings' => $smtpSettings,
             'smtpPurposes' => $smtpPurposes,
             'smtpEncryptionOptions' => $smtpEncryptionOptions,
+            'recentMailLogs' => $recentMailLogs,
             'canManageSmtp' => $canManageSmtp,
             'canManageSettings' => $canManageSettings,
         ]);
@@ -152,20 +184,43 @@ class SettingsController extends Controller
             'timeout' => null,
         ]);
 
+        $toAddress = $request->test_email;
+        $start = microtime(true);
+        $subject = 'SMTP test – ' . config('app.name');
+
         try {
             Mail::mailer($mailerName)
-                ->to($request->test_email)
+                ->to($toAddress)
                 ->send(new SmtpTestMail(
                     SmtpSetting::purposes()[$smtp->purpose] ?? $smtp->purpose,
                     $smtp->from_address,
                     $smtp->from_name
                 ));
+            $durationMs = (int) round((microtime(true) - $start) * 1000);
+            MailLog::create([
+                'smtp_setting_id' => $smtp->id,
+                'to_address' => $toAddress,
+                'subject' => $subject,
+                'status' => MailLog::STATUS_SENT,
+                'duration_ms' => $durationMs,
+                'error_message' => null,
+                'sent_at' => now(),
+            ]);
+            return redirect()->route('admin.settings')
+                ->with('success', 'Test email sent to ' . $toAddress);
         } catch (\Throwable $e) {
+            $durationMs = (int) round((microtime(true) - $start) * 1000);
+            MailLog::create([
+                'smtp_setting_id' => $smtp->id,
+                'to_address' => $toAddress,
+                'subject' => $subject,
+                'status' => MailLog::STATUS_FAILED,
+                'duration_ms' => $durationMs,
+                'error_message' => $e->getMessage(),
+                'sent_at' => now(),
+            ]);
             return redirect()->route('admin.settings')
                 ->with('error', 'Test failed: ' . $e->getMessage());
         }
-
-        return redirect()->route('admin.settings')
-            ->with('success', 'Test email sent to ' . $request->test_email);
     }
 }

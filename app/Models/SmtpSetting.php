@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SmtpSetting extends Model
 {
@@ -45,6 +46,11 @@ class SmtpSetting extends Model
             'tls' => 'TLS',
             'ssl' => 'SSL',
         ];
+    }
+
+    public function mailLogs(): HasMany
+    {
+        return $this->hasMany(MailLog::class, 'smtp_setting_id');
     }
 
     /** Get the active SMTP config for a given purpose, or null. */
