@@ -6,6 +6,7 @@ use App\Http\Traits\GetsCurrentShop;
 use App\Models\ImageGeneration;
 use App\Models\Merchant;
 use App\Services\AiUniversalService;
+use App\Services\MerchantCreditThresholdNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -149,6 +150,8 @@ class AiRouterController extends Controller
             $newBalance = max(0, $balance - $credits);
             $merchant->ai_credits_balance = $newBalance;
             $merchant->save();
+
+            MerchantCreditThresholdNotifier::notifyOnConsumption($merchant, $balance, $newBalance);
 
             return $newBalance;
         });

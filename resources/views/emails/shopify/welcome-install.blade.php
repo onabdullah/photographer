@@ -31,8 +31,8 @@
             @if($appLogoUrl)
                 <img src="{{ $appLogoUrl }}" alt="{{ $appName }}" style="max-height: 44px; width: auto; display: inline-block; margin-bottom: 16px;"><br>
             @endif
-            <h1>Welcome to {{ $appName }}</h1>
-            <p>Your store is all set up and ready to go.</p>
+            <h1>Congratulations</h1>
+            <p>Your journey to sustainable growth starts now with {{ $appName }}.</p>
         </div>
 
         {{-- ── CONTENT ── --}}
@@ -47,12 +47,12 @@
                 <strong>{{ $displayName }}</strong>,
             </p>
 
-            <p>Thank you for installing <strong>{{ $appName }}</strong>. You're now equipped with AI-powered tools to elevate your product photography — no editing skills required.</p>
-            <p><strong>{{ $appName }}</strong> is a world-class AI-optimized platform built for better performance. Enjoy it and grow your business with us.</p>
+            <p>Thank you for installing <strong>{{ $appName }}</strong>. You now have a professional AI workflow designed to produce high-converting product visuals with speed and consistency.</p>
+            <p>Our mission is not only to provide tools, but to build a long-term partnership with your brand. We are committed to helping you create exceptional visual results and lasting customer trust.</p>
 
             {{-- Credits badge --}}
             <div style="text-align: center; margin: 20px 0;">
-                <span class="credits-badge">🎁 &nbsp;{{ $creditsGranted }} Free AI Credits Added to Your Account</span>
+                <span class="credits-badge">{{ $creditsGranted }} Free AI Credits Added to Your Account</span>
             </div>
 
             {{-- Tools (minimal cards, no icons) --}}

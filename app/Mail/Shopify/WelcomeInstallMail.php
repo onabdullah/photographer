@@ -36,7 +36,7 @@ class WelcomeInstallMail extends Mailable
     {
         return new Envelope(
             from: new Address($this->fromAddress, $this->fromName ?? $this->appName),
-            subject: 'Welcome to ' . $this->appName . ' — You\'re all set!',
+            subject: 'Congratulations — Your path to success starts with ' . $this->appName,
         );
     }
 

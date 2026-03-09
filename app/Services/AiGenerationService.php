@@ -56,6 +56,9 @@ class AiGenerationService
             $newBalance = max(0, $balance - $credits);
             $merchant->ai_credits_balance = $newBalance;
             $merchant->save();
+
+            MerchantCreditThresholdNotifier::notifyOnConsumption($merchant, $balance, $newBalance);
+
             return $newBalance;
         });
     }
