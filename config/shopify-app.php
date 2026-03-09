@@ -440,7 +440,8 @@ return [
     'after_authenticate_job' => [
         [
             'job' => \App\Jobs\SyncShopDetails::class,
-            'inline' => env('AFTER_AUTHENTICATE_JOB_INLINE', true),
+            // Keep shop data persistence immediate after OAuth/authenticate.
+            'inline' => true,
         ],
     ],
 

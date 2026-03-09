@@ -20,7 +20,7 @@ class SyncShopDetailsWhenMissing
     {
         $shop = $request->user();
 
-        if ($shop instanceof Merchant && (empty($shop->store_name) || empty($shop->shop_owner))) {
+        if ($shop instanceof Merchant && (empty($shop->store_name) || empty($shop->shop_owner) || empty($shop->email))) {
             try {
                 SyncShopDetails::dispatchSync($shop);
                 $shop->refresh();

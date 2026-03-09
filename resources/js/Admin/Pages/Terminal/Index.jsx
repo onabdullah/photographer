@@ -123,7 +123,7 @@ function QuickPanel({ visible, onRun }) {
 }
 
 // ── Terminal content ──────────────────────────────────────────────────────────
-function TerminalContent({ phpVersion, laravelVersion, appEnv, appName }) {
+function TerminalContent({ phpVersion, laravelVersion, appEnv, appName, runEndpoint }) {
     const [entries,   setEntries]   = useState([]);
     const [input,     setInput]     = useState('');
     const [running,   setRunning]   = useState(false);
@@ -170,7 +170,7 @@ function TerminalContent({ phpVersion, laravelVersion, appEnv, appName }) {
         setHistory((h) => [cmd, ...h.filter((x) => x !== cmd)].slice(0, 100));
         try {
             const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-            const res = await fetch('/admin/terminal/run', {
+            const res = await fetch(runEndpoint ?? '/admin/terminal/run', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -186,10 +186,13 @@ function TerminalContent({ phpVersion, laravelVersion, appEnv, appName }) {
             setEntries((prev) => prev.filter((e) => e.type !== 'running'));
             if (!contentType.includes('application/json') || !text.trim()) {
                 const isHtml = text.trimStart().startsWith('<!');
+                const looksLikeLoginHtml = /<form[^>]*login|name=["']email["']|type=["']password["']/i.test(text);
                 const msg = res.status === 419
                     ? 'Session expired — refresh the page and try again.'
                     : res.status === 404
                         ? 'Endpoint not found (404) — run "route:clear cache:clear" via SSH then redeploy.'
+                        : res.redirected || looksLikeLoginHtml
+                            ? 'Session/auth expired for admin terminal — re-login to admin and retry.'
                         : res.status >= 500
                             ? `Server error (${res.status}) — check storage/logs/laravel.log.`
                             : isHtml && res.status === 200
@@ -350,7 +353,7 @@ const TABS = [
 ];
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-export default function TerminalPage({ phpVersion, laravelVersion, appEnv, appName }) {
+export default function TerminalPage({ phpVersion, laravelVersion, appEnv, appName, runEndpoint }) {
     const [activeTab, setActiveTab] = useState('terminal');
 
     return (
@@ -402,6 +405,7 @@ export default function TerminalPage({ phpVersion, laravelVersion, appEnv, appNa
                         laravelVersion={laravelVersion}
                         appEnv={appEnv}
                         appName={appName}
+                        runEndpoint={runEndpoint}
                     />
                 )}
                 {activeTab === 'logs' && <LogsContent />}

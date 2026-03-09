@@ -76,6 +76,7 @@ class TerminalController extends Controller
             'laravelVersion' => app()->version(),
             'appEnv'         => config('app.env'),
             'appName'        => config('app.name'),
+            'runEndpoint'    => route('admin.terminal.run'),
         ]);
     }
 
