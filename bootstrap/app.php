@@ -41,7 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'shopify/settings', // Embedded app iframe often blocks cookies; route is protected by verify.shopify
             // AI Studio Pro smart router
             'shopify/api/ai-studio/generate',
-            'shopify/tools/generation/downloaded',
+            'shopify/tools/generation/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
