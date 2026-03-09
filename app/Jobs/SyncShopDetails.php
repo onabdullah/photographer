@@ -47,14 +47,23 @@ class SyncShopDetails implements ShouldQueue
             $response = $shop->api()->rest('GET', '/admin/shop.json');
 
             if (! empty($response['errors'])) {
-                Log::channel('sync_shop')->error('API error fetching shop details', ['shop' => $shop->name, 'errors' => $response['errors']]);
+                Log::channel('sync_shop')->error('API error fetching shop details', [
+                    'shop' => $shop->name,
+                    'status' => $response['status'] ?? null,
+                    'errors' => $response['body'] ?? $response['errors'],
+                ]);
                 return;
             }
 
-            $body = $response['body'] ?? [];
-            $shopData = $body['shop'] ?? $body;
+            $body = $this->toArray($response['body'] ?? []);
+            $shopData = $this->toArray($body['shop'] ?? $body);
             if (empty($shopData) || ! is_array($shopData)) {
-                Log::channel('sync_shop')->warning('Unexpected shop API response structure', ['shop' => $shop->name, 'body_keys' => is_array($body) ? array_keys($body) : gettype($body)]);
+                Log::channel('sync_shop')->warning('Unexpected shop API response structure', [
+                    'shop' => $shop->name,
+                    'status' => $response['status'] ?? null,
+                    'body_type' => gettype($body),
+                    'body_keys' => is_array($body) ? array_keys($body) : null,
+                ]);
                 return;
             }
 
@@ -70,5 +79,26 @@ class SyncShopDetails implements ShouldQueue
         } catch (\Exception $e) {
             Log::channel('sync_shop')->error('Exception fetching shop details', ['shop' => $shop->name, 'error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Normalize Shopify SDK response values (array/ResponseAccess/object) into arrays.
+     */
+    private function toArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (is_object($value) && method_exists($value, 'toArray')) {
+            $converted = $value->toArray();
+            return is_array($converted) ? $converted : [];
+        }
+
+        if (is_object($value)) {
+            return (array) $value;
+        }
+
+        return [];
     }
 }

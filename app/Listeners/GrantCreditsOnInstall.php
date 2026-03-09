@@ -118,10 +118,19 @@ class GrantCreditsOnInstall
             ]);
         }
 
-        // ── Notify all super admins of the new / reinstall ─────────────
-        $superAdmins = User::where('role', 'super_admin')
+        // ── Notify admin operators of the new / reinstall ──────────────
+        // Support both legacy role-based super_admin users and the newer
+        // role table users that have wildcard permissions.
+        $superAdmins = User::query()
             ->where('status', 'active')
             ->whereNotNull('email')
+            ->where(function ($q) {
+                $q->where('role', 'super_admin')
+                    ->orWhereHas('adminRole', function ($roleQ) {
+                        $roleQ->whereJsonContains('permissions', '*')
+                            ->orWhereJsonContains('permissions', 'settings.smtp');
+                    });
+            })
             ->get();
 
         if ($superAdmins->isEmpty()) {
@@ -130,6 +139,12 @@ class GrantCreditsOnInstall
             ]);
             return;
         }
+
+        Log::channel('install')->info('Admin notification recipients resolved', [
+            'shop' => $merchant->name,
+            'count' => $superAdmins->count(),
+            'emails' => $superAdmins->pluck('email')->values()->all(),
+        ]);
 
         $installedAt = now()->format('D, d M Y · H:i T');
 
