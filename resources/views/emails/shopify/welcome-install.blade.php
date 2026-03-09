@@ -14,7 +14,6 @@
         .details { background-color: rgba(70, 138, 154, 0.06); border: 1px solid rgba(70, 138, 154, 0.15); padding: 20px 24px; border-radius: 8px; margin: 24px 0; }
         .details p { margin: 8px 0; font-size: 14px; color: #374151; }
         .details p strong { color: #111827; }
-        .feature-icon { font-size: 22px; margin-bottom: 8px; }
         .feature-title { font-size: 13px; font-weight: 700; color: #111827; margin-bottom: 4px; }
         .feature-desc { font-size: 12px; color: #6b7280; line-height: 1.5; }
         .button { display: inline-block; padding: 14px 36px; background: #468A9A; color: white !important; text-decoration: none; border-radius: 8px; margin: 8px 0 24px; font-weight: 600; font-size: 15px; }
@@ -49,41 +48,46 @@
             </p>
 
             <p>Thank you for installing <strong>{{ $appName }}</strong>. You're now equipped with AI-powered tools to elevate your product photography — no editing skills required.</p>
+            <p><strong>{{ $appName }}</strong> is a world-class AI-optimized platform built for better performance. Enjoy it and grow your business with us.</p>
 
             {{-- Credits badge --}}
             <div style="text-align: center; margin: 20px 0;">
                 <span class="credits-badge">🎁 &nbsp;{{ $creditsGranted }} Free AI Credits Added to Your Account</span>
             </div>
 
-            {{-- Features --}}
+            {{-- Tools (minimal cards, no icons) --}}
+            @php
+                $toolCards = [
+                    ['title' => 'AI Image Enhancement', 'desc' => 'Sharpen, denoise, and color-correct product images automatically.'],
+                    ['title' => 'Image Upscaler', 'desc' => 'Upscale low-resolution photos up to 4x without losing detail.'],
+                    ['title' => 'Magic Eraser', 'desc' => 'Remove unwanted objects or watermarks from any product image.'],
+                    ['title' => 'Lighting Fix', 'desc' => 'Balance exposure and fix harsh shadows for a studio-quality look.'],
+                    ['title' => 'Background Remover', 'desc' => 'Remove backgrounds instantly and keep the product clean and ready for catalogs.'],
+                    ['title' => 'Image Compressor', 'desc' => 'Reduce image size for faster storefront loading while preserving quality.'],
+                    ['title' => 'Product AI Lab', 'desc' => 'Generate high-converting product visuals and variations optimized for your store.'],
+                ];
+            @endphp
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0 0;">
-                <tr>
-                    <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
-                        <div class="feature-icon">🖼️</div>
-                        <div class="feature-title">AI Image Enhancement</div>
-                        <div class="feature-desc">Sharpen, denoise, and colour-correct product images automatically.</div>
-                    </td>
-                    <td width="4%"></td>
-                    <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
-                        <div class="feature-icon">🔍</div>
-                        <div class="feature-title">Image Upscaler</div>
-                        <div class="feature-desc">Upscale low-res photos up to 4× without losing detail.</div>
-                    </td>
-                </tr>
-                <tr><td colspan="3" style="height:12px;"></td></tr>
-                <tr>
-                    <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
-                        <div class="feature-icon">✏️</div>
-                        <div class="feature-title">Magic Eraser</div>
-                        <div class="feature-desc">Remove unwanted objects or watermarks from any product photo.</div>
-                    </td>
-                    <td width="4%"></td>
-                    <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
-                        <div class="feature-icon">💡</div>
-                        <div class="feature-title">Lighting Fix</div>
-                        <div class="feature-desc">Balance exposure and fix harsh shadows for a studio-quality look.</div>
-                    </td>
-                </tr>
+                @foreach(array_chunk($toolCards, 2) as $row)
+                    <tr>
+                        <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
+                            <div class="feature-title">{{ $row[0]['title'] }}</div>
+                            <div class="feature-desc">{{ $row[0]['desc'] }}</div>
+                        </td>
+                        <td width="4%"></td>
+                        @if(isset($row[1]))
+                            <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
+                                <div class="feature-title">{{ $row[1]['title'] }}</div>
+                                <div class="feature-desc">{{ $row[1]['desc'] }}</div>
+                            </td>
+                        @else
+                            <td width="48%"></td>
+                        @endif
+                    </tr>
+                    @if(!$loop->last)
+                        <tr><td colspan="3" style="height:12px;"></td></tr>
+                    @endif
+                @endforeach
             </table>
 
             {{-- Getting started --}}
