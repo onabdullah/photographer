@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AdminRole;
 use App\Models\User;
+use App\Services\AdminActivityNotifier;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -69,6 +70,9 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $actor = $request->user('admin') ?? $request->user();
+        $previous = $user->only(['name', 'email', 'role', 'admin_role_id', 'status']);
+
         $data = $request->validate([
             'name'          => 'required|string|max:255',
             'email'         => 'required|email|unique:users,email,' . $user->id,
@@ -79,13 +83,41 @@ class UserController extends Controller
 
         $user->update($data);
 
+        AdminActivityNotifier::notify(
+            action: 'Admin user updated',
+            actorName: $actor?->name ?? 'System',
+            actorEmail: $actor?->email,
+            details: [
+                'target_user_id' => $user->id,
+                'target_user_email' => $user->email,
+                'before' => $previous,
+                'after' => $user->fresh()->only(['name', 'email', 'role', 'admin_role_id', 'status']),
+            ],
+        );
+
         return redirect('/admin/users/' . $user->id)
             ->with('success', 'User updated successfully.');
     }
 
     public function updateStatus(Request $request, User $user)
     {
-        $user->update(['status' => $user->status === 'active' ? 'inactive' : 'active']);
+        $actor = $request->user('admin') ?? $request->user();
+        $previousStatus = $user->status;
+        $newStatus = $user->status === 'active' ? 'inactive' : 'active';
+        $user->update(['status' => $newStatus]);
+
+        AdminActivityNotifier::notify(
+            action: 'Admin user status changed',
+            actorName: $actor?->name ?? 'System',
+            actorEmail: $actor?->email,
+            details: [
+                'target_user_id' => $user->id,
+                'target_user_email' => $user->email,
+                'previous_status' => $previousStatus,
+                'new_status' => $newStatus,
+            ],
+        );
+
         return back()->with('success', 'User status updated.');
     }
 }

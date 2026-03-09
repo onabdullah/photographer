@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminRole;
+use App\Services\AdminActivityNotifier;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -46,16 +47,28 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
+        $actor = $request->user('admin') ?? $request->user();
         $data = $request->validate([
             'name'          => 'required|string|max:255',
             'permissions'   => 'array',
             'permissions.*' => 'string|in:' . implode(',', AdminRole::allPermissionKeys()),
         ]);
 
-        AdminRole::create([
+        $role = AdminRole::create([
             'name'        => $data['name'],
             'permissions' => $data['permissions'] ?? [],
         ]);
+
+        AdminActivityNotifier::notify(
+            action: 'Admin role created',
+            actorName: $actor?->name ?? 'System',
+            actorEmail: $actor?->email,
+            details: [
+                'role_id' => $role->id,
+                'role_name' => $role->name,
+                'permissions_count' => count($role->permissions ?? []),
+            ],
+        );
 
         return redirect('/admin/roles')->with('success', 'Role created successfully.');
     }
@@ -89,6 +102,9 @@ class RoleController extends Controller
 
     public function update(Request $request, AdminRole $adminRole)
     {
+        $actor = $request->user('admin') ?? $request->user();
+        $before = $adminRole->only(['name', 'permissions']);
+
         $data = $request->validate([
             'name'          => 'required|string|max:255',
             'permissions'   => 'array',
@@ -100,13 +116,38 @@ class RoleController extends Controller
             'permissions' => $data['permissions'] ?? [],
         ]);
 
+        AdminActivityNotifier::notify(
+            action: 'Admin role updated',
+            actorName: $actor?->name ?? 'System',
+            actorEmail: $actor?->email,
+            details: [
+                'role_id' => $adminRole->id,
+                'before' => $before,
+                'after' => $adminRole->fresh()->only(['name', 'permissions']),
+            ],
+        );
+
         return redirect('/admin/roles/' . $adminRole->id)
             ->with('success', 'Role updated successfully.');
     }
 
     public function destroy(AdminRole $adminRole)
     {
+        $actor = request()->user('admin') ?? request()->user();
+        $details = $adminRole->only(['id', 'name', 'permissions']);
         $adminRole->delete();
+
+        AdminActivityNotifier::notify(
+            action: 'Admin role deleted',
+            actorName: $actor?->name ?? 'System',
+            actorEmail: $actor?->email,
+            details: [
+                'role_id' => $details['id'] ?? null,
+                'role_name' => $details['name'] ?? null,
+                'permissions_count' => count($details['permissions'] ?? []),
+            ],
+        );
+
         return redirect('/admin/roles')->with('success', 'Role deleted.');
     }
 }

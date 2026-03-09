@@ -7,6 +7,7 @@ use App\Mail\Admin\SmtpTestMail;
 use App\Mail\Admin\TwoFactorDisabledMail;
 use App\Mail\Admin\TwoFactorEnabledMail;
 use App\Services\MailService;
+use App\Services\AdminActivityNotifier;
 use App\Models\LoginLog;
 use App\Models\MailLog;
 use App\Models\SiteSetting;
@@ -321,6 +322,16 @@ class SettingsController extends Controller
             'password_updated_at' => now(),
         ]);
 
+        AdminActivityNotifier::notify(
+            action: 'Admin password changed',
+            actorName: $user->name,
+            actorEmail: $user->email,
+            details: [
+                'admin_user_id' => $user->id,
+                'admin_name' => $user->name,
+            ],
+        );
+
         return redirect()->route('admin.settings')->with('success', 'Password updated.');
     }
 
@@ -336,6 +347,16 @@ class SettingsController extends Controller
         ]);
         $days = isset($valid['password_expiry_days']) ? (int) $valid['password_expiry_days'] : 0;
         SiteSetting::set(SiteSetting::KEY_PASSWORD_EXPIRY_DAYS, (string) $days);
+
+        AdminActivityNotifier::notify(
+            action: 'Security policy updated',
+            actorName: $user->name,
+            actorEmail: $user->email,
+            details: [
+                'password_expiry_days' => $days,
+            ],
+        );
+
         return redirect()->route('admin.settings')->with('success', 'Security settings updated.');
     }
 
@@ -431,6 +452,7 @@ class SettingsController extends Controller
     public function storeSmtp(Request $request)
     {
         $this->ensureCanManageSmtp();
+        $user = auth()->guard('admin')->user();
 
         $valid = $request->validate([
             'name' => 'nullable|string|max:128',
@@ -451,7 +473,22 @@ class SettingsController extends Controller
             unset($valid['password']);
         }
 
-        SmtpSetting::create($valid);
+        $smtp = SmtpSetting::create($valid);
+
+        AdminActivityNotifier::notify(
+            action: 'SMTP configuration added',
+            actorName: $user?->name ?? 'System',
+            actorEmail: $user?->email,
+            details: [
+                'smtp_id' => $smtp->id,
+                'name' => $smtp->name,
+                'purpose' => $smtp->purpose,
+                'host' => $smtp->host,
+                'port' => $smtp->port,
+                'from_address' => $smtp->from_address,
+                'is_active' => $smtp->is_active ? 'yes' : 'no',
+            ],
+        );
 
         return redirect()->route('admin.settings')->with('success', 'SMTP configuration added.');
     }
@@ -459,6 +496,8 @@ class SettingsController extends Controller
     public function updateSmtp(Request $request, SmtpSetting $smtpSetting)
     {
         $this->ensureCanManageSmtp();
+        $user = auth()->guard('admin')->user();
+        $before = $smtpSetting->only(['name', 'purpose', 'host', 'port', 'from_address', 'is_active']);
 
         $valid = $request->validate([
             'name' => 'nullable|string|max:128',
@@ -481,20 +520,56 @@ class SettingsController extends Controller
 
         $smtpSetting->update($valid);
 
+        $after = $smtpSetting->fresh()->only(['name', 'purpose', 'host', 'port', 'from_address', 'is_active']);
+        AdminActivityNotifier::notify(
+            action: 'SMTP configuration updated',
+            actorName: $user?->name ?? 'System',
+            actorEmail: $user?->email,
+            details: [
+                'smtp_id' => $smtpSetting->id,
+                'before' => $before,
+                'after' => $after,
+            ],
+        );
+
         return redirect()->route('admin.settings')->with('success', 'SMTP configuration updated.');
     }
 
     public function destroySmtp(SmtpSetting $smtpSetting)
     {
         $this->ensureCanManageSmtp();
+        $user = auth()->guard('admin')->user();
+        $details = $smtpSetting->only(['id', 'name', 'purpose', 'host', 'port', 'from_address', 'is_active']);
         $smtpSetting->delete();
+
+        AdminActivityNotifier::notify(
+            action: 'SMTP configuration removed',
+            actorName: $user?->name ?? 'System',
+            actorEmail: $user?->email,
+            details: $details,
+        );
+
         return redirect()->route('admin.settings')->with('success', 'SMTP configuration removed.');
     }
 
     public function setActiveSmtp(SmtpSetting $smtpSetting)
     {
         $this->ensureCanManageSmtp();
+        $user = auth()->guard('admin')->user();
         $smtpSetting->update(['is_active' => true]);
+
+        AdminActivityNotifier::notify(
+            action: 'SMTP active status changed',
+            actorName: $user?->name ?? 'System',
+            actorEmail: $user?->email,
+            details: [
+                'smtp_id' => $smtpSetting->id,
+                'name' => $smtpSetting->name,
+                'purpose' => $smtpSetting->purpose,
+                'is_active' => 'yes',
+            ],
+        );
+
         return redirect()->route('admin.settings')->with('success', 'SMTP set as active for this purpose.');
     }
 
