@@ -54,7 +54,6 @@ Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMis
     Route::get('/recent-generations', [\App\Http\Controllers\AiStudioController::class, 'getRecentGenerations'])->name('recent-generations');
     Route::post('/assign-to-product', [\App\Http\Controllers\AiStudioController::class, 'assignToProduct'])->name('assign-to-product');
     Route::post('/tools/generation/downloaded', [\App\Http\Controllers\AiStudioController::class, 'markDownloaded'])->name('tools.generation.downloaded');
-    Route::post('/tools/export/email', [\App\Http\Controllers\AiStudioController::class, 'emailExport'])->name('tools.export.email');
 
     // AI Image Upscaler (modular; uses ImageGeneration with tool_used=upscaler)
     Route::post('/tools/upscale', [\App\Http\Controllers\ImageUpscalerController::class, 'upscale'])->name('tools.upscale');
