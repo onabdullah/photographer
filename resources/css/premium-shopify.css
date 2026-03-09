@@ -1317,6 +1317,14 @@
   color: var(--p-color-text) !important;
 }
 
+/* Ensure all icons within overlay buttons are always visible regardless of tone */
+.aistudio-gallery-card-overlay .Polaris-Button .Polaris-Icon svg {
+  fill: currentColor !important;
+}
+.aistudio-gallery-card-overlay .Polaris-Button .Polaris-Icon {
+  color: var(--p-color-text) !important;
+}
+
 .aistudio-gallery-card-overlay .Polaris-Button:hover {
   background: #fff !important;
   border-color: #fff !important;

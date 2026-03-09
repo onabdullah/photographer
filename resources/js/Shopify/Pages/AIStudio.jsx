@@ -2173,7 +2173,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                                     <Button
                                       size="slim"
                                       icon={DeleteIcon}
-                                      tone="critical"
                                       accessibilityLabel="Delete"
                                       onClick={() => setDeleteConfirmId(gen.id)}
                                     />
