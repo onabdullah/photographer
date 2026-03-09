@@ -397,4 +397,39 @@ GRAPHQL;
 
         return response()->json(['ok' => true]);
     }
+
+    public function deleteGeneration(Request $request, int $id)
+    {
+        $shopDomain = $this->shopDomain($request);
+        if (! $shopDomain) {
+            return response()->json(['message' => 'Shop not authenticated.'], 403);
+        }
+
+        $generation = ImageGeneration::where('id', $id)
+            ->where('shop_domain', $shopDomain)
+            ->first();
+
+        if (! $generation) {
+            return response()->json(['message' => 'Generation not found.'], 404);
+        }
+
+        // Delete the stored file from local disk if it is our own storage URL.
+        if ($generation->result_image_url) {
+            try {
+                $urlPath = parse_url((string) $generation->result_image_url, PHP_URL_PATH);
+                if ($urlPath && str_starts_with($urlPath, '/storage/')) {
+                    $storagePath = ltrim(substr($urlPath, strlen('/storage')), '/');
+                    if (Storage::disk('public')->exists($storagePath)) {
+                        Storage::disk('public')->delete($storagePath);
+                    }
+                }
+            } catch (\Throwable) {
+                // Non-fatal: proceed with record deletion regardless.
+            }
+        }
+
+        $generation->delete();
+
+        return response()->json(['ok' => true]);
+    }
 }

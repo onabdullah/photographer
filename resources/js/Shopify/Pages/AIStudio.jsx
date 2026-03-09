@@ -22,6 +22,7 @@ import {
 } from '@shopify/polaris';
 import {
   ArrowRightIcon,
+  DeleteIcon,
   ExportIcon,
   ImageIcon,
   ImageMagicIcon,
@@ -543,6 +544,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [isExporting, setIsExporting] = useState(false);
   const [processingMessageIndex, setProcessingMessageIndex] = useState(0);
   const [galleryImageLoadedIds, setGalleryImageLoadedIds] = useState(() => new Set());
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const showToast = useCallback((message, isError = false) => {
     setToast({ message, isError });
@@ -2093,58 +2095,91 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                               />
                             </div>
                             <div className="aistudio-gallery-card-overlay">
-                              <InlineStack gap="200" blockAlign="center">
-                                <Tooltip content="Download">
+                              {deleteConfirmId === gen.id ? (
+                                <InlineStack gap="150" blockAlign="center">
+                                  <Text as="span" variant="bodySm" tone="critical" fontWeight="semibold">Delete image?</Text>
                                   <Button
                                     size="slim"
-                                    icon={ExportIcon}
-                                    accessibilityLabel="Download"
-                                    onClick={() => {
-                                      const a = document.createElement('a');
-                                      a.href = gen.result_image_url;
-                                      a.download = 'masterpiece.png';
-                                      a.target = '_blank';
-                                      a.rel = 'noopener noreferrer';
-                                      document.body.appendChild(a);
-                                      a.click();
-                                      document.body.removeChild(a);
-                                      showToast('Download started');
-                                      axios.post('/shopify/tools/generation/downloaded', { generation_id: gen.id }).catch(() => {});
-                                    }}
-                                  />
-                                </Tooltip>
-                                <Tooltip content="Save to Product">
-                                  <Button
-                                    size="slim"
-                                    icon={ImageIcon}
-                                    accessibilityLabel="Save to Product"
+                                    tone="critical"
                                     onClick={async () => {
-                                      setGenerationId(gen.id);
-                                      const shopify = shopifyAppBridge;
-                                      if (!shopify?.resourcePicker) {
-                                        showToast('Open this app from Shopify Admin to use Save to Product.', true);
-                                        return;
-                                      }
                                       try {
-                                        const selection = await shopify.resourcePicker({ type: 'product', action: 'select', multiple: false });
-                                        const selected = Array.isArray(selection) ? selection : (selection && selection.selection) ?? [];
-                                        if (!selected.length) return;
-                                        const product = selected[0];
-                                        const productId = product.admin_graphql_api_id ?? product.id ?? String(product.id);
-                                        const res = await axios.post('/shopify/assign-to-product', { product_id: productId, generation_id: gen.id });
-                                        if (res.data.success) {
-                                          showToast(res.data.message);
-                                          setRecentGenerations((prev) =>
-                                            prev.map((g) => (g.id === gen.id ? { ...g, shopify_product_id: productId } : g))
-                                          );
-                                        } else throw new Error(res.data.message);
-                                      } catch (err) {
-                                        showToast(err.response?.data?.message || err.message || 'Failed to add to product.', true);
+                                        await axios.delete(`/shopify/tools/generation/${gen.id}`);
+                                        setRecentGenerations((prev) => prev.filter((g) => g.id !== gen.id));
+                                        showToast('Image deleted.');
+                                      } catch {
+                                        showToast('Could not delete image. Please try again.', true);
+                                      } finally {
+                                        setDeleteConfirmId(null);
                                       }
                                     }}
-                                  />
-                                </Tooltip>
-                              </InlineStack>
+                                  >
+                                    Delete
+                                  </Button>
+                                  <Button size="slim" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
+                                </InlineStack>
+                              ) : (
+                                <InlineStack gap="200" blockAlign="center">
+                                  <Tooltip content="Download">
+                                    <Button
+                                      size="slim"
+                                      icon={ExportIcon}
+                                      accessibilityLabel="Download"
+                                      onClick={() => {
+                                        const a = document.createElement('a');
+                                        a.href = gen.result_image_url;
+                                        a.download = 'masterpiece.png';
+                                        a.target = '_blank';
+                                        a.rel = 'noopener noreferrer';
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
+                                        showToast('Download started');
+                                        axios.post('/shopify/tools/generation/downloaded', { generation_id: gen.id }).catch(() => {});
+                                      }}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip content="Save to Product">
+                                    <Button
+                                      size="slim"
+                                      icon={ImageIcon}
+                                      accessibilityLabel="Save to Product"
+                                      onClick={async () => {
+                                        setGenerationId(gen.id);
+                                        const shopify = shopifyAppBridge;
+                                        if (!shopify?.resourcePicker) {
+                                          showToast('Open this app from Shopify Admin to use Save to Product.', true);
+                                          return;
+                                        }
+                                        try {
+                                          const selection = await shopify.resourcePicker({ type: 'product', action: 'select', multiple: false });
+                                          const selected = Array.isArray(selection) ? selection : (selection && selection.selection) ?? [];
+                                          if (!selected.length) return;
+                                          const product = selected[0];
+                                          const productId = product.admin_graphql_api_id ?? product.id ?? String(product.id);
+                                          const res = await axios.post('/shopify/assign-to-product', { product_id: productId, generation_id: gen.id });
+                                          if (res.data.success) {
+                                            showToast(res.data.message);
+                                            setRecentGenerations((prev) =>
+                                              prev.map((g) => (g.id === gen.id ? { ...g, shopify_product_id: productId } : g))
+                                            );
+                                          } else throw new Error(res.data.message);
+                                        } catch (err) {
+                                          showToast(err.response?.data?.message || err.message || 'Failed to add to product.', true);
+                                        }
+                                      }}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip content="Delete">
+                                    <Button
+                                      size="slim"
+                                      icon={DeleteIcon}
+                                      tone="critical"
+                                      accessibilityLabel="Delete"
+                                      onClick={() => setDeleteConfirmId(gen.id)}
+                                    />
+                                  </Tooltip>
+                                </InlineStack>
+                              )}
                             </div>
                           </div>
                           <div className="aistudio-gallery-card-meta">
