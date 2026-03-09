@@ -30,8 +30,6 @@ import {
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
 import MagicButton from '@/Shopify/Components/MagicButton';
 import BrowseFromStore from '@/Shopify/Components/BrowseFromStore';
 
@@ -1285,43 +1283,27 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       return;
     }
     setIsExporting(true);
-    showToast(`Gathering ${gensToExport.length} images for export...`);
+    showToast(`Preparing ${gensToExport.length} images and sending to your owner email...`);
 
     try {
-      const zip = new JSZip();
-
-      const promises = gensToExport.map(async (gen, index) => {
-        try {
-          const response = await fetch(gen.result_image_url);
-          if (!response.ok) throw new Error('Failed to fetch image');
-          const blob = await response.blob();
-
-          let folderPath = '';
-          if (exportType === 'categories') {
-            const tool = gen.tool_used || 'uncategorized';
-            folderPath = `${tool}/`;
-          }
-
-          const filename = `${folderPath}masterpiece-${index + 1}.png`;
-          zip.file(filename, blob);
-        } catch (err) {
-          console.error('Failed to zip image', err);
-        }
+      const generationIds = gensToExport.map((g) => g.id).filter(Boolean);
+      const { data } = await axios.post('/shopify/tools/export/email', {
+        generation_ids: generationIds,
+        export_type: exportType,
       });
 
-      await Promise.all(promises);
-
-      const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, 'ai-studio-export.zip');
-
-      showToast('Export successful!');
+      if (data?.queued) {
+        showToast(`Your export is being prepared. A secure download link will be sent to ${data?.sent_to || 'your owner email'} shortly.`);
+      } else {
+        showToast(data?.message || 'Export sent to owner email successfully.');
+      }
       setExportModalOpen(false);
     } catch (err) {
-      showToast('Failed to create export ZIP', true);
+      showToast(err?.response?.data?.message || 'Failed to send export email', true);
     } finally {
       setIsExporting(false);
     }
-  }, [filteredGenerations, exportType, showToast]);
+  }, [filteredGenerations, exportType, exportSpecificTool, recentGenerations, showToast]);
 
   const dropZoneContent = (
     <DropZone.FileUpload
@@ -2178,7 +2160,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
           onClose={() => !isExporting && setExportModalOpen(false)}
           title="Export Your Masterpieces"
           primaryAction={{
-            content: isExporting ? 'Creating ZIP...' : 'Export',
+            content: isExporting ? 'Sending email...' : 'Send to Owner Email',
             onAction: handleExportZip,
             loading: isExporting,
             disabled: isExporting || (exportType === 'specific_tool'
@@ -2197,14 +2179,14 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
           <Modal.Section>
             <BlockStack gap="400">
               <Text as="p" tone="subdued">
-                We value your privacy and data security. All of your creations are securely processed and are fully ready for download. Please select how you'd like to organize your exported files.
+                Your selected creations will be securely packaged and sent directly to the store owner email on file. No local download will be generated.
               </Text>
 
               <Text as="p" tone="subdued">
                 <strong>Instructions:</strong><br />
                 1. Select your preferred export format below.<br />
-                2. Click "Export" to automatically assemble your ZIP file.<br />
-                3. Keep this window open until the download is complete. Large exports may take a few moments.
+                2. Click "Send to Owner Email" to deliver the export package.<br />
+                3. Keep this window open until confirmation appears.
               </Text>
 
               <ChoiceList

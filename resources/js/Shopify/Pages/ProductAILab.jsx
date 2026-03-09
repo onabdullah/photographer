@@ -27,8 +27,6 @@ import {
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
 import MagicButton from '@/Shopify/Components/MagicButton';
 import BrowseFromStore from '@/Shopify/Components/BrowseFromStore';
 
@@ -394,23 +392,22 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
   const handleExportZip = useCallback(async () => {
     if (!filteredGenerations.length) { setExportModalOpen(false); return; }
     setIsExporting(true);
-    showToast(`Gathering ${filteredGenerations.length} images for export...`);
+    showToast(`Preparing ${filteredGenerations.length} images and sending to your owner email...`);
     try {
-      const zip = new JSZip();
-      await Promise.all(
-        filteredGenerations.map(async (gen, i) => {
-          try {
-            const blob   = await fetch(gen.result_image_url).then((r) => r.blob());
-            const folder = exportType === 'categories' ? `${gen.tool_used || 'uncategorized'}/` : '';
-            zip.file(`${folder}masterpiece-${i + 1}.png`, blob);
-          } catch { /* skip */ }
-        }),
-      );
-      const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, 'product-ai-lab-export.zip');
-      showToast('Export successful!');
+      const generationIds = filteredGenerations.map((g) => g.id).filter(Boolean);
+      const { data } = await axios.post('/shopify/tools/export/email', {
+        generation_ids: generationIds,
+        export_type: exportType,
+      });
+      if (data?.queued) {
+        showToast(`Your export is being prepared. A secure download link will be sent to ${data?.sent_to || 'your owner email'} shortly.`);
+      } else {
+        showToast(data?.message || 'Export sent to owner email successfully.');
+      }
       setExportModalOpen(false);
-    } catch { showToast('Failed to create export ZIP', true); }
+    } catch (err) {
+      showToast(err?.response?.data?.message || 'Failed to send export email', true);
+    }
     finally { setIsExporting(false); }
   }, [filteredGenerations, exportType, showToast]);
 
@@ -944,7 +941,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
             onClose={() => !isExporting && setExportModalOpen(false)}
             title="Export Your Masterpieces"
             primaryAction={{
-              content: isExporting ? 'Creating ZIP…' : 'Export',
+              content: isExporting ? 'Sending email…' : 'Send to Owner Email',
               onAction: handleExportZip,
               loading: isExporting,
               disabled: isExporting || filteredGenerations.length === 0,
@@ -967,8 +964,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
               />
               <Box paddingBlockStart="400">
                 <Text variant="bodySm" tone="subdued" as="p">
-                  {filteredGenerations.length} image{filteredGenerations.length !== 1 ? 's' : ''} will be included
-                  based on your current filters.
+                  {filteredGenerations.length} image{filteredGenerations.length !== 1 ? 's' : ''} will be packaged and emailed to your store owner address.
                 </Text>
               </Box>
             </Modal.Section>

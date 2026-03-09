@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schedule;
 use Inertia\Inertia;
 
 /*
@@ -53,4 +54,17 @@ Route::prefix('shopify')
 Route::prefix('admin')
     ->name('admin.')
     ->group(base_path('routes/admin.php'));
+
+/*
+|--------------------------------------------------------------------------
+| Large-Export Download
+|--------------------------------------------------------------------------
+| Signed, time-limited download links emailed to store owners for exports
+| that exceed the inline attachment threshold. No Shopify auth required —
+| the link is clicked directly from an email client.
+|--------------------------------------------------------------------------
+*/
+Route::get('/export/download/{filename}', [\App\Http\Controllers\AiStudioController::class, 'serveExportDownload'])
+    ->name('export.download')
+    ->where('filename', '[a-f0-9\-]+');
 

@@ -4,8 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsCurrentShop;
 use App\Http\Traits\UsesShopifyTokenExchange;
+use App\Jobs\ProcessLargeExport;
+use App\Mail\Shopify\MasterpiecesExportLinkMail;
+use App\Mail\Shopify\MasterpiecesExportReadyMail;
 use App\Models\ImageGeneration;
+use App\Models\Merchant;
 use App\Services\AiGenerationService;
+use App\Services\MailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +19,12 @@ use Illuminate\Support\Facades\Storage;
 class AiStudioController extends Controller
 {
     use GetsCurrentShop, UsesShopifyTokenExchange;
+
+    /**
+     * Exports at or below this many images are handled synchronously (ZIP as email attachment).
+     * Above this threshold the export is queued as a background job and emailed as a download link.
+     */
+    private const INLINE_IMAGE_THRESHOLD = 20;
 
     private function bgLog(string $message, array $context = []): void
     {
@@ -396,5 +407,184 @@ GRAPHQL;
         }
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Build export ZIP server-side and deliver to store owner email.
+     */
+    public function emailExport(Request $request)
+    {
+        $shopDomain = $this->shopDomain($request);
+        if (! $shopDomain) {
+            return response()->json(['message' => 'Shop not authenticated.'], 403);
+        }
+
+        $payload = $request->validate([
+            'generation_ids' => 'required|array|min:1|max:200',
+            'generation_ids.*' => 'integer|min:1',
+            'export_type' => 'nullable|string|in:flat,categories,specific_tool',
+        ]);
+
+        $merchant = Merchant::where('name', $shopDomain)->first();
+        if (! $merchant) {
+            return response()->json(['message' => 'Merchant not found.'], 404);
+        }
+
+        $ownerEmail = mb_strtolower(trim((string) ($merchant->email ?? '')));
+        if ($ownerEmail === '' || ! filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {
+            return response()->json(['message' => 'Store owner email is not configured.'], 422);
+        }
+
+        $generations = ImageGeneration::query()
+            ->where('shop_domain', $shopDomain)
+            ->where('status', 'completed')
+            ->whereNotNull('result_image_url')
+            ->whereIn('id', $payload['generation_ids'])
+            ->orderByDesc('updated_at')
+            ->get(['id', 'tool_used', 'result_image_url', 'downloaded_at']);
+
+        if ($generations->isEmpty()) {
+            return response()->json(['message' => 'No valid creations found for export.'], 422);
+        }
+
+        $exportType = $payload['export_type'] ?? 'flat';
+
+        // ── Large-export path: queue a background job and return immediately ───
+        if ($generations->count() > self::INLINE_IMAGE_THRESHOLD) {
+            ProcessLargeExport::dispatch(
+                shopDomain:    $shopDomain,
+                generationIds: $generations->pluck('id')->all(),
+                exportType:    $exportType,
+                ownerEmail:    $ownerEmail,
+                shopName:      $merchant->store_name ?: $merchant->shop_owner ?: $merchant->name,
+            );
+
+            return response()->json([
+                'ok'          => true,
+                'queued'      => true,
+                'message'     => 'Your export is being prepared. You will receive a secure download link at your owner email shortly.',
+                'sent_to'     => $ownerEmail,
+                'images_count' => $generations->count(),
+            ], 202);
+        }
+
+        // ── Small-export path: build ZIP synchronously, attach to email ───────
+        $timestamp = now()->format('Ymd_His');
+        $zipFilename = 'masterpieces-export-' . $timestamp . '.zip';
+        $exportDir = storage_path('app/exports');
+        if (! is_dir($exportDir)) {
+            @mkdir($exportDir, 0755, true);
+        }
+
+        $zipPath = $exportDir . DIRECTORY_SEPARATOR . $zipFilename;
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['message' => 'Failed to create export package.'], 500);
+        }
+
+        $added = 0;
+        foreach ($generations as $index => $generation) {
+            $bytes = $this->getImageContentsFromUrl((string) $generation->result_image_url);
+            if ($bytes === null || $bytes === '') {
+                continue;
+            }
+
+            $folder = '';
+            if ($exportType === 'categories' || $exportType === 'specific_tool') {
+                $tool = strtolower((string) ($generation->tool_used ?: 'uncategorized'));
+                $tool = preg_replace('/[^a-z0-9_\-]+/i', '-', $tool) ?: 'uncategorized';
+                $folder = $tool . '/';
+            }
+
+            $zip->addFromString($folder . 'masterpiece-' . ($index + 1) . '.png', $bytes);
+            $added++;
+        }
+
+        $zip->close();
+
+        if ($added === 0) {
+            @unlink($zipPath);
+            return response()->json(['message' => 'No exportable image bytes were available.'], 422);
+        }
+
+        $smtp = MailService::resolveSmtp();
+        if (! $smtp) {
+            @unlink($zipPath);
+            return response()->json(['message' => 'Email delivery is currently unavailable.'], 503);
+        }
+
+        $exportLabel = match ($exportType) {
+            'categories' => 'Organized by tool',
+            'specific_tool' => 'Specific tool set',
+            default => 'All in one folder',
+        };
+
+        try {
+            $sent = MailService::send(
+                toAddress: $ownerEmail,
+                mailable: new MasterpiecesExportReadyMail(
+                    fromAddress: $smtp->from_address,
+                    fromName: $smtp->from_name,
+                    shopName: $merchant->store_name ?: $merchant->shop_owner ?: $merchant->name,
+                    imagesCount: $added,
+                    exportLabel: $exportLabel,
+                    zipPath: $zipPath,
+                    zipFilename: $zipFilename,
+                ),
+                subject: 'Your masterpiece export is ready — ' . ($merchant->store_name ?: $merchant->name),
+            );
+
+            if (! $sent) {
+                return response()->json(['message' => 'Export email could not be sent. Please try again.'], 500);
+            }
+
+            ImageGeneration::query()
+                ->whereIn('id', $generations->pluck('id')->all())
+                ->whereNull('downloaded_at')
+                ->update(['downloaded_at' => now()]);
+
+            return response()->json([
+                'ok'           => true,
+                'queued'       => false,
+                'message'      => 'Export sent to your store owner email successfully.',
+                'sent_to'      => $ownerEmail,
+                'images_count' => $added,
+            ]);
+        } finally {
+            @unlink($zipPath);
+        }
+    }
+
+    /**
+     * Serve a queued large-export ZIP via a signed, time-limited URL.
+     *
+     * Registered in routes/web.php — no Shopify session required since the
+     * store owner clicks this link from their email client.
+     * Security is enforced entirely by the signed URL signature and expiry.
+     */
+    public function serveExportDownload(Request $request, string $filename): mixed
+    {
+        if (! $request->hasValidSignature()) {
+            abort(403, 'This download link is invalid or has expired.');
+        }
+
+        // Validate the filename is a UUID — prevents any path-traversal attempt.
+        if (! preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/', $filename)) {
+            abort(404);
+        }
+
+        $absolutePath = Storage::disk('local')->path('exports/' . $filename . '.zip');
+
+        if (! is_file($absolutePath)) {
+            abort(404, 'Export file not found. It may have expired or already been cleaned up.');
+        }
+
+        // Sanitise display name with basename() to prevent header injection.
+        $displayName = basename($request->query('dl', 'masterpieces-export.zip'));
+
+        return response()->download($absolutePath, $displayName, [
+            'Content-Type' => 'application/zip',
+        ]);
     }
 }
