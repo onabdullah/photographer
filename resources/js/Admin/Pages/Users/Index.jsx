@@ -1,6 +1,6 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { Link } from '@inertiajs/react';
-import { Users } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import ActionButtons from '@/Admin/Components/ActionButtons';
 
 const STATUS_CLS = {
@@ -29,6 +29,12 @@ export default function UsersIndex({ users }) {
         <AdminLayout
             title="User Management"
             breadcrumbs={[{ label: 'Users' }]}
+            headerActions={
+                <Link href="/admin/users/create" className="btn btn-primary">
+                    <Plus size={14} className="mr-1.5" />
+                    Add Team User
+                </Link>
+            }
         >
             <div className="card-base overflow-hidden">
                 <div className="overflow-x-auto">

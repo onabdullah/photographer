@@ -3,39 +3,36 @@ import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 
-export default function UserEdit({ user, roles }) {
-    const { data, setData, put, processing, errors } = useForm({
-        name:           user.name         ?? '',
-        email:          user.email        ?? '',
-        admin_role_id:  user.admin_role_id ?? '',
-        status:         user.status       ?? 'active',
+export default function UserCreate({ roles }) {
+    const { data, setData, post, processing, errors } = useForm({
+        name: '',
+        email: '',
+        admin_role_id: '',
+        status: 'active',
     });
 
     const submit = (e) => {
         e.preventDefault();
-        put(`/admin/users/${user.id}`);
+        post('/admin/users');
     };
 
     return (
         <AdminLayout
-            title="Edit User"
+            title="Add Team User"
             breadcrumbs={[
                 { label: 'Users', href: '/admin/users' },
-                { label: user.name, href: `/admin/users/${user.id}` },
-                { label: 'Edit' },
+                { label: 'Add Team User' },
             ]}
             headerActions={
-                <Link href={`/admin/users/${user.id}`} className="btn btn-secondary">
+                <Link href="/admin/users" className="btn btn-secondary">
                     <ArrowLeft size={14} className="mr-1.5" />
-                    Back to User
+                    Back to Users
                 </Link>
             }
             centerHeader
         >
             <form onSubmit={submit} className="space-y-6 max-w-xl">
                 <div className="card space-y-4">
-
-                    {/* Name */}
                     <div>
                         <label className="form-label">Full Name <span className="text-red-500">*</span></label>
                         <input
@@ -43,11 +40,11 @@ export default function UserEdit({ user, roles }) {
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             className="form-input"
+                            autoComplete="name"
                         />
                         {errors.name && <p className="form-error">{errors.name}</p>}
                     </div>
 
-                    {/* Email */}
                     <div>
                         <label className="form-label">Email Address <span className="text-red-500">*</span></label>
                         <input
@@ -60,7 +57,6 @@ export default function UserEdit({ user, roles }) {
                         {errors.email && <p className="form-error">{errors.email}</p>}
                     </div>
 
-                    {/* Custom role */}
                     <div>
                         <label className="form-label">Custom Role <span className="text-red-500">*</span></label>
                         {roles?.length > 0 ? (
@@ -82,9 +78,8 @@ export default function UserEdit({ user, roles }) {
                         {errors.admin_role_id && <p className="form-error">{errors.admin_role_id}</p>}
                     </div>
 
-                    {/* Status */}
                     <div>
-                        <label className="form-label">Status</label>
+                        <label className="form-label">Status <span className="text-red-500">*</span></label>
                         <select
                             value={data.status}
                             onChange={(e) => setData('status', e.target.value)}
@@ -95,13 +90,17 @@ export default function UserEdit({ user, roles }) {
                         </select>
                         {errors.status && <p className="form-error">{errors.status}</p>}
                     </div>
+
+                    <div className="rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
+                        A secure temporary password will be generated automatically and emailed to the new team user.
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button type="submit" disabled={processing} className="btn btn-primary">
-                        {processing ? 'Saving…' : 'Save Changes'}
+                    <button type="submit" disabled={processing || !roles?.length} className="btn btn-primary">
+                        {processing ? 'Creating…' : 'Create Team User'}
                     </button>
-                    <Link href={`/admin/users/${user.id}`} className="btn btn-secondary">Cancel</Link>
+                    <Link href="/admin/users" className="btn btn-secondary">Cancel</Link>
                 </div>
             </form>
         </AdminLayout>

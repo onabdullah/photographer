@@ -204,6 +204,10 @@ Route::middleware(['auth:admin'])->group(function () {
     */
     Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])
         ->middleware('admin.permission:users.view')->name('users.index');
+    Route::get('/users/create', [\App\Http\Controllers\Admin\UserController::class, 'create'])
+        ->middleware('admin.permission:users.manage')->name('users.create');
+    Route::post('/users', [\App\Http\Controllers\Admin\UserController::class, 'store'])
+        ->middleware('admin.permission:users.manage')->name('users.store');
     Route::get('/users/{user}', [\App\Http\Controllers\Admin\UserController::class, 'show'])
         ->middleware('admin.permission:users.view')->name('users.show');
     Route::get('/users/{user}/edit', [\App\Http\Controllers\Admin\UserController::class, 'edit'])
