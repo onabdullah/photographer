@@ -185,11 +185,16 @@ function TerminalContent({ phpVersion, laravelVersion, appEnv, appName }) {
             const text = await res.text();
             setEntries((prev) => prev.filter((e) => e.type !== 'running'));
             if (!contentType.includes('application/json') || !text.trim()) {
+                const isHtml = text.trimStart().startsWith('<!');
                 const msg = res.status === 419
-                    ? 'Session expired (419). Refresh the page and try again.'
-                    : res.status >= 500
-                        ? `Server error (${res.status}). Check the Laravel log.`
-                        : `Unexpected response (${res.status}). ${text.slice(0, 200) || 'No body.'}`;
+                    ? 'Session expired — refresh the page and try again.'
+                    : res.status === 404
+                        ? 'Endpoint not found (404) — run "route:clear cache:clear" via SSH then redeploy.'
+                        : res.status >= 500
+                            ? `Server error (${res.status}) — check storage/logs/laravel.log.`
+                            : isHtml && res.status === 200
+                                ? 'Route not registered on this server (got HTML instead of JSON). Stale route cache — run "php artisan route:clear config:clear cache:clear" via SSH or delete bootstrap/cache/routes-v7.php.'
+                                : `Unexpected response (${res.status}) — ${text.slice(0, 120) || 'no body'}.`;
                 push({ type: 'error', content: msg });
                 window.dispatchEvent(new CustomEvent(TOAST_EVENT_ERROR, { detail: { message: msg } }));
                 return;

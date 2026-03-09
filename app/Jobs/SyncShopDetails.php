@@ -47,14 +47,14 @@ class SyncShopDetails implements ShouldQueue
             $response = $shop->api()->rest('GET', '/admin/shop.json');
 
             if (! empty($response['errors'])) {
-                Log::error('SyncShopDetails: API Error fetching shop details', ['errors' => $response['errors']]);
+                Log::channel('sync_shop')->error('API error fetching shop details', ['shop' => $shop->name, 'errors' => $response['errors']]);
                 return;
             }
 
             $body = $response['body'] ?? [];
             $shopData = $body['shop'] ?? $body;
             if (empty($shopData) || ! is_array($shopData)) {
-                Log::warning('SyncShopDetails: Unexpected shop API response structure', ['body_keys' => is_array($body) ? array_keys($body) : gettype($body)]);
+                Log::channel('sync_shop')->warning('Unexpected shop API response structure', ['shop' => $shop->name, 'body_keys' => is_array($body) ? array_keys($body) : gettype($body)]);
                 return;
             }
 
@@ -65,10 +65,10 @@ class SyncShopDetails implements ShouldQueue
             $shop->country = $shopData['country_name'] ?? $shopData['country'] ?? $shop->country;
             $shop->save();
 
-            Log::info("SyncShopDetails: Updated shop details for {$shop->name}", ['store_name' => $shop->store_name, 'shop_owner' => $shop->shop_owner]);
+            Log::channel('sync_shop')->info('Shop details synced', ['shop' => $shop->name, 'store_name' => $shop->store_name, 'shop_owner' => $shop->shop_owner, 'email' => $shop->email]);
 
         } catch (\Exception $e) {
-            Log::error("SyncShopDetails: Exception fetching shop details - " . $e->getMessage());
+            Log::channel('sync_shop')->error('Exception fetching shop details', ['shop' => $shop->name, 'error' => $e->getMessage()]);
         }
     }
 }

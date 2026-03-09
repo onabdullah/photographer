@@ -99,7 +99,7 @@ class AiUniversalService
                 ],
             ];
 
-            Log::info('AiUniversal: dispatching Nano Banana 2', [
+            Log::channel('universal_generate')->info('Dispatching Nano Banana 2', [
                 'shop'         => $shopDomain,
                 'intent'       => $intent,
                 'aspect_ratio' => $aspectRatio,
@@ -117,7 +117,7 @@ class AiUniversalService
             if ($response->failed()) {
                 $errorDetail = $response->json('detail') ?? $response->body();
                 $errorMsg    = 'Nano Banana 2 API error: ' . (is_string($errorDetail) && $errorDetail !== '' ? $errorDetail : ('HTTP ' . $response->status()));
-                Log::error('Nano Banana 2 API error', ['status' => $response->status(), 'body' => $response->body()]);
+                Log::channel('universal_generate')->error('Nano Banana 2 API error', ['status' => $response->status(), 'body' => $response->body()]);
                 $generation->update(['status' => 'failed', 'error_message' => $errorMsg, 'processing_time_seconds' => round($generation->created_at->diffInSeconds(now(), true), 4)]);
                 AppStat::incrementKey('universal_generate_failed_count');
                 throw new \RuntimeException($errorMsg);

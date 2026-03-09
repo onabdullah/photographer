@@ -354,7 +354,7 @@ return [
 
     'listen' => [
         \Osiset\ShopifyApp\Messaging\Events\AppInstalledEvent::class => [
-            \App\Listeners\GrantCreditsOnInstall::class,
+            // Auto-discovered by Laravel 11 — registering here would fire it twice.
         ],
         \Osiset\ShopifyApp\Messaging\Events\ShopAuthenticatedEvent::class => [
             // \App\Listeners\MyListener::class,
@@ -363,7 +363,7 @@ return [
             // \App\Listeners\MyListener::class,
         ],
         \Osiset\ShopifyApp\Messaging\Events\AppUninstalledEvent::class => [
-            \App\Listeners\ShopifyUninstallListener::class,
+            // Auto-discovered by Laravel 11 — registering here would fire it twice.
         ],
         \Osiset\ShopifyApp\Messaging\Events\PlanActivatedEvent::class => [
             // \App\Listeners\MyListener::class,

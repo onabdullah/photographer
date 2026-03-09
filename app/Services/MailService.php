@@ -6,6 +6,7 @@ use App\Models\MailLog;
 use App\Models\SmtpSetting;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class MailService
@@ -31,6 +32,10 @@ class MailService
         $smtp = self::resolveSmtp();
 
         if (! $smtp) {
+            Log::channel('mail')->warning('No active SMTP setting found — email not sent.', [
+                'to'      => $toAddress,
+                'subject' => $subject,
+            ]);
             return false;
         }
 

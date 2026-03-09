@@ -429,7 +429,7 @@ class AiGenerationService
             ]);
             AppStat::incrementKey('compressor_success_count');
             $creditsRemaining = self::deductCreditsForGeneration($generation);
-            Log::channel('upscaler')->info('Compressor completed', ['generation_id' => $generation->id]);
+            Log::channel('compressor')->info('Compressor completed', ['generation_id' => $generation->id]);
             return [
                 'status' => 'completed',
                 'job_id' => null,
@@ -446,7 +446,7 @@ class AiGenerationService
                 'processing_time_seconds' => self::processingDurationSeconds($generation),
             ]);
             AppStat::incrementKey('compressor_failed_count');
-            Log::channel('upscaler')->warning('Compressor failed', ['error' => $e->getMessage(), 'generation_id' => $generation->id]);
+            Log::channel('compressor')->warning('Compressor failed', ['error' => $e->getMessage(), 'generation_id' => $generation->id]);
             throw $e;
         }
     }
@@ -692,7 +692,7 @@ class AiGenerationService
             ],
         ];
 
-        Log::channel('upscaler')->info('Enhancer create prediction', [
+        Log::channel('enhance')->info('Enhancer create prediction', [
             'shop_domain' => $shopDomain,
             'version' => $version,
             'scale' => $scale,
@@ -707,7 +707,7 @@ class AiGenerationService
 
         if (! $response->successful()) {
             $detail = $response->json('detail') ?? $response->body();
-            Log::channel('upscaler')->warning('Enhancer create failed', ['status' => $statusCode, 'detail' => $detail]);
+            Log::channel('enhance')->warning('Enhancer create failed', ['status' => $statusCode, 'detail' => $detail]);
             throw new \RuntimeException(is_string($detail) ? $detail : 'Enhance request failed. Please try again.');
         }
 
@@ -767,7 +767,7 @@ class AiGenerationService
             ],
         ];
 
-        Log::channel('upscaler')->info('Lighting fix create prediction', [
+        Log::channel('lighting')->info('Lighting fix create prediction', [
             'shop_domain' => $shopDomain,
         ]);
 
@@ -780,7 +780,7 @@ class AiGenerationService
 
         if (! $response->successful()) {
             $detail = $response->json('detail') ?? $response->body();
-            Log::channel('upscaler')->warning('Lighting fix create failed', ['status' => $statusCode, 'detail' => $detail]);
+            Log::channel('lighting')->warning('Lighting fix create failed', ['status' => $statusCode, 'detail' => $detail]);
             throw new \RuntimeException(is_string($detail) ? $detail : 'Lighting fix request failed. Please try again.');
         }
 
@@ -1143,7 +1143,7 @@ class AiGenerationService
                 ]);
                 AppStat::incrementKey('enhance_failed_count');
             }
-            Log::channel('upscaler')->error('Enhancer poll error', ['job_id' => $jobId, 'error' => $e->getMessage()]);
+            Log::channel('enhance')->error('Enhancer poll error', ['job_id' => $jobId, 'error' => $e->getMessage()]);
             throw $e;
         }
     }
@@ -1254,7 +1254,7 @@ class AiGenerationService
                 ]);
                 AppStat::incrementKey('lighting_failed_count');
             }
-            Log::channel('upscaler')->error('Lighting fix poll error', ['job_id' => $jobId, 'error' => $e->getMessage()]);
+            Log::channel('lighting')->error('Lighting fix poll error', ['job_id' => $jobId, 'error' => $e->getMessage()]);
             throw $e;
         }
     }

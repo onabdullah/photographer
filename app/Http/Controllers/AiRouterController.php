@@ -81,7 +81,7 @@ class AiRouterController extends Controller
                 'credits_remaining' => $newBalance,
             ]));
         } catch (\Throwable $e) {
-            Log::error('AiRouter generate error', [
+            Log::channel('universal_generate')->error('Generate error', [
                 'category' => $category,
                 'shop'     => $shopDomain,
                 'error'    => $e->getMessage(),
@@ -117,7 +117,7 @@ class AiRouterController extends Controller
 
             return response()->json($result);
         } catch (\Throwable $e) {
-            Log::error('AiRouter job status error', [
+            Log::channel('universal_generate')->error('Job status error', [
                 'job_id' => $jobId,
                 'error'  => $e->getMessage(),
             ]);

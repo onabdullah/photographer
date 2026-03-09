@@ -73,7 +73,7 @@ class AiStudioController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            Log::error('Background removal error', ['error' => $e->getMessage()]);
+            Log::channel('bg_remover')->error('Background removal error', ['error' => $e->getMessage()]);
 
             $isUnavailable = str_contains($e->getMessage(), 'temporarily unavailable');
             $statusCode = $isUnavailable ? 503 : 500;
@@ -226,7 +226,7 @@ GRAPHQL;
                 'file_id' => $fileId,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Save to Shopify error', ['error' => $e->getMessage()]);
+            Log::channel('ai_studio')->error('Save to Shopify error', ['error' => $e->getMessage()]);
 
             return response()->json([
                 'message' => 'Failed to save image to Shopify. Please try again.',
@@ -305,7 +305,7 @@ GRAPHQL;
                 if (! $bodyArray && is_object($body)) {
                     $bodyArray = isset($body->container) ? (is_array($body->container) ? $body->container : (array) $body->container) : [];
                 }
-                Log::warning('Assign to product REST errors', [
+                Log::channel('ai_studio')->warning('Assign to product REST errors', [
                     'status' => $status,
                     'body' => $bodyArray ?? $body,
                 ]);
@@ -341,7 +341,7 @@ GRAPHQL;
                 'message' => 'Image added to product gallery.',
             ]);
         } catch (\Exception $e) {
-            Log::error('Assign to product error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::channel('ai_studio')->error('Assign to product error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'message' => config('app.debug') ? $e->getMessage() : 'Failed to add image to product. Please try again.',
             ], 500);
@@ -366,7 +366,7 @@ GRAPHQL;
             $response = Http::timeout(30)->get($url);
             return $response->successful() ? $response->body() : null;
         } catch (\Throwable $e) {
-            Log::warning('Assign to product: could not fetch image URL', ['url' => $url, 'error' => $e->getMessage()]);
+            Log::channel('ai_studio')->warning('Assign to product: could not fetch image URL', ['url' => $url, 'error' => $e->getMessage()]);
             return null;
         }
     }

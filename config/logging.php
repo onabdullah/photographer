@@ -128,23 +128,90 @@ return [
         ],
 
         'bg_remover' => [
-            'driver' => 'single',
-            'path' => storage_path('logs/bg_remover.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'driver' => 'daily',
+            'path'   => storage_path('logs/bg_remover.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 14,
             'replace_placeholders' => true,
         ],
 
         'upscaler' => [
-            'driver' => 'single',
-            'path' => storage_path('logs/upscaler.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'driver' => 'daily',
+            'path'   => storage_path('logs/upscaler.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 14,
             'replace_placeholders' => true,
         ],
 
         'magic_eraser' => [
-            'driver' => 'single',
-            'path' => storage_path('logs/magic_eraser.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'driver' => 'daily',
+            'path'   => storage_path('logs/magic_eraser.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'enhance' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/enhance.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'lighting' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/lighting.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'compressor' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/compressor.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'universal_generate' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/universal_generate.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'install' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/install.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 30,
+            'replace_placeholders' => true,
+        ],
+
+        'sync_shop' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/sync_shop.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'mail' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/mail.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 30,
+            'replace_placeholders' => true,
+        ],
+
+        'ai_studio' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/ai_studio.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 14,
             'replace_placeholders' => true,
         ],
 
