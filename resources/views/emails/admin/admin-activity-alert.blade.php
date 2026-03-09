@@ -21,6 +21,24 @@
     </style>
 </head>
 <body>
+    @php
+        $formatLabel = function (string $key): string {
+            return ucwords(str_replace('_', ' ', $key));
+        };
+
+        $formatSimple = function ($value): string {
+            if ($value === null || $value === '') {
+                return 'N/A';
+            }
+
+            if (is_bool($value)) {
+                return $value ? 'Yes' : 'No';
+            }
+
+            return (string) $value;
+        };
+    @endphp
+
     <div class="container">
         <div class="header">
             <h1>Admin Activity Alert</h1>
@@ -37,10 +55,40 @@
             @if(!empty($details))
                 <div class="details">
                     @foreach($details as $key => $value)
-                        <div class="row">
-                            <div class="label">{{ str_replace('_', ' ', $key) }}</div>
-                            <div class="value">{{ is_scalar($value) || $value === null ? ($value ?? 'N/A') : json_encode($value) }}</div>
-                        </div>
+                        @if(in_array($key, ['before', 'after'], true) && is_array($value))
+                            <div class="row">
+                                <div class="label">{{ $formatLabel($key) }}</div>
+                                <div class="value">
+                                    @if(empty($value))
+                                        N/A
+                                    @else
+                                        @foreach($value as $field => $fieldValue)
+                                            <div><strong>{{ $formatLabel((string) $field) }}:</strong> {{ $formatSimple($fieldValue) }}</div>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
+                        @elseif(is_array($value))
+                            <div class="row">
+                                <div class="label">{{ $formatLabel((string) $key) }}</div>
+                                <div class="value">
+                                    @if(empty($value))
+                                        N/A
+                                    @elseif(array_is_list($value))
+                                        {{ implode(', ', array_map(fn ($item) => $formatSimple($item), $value)) }}
+                                    @else
+                                        @foreach($value as $field => $fieldValue)
+                                            <div><strong>{{ $formatLabel((string) $field) }}:</strong> {{ $formatSimple($fieldValue) }}</div>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
+                        @else
+                            <div class="row">
+                                <div class="label">{{ $formatLabel((string) $key) }}</div>
+                                <div class="value">{{ $formatSimple($value) }}</div>
+                            </div>
+                        @endif
                     @endforeach
                 </div>
             @endif

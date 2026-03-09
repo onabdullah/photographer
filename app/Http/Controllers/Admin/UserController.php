@@ -65,6 +65,9 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        $actor = request()->user('admin') ?? request()->user();
+        $this->enforceSuperAdminSelfOnly($actor, $user);
+
         return Inertia::render('Admin/Pages/Users/Edit', [
             'user'  => $user->only(['id', 'name', 'email', 'admin_role_id', 'status']),
             'roles' => AdminRole::select('id', 'name')->get(),
@@ -126,6 +129,7 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $actor = $request->user('admin') ?? $request->user();
+        $this->enforceSuperAdminSelfOnly($actor, $user);
         $previous = $user->only(['name', 'email', 'role', 'admin_role_id', 'status']);
 
         $data = $request->validate([
@@ -159,6 +163,7 @@ class UserController extends Controller
     public function updateStatus(Request $request, User $user)
     {
         $actor = $request->user('admin') ?? $request->user();
+        $this->enforceSuperAdminSelfOnly($actor, $user);
         $previousStatus = $user->status;
         $newStatus = $user->status === 'active' ? 'inactive' : 'active';
         $user->update(['status' => $newStatus]);
@@ -253,5 +258,26 @@ class UserController extends Controller
             ),
             subject: 'Your team account access — ' . config('app.name'),
         );
+    }
+
+    private function enforceSuperAdminSelfOnly(?User $actor, User $target): void
+    {
+        if (! $this->isSuperAdminUser($target)) {
+            return;
+        }
+
+        if (! $actor || (int) $actor->id !== (int) $target->id) {
+            abort(403, 'Only the superadmin can edit their own account.');
+        }
+    }
+
+    private function isSuperAdminUser(User $user): bool
+    {
+        if ($user->role === 'super_admin') {
+            return true;
+        }
+
+        $permissions = $user->adminRole?->permissions ?? [];
+        return in_array('*', $permissions, true);
     }
 }

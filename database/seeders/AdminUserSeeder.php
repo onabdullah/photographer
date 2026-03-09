@@ -42,5 +42,15 @@ class AdminUserSeeder extends Seeder
             'admin_role_id' => $superAdminRole->id,
             'status' => $user->status ?: 'active',
         ])->save();
+
+        // Keep all super-admin operators bound to the Super Admin role so newly
+        // seeded permissions/wildcard behavior are inherited consistently.
+        User::query()
+            ->where('role', 'super_admin')
+            ->where(function ($q) use ($superAdminRole) {
+                $q->whereNull('admin_role_id')
+                    ->orWhere('admin_role_id', '!=', $superAdminRole->id);
+            })
+            ->update(['admin_role_id' => $superAdminRole->id]);
     }
 }
