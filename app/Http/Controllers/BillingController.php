@@ -3,11 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsCurrentShop;
+use App\Models\Plan;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Osiset\ShopifyApp\Actions\GetPlanUrl;
+use Osiset\ShopifyApp\Objects\Values\NullablePlanId;
+use Osiset\ShopifyApp\Objects\Values\ShopId;
 
 class BillingController extends Controller
 {
     use GetsCurrentShop;
+
+    /* ─── Plans page ─────────────────────────────────────────────── */
 
     public function billing(Request $request)
     {
@@ -18,13 +26,156 @@ class BillingController extends Controller
 
         $plan = $shop->plan;
 
+        $plans = Plan::orderBy('price')->get(['id', 'name', 'price', 'trial_days', 'monthly_credits']);
+
         return \Inertia\Inertia::render('Shopify/Billing', [
-            'credits' => $shop->ai_credits_balance ?? 0,
+            'credits'     => $shop->ai_credits_balance ?? 0,
             'currentPlan' => $plan ? [
-                'name' => $plan->name,
-                'price' => $plan->price ?? 0,
-                'credits_per_month' => $plan->monthly_credits ?? 0,
+                'id'               => $plan->id,
+                'name'             => $plan->name,
+                'price'            => (float) $plan->price,
+                'credits_per_month'=> (int) ($plan->monthly_credits ?? 0),
             ] : null,
+            'plans' => $plans->map(fn ($p) => [
+                'id'               => $p->id,
+                'name'             => $p->name,
+                'price'            => (float) $p->price,
+                'trial_days'       => (int) ($p->trial_days ?? 0),
+                'credits_per_month'=> (int) ($p->monthly_credits ?? 0),
+            ])->values(),
         ]);
+    }
+
+    /* ─── Subscribe to a recurring plan ─────────────────────────── */
+
+    /**
+     * Returns the Shopify billing confirmation URL for the requested plan.
+     * The frontend calls this via redirect: window.open(url) or App Bridge redirect.
+     */
+    public function subscribe(Request $request, GetPlanUrl $getPlanUrl): JsonResponse
+    {
+        $shop = $this->currentShop($request);
+        if (! $shop) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        $planId = (int) $request->input('plan_id');
+        $host   = (string) $request->input('host', '');
+
+        $plan = Plan::find($planId);
+        if (! $plan) {
+            return response()->json(['error' => 'Plan not found'], 404);
+        }
+
+        try {
+            $url = $getPlanUrl(
+                ShopId::fromNative($shop->getId()->toNative()),
+                NullablePlanId::fromNative($planId),
+                $host,
+            );
+
+            return response()->json(['confirmation_url' => $url]);
+        } catch (\Throwable $e) {
+            Log::error('BillingController@subscribe error', [
+                'shop'    => $shop->name,
+                'plan_id' => $planId,
+                'error'   => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Could not generate billing URL. Please try again.'], 500);
+        }
+    }
+
+    /* ─── One-time credit top-up ─────────────────────────────────── */
+
+    /**
+     * Credit top-ups are stored as Shopify ApplicationCharge (one-time).
+     * We create the charge via REST and return the confirmation URL.
+     */
+    public function topUp(Request $request): JsonResponse
+    {
+        $shop = $this->currentShop($request);
+        if (! $shop) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        $packs = [
+            'pack-100'  => ['credits' => 100,  'price' => 5.99,  'name' => '100 AI Credits'],
+            'pack-250'  => ['credits' => 250,  'price' => 8.99,  'name' => '250 AI Credits'],
+            'pack-500'  => ['credits' => 500,  'price' => 16.99, 'name' => '500 AI Credits'],
+            'pack-1000' => ['credits' => 1000, 'price' => 21.99, 'name' => '1,000 AI Credits'],
+        ];
+
+        $packId = $request->input('pack_id');
+        if (! isset($packs[$packId])) {
+            return response()->json(['error' => 'Invalid credit pack'], 422);
+        }
+
+        $pack        = $packs[$packId];
+        $redirectUrl = rtrim(config('app.url'), '/') . '/shopify/billing/topup/callback';
+
+        try {
+            $response = $shop->api()->rest('POST', '/admin/api/2025-10/application_charges.json', [
+                'application_charge' => [
+                    'name'         => $pack['name'],
+                    'price'        => $pack['price'],
+                    'return_url'   => $redirectUrl,
+                    'test'         => (bool) env('SHOPIFY_TEST_CHARGES', true),
+                ],
+            ]);
+
+            $confirmationUrl = $response['body']['application_charge']['confirmation_url'] ?? null;
+            if (! $confirmationUrl) {
+                throw new \RuntimeException('Shopify did not return a confirmation URL');
+            }
+
+            // Stash pending pack in session so callback can credit it
+            session([
+                'pending_topup' => [
+                    'pack_id'    => $packId,
+                    'credits'    => $pack['credits'],
+                    'charge_id'  => $response['body']['application_charge']['id'],
+                    'shop'       => $shop->name,
+                ],
+            ]);
+
+            return response()->json(['confirmation_url' => $confirmationUrl]);
+        } catch (\Throwable $e) {
+            Log::error('BillingController@topUp error', [
+                'shop'    => $shop->name,
+                'pack_id' => $packId,
+                'error'   => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Could not create charge. Please try again.'], 500);
+        }
+    }
+
+    /* ─── Top-up callback (after merchant approves) ──────────────── */
+
+    public function topUpCallback(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $shop = $this->currentShop($request);
+        if (! $shop) {
+            return redirect()->route('billing')->with('error', 'Session expired. Please try again.');
+        }
+
+        $pending = session('pending_topup');
+        if (! $pending || $pending['shop'] !== $shop->name) {
+            return redirect()->route('billing')->with('error', 'Invalid callback.');
+        }
+
+        // Verify charge is accepted
+        $chargeId = $pending['charge_id'];
+        $response = $shop->api()->rest('GET', "/admin/api/2025-10/application_charges/{$chargeId}.json");
+        $status   = $response['body']['application_charge']['status'] ?? null;
+
+        if ($status === 'accepted') {
+            $shop->increment('ai_credits_balance', (int) $pending['credits']);
+            session()->forget('pending_topup');
+            return redirect()->route('billing')->with('success', "Added {$pending['credits']} credits to your account!");
+        }
+
+        return redirect()->route('billing')->with('error', 'Charge was not accepted.');
     }
 }

@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             AppStatsSeeder::class,
             AiStudioToolSettingsSeeder::class,
+            PlansSeeder::class,
         ]);
     }
 

@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import ShopifyLayout from '@/Shopify/Layouts/ShopifyLayout';
 import {
   Page,
@@ -10,9 +11,11 @@ import {
   Badge,
   Box,
   ProgressBar,
+  Banner,
 } from '@shopify/polaris';
 import { Camera, Zap, Clock, Check } from 'lucide-react';
 import MagicButton from '@/Shopify/Components/MagicButton';
+import axios from 'axios';
 
 const TEAL = '#468A9A';
 
@@ -44,15 +47,57 @@ const SCALE_FEATURES = [
   'Dedicated success manager',
 ];
 
-export default function Billing({ credits, currentPlan }) {
+export default function Billing({ credits, currentPlan, plans = [] }) {
   const planName = currentPlan?.name ?? 'Free Trial';
   const creditsRemaining = typeof credits === 'number' ? credits : 0;
   const totalCreditsPerMonth = currentPlan?.credits_per_month ?? 5;
-  const progress = totalCreditsPerMonth > 0 ? Math.min(1, creditsRemaining / totalCreditsPerMonth) : 0;
+  const progress = totalCreditsPerMonth > 0 ? Math.min(100, Math.round((creditsRemaining / totalCreditsPerMonth) * 100)) : 0;
 
-  const isFree = planName === 'Free Trial';
+  const isFree = !currentPlan || planName === 'Free Trial';
   const isPro = planName === 'Pro Plan' || planName === 'Pro';
   const isScale = planName === 'Scale';
+
+  const [subscribingId, setSubscribingId] = useState(null);
+  const [toppingUpId, setToppingUpId] = useState(null);
+  const [billingError, setBillingError] = useState('');
+
+  const host = new URLSearchParams(window.location.search).get('host') ?? '';
+
+  const handleSubscribe = useCallback(async (planId) => {
+    if (subscribingId) return;
+    setBillingError('');
+    setSubscribingId(planId);
+    try {
+      const { data } = await axios.post('/shopify/billing/subscribe', { plan_id: planId, host });
+      if (data.confirmation_url) {
+        // Redirect the top-level frame so Shopify billing page loads outside the iframe
+        window.top.location.replace(data.confirmation_url);
+      }
+    } catch (err) {
+      setBillingError(err.response?.data?.error ?? 'Could not start billing. Please try again.');
+      setSubscribingId(null);
+    }
+  }, [subscribingId, host]);
+
+  const handleTopUp = useCallback(async (packId) => {
+    if (toppingUpId) return;
+    setBillingError('');
+    setToppingUpId(packId);
+    try {
+      const { data } = await axios.post('/shopify/billing/top-up', { pack_id: packId });
+      if (data.confirmation_url) {
+        window.top.location.replace(data.confirmation_url);
+      }
+    } catch (err) {
+      setBillingError(err.response?.data?.error ?? 'Could not start top-up. Please try again.');
+      setToppingUpId(null);
+    }
+  }, [toppingUpId]);
+
+  // Resolve plan IDs from server-provided plans list
+  const proPlan = plans.find(p => p.name === 'Pro' || p.name === 'Pro Plan');
+  const scalePlan = plans.find(p => p.name === 'Scale');
+
 
   return (
     <ShopifyLayout>
@@ -61,6 +106,12 @@ export default function Billing({ credits, currentPlan }) {
         subtitle="Manage your AI credits and choose the plan that fits your business scale."
       >
         <BlockStack gap="600">
+          {billingError && (
+            <Banner tone="critical" onDismiss={() => setBillingError('')}>
+              {billingError}
+            </Banner>
+          )}
+
           {/* 1. Current Account Status Banner */}
           <Card className="billing-status-card">
             <Box padding="400">
@@ -162,7 +213,14 @@ export default function Billing({ credits, currentPlan }) {
                     {isPro ? (
                       <Button fullWidth disabled>Current Plan</Button>
                     ) : (
-                      <MagicButton fullWidth>Upgrade to Pro</MagicButton>
+                      <MagicButton
+                        fullWidth
+                        loading={subscribingId === proPlan?.id}
+                        disabled={!!subscribingId || !proPlan}
+                        onClick={() => proPlan && handleSubscribe(proPlan.id)}
+                      >
+                        {subscribingId === proPlan?.id ? 'Redirecting…' : 'Upgrade to Pro'}
+                      </MagicButton>
                     )}
                   </BlockStack>
                 </Box>
@@ -199,8 +257,14 @@ export default function Billing({ credits, currentPlan }) {
                     {isScale ? (
                       <Button fullWidth disabled>Current Plan</Button>
                     ) : (
-                      <Button fullWidth variant="primary">
-                        Upgrade to Scale
+                      <Button
+                        fullWidth
+                        variant="primary"
+                        loading={subscribingId === scalePlan?.id}
+                        disabled={!!subscribingId || !scalePlan}
+                        onClick={() => scalePlan && handleSubscribe(scalePlan.id)}
+                      >
+                        {subscribingId === scalePlan?.id ? 'Redirecting…' : 'Upgrade to Scale'}
                       </Button>
                     )}
                   </BlockStack>
@@ -259,8 +323,15 @@ export default function Billing({ credits, currentPlan }) {
                           </Text>
                         </div>
                         <Box paddingBlockStart="200">
-                          <Button fullWidth variant="tertiary" size="medium" disabled={isFree}>
-                            Buy Now
+                          <Button
+                            fullWidth
+                            variant="tertiary"
+                            size="medium"
+                            disabled={isFree || !!toppingUpId}
+                            loading={toppingUpId === pack.id}
+                            onClick={() => !isFree && handleTopUp(pack.id)}
+                          >
+                            {toppingUpId === pack.id ? 'Redirecting…' : 'Buy Now'}
                           </Button>
                         </Box>
                       </BlockStack>

@@ -40,6 +40,9 @@ Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMis
 
     // Plans & Billing
     Route::get('/plans', [\App\Http\Controllers\BillingController::class, 'billing'])->name('billing');
+    Route::post('/billing/subscribe', [\App\Http\Controllers\BillingController::class, 'subscribe'])->name('billing.subscribe');
+    Route::post('/billing/top-up', [\App\Http\Controllers\BillingController::class, 'topUp'])->name('billing.topup');
+    Route::get('/billing/topup/callback', [\App\Http\Controllers\BillingController::class, 'topUpCallback'])->name('billing.topup.callback');
 
     // Help & Support
     Route::get('/help', [\App\Http\Controllers\HelpController::class, 'help'])->name('help');
