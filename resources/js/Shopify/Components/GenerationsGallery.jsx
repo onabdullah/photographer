@@ -20,7 +20,6 @@ import {
   Box,
   Icon,
   Tooltip,
-  Modal,
   ChoiceList,
 } from '@shopify/polaris';
 import {
@@ -29,7 +28,7 @@ import {
   ImageIcon,
   ImageMagicIcon,
 } from '@shopify/polaris-icons';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import axios from 'axios';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -90,11 +89,43 @@ export default function GenerationsGallery({
   );
   const [isExporting, setIsExporting]               = useState(false);
 
-  /* ── white backdrop for modals (matches resource-picker style) ── */
+  /* ── App Bridge ui-modal refs ── */
+  const deleteModalRef = useRef(null);
+  const exportModalRef = useRef(null);
+  const isExportingRef = useRef(false);
+  useEffect(() => { isExportingRef.current = isExporting; }, [isExporting]);
+
+  /* show / hide delete modal */
   useEffect(() => {
-    document.body.classList.toggle('gallery-modal-open', deleteModalGen !== null || exportModalOpen);
-    return () => document.body.classList.remove('gallery-modal-open');
-  }, [deleteModalGen, exportModalOpen]);
+    const el = deleteModalRef.current;
+    if (!el) return;
+    if (deleteModalGen !== null) el.show?.(); else el.hide?.();
+  }, [deleteModalGen]);
+
+  /* handle delete modal closed via App Bridge X button */
+  useEffect(() => {
+    const el = deleteModalRef.current;
+    if (!el) return;
+    const onHide = () => setDeleteModalGen(null);
+    el.addEventListener('hide', onHide);
+    return () => el.removeEventListener('hide', onHide);
+  }, []);
+
+  /* show / hide export modal */
+  useEffect(() => {
+    const el = exportModalRef.current;
+    if (!el) return;
+    if (exportModalOpen) el.show?.(); else el.hide?.();
+  }, [exportModalOpen]);
+
+  /* handle export modal closed via App Bridge X button */
+  useEffect(() => {
+    const el = exportModalRef.current;
+    if (!el) return;
+    const onHide = () => { if (!isExportingRef.current) setExportModalOpen(false); };
+    el.addEventListener('hide', onHide);
+    return () => el.removeEventListener('hide', onHide);
+  }, []);
 
   /* ── filtered list ── */
   const filtered = useMemo(() => {
@@ -353,50 +384,22 @@ export default function GenerationsGallery({
         </Card>
       </Box>
 
-      {/* Delete modal */}
-      <Modal
-        open={deleteModalGen !== null}
-        onClose={() => setDeleteModalGen(null)}
-        title="Delete image permanently?"
-        primaryAction={{
-          content: 'Delete permanently',
-          destructive: true,
-          onAction: handleDeleteConfirm,
-        }}
-        secondaryActions={[{
-          content: 'Cancel',
-          onAction: () => setDeleteModalGen(null),
-        }]}
-      >
-        <Modal.Section>
+      {/* Delete modal – ui-modal renders backdrop at Shopify admin level */}
+      <ui-modal id="gallery-delete-modal" ref={deleteModalRef}>
+        <div style={{ padding: '20px' }}>
           <Text as="p">
             This image will be permanently removed from your gallery. This action cannot be undone.
           </Text>
-        </Modal.Section>
-      </Modal>
+        </div>
+        <ui-title-bar title="Delete image permanently?">
+          <button variant="primary" tone="critical" onClick={handleDeleteConfirm}>Delete permanently</button>
+          <button onClick={() => setDeleteModalGen(null)}>Cancel</button>
+        </ui-title-bar>
+      </ui-modal>
 
-      {/* Export modal */}
-      <Modal
-        open={exportModalOpen}
-        onClose={() => !isExporting && setExportModalOpen(false)}
-        title="Export Your Masterpieces"
-        primaryAction={{
-          content: isExporting ? 'Creating ZIP…' : 'Export',
-          onAction: handleExportZip,
-          loading: isExporting,
-          disabled:
-            isExporting ||
-            (exportType === 'specific_tool'
-              ? generations.filter((g) => (g.tool_used || '') === exportSpecificTool).length === 0
-              : filtered.length === 0),
-        }}
-        secondaryActions={[{
-          content: 'Cancel',
-          onAction: () => setExportModalOpen(false),
-          disabled: isExporting,
-        }]}
-      >
-        <Modal.Section>
+      {/* Export modal – ui-modal renders backdrop at Shopify admin level */}
+      <ui-modal id="gallery-export-modal" ref={exportModalRef}>
+        <div style={{ padding: '20px' }}>
           <BlockStack gap="400">
             <Text as="p" tone="subdued">
               All your creations are securely processed and ready for download. Select how you'd like
@@ -444,8 +447,25 @@ export default function GenerationsGallery({
                 : `${filtered.length} image${filtered.length !== 1 ? 's' : ''} will be included based on your current filters.`}
             </Text>
           </BlockStack>
-        </Modal.Section>
-      </Modal>
+        </div>
+        <ui-title-bar title="Export Your Masterpieces">
+          <button
+            variant="primary"
+            onClick={handleExportZip}
+            disabled={
+              isExporting ||
+              (exportType === 'specific_tool'
+                ? generations.filter((g) => (g.tool_used || '') === exportSpecificTool).length === 0
+                : filtered.length === 0) || undefined
+            }
+          >
+            {isExporting ? 'Creating ZIP…' : 'Export'}
+          </button>
+          <button onClick={() => !isExporting && setExportModalOpen(false)} disabled={isExporting || undefined}>
+            Cancel
+          </button>
+        </ui-title-bar>
+      </ui-modal>
     </>
   );
 }

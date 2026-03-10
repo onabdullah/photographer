@@ -1425,16 +1425,6 @@
   color: var(--premium-teal);
 }
 
-/* Browse from Store modal – dark backdrop */
-body.ai-browse-modal-open .Polaris-Backdrop {
-  background: rgba(0, 0, 0, 0.5) !important;
-}
-
-/* Gallery delete / export modals – dark backdrop (matches resource-picker style) */
-body.gallery-modal-open .Polaris-Backdrop {
-  background: rgba(0, 0, 0, 0.5) !important;
-}
-
 /* Browse from Store – professional product & image picker */
 .browse-product-row {
   display: flex;

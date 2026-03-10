@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Modal, BlockStack, Text, Box, InlineStack } from '@shopify/polaris';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { BlockStack, Text, Box, InlineStack } from '@shopify/polaris';
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 import { Sparkles, Rocket, TrendingUp } from 'lucide-react';
@@ -31,6 +31,28 @@ export default function WelcomeModal() {
   const { width, height } = useWindowSize();
   const [isOpen, setIsOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const modalRef = useRef(null);
+
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    setShowConfetti(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, 'true');
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = modalRef.current;
+    if (!el) return;
+    if (isOpen) el.show?.(); else el.hide?.();
+  }, [isOpen]);
+
+  useEffect(() => {
+    const el = modalRef.current;
+    if (!el) return;
+    el.addEventListener('hide', handleClose);
+    return () => el.removeEventListener('hide', handleClose);
+  }, [handleClose]);
 
   // On mount: if user has never seen the modal, open it
   useEffect(() => {
@@ -46,14 +68,6 @@ export default function WelcomeModal() {
     const timer = setTimeout(() => setShowConfetti(false), CONFETTI_DURATION_MS);
     return () => clearTimeout(timer);
   }, [isOpen]);
-
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-    setShowConfetti(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, 'true');
-    }
-  }, []);
 
   return (
     <>
@@ -75,9 +89,9 @@ export default function WelcomeModal() {
         </div>
       )}
 
-      <Modal open={isOpen} onClose={handleClose} title="Welcome to the Future e-commerce ✨">
+      <ui-modal id="welcome-modal" ref={modalRef}>
         {/* Top – 5 free credits + two lines */}
-        <Modal.Section>
+        <div style={{ padding: '20px' }}>
           <BlockStack gap="300" align="center" inlineAlign="center">
             <Text as="p" variant="bodyLg">
               You got{' '}
@@ -101,10 +115,10 @@ export default function WelcomeModal() {
               </Text>
             </BlockStack>
           </BlockStack>
-        </Modal.Section>
+        </div>
 
         {/* Value props – subtle card, left-aligned */}
-        <Modal.Section>
+        <div style={{ padding: '0 20px' }}>
           <Box
             padding="400"
             background="bg-surface-secondary"
@@ -128,17 +142,20 @@ export default function WelcomeModal() {
               ))}
             </BlockStack>
           </Box>
-        </Modal.Section>
+        </div>
 
         {/* CTA – small button */}
-        <Modal.Section>
+        <div style={{ padding: '20px' }}>
           <BlockStack gap="300" inlineAlign="center">
             <MagicButton size="slim" onClick={handleClose}>
               Let's Create Magic 🚀
             </MagicButton>
           </BlockStack>
-        </Modal.Section>
-      </Modal>
+        </div>
+        <ui-title-bar title="Welcome to the Future e-commerce ✨">
+          <button variant="primary" onClick={handleClose}>Let's Create Magic 🚀</button>
+        </ui-title-bar>
+      </ui-modal>
     </>
   );
 }

@@ -11,9 +11,8 @@ import {
   ChoiceList,
   Button,
   Banner,
-  Modal,
 } from '@shopify/polaris';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { TitleBar } from '@shopify/app-bridge-react';
 import MagicButton from '@/Shopify/Components/MagicButton';
@@ -73,6 +72,21 @@ export default function Settings() {
   const [settings, setSettings] = useState(initialFromServer);
   const [isSaving, setIsSaving] = useState(false);
   const [clearHistoryModalOpen, setClearHistoryModalOpen] = useState(false);
+  const clearHistoryModalRef = useRef(null);
+
+  useEffect(() => {
+    const el = clearHistoryModalRef.current;
+    if (!el) return;
+    if (clearHistoryModalOpen) el.show?.(); else el.hide?.();
+  }, [clearHistoryModalOpen]);
+
+  useEffect(() => {
+    const el = clearHistoryModalRef.current;
+    if (!el) return;
+    const onHide = () => setClearHistoryModalOpen(false);
+    el.addEventListener('hide', onHide);
+    return () => el.removeEventListener('hide', onHide);
+  }, []);
 
   // Sync local state when server sends new initial (e.g. after save or navigation)
   useEffect(() => {
@@ -217,18 +231,8 @@ export default function Settings() {
           </Layout>
 
           {/* Clear history confirmation modal */}
-          <Modal
-            open={clearHistoryModalOpen}
-            onClose={closeClearHistoryModal}
-            title="Clear generation history?"
-            primaryAction={{
-              content: 'Clear history',
-              destructive: true,
-              onAction: handleConfirmClearHistory,
-            }}
-            secondaryActions={[{ content: 'Cancel', onAction: closeClearHistoryModal }]}
-          >
-            <Modal.Section>
+          <ui-modal id="clear-history-modal" ref={clearHistoryModalRef}>
+            <div style={{ padding: '20px' }}>
               <BlockStack gap="400">
                 <Banner tone="critical">
                   This action cannot be undone. All your generated images and history on our servers will be permanently deleted.
@@ -237,8 +241,12 @@ export default function Settings() {
                   If you clear your history, you will lose access to previously generated images stored by this app. Your Shopify products and their images are not affected.
                 </Text>
               </BlockStack>
-            </Modal.Section>
-          </Modal>
+            </div>
+            <ui-title-bar title="Clear generation history?">
+              <button variant="primary" tone="critical" onClick={handleConfirmClearHistory}>Clear history</button>
+              <button onClick={closeClearHistoryModal}>Cancel</button>
+            </ui-title-bar>
+          </ui-modal>
         </BlockStack>
       </Page>
     </ShopifyLayout>

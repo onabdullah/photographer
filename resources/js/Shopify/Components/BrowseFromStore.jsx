@@ -1,5 +1,4 @@
 import {
-  Modal,
   TextField,
   BlockStack,
   InlineStack,
@@ -41,13 +40,22 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const gridRef = useRef(null);
   const loadMoreRef = useRef(null);
+  const uiModalRef = useRef(null);
+
+  /* ── App Bridge ui-modal show/hide ── */
+  useEffect(() => {
+    const el = uiModalRef.current;
+    if (!el) return;
+    if (open) el.show?.(); else el.hide?.();
+  }, [open]);
 
   useEffect(() => {
-    if (open) {
-      document.body.classList.add('ai-browse-modal-open');
-    }
-    return () => document.body.classList.remove('ai-browse-modal-open');
-  }, [open]);
+    const el = uiModalRef.current;
+    if (!el) return;
+    const onHide = () => onClose?.();
+    el.addEventListener('hide', onHide);
+    return () => el.removeEventListener('hide', onHide);
+  }, [onClose]);
 
   const fetchProducts = useCallback(async (cursor = null, append = false) => {
     if (append) {
@@ -125,6 +133,12 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
       }
     }
   }, [view, handleBack, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, handleKeyDown]);
 
   useEffect(() => {
     if (!open) return;
@@ -287,24 +301,12 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
   );
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={view === 'products' ? 'Add product' : selectedProduct?.title || 'Select image'}
-      limitHeight
-      primaryAction={
-        view === 'images'
-          ? null
-          : { content: 'Cancel', onAction: onClose }
-      }
-      secondaryActions={
-        view === 'images'
-          ? [{ content: 'Back', onAction: handleBack }]
-          : []
-      }
-      onKeyDown={handleKeyDown}
+    <ui-modal
+      id="browse-from-store-modal"
+      ref={uiModalRef}
+      variant="large"
     >
-      <Modal.Section>
+      <div style={{ padding: '16px', minHeight: '520px' }}>
         <BlockStack gap="400">
           {view === 'products' && (
             <>
@@ -392,7 +394,11 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
             </>
           )}
         </BlockStack>
-      </Modal.Section>
-    </Modal>
+      </div>
+      <ui-title-bar title={view === 'products' ? 'Add product' : selectedProduct?.title || 'Select image'}>
+        {view === 'products' && <button onClick={onClose}>Cancel</button>}
+        {view === 'images'   && <button onClick={handleBack}>Back</button>}
+      </ui-title-bar>
+    </ui-modal>
   );
 }
