@@ -14,23 +14,21 @@ import {
   Icon,
   Tooltip,
   Modal,
-  ChoiceList,
 } from '@shopify/polaris';
 import {
   ArrowRightIcon,
   ExportIcon,
   ImageIcon,
-  ImageMagicIcon,
   PlusCircleIcon,
   MinusCircleIcon,
 } from '@shopify/polaris-icons';
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
+
 import MagicButton from '@/Shopify/Components/MagicButton';
 import BrowseFromStore from '@/Shopify/Components/BrowseFromStore';
+import GenerationsGallery from '@/Shopify/Components/GenerationsGallery';
 
 /* ─────────────────────────────────────────────────────────────────
    Constants
@@ -57,13 +55,6 @@ const RESOLUTION_OPTIONS = [
   { value: '4K', label: '4K', hint: 'Ultra HD',   extraCredits: 3 },
 ];
 
-const GALLERY_DATE_OPTIONS = [
-  { value: 'all',          label: 'All time' },
-  { value: 'today',        label: 'Today' },
-  { value: 'last_7_days',  label: 'Last 7 days' },
-  { value: 'last_30_days', label: 'Last 30 days' },
-];
-
 const GALLERY_TOOL_OPTIONS = [
   { value: 'all',               label: 'All tools' },
   { value: 'universal_generate', label: 'Product AI Lab (VTO)' },
@@ -75,22 +66,6 @@ const PROCESSING_MESSAGES = [
   'Polishing edges…', 'Rendering shadows…', 'Harmonising palette…',
   'Final touches…',
 ];
-
-/* ─────────────────────────────────────────────────────────────────
-   Helpers
-───────────────────────────────────────────────────────────────── */
-function timeAgo(dateStr) {
-  const date = new Date(dateStr);
-  const s = Math.floor((Date.now() - date) / 1000);
-  if (s < 60)  return 'Just now';
-  const m = Math.floor(s / 60);
-  if (m < 60)  return `${m} minute${m === 1 ? '' : 's'} ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24)  return `${h} hour${h === 1 ? '' : 's'} ago`;
-  const d = Math.floor(h / 24);
-  if (d < 7)   return `${d} day${d === 1 ? '' : 's'} ago`;
-  return date.toLocaleDateString();
-}
 
 /** Resolve extra credit cost from resolution value */
 function resolutionExtraCredits(resolution) {
@@ -197,25 +172,18 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
   const [generationId, setGenerationId]           = useState(null);
   const [toast, setToast]                         = useState(null);
   const [recentGenerations, setRecentGenerations] = useState([]);
-  const [gridColumns, setGridColumns]             = useState(4);
-  const [galleryToolFilter, setGalleryToolFilter] = useState('all');
-  const [galleryDateFilter, setGalleryDateFilter] = useState('all');
-  const [exportModalOpen, setExportModalOpen]     = useState(false);
-  const [browseModalOpen, setBrowseModalOpen]     = useState(false);
-  const [exportType, setExportType]               = useState('flat');
-  const [isExporting, setIsExporting]             = useState(false);
-  const [galleryLoadedIds, setGalleryLoadedIds]   = useState(() => new Set());
 
+  const [browseModalOpen, setBrowseModalOpen]     = useState(false);
   /* Pro Reference Drawer */
   const [drawerOpen, setDrawerOpen]     = useState(false);
   const [styleRef, setStyleRef]         = useState(null);
   const [faceRef, setFaceRef]           = useState(null);
-  const [poseRef, setPoseRef]           = useState(null);
 
+  const [poseRef, setPoseRef]           = useState(null);
   const pollRef   = useRef(null);
   const pollCount = useRef(0);
-  const shopifyAppBridge = (typeof window !== 'undefined' && window.shopify) || null;
 
+  const shopifyAppBridge = (typeof window !== 'undefined' && window.shopify) || null;
   /* ── Derived ── */
   const isScanning     = processingStatus === 'uploading' || processingStatus === 'scanning';
   const isDone         = processingStatus === 'done';
@@ -246,18 +214,6 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
 
   useEffect(() => { refetchGallery(); }, [refetchGallery]);
 
-  const filteredGenerations = useMemo(() => {
-    let list = galleryToolFilter === 'all'
-      ? recentGenerations
-      : recentGenerations.filter((g) => g.tool_used === galleryToolFilter);
-    if (galleryDateFilter !== 'all') {
-      const now     = Date.now();
-      const cutoffs = { today: 86400e3, last_7_days: 604800e3, last_30_days: 2592000e3 };
-      const cutoff  = now - (cutoffs[galleryDateFilter] || 0);
-      list = list.filter((g) => new Date(g.updated_at || g.created_at).getTime() >= cutoff);
-    }
-    return list;
-  }, [recentGenerations, galleryToolFilter, galleryDateFilter]);
 
   /* ── Scanning animation ── */
   useEffect(() => {
@@ -389,30 +345,6 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
       showToast(err.response?.data?.message || 'Generation failed. Please try again.', true);
     }
   };
-
-  /* ── Export ── */
-  const handleExportZip = useCallback(async () => {
-    if (!filteredGenerations.length) { setExportModalOpen(false); return; }
-    setIsExporting(true);
-    showToast(`Gathering ${filteredGenerations.length} images for export...`);
-    try {
-      const zip = new JSZip();
-      await Promise.all(
-        filteredGenerations.map(async (gen, i) => {
-          try {
-            const blob   = await fetch(gen.result_image_url).then((r) => r.blob());
-            const folder = exportType === 'categories' ? `${gen.tool_used || 'uncategorized'}/` : '';
-            zip.file(`${folder}masterpiece-${i + 1}.png`, blob);
-          } catch { /* skip */ }
-        }),
-      );
-      const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, 'product-ai-lab-export.zip');
-      showToast('Export successful!');
-      setExportModalOpen(false);
-    } catch { showToast('Failed to create export ZIP', true); }
-    finally { setIsExporting(false); }
-  }, [filteredGenerations, exportType, showToast]);
 
   /* ─────────────────────────────────────────────────────────────
      JSX
@@ -815,164 +747,14 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
             </Layout.Section>
           </Layout>
 
-          {/* ── Recent Masterpieces Gallery ── */}
-          <Box paddingBlockStart="600">
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack align="space-between" blockAlign="center" wrap gap="400">
-                  <Text as="h2" variant="headingMd">Recent Masterpieces</Text>
-                  <InlineStack gap="300" blockAlign="center" wrap>
-                    <InlineStack gap="200" blockAlign="center">
-                      <Text as="span" variant="bodySm" tone="subdued">Date:</Text>
-                      <Select label="" labelHidden options={GALLERY_DATE_OPTIONS} value={galleryDateFilter} onChange={setGalleryDateFilter} />
-                    </InlineStack>
-                    <InlineStack gap="200" blockAlign="center">
-                      <Text as="span" variant="bodySm" tone="subdued">Tool:</Text>
-                      <Select label="" labelHidden options={GALLERY_TOOL_OPTIONS} value={galleryToolFilter} onChange={setGalleryToolFilter} />
-                    </InlineStack>
-                    <InlineStack gap="200" blockAlign="center">
-                      <Text as="span" variant="bodySm" tone="subdued">Grid:</Text>
-                      <Select
-                        label="" labelHidden
-                        options={[
-                          { value: '3', label: '3 columns' },
-                          { value: '4', label: '4 columns' },
-                          { value: '5', label: '5 columns' },
-                          { value: '6', label: '6 columns' },
-                        ]}
-                        value={String(gridColumns)}
-                        onChange={(v) => setGridColumns(Number(v))}
-                      />
-                    </InlineStack>
-                    <InlineStack gap="200" blockAlign="center">
-                      <Button icon={ExportIcon} onClick={() => setExportModalOpen(true)}>Export</Button>
-                    </InlineStack>
-                  </InlineStack>
-                </InlineStack>
-
-                {filteredGenerations.length === 0 ? (
-                  <div className="aistudio-gallery-empty">
-                    <div className="aistudio-gallery-empty-icon" aria-hidden>
-                      <Icon source={ImageMagicIcon} tone="subdued" />
-                    </div>
-                    <Text as="h3" variant="headingMd">
-                      {recentGenerations.length === 0
-                        ? 'Your gallery will appear here'
-                        : `No creations for ${GALLERY_TOOL_OPTIONS.find((o) => o.value === galleryToolFilter)?.label ?? 'this filter'}`}
-                    </Text>
-                  </div>
-                ) : (
-                  <div
-                    className="aistudio-gallery aistudio-gallery--masonry"
-                    style={{ ['--gallery-columns']: gridColumns }}
-                  >
-                    {filteredGenerations.map((gen) => (
-                      <div key={gen.id} className="aistudio-gallery-card">
-                        <div className={`aistudio-gallery-card-image-wrap${galleryLoadedIds.has(gen.id) ? ' is-loaded' : ''}`}>
-                          <div className="aistudio-gallery-card-checkerboard">
-                            <div className="aistudio-gallery-card-skeleton" aria-hidden="true" />
-                            <img
-                              src={gen.result_image_url}
-                              alt=""
-                              loading="lazy"
-                              decoding="async"
-                              onLoad={() => setGalleryLoadedIds((prev) => new Set(prev).add(gen.id))}
-                              onError={(e) => {
-                                const img = e.target;
-                                const src = img?.src || gen.result_image_url;
-                                let path = src;
-                                try { if (typeof src === 'string' && src.startsWith('http')) path = new URL(src).pathname; } catch { /* ignore */ }
-                                if (path?.startsWith('/storage/') && typeof window !== 'undefined') {
-                                  img.src = window.location.origin + path;
-                                }
-                              }}
-                            />
-                          </div>
-                          <div className="aistudio-gallery-card-overlay">
-                            <InlineStack gap="200" blockAlign="center">
-                              <Tooltip content="Download">
-                                <Button
-                                  size="slim" icon={ExportIcon} accessibilityLabel="Download"
-                                  onClick={() => {
-                                    const a = document.createElement('a');
-                                    a.href = gen.result_image_url;
-                                    a.download = 'masterpiece.png';
-                                    a.target = '_blank'; a.rel = 'noopener noreferrer';
-                                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                                    showToast('Download started');
-                                    axios.post('/shopify/tools/generation/downloaded', { generation_id: gen.id }).catch(() => {});
-                                  }}
-                                />
-                              </Tooltip>
-                              <Tooltip content="Save to Shopify Product Media">
-                                <Button
-                                  size="slim" icon={ImageIcon} accessibilityLabel="Save to Shopify Product Media"
-                                  onClick={async () => {
-                                    const shopify = shopifyAppBridge;
-                                    if (!shopify?.resourcePicker) { showToast('Open this app from Shopify Admin.', true); return; }
-                                    try {
-                                      const sel    = await shopify.resourcePicker({ type: 'product', action: 'select', multiple: false });
-                                      const items  = Array.isArray(sel) ? sel : (sel?.selection ?? []);
-                                      if (!items.length) return;
-                                      const p = items[0];
-                                      const pid = p.admin_graphql_api_id ?? p.id ?? String(p.id);
-                                      const res = await axios.post('/shopify/assign-to-product', { product_id: pid, generation_id: gen.id });
-                                      if (res.data.success) showToast(res.data.message);
-                                      else throw new Error(res.data.message);
-                                    } catch (err) { showToast(err.response?.data?.message || err.message || 'Failed.', true); }
-                                  }}
-                                />
-                              </Tooltip>
-                            </InlineStack>
-                          </div>
-                        </div>
-                        <div className="aistudio-gallery-card-meta">
-                          <Text as="span" variant="bodySm" tone="subdued">{timeAgo(gen.updated_at || gen.created_at)}</Text>
-                          {gen.shopify_product_id && <Text as="span" variant="bodySm" tone="subdued">{' · '}On product</Text>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </BlockStack>
-            </Card>
-          </Box>
-
-          {/* ── Export Modal ── */}
-          <Modal
-            open={exportModalOpen}
-            onClose={() => !isExporting && setExportModalOpen(false)}
-            title="Export Your Masterpieces"
-            primaryAction={{
-              content: isExporting ? 'Creating ZIP…' : 'Export',
-              onAction: handleExportZip,
-              loading: isExporting,
-              disabled: isExporting || filteredGenerations.length === 0,
-            }}
-            secondaryActions={[{
-              content: 'Cancel',
-              onAction: () => !isExporting && setExportModalOpen(false),
-              disabled: isExporting,
-            }]}
-          >
-            <Modal.Section>
-              <ChoiceList
-                title="Export format"
-                choices={[
-                  { label: 'All in one folder (flat)', value: 'flat' },
-                  { label: 'Organised by tool (folders)', value: 'categories' },
-                ]}
-                selected={[exportType]}
-                onChange={([v]) => setExportType(v)}
-              />
-              <Box paddingBlockStart="400">
-                <Text variant="bodySm" tone="subdued" as="p">
-                  {filteredGenerations.length} image{filteredGenerations.length !== 1 ? 's' : ''} will be included
-                  based on your current filters.
-                </Text>
-              </Box>
-            </Modal.Section>
-          </Modal>
+          <GenerationsGallery
+            generations={recentGenerations}
+            toolFilterOptions={GALLERY_TOOL_OPTIONS}
+            shopifyAppBridge={shopifyAppBridge}
+            showToast={showToast}
+            exportFileName="product-ai-lab-export.zip"
+            onGenerationsChange={setRecentGenerations}
+          />
         </BlockStack>
       </Page>
 

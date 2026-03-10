@@ -16,25 +16,22 @@ import {
   Icon,
   Tooltip,
   Modal,
-  ChoiceList,
+
   Checkbox,
   RangeSlider,
 } from '@shopify/polaris';
 import {
   ArrowRightIcon,
-  DeleteIcon,
   ExportIcon,
   ImageIcon,
-  ImageMagicIcon,
   PlusCircleIcon,
 } from '@shopify/polaris-icons';
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
 import MagicButton from '@/Shopify/Components/MagicButton';
 import BrowseFromStore from '@/Shopify/Components/BrowseFromStore';
+import GenerationsGallery from '@/Shopify/Components/GenerationsGallery';
 
 const AI_TOOLS = [
   { value: 'magic_eraser', label: 'Magic Eraser' },
@@ -516,10 +513,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [jobId, setJobId] = useState(null);
   const [generationId, setGenerationId] = useState(null);
   const [recentGenerations, setRecentGenerations] = useState([]);
-  const [gridColumns, setGridColumns] = useState(4);
-  const [galleryToolFilter, setGalleryToolFilter] = useState('all');
-  const [galleryDateFilter, setGalleryDateFilter] = useState('all');
-  const [exportModalOpen, setExportModalOpen] = useState(false);
   const [lastCompletedTool, setLastCompletedTool] = useState(null); // 'remove_bg' | 'compressor' | 'upscale' | 'magic_eraser' | 'enhance' | 'lighting'
   const [compressorLevel, setCompressorLevel] = useState(40); // 0–100: how much to compress (0=minimal, 100=max). Maps to quality 95→60.
   const [inputImageSize, setInputImageSize] = useState(null); // bytes when known (e.g. from file upload)
@@ -539,12 +532,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [magicEraserCursorPos, setMagicEraserCursorPos] = useState({ x: -100, y: -100 });
   const [magicEraserCursorVisible, setMagicEraserCursorVisible] = useState(false);
   const [compareSliderPosition, setCompareSliderPosition] = useState(50); // 0-100 for before/after
-  const [exportType, setExportType] = useState('flat'); // 'flat', 'categories', 'specific_tool'
-  const [exportSpecificTool, setExportSpecificTool] = useState('background_remover');
-  const [isExporting, setIsExporting] = useState(false);
   const [processingMessageIndex, setProcessingMessageIndex] = useState(0);
-  const [galleryImageLoadedIds, setGalleryImageLoadedIds] = useState(() => new Set());
-  const [deleteModalGen, setDeleteModalGen] = useState(null);
 
   const showToast = useCallback((message, isError = false) => {
     setToast({ message, isError });
@@ -1250,80 +1238,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     refetchRecentGenerations();
   }, [isRemoveBgDone, refetchRecentGenerations]);
 
-  const filteredGenerations = useMemo(() => {
-    let filtered = galleryToolFilter === 'all'
-      ? recentGenerations
-      : recentGenerations.filter((g) => (g.tool_used || '') === galleryToolFilter);
 
-    if (galleryDateFilter !== 'all') {
-      const now = new Date();
-      filtered = filtered.filter((g) => {
-        const gDate = new Date(g.updated_at || g.created_at);
-        if (galleryDateFilter === 'today') {
-          return gDate.toDateString() === now.toDateString();
-        }
-        const diffDays = (now - gDate) / (1000 * 60 * 60 * 24);
-        if (galleryDateFilter === 'last_7_days') {
-          return diffDays <= 7;
-        }
-        if (galleryDateFilter === 'last_30_days') {
-          return diffDays <= 30;
-        }
-        return true;
-      });
-    }
-    return filtered;
-  }, [recentGenerations, galleryToolFilter, galleryDateFilter]);
-
-  const handleExportZip = useCallback(async () => {
-    let gensToExport = filteredGenerations;
-    if (exportType === 'specific_tool') {
-      gensToExport = recentGenerations.filter((g) => (g.tool_used || '') === exportSpecificTool);
-    }
-
-    if (!gensToExport || gensToExport.length === 0) {
-      showToast('No creations to export');
-      setExportModalOpen(false);
-      return;
-    }
-    setIsExporting(true);
-    showToast(`Gathering ${gensToExport.length} images for export...`);
-
-    try {
-      const zip = new JSZip();
-
-      const promises = gensToExport.map(async (gen, index) => {
-        try {
-          const response = await fetch(gen.result_image_url);
-          if (!response.ok) throw new Error('Failed to fetch image');
-          const blob = await response.blob();
-
-          let folderPath = '';
-          if (exportType === 'categories') {
-            const tool = gen.tool_used || 'uncategorized';
-            folderPath = `${tool}/`;
-          }
-
-          const filename = `${folderPath}masterpiece-${index + 1}.png`;
-          zip.file(filename, blob);
-        } catch (err) {
-          console.error('Failed to zip image', err);
-        }
-      });
-
-      await Promise.all(promises);
-
-      const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, 'ai-studio-export.zip');
-
-      showToast('Export successful!');
-      setExportModalOpen(false);
-    } catch (err) {
-      showToast('Failed to create export ZIP', true);
-    } finally {
-      setIsExporting(false);
-    }
-  }, [filteredGenerations, exportType, showToast]);
 
   const dropZoneContent = (
     <DropZone.FileUpload
@@ -2040,179 +1955,14 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
             </Layout.Section>
           </Layout>
 
-          {/* Recent Masterpieces – dynamic grid gallery */}
-          <Box paddingBlockStart="600">
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack align="space-between" blockAlign="center" wrap gap="400">
-                  <Text as="h2" variant="headingMd">Recent Masterpieces</Text>
-                  <InlineStack gap="300" blockAlign="center" wrap>
-                    <InlineStack gap="200" blockAlign="center">
-                      <Text as="span" variant="bodySm" tone="subdued">Date:</Text>
-                      <Select
-                        label=""
-                        labelHidden
-                        options={GALLERY_DATE_OPTIONS}
-                        value={galleryDateFilter}
-                        onChange={setGalleryDateFilter}
-                      />
-                    </InlineStack>
-                    <InlineStack gap="200" blockAlign="center">
-                      <Text as="span" variant="bodySm" tone="subdued">Tool:</Text>
-                      <Select
-                        label=""
-                        labelHidden
-                        options={GALLERY_TOOL_OPTIONS}
-                        value={galleryToolFilter}
-                        onChange={setGalleryToolFilter}
-                      />
-                    </InlineStack>
-                    <InlineStack gap="200" blockAlign="center">
-                      <Text as="span" variant="bodySm" tone="subdued">Grid:</Text>
-                      <Select
-                        label=""
-                        labelHidden
-                        options={[
-                          { value: '3', label: '3 columns' },
-                          { value: '4', label: '4 columns' },
-                          { value: '5', label: '5 columns' },
-                          { value: '6', label: '6 columns' },
-                        ]}
-                        value={String(gridColumns)}
-                        onChange={(v) => setGridColumns(Number(v))}
-                      />
-                    </InlineStack>
-                    <InlineStack gap="200" blockAlign="center">
-                      <Button icon={ExportIcon} onClick={() => setExportModalOpen(true)}>
-                        Export
-                      </Button>
-                    </InlineStack>
-                  </InlineStack>
-                </InlineStack>
-                {(() => {
-                  const filtered = filteredGenerations;
-
-                  return filtered.length === 0 ? (
-                    <div className="aistudio-gallery-empty">
-                      <div className="aistudio-gallery-empty-icon" aria-hidden>
-                        <Icon source={ImageMagicIcon} tone="subdued" />
-                      </div>
-                      <Text as="h3" variant="headingMd">
-                        {recentGenerations.length === 0
-                          ? 'Your gallery will appear here'
-                          : `No creations for ${GALLERY_TOOL_OPTIONS.find((o) => o.value === galleryToolFilter)?.label ?? 'this tool'}`}
-                      </Text>
-                    </div>
-                  ) : (
-                    <div
-                      className="aistudio-gallery aistudio-gallery--masonry"
-                      style={{ ['--gallery-columns']: gridColumns }}
-                    >
-                      {filtered.map((gen) => (
-                        <div key={gen.id} className="aistudio-gallery-card">
-                          <div className={`aistudio-gallery-card-image-wrap${galleryImageLoadedIds.has(gen.id) ? ' is-loaded' : ''}`}>
-                            <div className="aistudio-gallery-card-checkerboard">
-                              <div className="aistudio-gallery-card-skeleton" aria-hidden="true" />
-                              <img
-                                src={gen.result_image_url}
-                                alt=""
-                                loading="lazy"
-                                decoding="async"
-                                onLoad={() => setGalleryImageLoadedIds((prev) => new Set(prev).add(gen.id))}
-                                onError={(e) => {
-                                  const img = e.target;
-                                  const src = img?.src || gen.result_image_url;
-                                  let path = src;
-                                  try {
-                                    if (typeof src === 'string' && src.startsWith('http')) path = new URL(src).pathname;
-                                  } catch (_) { /* ignore */ }
-                                  if (path && typeof path === 'string' && path.startsWith('/storage/') && typeof window !== 'undefined') {
-                                    img.src = window.location.origin + path;
-                                  }
-                                }}
-                              />
-                            </div>
-                            <div className="aistudio-gallery-card-overlay">
-                              <InlineStack gap="200" blockAlign="center">
-                                <Tooltip content="Download">
-                                  <Button
-                                    size="slim"
-                                    icon={ExportIcon}
-                                    accessibilityLabel="Download"
-                                    onClick={() => {
-                                      const a = document.createElement('a');
-                                      a.href = gen.result_image_url;
-                                      a.download = 'masterpiece.png';
-                                      a.target = '_blank';
-                                      a.rel = 'noopener noreferrer';
-                                      document.body.appendChild(a);
-                                      a.click();
-                                      document.body.removeChild(a);
-                                      showToast('Download started');
-                                      axios.post('/shopify/tools/generation/downloaded', { generation_id: gen.id }).catch(() => {});
-                                    }}
-                                  />
-                                </Tooltip>
-                                <Tooltip content="Save to Product">
-                                  <Button
-                                    size="slim"
-                                    icon={ImageIcon}
-                                    accessibilityLabel="Save to Product"
-                                    onClick={async () => {
-                                      setGenerationId(gen.id);
-                                      const shopify = shopifyAppBridge;
-                                      if (!shopify?.resourcePicker) {
-                                        showToast('Open this app from Shopify Admin to use Save to Product.', true);
-                                        return;
-                                      }
-                                      try {
-                                        const selection = await shopify.resourcePicker({ type: 'product', action: 'select', multiple: false });
-                                        const selected = Array.isArray(selection) ? selection : (selection && selection.selection) ?? [];
-                                        if (!selected.length) return;
-                                        const product = selected[0];
-                                        const productId = product.admin_graphql_api_id ?? product.id ?? String(product.id);
-                                        const res = await axios.post('/shopify/assign-to-product', { product_id: productId, generation_id: gen.id });
-                                        if (res.data.success) {
-                                          showToast(res.data.message);
-                                          setRecentGenerations((prev) =>
-                                            prev.map((g) => (g.id === gen.id ? { ...g, shopify_product_id: productId } : g))
-                                          );
-                                        } else throw new Error(res.data.message);
-                                      } catch (err) {
-                                        showToast(err.response?.data?.message || err.message || 'Failed to add to product.', true);
-                                      }
-                                    }}
-                                  />
-                                </Tooltip>
-                                <Tooltip content="Delete">
-                                  <Button
-                                    size="slim"
-                                    icon={DeleteIcon}
-                                    accessibilityLabel="Delete"
-                                    onClick={() => setDeleteModalGen(gen)}
-                                  />
-                                </Tooltip>
-                              </InlineStack>
-                            </div>
-                          </div>
-                          <div className="aistudio-gallery-card-meta">
-                            <Text as="span" variant="bodySm" tone="subdued">
-                              {timeAgo(gen.updated_at || gen.created_at)}
-                            </Text>
-                            {gen.shopify_product_id && (
-                              <Text as="span" variant="bodySm" tone="subdued">
-                                {' · '}On product
-                              </Text>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </BlockStack>
-            </Card>
-          </Box>
+          <GenerationsGallery
+            generations={recentGenerations}
+            toolFilterOptions={GALLERY_TOOL_OPTIONS}
+            shopifyAppBridge={shopifyAppBridge}
+            showToast={showToast}
+            exportFileName="ai-studio-export.zip"
+            onGenerationsChange={setRecentGenerations}
+          />
         </BlockStack>
 
         <BrowseFromStore
@@ -2220,102 +1970,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
           onClose={() => setBrowseModalOpen(false)}
           onSelectImage={handleBrowseSelectImage}
         />
-
-        <Modal
-          open={deleteModalGen !== null}
-          onClose={() => setDeleteModalGen(null)}
-          title="Delete image permanently?"
-          primaryAction={{
-            content: 'Delete permanently',
-            destructive: true,
-            onAction: async () => {
-              const gen = deleteModalGen;
-              setDeleteModalGen(null);
-              try {
-                await axios.delete(`/shopify/tools/generation/${gen.id}`);
-                setRecentGenerations((prev) => prev.filter((g) => g.id !== gen.id));
-                showToast('Image deleted.');
-              } catch {
-                showToast('Could not delete image. Please try again.', true);
-              }
-            },
-          }}
-          secondaryActions={[
-            {
-              content: 'Cancel',
-              onAction: () => setDeleteModalGen(null),
-            },
-          ]}
-        >
-          <Modal.Section>
-            <Text as="p">This image will be permanently removed from your gallery. This action cannot be undone.</Text>
-          </Modal.Section>
-        </Modal>
-
-        <Modal
-          open={exportModalOpen}
-          onClose={() => !isExporting && setExportModalOpen(false)}
-          title="Export Your Masterpieces"
-          primaryAction={{
-            content: isExporting ? 'Creating ZIP...' : 'Export',
-            onAction: handleExportZip,
-            loading: isExporting,
-            disabled: isExporting || (exportType === 'specific_tool'
-              ? recentGenerations.filter(g => (g.tool_used || '') === exportSpecificTool).length === 0
-              : filteredGenerations.length === 0
-            ),
-          }}
-          secondaryActions={[
-            {
-              content: 'Cancel',
-              onAction: () => setExportModalOpen(false),
-              disabled: isExporting,
-            },
-          ]}
-        >
-          <Modal.Section>
-            <BlockStack gap="400">
-              <Text as="p" tone="subdued">
-                We value your privacy and data security. All of your creations are securely processed and are fully ready for download. Please select how you'd like to organize your exported files.
-              </Text>
-
-              <Text as="p" tone="subdued">
-                <strong>Instructions:</strong><br />
-                1. Select your preferred export format below.<br />
-                2. Click "Export" to automatically assemble your ZIP file.<br />
-                3. Keep this window open until the download is complete. Large exports may take a few moments.
-              </Text>
-
-              <ChoiceList
-                title="Export Organization"
-                choices={[
-                  { label: 'All in one folder (Uses current filters)', value: 'flat' },
-                  { label: 'Organized by Category (Uses current filters)', value: 'categories', helpText: 'Creates a separate folder for each AI tool inside the zip file.' },
-                  { label: 'Specific Tool (Ignores filters)', value: 'specific_tool', helpText: 'Download all creations specifically for one AI tool.' },
-                ]}
-                selected={[exportType]}
-                onChange={(val) => setExportType(val[0])}
-              />
-
-              {exportType === 'specific_tool' && (
-                <Box paddingBlockStart="200">
-                  <Select
-                    label="Select Tool to Export"
-                    options={GALLERY_TOOL_OPTIONS.filter(o => o.value !== 'all').map(o => {
-                      const count = recentGenerations.filter(g => (g.tool_used || '') === o.value).length;
-                      return {
-                        value: o.value,
-                        label: `${o.label} (${count})`
-                      };
-                    })}
-                    value={exportSpecificTool}
-                    onChange={setExportSpecificTool}
-                  />
-                </Box>
-              )}
-            </BlockStack>
-          </Modal.Section>
-        </Modal>
       </Page>
     </ShopifyLayout>
   );
