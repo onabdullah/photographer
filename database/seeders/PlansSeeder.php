@@ -19,7 +19,7 @@ class PlansSeeder extends Seeder
     {
         $plans = [
             [
-                'type'            => PlanType::RECURRING()->getValue(),
+                'type'            => PlanType::RECURRING()->toNative(),
                 'name'            => 'Free Trial',
                 'price'           => 0.00,
                 'capped_amount'   => null,
@@ -30,7 +30,7 @@ class PlansSeeder extends Seeder
                 'monthly_credits' => 5,
             ],
             [
-                'type'            => PlanType::RECURRING()->getValue(),
+                'type'            => PlanType::RECURRING()->toNative(),
                 'name'            => 'Pro',
                 'price'           => 19.99,
                 'capped_amount'   => null,
@@ -41,7 +41,7 @@ class PlansSeeder extends Seeder
                 'monthly_credits' => 500,
             ],
             [
-                'type'            => PlanType::RECURRING()->getValue(),
+                'type'            => PlanType::RECURRING()->toNative(),
                 'name'            => 'Scale',
                 'price'           => 49.99,
                 'capped_amount'   => null,
