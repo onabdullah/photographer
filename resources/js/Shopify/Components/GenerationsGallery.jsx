@@ -29,7 +29,6 @@ import {
   ImageMagicIcon,
 } from '@shopify/polaris-icons';
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import Masonry from 'react-masonry-css';
 import axios from 'axios';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -89,6 +88,7 @@ export default function GenerationsGallery({
     () => (toolFilterOptions?.find((o) => o.value !== 'all')?.value ?? ''),
   );
   const [isExporting, setIsExporting]               = useState(false);
+  const [deletingId, setDeletingId]                 = useState(null);
 
   /* ── App Bridge ui-modal refs ── */
   const deleteModalRef = useRef(null);
@@ -200,13 +200,19 @@ export default function GenerationsGallery({
   const handleDeleteConfirm = useCallback(async () => {
     const gen = deleteModalGen;
     setDeleteModalGen(null);
-    try {
-      await axios.delete(`/shopify/tools/generation/${gen.id}`);
-      onGenerationsChange?.(generations.filter((g) => g.id !== gen.id));
-      showToast('Image deleted.');
-    } catch {
-      showToast('Could not delete image. Please try again.', true);
-    }
+    // Animate out first, then remove
+    setDeletingId(gen.id);
+    setTimeout(async () => {
+      try {
+        await axios.delete(`/shopify/tools/generation/${gen.id}`);
+        onGenerationsChange?.(generations.filter((g) => g.id !== gen.id));
+        showToast('Image deleted.');
+      } catch {
+        showToast('Could not delete image. Please try again.', true);
+      } finally {
+        setDeletingId(null);
+      }
+    }, 280);
   }, [deleteModalGen, generations, onGenerationsChange, showToast]);
 
   /* ── export zip ── */
@@ -314,13 +320,13 @@ export default function GenerationsGallery({
                 </Text>
               </div>
             ) : (
-              <Masonry
-                breakpointCols={gridColumns}
-                className="aistudio-gallery aistudio-masonry"
-                columnClassName="aistudio-masonry-col"
-              >
-                {filtered.map((gen) => (
-                  <div key={gen.id} className="aistudio-gallery-card">
+              <div className="aistudio-masonry" style={{ '--gallery-columns': gridColumns }}>
+                {Array.from({ length: gridColumns }, (_, col) => (
+                  <div key={col} className="aistudio-masonry-col">
+                    {filtered
+                      .filter((_, i) => i % gridColumns === col)
+                      .map((gen) => (
+                  <div key={gen.id} className={`aistudio-gallery-card${deletingId === gen.id ? ' is-deleting' : ''}`}>
                     <div className={`aistudio-gallery-card-image-wrap${loadedIds.has(gen.id) ? ' is-loaded' : ''}`}>
                       <div className="aistudio-gallery-card-checkerboard">
                         <div className="aistudio-gallery-card-skeleton" aria-hidden="true" />
@@ -380,7 +386,9 @@ export default function GenerationsGallery({
                     </div>
                   </div>
                 ))}
-              </Masonry>
+                  </div>
+                ))}
+              </div>
             )}
           </BlockStack>
         </Card>
