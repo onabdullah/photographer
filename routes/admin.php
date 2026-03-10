@@ -131,6 +131,22 @@ Route::middleware(['auth:admin'])->group(function () {
         return Inertia::render('Admin/Pages/Finance');
     })->middleware('admin.permission:finance.view')->name('finance');
 
+    // Plans Management
+    Route::prefix('plans')->name('plans.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\PlanController::class, 'index'])
+            ->middleware('admin.permission:plans.view')
+            ->name('index');
+        Route::post('/', [\App\Http\Controllers\Admin\PlanController::class, 'store'])
+            ->middleware('admin.permission:plans.manage')
+            ->name('store');
+        Route::put('/{id}', [\App\Http\Controllers\Admin\PlanController::class, 'update'])
+            ->middleware('admin.permission:plans.manage')
+            ->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\PlanController::class, 'destroy'])
+            ->middleware('admin.permission:plans.manage')
+            ->name('destroy');
+    });
+
     Route::get('/ai-studio-tools', \App\Http\Controllers\Admin\AiStudioToolsController::class)
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools');
