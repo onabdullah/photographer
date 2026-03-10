@@ -275,44 +275,64 @@ GRAPHQL;
         }
 
         $mutation = <<<'GRAPHQL'
-mutation productAppendImages($input: ProductAppendImagesInput!) {
-  productAppendImages(input: $input) {
-    newImages { id src }
-    userErrors { field message }
+mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
+  productCreateMedia(productId: $productId, media: $media) {
+    media {
+      ... on MediaImage {
+        id
+        image { url }
+      }
+      mediaContentType
+      status
+    }
+    mediaUserErrors { code field message }
   }
 }
 GRAPHQL;
 
         try {
             $response = $shop->api()->graph($mutation, [
-                'input' => [
-                    'id' => $gid,
-                    'images' => [
-                        ['src' => $generation->result_image_url],
+                'productId' => $gid,
+                'media' => [
+                    [
+                        'mediaContentType' => 'IMAGE',
+                        'originalSource'   => $generation->result_image_url,
                     ],
                 ],
             ]);
 
-            $body = $response['body'] ?? null;
-            $data = [];
-            if ($body && method_exists($body, 'toArray')) {
-                $data = $body->toArray();
-            } elseif (is_array($body)) {
-                $data = $body;
-            } elseif (is_object($body) && isset($body->container)) {
-                $data = (array) $body->container;
+            // Top-level GraphQL errors (e.g. unknown field, auth failure)
+            if (! empty($response['errors'])) {
+                $errMsg = is_array($response['errors'])
+                    ? collect($response['errors'])->pluck('message')->filter()->implode(' ')
+                    : (string) $response['errors'];
+                Log::channel('ai_studio')->error('productCreateMedia GraphQL error', [
+                    'errors'      => $response['errors'],
+                    'product_gid' => $gid,
+                ]);
+                return response()->json(['message' => $errMsg ?: 'Failed to add image to product.'], 422);
             }
 
-            $userErrors = $data['data']['productAppendImages']['userErrors'] ?? [];
-            if (! empty($userErrors)) {
-                $msg = collect($userErrors)->pluck('message')->filter()->implode(' ');
-                Log::channel('ai_studio')->warning('productAppendImages userErrors', ['errors' => $userErrors]);
+            $body = $response['body'] ?? null;
+            $data = $body ? $body->toArray() : [];
+
+            $mediaUserErrors = $data['data']['productCreateMedia']['mediaUserErrors'] ?? [];
+            if (! empty($mediaUserErrors)) {
+                $msg = collect($mediaUserErrors)->pluck('message')->filter()->implode(' ');
+                Log::channel('ai_studio')->warning('productCreateMedia mediaUserErrors', [
+                    'errors'      => $mediaUserErrors,
+                    'product_gid' => $gid,
+                ]);
                 return response()->json(['message' => $msg ?: 'Could not add image to product.'], 422);
             }
 
-            $newImages = $data['data']['productAppendImages']['newImages'] ?? [];
-            if (empty($newImages)) {
-                Log::channel('ai_studio')->warning('productAppendImages returned no images', ['data' => $data]);
+            $media = $data['data']['productCreateMedia']['media'] ?? [];
+            if (empty($media)) {
+                Log::channel('ai_studio')->warning('productCreateMedia returned no media', [
+                    'data'        => $data,
+                    'product_gid' => $gid,
+                    'image_url'   => $generation->result_image_url,
+                ]);
                 return response()->json(['message' => 'Failed to add image to product.'], 422);
             }
 
