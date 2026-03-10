@@ -215,6 +215,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'privacy' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/privacy.log'),
+            'level'  => 'info',
+            'days'   => 90,
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

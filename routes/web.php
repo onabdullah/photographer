@@ -68,3 +68,21 @@ Route::get('/export/download/{filename}', [\App\Http\Controllers\AiStudioControl
     ->name('export.download')
     ->where('filename', '[a-f0-9\-]+');
 
+/*
+|--------------------------------------------------------------------------
+| Shopify GDPR / Privacy Webhooks
+|--------------------------------------------------------------------------
+| Required by Shopify App Store rules for every listed app.
+| Registered in Partner Dashboard → App → Privacy → GDPR webhooks.
+| Protected by HMAC verification middleware (no CSRF / session auth needed).
+|--------------------------------------------------------------------------
+*/
+Route::middleware([\App\Http\Middleware\VerifyShopifyWebhookHmac::class])
+    ->prefix('webhooks/privacy')
+    ->name('webhooks.privacy.')
+    ->group(function () {
+        Route::post('customers-data-request', [\App\Http\Controllers\PrivacyWebhookController::class, 'customerDataRequest'])->name('customers-data-request');
+        Route::post('customers-redact',       [\App\Http\Controllers\PrivacyWebhookController::class, 'customerRedact'])->name('customers-redact');
+        Route::post('shop-redact',            [\App\Http\Controllers\PrivacyWebhookController::class, 'shopRedact'])->name('shop-redact');
+    });
+

@@ -42,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // AI Studio Pro smart router
             'shopify/api/ai-studio/generate',
             'shopify/tools/generation/*',
+            'webhooks/privacy/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

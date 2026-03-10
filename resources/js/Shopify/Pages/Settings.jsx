@@ -15,6 +15,7 @@ import {
 } from '@shopify/polaris';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
+import { TitleBar } from '@shopify/app-bridge-react';
 import MagicButton from '@/Shopify/Components/MagicButton';
 
 const IMAGE_FORMAT_OPTIONS = [
@@ -116,30 +117,25 @@ export default function Settings() {
 
   return (
     <ShopifyLayout>
+      {/* App Bridge TitleBar — shows Save/Discard in the Shopify Admin top chrome when there are unsaved changes */}
+      {isDirty ? (
+        <TitleBar title="App Settings">
+          <button variant="primary" onClick={handleSave} disabled={isSaving}>
+            Save
+          </button>
+          <button onClick={handleDiscard} disabled={isSaving}>
+            Discard
+          </button>
+        </TitleBar>
+      ) : (
+        <TitleBar title="App Settings" />
+      )}
       <Page title="App Settings" subtitle="Tailor AI Studio to your workflow.">
         <BlockStack gap="600">
           {successMessage && (
             <Banner tone="success" onDismiss={() => {}}>
               {successMessage}
             </Banner>
-          )}
-          {/* Sticky save bar when dirty */}
-          {isDirty && (
-            <div className="settings-save-bar">
-              <div className="settings-save-bar-inner">
-                <Text as="span" variant="bodyMd" fontWeight="medium">
-                  Unsaved changes
-                </Text>
-                <div className="settings-save-bar-actions">
-                  <Button onClick={handleDiscard} disabled={isSaving}>
-                    Discard
-                  </Button>
-                  <MagicButton onClick={handleSave} loading={isSaving}>
-                    Save
-                  </MagicButton>
-                </div>
-              </div>
-            </div>
           )}
 
           <Layout>

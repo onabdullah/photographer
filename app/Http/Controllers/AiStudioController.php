@@ -7,7 +7,6 @@ use App\Http\Traits\UsesShopifyTokenExchange;
 use App\Models\ImageGeneration;
 use App\Services\AiGenerationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -236,11 +235,10 @@ GRAPHQL;
 
     /**
      * Assign a generation's result image to a Shopify product (product gallery).
-     * Uses REST Admin API Product Image (POST .../images.json) with base64 attachment so the image
-     * is sent in the request body — no staged upload or public URL required.
-     * Requires `write_products` (products scope). Updates ImageGeneration.shopify_product_id.
+     * Uses the GraphQL Admin API productAppendImages mutation — compatible with API 2024-10+.
+     * Requires `write_products` scope. Updates ImageGeneration.shopify_product_id.
      *
-     * @see https://shopify.dev/docs/api/admin-rest/latest/resources/product-image
+     * @see https://shopify.dev/docs/api/admin-graphql/latest/mutations/productAppendImages
      */
     public function assignToProduct(Request $request)
     {
@@ -263,75 +261,58 @@ GRAPHQL;
         }
 
         $productIdInput = $validated['product_id'];
-        $numericProductId = (int) preg_replace('/^gid:\/\/shopify\/Product\//', '', $productIdInput);
+        // Normalise to GID (accept both numeric ID and full GID)
+        if (is_numeric($productIdInput)) {
+            $gid = 'gid://shopify/Product/' . $productIdInput;
+        } elseif (str_starts_with($productIdInput, 'gid://')) {
+            $gid = $productIdInput;
+        } else {
+            return response()->json(['message' => 'Invalid product.'], 422);
+        }
+        $numericProductId = (int) preg_replace('/^gid:\/\/shopify\/Product\//', '', $gid);
         if ($numericProductId <= 0) {
             return response()->json(['message' => 'Invalid product.'], 422);
         }
 
+        $mutation = <<<'GRAPHQL'
+mutation productAppendImages($input: ProductAppendImagesInput!) {
+  productAppendImages(input: $input) {
+    newImages { id src }
+    userErrors { field message }
+  }
+}
+GRAPHQL;
+
         try {
-            $imageContents = $this->getImageContentsFromUrl($generation->result_image_url);
-            if ($imageContents === null || $imageContents === '') {
-                return response()->json(['message' => 'Could not load the image. Try again or use a different image.'], 422);
-            }
-
-            $attachment = base64_encode($imageContents);
-            $filename = 'remove-bg-' . $generation->id . '.png';
-            $path = '/admin/products/' . $numericProductId . '/images.json';
-            $payload = [
-                'image' => [
-                    'attachment' => $attachment,
-                    'filename' => $filename,
+            $response = $shop->api()->graph($mutation, [
+                'input' => [
+                    'id' => $gid,
+                    'images' => [
+                        ['src' => $generation->result_image_url],
+                    ],
                 ],
-            ];
-
-            // Use our HTTP client with 60s timeout (base64 image can be large; default client often times out at 10s)
-            $storedToken = method_exists($shop, 'getAccessToken') ? $shop->getAccessToken()->toNative() : ($shop->password ?? null);
-            $response = $storedToken
-                ? $this->restWithToken($shop->name, $storedToken, 'POST', $path, $payload, 60)
-                : $shop->api()->rest('POST', $path, $payload);
-
-            // If stored token failed (e.g. 401 in embedded app), retry with session token exchange (also 60s timeout)
-            if (! empty($response['errors'])) {
-                $accessToken = $this->getAccessTokenForRequest($shop, $request);
-                if ($accessToken) {
-                    $response = $this->restWithToken($shop->name, $accessToken, 'POST', $path, $payload, 60);
-                }
-            }
-
-            if (! empty($response['errors'])) {
-                $status = $response['status'] ?? null;
-                $body = $response['body'] ?? null;
-                $bodyArray = $body && is_object($body) && method_exists($body, 'toArray') ? $body->toArray() : (is_array($body) ? $body : null);
-                if (! $bodyArray && is_object($body)) {
-                    $bodyArray = isset($body->container) ? (is_array($body->container) ? $body->container : (array) $body->container) : [];
-                }
-                Log::channel('ai_studio')->warning('Assign to product REST errors', [
-                    'status' => $status,
-                    'body' => $bodyArray ?? $body,
-                ]);
-                $errMsg = 'Could not add image to product.';
-                if (is_string($body)) {
-                    $errMsg = (str_contains($body, 'timed out') || str_contains($body, 'Operation timed out'))
-                        ? 'Request timed out. The image may be large — try again or use a smaller image.'
-                        : $body;
-                } elseif ($bodyArray) {
-                    if (isset($bodyArray['errors']) && is_string($bodyArray['errors'])) {
-                        $errMsg = $bodyArray['errors'];
-                    } elseif (isset($bodyArray['errors']) && is_array($bodyArray['errors'])) {
-                        $first = reset($bodyArray['errors']);
-                        $errMsg = is_array($first) ? (reset($first) ?: $errMsg) : (string) $first;
-                    } elseif (isset($bodyArray['image']) && is_array($bodyArray['image'])) {
-                        $errMsg = (string) reset($bodyArray['image']);
-                    } elseif (isset($bodyArray['error'])) {
-                        $errMsg = is_string($bodyArray['error']) ? $bodyArray['error'] : json_encode($bodyArray['error']);
-                    }
-                }
-                return response()->json(['message' => $errMsg], 422);
-            }
+            ]);
 
             $body = $response['body'] ?? null;
-            $image = is_object($body) ? ($body->image ?? null) : ($body['image'] ?? null);
-            if (! $image) {
+            $data = [];
+            if ($body && method_exists($body, 'toArray')) {
+                $data = $body->toArray();
+            } elseif (is_array($body)) {
+                $data = $body;
+            } elseif (is_object($body) && isset($body->container)) {
+                $data = (array) $body->container;
+            }
+
+            $userErrors = $data['data']['productAppendImages']['userErrors'] ?? [];
+            if (! empty($userErrors)) {
+                $msg = collect($userErrors)->pluck('message')->filter()->implode(' ');
+                Log::channel('ai_studio')->warning('productAppendImages userErrors', ['errors' => $userErrors]);
+                return response()->json(['message' => $msg ?: 'Could not add image to product.'], 422);
+            }
+
+            $newImages = $data['data']['productAppendImages']['newImages'] ?? [];
+            if (empty($newImages)) {
+                Log::channel('ai_studio')->warning('productAppendImages returned no images', ['data' => $data]);
                 return response()->json(['message' => 'Failed to add image to product.'], 422);
             }
 
@@ -341,33 +322,10 @@ GRAPHQL;
                 'message' => 'Image added to product gallery.',
             ]);
         } catch (\Exception $e) {
-            Log::channel('ai_studio')->error('Assign to product error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::channel('ai_studio')->error('Assign to product error', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => config('app.debug') ? $e->getMessage() : 'Failed to add image to product. Please try again.',
             ], 500);
-        }
-    }
-
-    /**
-     * Get raw image bytes from a URL. If URL is our app's storage, read from disk; otherwise HTTP get.
-     */
-    private function getImageContentsFromUrl(string $url): ?string
-    {
-        $appUrl = rtrim(config('app.url'), '/');
-        $storagePath = 'storage/';
-        if (str_starts_with($url, $appUrl . '/') && str_contains($url, $storagePath)) {
-            $path = substr($url, strpos($url, $storagePath) + strlen($storagePath));
-            $fullPath = Storage::disk('public')->path($path);
-            if (is_file($fullPath)) {
-                return file_get_contents($fullPath) ?: null;
-            }
-        }
-        try {
-            $response = Http::timeout(30)->get($url);
-            return $response->successful() ? $response->body() : null;
-        } catch (\Throwable $e) {
-            Log::channel('ai_studio')->warning('Assign to product: could not fetch image URL', ['url' => $url, 'error' => $e->getMessage()]);
-            return null;
         }
     }
 
