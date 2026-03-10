@@ -29,7 +29,7 @@ import {
   ImageIcon,
   ImageMagicIcon,
 } from '@shopify/polaris-icons';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import axios from 'axios';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -89,6 +89,12 @@ export default function GenerationsGallery({
     () => (toolFilterOptions?.find((o) => o.value !== 'all')?.value ?? ''),
   );
   const [isExporting, setIsExporting]               = useState(false);
+
+  /* ── white backdrop for modals (matches resource-picker style) ── */
+  useEffect(() => {
+    document.body.classList.toggle('gallery-modal-open', deleteModalGen !== null || exportModalOpen);
+    return () => document.body.classList.remove('gallery-modal-open');
+  }, [deleteModalGen, exportModalOpen]);
 
   /* ── filtered list ── */
   const filtered = useMemo(() => {

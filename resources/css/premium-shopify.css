@@ -1430,6 +1430,11 @@ body.ai-browse-modal-open .Polaris-Backdrop {
   background: rgba(0, 0, 0, 0.5) !important;
 }
 
+/* Gallery delete / export modals – white backdrop (matches resource-picker style) */
+body.gallery-modal-open .Polaris-Backdrop {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
 /* Browse from Store – professional product & image picker */
 .browse-product-row {
   display: flex;
