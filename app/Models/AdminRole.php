@@ -34,6 +34,10 @@ class AdminRole extends Model
         'FINANCE' => [
             'finance.view'      => 'Finance View',
         ],
+        'PLANS' => [
+            'plans.view'        => 'Plans View',
+            'plans.manage'      => 'Plans Manage',
+        ],
         'USERS' => [
             'users.view'        => 'Users View',
             'users.manage'      => 'Users Manage',

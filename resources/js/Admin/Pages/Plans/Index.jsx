@@ -215,39 +215,142 @@ function SlideOver({ open, onClose, title, children }) {
     );
 }
 
-/* ─── Delete confirmation row ─────────────────────────────────────── */
+/* ─── Plan card ───────────────────────────────────────────────────── */
 
-function DeleteConfirm({ plan, onCancel }) {
+function PlanCard({ plan, onEdit, isConfirming, onDeleteToggle }) {
     const { delete: destroy, processing } = useForm();
 
     return (
-        <tr className="bg-red-50 dark:bg-red-950/30">
-            <td colSpan={7} className="px-6 py-4">
-                <div className="flex items-center gap-4">
-                    <TriangleAlert size={16} className="text-red-500 flex-shrink-0" />
-                    <span className="text-sm text-red-700 dark:text-red-300 flex-1">
-                        Delete <strong>{plan.name}</strong>? This cannot be undone.
-                        {plan.merchants_count > 0 && (
-                            <span className="ml-1 font-semibold">
-                                ({plan.merchants_count} merchant{plan.merchants_count !== 1 ? 's' : ''} active — cannot delete.)
+        <div className="card relative overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                        <CreditCard size={18} className="text-primary-600 dark:text-primary-400" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">{plan.name}</p>
+                        <div className="flex items-center flex-wrap gap-1.5 mt-1">
+                            {plan.on_install && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-px rounded text-[10px] font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">
+                                    <ShieldCheck size={9} /> Default
+                                </span>
+                            )}
+                            {plan.test && (
+                                <span className="inline-flex px-1.5 py-px rounded text-[10px] font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
+                                    Test
+                                </span>
+                            )}
+                            <span className={[
+                                'inline-flex items-center px-1.5 py-px rounded text-[10px] font-medium',
+                                plan.type === 'RECURRING'
+                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                    : 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
+                            ].join(' ')}>
+                                {plan.type === 'RECURRING' ? 'Recurring' : 'One-time'}
                             </span>
-                        )}
-                    </span>
-                    {plan.merchants_count === 0 && (
-                        <button
-                            onClick={() => destroy(`/admin/plans/${plan.id}`, { preserveScroll: true })}
-                            disabled={processing}
-                            className="px-3 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
-                        >
-                            {processing ? 'Deleting…' : 'Confirm Delete'}
-                        </button>
-                    )}
-                    <button onClick={onCancel} className="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 transition-colors">
-                        Cancel
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                    <button
+                        onClick={() => onEdit(plan)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                        title="Edit"
+                    >
+                        <Pencil size={13} />
+                    </button>
+                    <button
+                        onClick={() => onDeleteToggle(plan.id)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        title="Delete"
+                    >
+                        <Trash2 size={13} />
                     </button>
                 </div>
-            </td>
-        </tr>
+            </div>
+
+            {/* Price */}
+            <div className="mb-4">
+                {plan.price === 0 ? (
+                    <span className="text-3xl font-bold text-green-600 dark:text-green-400">Free</span>
+                ) : (
+                    <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {fmtPrice(plan.price)}
+                        {plan.type === 'RECURRING' && (
+                            <span className="text-sm font-normal text-gray-400 ml-1">/mo</span>
+                        )}
+                    </span>
+                )}
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto">
+                <div>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Credits</p>
+                    <div className="flex items-center gap-1">
+                        <Sparkles size={11} className="text-orange-400 flex-shrink-0" />
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{fmt(plan.monthly_credits)}</span>
+                    </div>
+                </div>
+                <div>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Trial</p>
+                    {plan.trial_days > 0 ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">
+                            {plan.trial_days}d free
+                        </span>
+                    ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                    )}
+                </div>
+                <div>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Merchants</p>
+                    <div className="flex items-center gap-1">
+                        <Users size={11} className="text-gray-400 flex-shrink-0" />
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{fmt(plan.merchants_count)}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Delete confirm overlay */}
+            {isConfirming && (
+                <div className="absolute inset-0 z-10 rounded-lg bg-white/[.97] dark:bg-gray-900/[.97] flex flex-col items-center justify-center gap-3 p-6">
+                    <TriangleAlert size={22} className="text-red-500" />
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white text-center">
+                        Delete <span className="text-red-600">{plan.name}</span>?
+                    </p>
+                    {plan.merchants_count > 0 ? (
+                        <>
+                            <p className="text-xs text-red-600 dark:text-red-400 text-center">
+                                {plan.merchants_count} merchant{plan.merchants_count !== 1 ? 's' : ''} active — cannot delete.
+                            </p>
+                            <button
+                                onClick={() => onDeleteToggle(null)}
+                                className="px-4 py-1.5 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                Close
+                            </button>
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => destroy(`/admin/plans/${plan.id}`, { preserveScroll: true })}
+                                disabled={processing}
+                                className="px-4 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
+                            >
+                                {processing ? 'Deleting…' : 'Confirm'}
+                            </button>
+                            <button
+                                onClick={() => onDeleteToggle(null)}
+                                className="px-4 py-1.5 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -310,160 +413,26 @@ export default function PlansIndex({ plans, stats }) {
                     ))}
                 </div>
 
-                {/* Plans table */}
-                <div className="card-base overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">All Plans</h2>
-                        <span className="text-xs text-gray-400">{plans.length} plan{plans.length !== 1 ? 's' : ''}</span>
+                {/* Plans grid */}
+                {plans.length === 0 ? (
+                    <div className="card flex flex-col items-center justify-center py-16 gap-3">
+                        <CreditCard size={36} className="text-gray-300 dark:text-gray-600" />
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">No plans yet</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Click "New Plan" to get started.</p>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead className="bg-gray-50 dark:bg-gray-800/60">
-                                <tr>
-                                    {['Plan', 'Type', 'Price', 'Credits / mo', 'Trial', 'Merchants', 'Actions'].map((col, i) => (
-                                        <th
-                                            key={col}
-                                            scope="col"
-                                            className={[
-                                                'py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400',
-                                                i === 0 ? 'pl-6 pr-4 text-left' : i === 6 ? 'pl-4 pr-6 text-right' : 'px-4 text-left',
-                                            ].join(' ')}
-                                        >
-                                            {col}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50 bg-white dark:bg-gray-800">
-                                {plans.map((plan) => (
-                                    <>
-                                        <tr
-                                            key={plan.id}
-                                            className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                                        >
-                                            {/* Plan name */}
-                                            <td className="whitespace-nowrap py-3.5 pl-6 pr-4">
-                                                <div className="flex items-center gap-2.5">
-                                                    <div className="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
-                                                        <CreditCard size={14} className="text-primary-600 dark:text-primary-400" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{plan.name}</p>
-                                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                                            {plan.on_install && (
-                                                                <span className="inline-flex items-center gap-1 px-1.5 py-px rounded text-[10px] font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">
-                                                                    <ShieldCheck size={9} />
-                                                                    Default
-                                                                </span>
-                                                            )}
-                                                            {plan.test && (
-                                                                <span className="inline-flex px-1.5 py-px rounded text-[10px] font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
-                                                                    Test
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* Type */}
-                                            <td className="whitespace-nowrap px-4 py-3.5">
-                                                <span className={[
-                                                    'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
-                                                    plan.type === 'RECURRING'
-                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                                        : 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
-                                                ].join(' ')}>
-                                                    {plan.type === 'RECURRING' ? 'Recurring' : 'One-time'}
-                                                </span>
-                                            </td>
-
-                                            {/* Price */}
-                                            <td className="whitespace-nowrap px-4 py-3.5">
-                                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                    {plan.price === 0 ? (
-                                                        <span className="text-green-600 dark:text-green-400">Free</span>
-                                                    ) : (
-                                                        fmtPrice(plan.price)
-                                                    )}
-                                                </span>
-                                                {plan.price > 0 && plan.type === 'RECURRING' && (
-                                                    <span className="text-xs text-gray-400 ml-1">/mo</span>
-                                                )}
-                                            </td>
-
-                                            {/* Credits */}
-                                            <td className="whitespace-nowrap px-4 py-3.5">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Sparkles size={12} className="text-orange-400 flex-shrink-0" />
-                                                    <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
-                                                        {fmt(plan.monthly_credits)}
-                                                    </span>
-                                                </div>
-                                            </td>
-
-                                            {/* Trial */}
-                                            <td className="whitespace-nowrap px-4 py-3.5 text-sm text-gray-500 dark:text-gray-400">
-                                                {plan.trial_days > 0 ? (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">
-                                                        {plan.trial_days}d free
-                                                    </span>
-                                                ) : '—'}
-                                            </td>
-
-                                            {/* Merchants */}
-                                            <td className="whitespace-nowrap px-4 py-3.5">
-                                                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
-                                                    <Users size={13} className="text-gray-400" />
-                                                    {fmt(plan.merchants_count)}
-                                                </div>
-                                            </td>
-
-                                            {/* Actions */}
-                                            <td className="whitespace-nowrap py-3.5 pl-4 pr-6 text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <button
-                                                        onClick={() => openEdit(plan)}
-                                                        className="p-1.5 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
-                                                        title="Edit plan"
-                                                    >
-                                                        <Pencil size={14} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setConfirmDelete(confirmDelete === plan.id ? null : plan.id)}
-                                                        className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                        title="Delete plan"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-
-                                        {/* Inline delete confirm */}
-                                        {confirmDelete === plan.id && (
-                                            <DeleteConfirm
-                                                key={`delete-${plan.id}`}
-                                                plan={plan}
-                                                onCancel={() => setConfirmDelete(null)}
-                                            />
-                                        )}
-                                    </>
-                                ))}
-
-                                {plans.length === 0 && (
-                                    <tr>
-                                        <td colSpan={7} className="px-6 py-14 text-center">
-                                            <CreditCard size={32} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white">No plans yet</p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Click "New Plan" to get started.</p>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {plans.map((plan) => (
+                            <PlanCard
+                                key={plan.id}
+                                plan={plan}
+                                onEdit={openEdit}
+                                isConfirming={confirmDelete === plan.id}
+                                onDeleteToggle={(id) => setConfirmDelete(id === confirmDelete ? null : id)}
+                            />
+                        ))}
                     </div>
-                </div>
+                )}
 
             </div>
 
