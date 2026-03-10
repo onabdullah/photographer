@@ -29,6 +29,7 @@ import {
   ImageMagicIcon,
 } from '@shopify/polaris-icons';
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import Masonry from 'react-masonry-css';
 import axios from 'axios';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -313,9 +314,10 @@ export default function GenerationsGallery({
                 </Text>
               </div>
             ) : (
-              <div
-                className="aistudio-gallery aistudio-gallery--masonry"
-                style={{ ['--gallery-columns']: gridColumns }}
+              <Masonry
+                breakpointCols={gridColumns}
+                className="aistudio-gallery aistudio-masonry"
+                columnClassName="aistudio-masonry-col"
               >
                 {filtered.map((gen) => (
                   <div key={gen.id} className="aistudio-gallery-card">
@@ -378,7 +380,7 @@ export default function GenerationsGallery({
                     </div>
                   </div>
                 ))}
-              </div>
+              </Masonry>
             )}
           </BlockStack>
         </Card>

@@ -1180,9 +1180,25 @@
   width: 100%;
 }
 
+/* Old CSS-columns masonry – kept for reference, replaced by react-masonry-css below */
 .aistudio-gallery--masonry {
   column-count: var(--gallery-columns, 4);
   column-gap: var(--p-space-300);
+}
+
+/* react-masonry-css: flex container + column children */
+.aistudio-masonry {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.aistudio-masonry-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 .aistudio-gallery-card {
@@ -1194,8 +1210,7 @@
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
   display: flex;
   flex-direction: column;
-  break-inside: avoid;
-  margin-bottom: var(--p-space-300);
+  /* break-inside no longer needed with react-masonry-css */
 }
 
 .aistudio-gallery-card:hover {
