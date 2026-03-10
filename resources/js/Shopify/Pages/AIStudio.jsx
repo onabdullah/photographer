@@ -1356,6 +1356,52 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
               document.body
             )}
 
+          {/* ── Tool Tab Bar ─────────────────────────────────────── */}
+          <div
+            role="tablist"
+            aria-label="AI Tools"
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 8,
+              paddingBottom: 4,
+            }}
+          >
+            {toolOptions.map((tool) => (
+              <button
+                key={tool.value}
+                role="tab"
+                aria-selected={selectedTool === tool.value}
+                type="button"
+                onClick={() => handleToolChange(tool.value)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 8,
+                  border: `2px solid ${
+                    selectedTool === tool.value ? TEAL : 'var(--p-color-border)'
+                  }`,
+                  background:
+                    selectedTool === tool.value
+                      ? `rgba(70,138,154,0.10)`
+                      : 'var(--p-color-bg-surface)',
+                  color:
+                    selectedTool === tool.value
+                      ? TEAL
+                      : 'var(--p-color-text)',
+                  fontWeight: selectedTool === tool.value ? 600 : 400,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  lineHeight: '1.4',
+                  outline: 'none',
+                }}
+              >
+                {tool.label}
+              </button>
+            ))}
+          </div>
+
           <Layout>
             {/* Hero Canvas (left) – massive output area */}
             <Layout.Section>
@@ -1658,14 +1704,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
             <Layout.Section variant="oneThird">
               <Card>
                 <BlockStack gap="400">
-                  <Select
-                    label=""
-                    labelHidden
-                    options={toolOptions}
-                    value={selectedTool}
-                    onChange={handleToolChange}
-                  />
-
                   {selectedTool === 'upscale' && (
                     <BlockStack gap="200">
                       <Text variant="bodySm" as="span" tone="subdued">Upscale factor</Text>
