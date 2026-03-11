@@ -96,6 +96,11 @@ class PlanController extends Controller
             'terms'           => ['nullable', 'string', 'max:255'],
         ]);
 
+        // Check if critical fields are being changed
+        $priceChanged = (float) $plan->price !== (float) $data['price'];
+        $creditsChanged = (int) $plan->monthly_credits !== (int) $data['monthly_credits'];
+        $trialChanged = (int) ($plan->trial_days ?? 0) !== (int) ($data['trial_days'] ?? 0);
+
         // Prevent multiple on_install plans
         if (! empty($data['on_install']) && ! $plan->on_install) {
             Plan::where('on_install', true)->where('id', '!=', $plan->id)->update(['on_install' => false]);
@@ -113,8 +118,18 @@ class PlanController extends Controller
             'terms'           => $data['terms'] ?? null,
         ]);
 
+        // Build success message with warning if critical fields changed
+        $successMessage = 'Plan "' . $plan->name . '" updated successfully.';
+        
+        if ($priceChanged || $creditsChanged || $trialChanged) {
+            $activeCount = Merchant::where('plan_id', $plan->id)->count();
+            if ($activeCount > 0) {
+                $successMessage .= ' Note: ' . $activeCount . ' existing merchant subscription(s) will keep their original terms. Only new subscriptions will use the updated plan details.';
+            }
+        }
+
         return redirect()->route('admin.plans.index')
-            ->with('success', 'Plan "' . $plan->name . '" updated successfully.');
+            ->with('success', $successMessage);
     }
 
     /* ─── Destroy ────────────────────────────────────────────────── */

@@ -34,6 +34,7 @@ function PlanForm({ plan, onClose, mode }) {
         e.preventDefault();
         const opts = {
             preserveScroll: true,
+            preserveState: false, // Force fresh data from server
             onSuccess: () => { reset(); onClose(); },
         };
         if (isEdit) {
