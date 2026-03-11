@@ -102,33 +102,76 @@ class RoleController extends Controller
 
     public function update(Request $request, AdminRole $adminRole)
     {
-        $actor = $request->user('admin') ?? $request->user();
-        $before = $adminRole->only(['name', 'permissions']);
-
-        $data = $request->validate([
-            'name'          => 'required|string|max:255',
-            'permissions'   => 'array',
-            'permissions.*' => 'string|in:' . implode(',', AdminRole::allPermissionKeys()),
+        \Log::channel('single')->info('Role update started', [
+            'role_id' => $adminRole->id,
+            'role_name' => $adminRole->name,
+            'request_data' => $request->all(),
         ]);
 
-        $adminRole->update([
-            'name'        => $data['name'],
-            'permissions' => $data['permissions'] ?? [],
-        ]);
+        try {
+            $actor = $request->user('admin') ?? $request->user();
+            $before = $adminRole->only(['name', 'permissions']);
 
-        AdminActivityNotifier::notify(
-            action: 'Admin role updated',
-            actorName: $actor?->name ?? 'System',
-            actorEmail: $actor?->email,
-            details: [
+            \Log::channel('single')->info('Role update - Before validation', [
                 'role_id' => $adminRole->id,
-                'before' => $before,
-                'after' => $adminRole->fresh()->only(['name', 'permissions']),
-            ],
-        );
+                'before_data' => $before,
+            ]);
 
-        return redirect('/admin/roles/' . $adminRole->id)
-            ->with('success', 'Role updated successfully.');
+            $data = $request->validate([
+                'name'          => 'required|string|max:255',
+                'permissions'   => 'array',
+                'permissions.*' => 'string|in:' . implode(',', AdminRole::allPermissionKeys()),
+            ]);
+
+            \Log::channel('single')->info('Role update - Validation passed', [
+                'role_id' => $adminRole->id,
+                'validated_data' => $data,
+            ]);
+
+            $adminRole->update([
+                'name'        => $data['name'],
+                'permissions' => $data['permissions'] ?? [],
+            ]);
+
+            \Log::channel('single')->info('Role update - Database updated', [
+                'role_id' => $adminRole->id,
+                'after_data' => $adminRole->fresh()->only(['name', 'permissions']),
+            ]);
+
+            AdminActivityNotifier::notify(
+                action: 'Admin role updated',
+                actorName: $actor?->name ?? 'System',
+                actorEmail: $actor?->email,
+                details: [
+                    'role_id' => $adminRole->id,
+                    'before' => $before,
+                    'after' => $adminRole->fresh()->only(['name', 'permissions']),
+                ],
+            );
+
+            \Log::channel('single')->info('Role update - Success', [
+                'role_id' => $adminRole->id,
+            ]);
+
+            return redirect('/admin/roles/' . $adminRole->id)
+                ->with('success', 'Role updated successfully.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::channel('single')->error('Role update - Validation failed', [
+                'role_id' => $adminRole->id,
+                'errors' => $e->errors(),
+                'request_data' => $request->all(),
+            ]);
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::channel('single')->error('Role update - Exception occurred', [
+                'role_id' => $adminRole->id,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+            throw $e;
+        }
     }
 
     public function destroy(AdminRole $adminRole)

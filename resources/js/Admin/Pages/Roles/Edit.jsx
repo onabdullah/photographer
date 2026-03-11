@@ -101,9 +101,44 @@ export default function RoleEdit({ role, allPermissions }) {
 
     const submit = (e) => {
         e.preventDefault();
+        
+        console.log('Role Edit - Form submission started', {
+            role_id: role.id,
+            form_data: data,
+            errors: errors,
+        });
+
         put(`/admin/roles/${role.id}`, {
             preserveScroll: true,
             preserveState: false, // Force fresh data from server
+            onBefore: () => {
+                console.log('Role Edit - Before request', {
+                    role_id: role.id,
+                    data: data,
+                });
+            },
+            onStart: () => {
+                console.log('Role Edit - Request started', {
+                    role_id: role.id,
+                });
+            },
+            onSuccess: (page) => {
+                console.log('Role Edit - Success', {
+                    role_id: role.id,
+                    response: page,
+                });
+            },
+            onError: (errors) => {
+                console.error('Role Edit - Error', {
+                    role_id: role.id,
+                    errors: errors,
+                });
+            },
+            onFinish: () => {
+                console.log('Role Edit - Request finished', {
+                    role_id: role.id,
+                });
+            },
         });
     };
 
