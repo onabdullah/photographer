@@ -26,26 +26,24 @@ const CREDIT_PACKS = [
   { id: 'pack-1000', credits: 1000, price: '$21.99', perCredit: '2.2¢', popular: false },
 ];
 
-const FREE_FEATURES = [
-  '5 AI generations to start',
-  'All AI tools unlocked',
-  'Export to your store',
-];
-
-const PRO_FEATURES = [
-  '500 AI generations / month',
-  'All AI tools unlocked',
-  'Priority support',
-  'Background remover & swap',
-];
-
-const SCALE_FEATURES = [
-  '2,000 AI generations / month',
-  'All AI tools unlocked',
-  'Priority support',
-  'Background remover & swap',
-  'Dedicated success manager',
-];
+// Generate basic features for plans based on their credits
+const generatePlanFeatures = (creditsPerMonth, price) => {
+  const features = [
+    `${creditsPerMonth.toLocaleString()} AI generation${creditsPerMonth !== 1 ? 's' : ''} ${price === 0 ? 'to start' : '/ month'}`,
+    'All AI tools unlocked',
+  ];
+  
+  if (price === 0) {
+    features.push('Export to your store');
+  } else {
+    features.push('Priority support', 'Background remover & swap');
+    if (creditsPerMonth >= 2000) {
+      features.push('Dedicated success manager');
+    }
+  }
+  
+  return features;
+};
 
 export default function Billing({ credits, currentPlan, plans = [] }) {
   const planName = currentPlan?.name ?? 'Free Trial';
@@ -53,9 +51,14 @@ export default function Billing({ credits, currentPlan, plans = [] }) {
   const totalCreditsPerMonth = currentPlan?.credits_per_month ?? 5;
   const progress = totalCreditsPerMonth > 0 ? Math.min(100, Math.round((creditsRemaining / totalCreditsPerMonth) * 100)) : 0;
 
-  const isFree = !currentPlan || planName === 'Free Trial';
-  const isPro = planName === 'Pro Plan' || planName === 'Pro';
-  const isScale = planName === 'Scale';
+  // Sort plans by price (ascending) to display consistently
+  const sortedPlans = [...plans].sort((a, b) => a.price - b.price);
+  
+  // Determine if current plan is free (price = 0)
+  const isFree = !currentPlan || currentPlan.price === 0;
+  
+  // Find the most popular plan (middle one or highest non-free)
+  const popularPlanIndex = sortedPlans.length > 2 ? 1 : sortedPlans.findIndex(p => p.price > 0);
 
   const [subscribingId, setSubscribingId] = useState(null);
   const [toppingUpId, setToppingUpId] = useState(null);
@@ -94,10 +97,8 @@ export default function Billing({ credits, currentPlan, plans = [] }) {
     }
   }, [toppingUpId]);
 
-  // Resolve plan IDs from server-provided plans list
-  const proPlan = plans.find(p => p.name === 'Pro' || p.name === 'Pro Plan');
-  const scalePlan = plans.find(p => p.name === 'Scale');
-
+  // Check if current user is on this plan
+  const isCurrentPlan = (plan) => currentPlan?.id === plan.id;
 
   return (
     <ShopifyLayout>
@@ -141,135 +142,79 @@ export default function Billing({ credits, currentPlan, plans = [] }) {
             <Text variant="headingMd" as="h2" fontWeight="semibold">
               Monthly Subscriptions
             </Text>
-            <InlineGrid columns={{ xs: 1, md: 3 }} gap="400">
-              {/* Free Trial */}
-              <Card>
-                <Box padding="400">
-                  <BlockStack gap="400">
-                    <BlockStack gap="200">
-                      <Text variant="headingLg" as="h3" fontWeight="bold">
-                        Free Trial
-                      </Text>
-                      <InlineStack gap="100" blockAlign="baseline">
-                        <Text variant="heading2Xl" as="span" fontWeight="bold">
-                          $0
-                        </Text>
-                        <Text variant="bodyMd" tone="subdued" as="span">
-                          /mo
-                        </Text>
-                      </InlineStack>
-                      <Text variant="bodySm" tone="subdued">
-                        5 Credits
-                      </Text>
-                    </BlockStack>
-                    <BlockStack gap="200">
-                      {FREE_FEATURES.map((item) => (
-                        <InlineStack key={item} gap="200" blockAlign="center">
-                          <Check size={16} style={{ color: TEAL, flexShrink: 0 }} aria-hidden />
-                          <Text as="span" variant="bodySm">{item}</Text>
-                        </InlineStack>
-                      ))}
-                    </BlockStack>
-                    {isFree ? (
-                      <Button fullWidth disabled>Current Plan</Button>
-                    ) : (
-                      <Button fullWidth variant="tertiary" disabled>Free Trial</Button>
-                    )}
-                  </BlockStack>
-                </Box>
-              </Card>
-
-              {/* Pro Plan – Hero card */}
-              <Card className="billing-plan-hero">
-                <Box padding="400">
-                  <Box position="absolute" insetBlockStart="200" insetInlineEnd="200">
-                    <Badge tone="info">Most Popular</Badge>
-                  </Box>
-                  <BlockStack gap="400">
-                    <BlockStack gap="200">
-                      <Text variant="headingLg" as="h3" fontWeight="bold">
-                        Pro Plan
-                      </Text>
-                      <InlineStack gap="100" blockAlign="baseline">
-                        <Text variant="heading2Xl" as="span" fontWeight="bold">
-                          $19.99
-                        </Text>
-                        <Text variant="bodyMd" tone="subdued" as="span">
-                          /mo
-                        </Text>
-                      </InlineStack>
-                      <Text variant="bodySm" tone="subdued">
-                        500 Credits
-                      </Text>
-                    </BlockStack>
-                    <BlockStack gap="200">
-                      {PRO_FEATURES.map((item) => (
-                        <InlineStack key={item} gap="200" blockAlign="center">
-                          <Check size={16} style={{ color: TEAL, flexShrink: 0 }} aria-hidden />
-                          <Text as="span" variant="bodySm">{item}</Text>
-                        </InlineStack>
-                      ))}
-                    </BlockStack>
-                    {isPro ? (
-                      <Button fullWidth disabled>Current Plan</Button>
-                    ) : (
-                      <MagicButton
-                        fullWidth
-                        loading={subscribingId === proPlan?.id}
-                        disabled={!!subscribingId || !proPlan}
-                        onClick={() => proPlan && handleSubscribe(proPlan.id)}
-                      >
-                        {subscribingId === proPlan?.id ? 'Redirecting…' : 'Upgrade to Pro'}
-                      </MagicButton>
-                    )}
-                  </BlockStack>
-                </Box>
-              </Card>
-
-              {/* Scale */}
-              <Card>
-                <Box padding="400">
-                  <BlockStack gap="400">
-                    <BlockStack gap="200">
-                      <Text variant="headingLg" as="h3" fontWeight="bold">
-                        Scale
-                      </Text>
-                      <InlineStack gap="100" blockAlign="baseline">
-                        <Text variant="heading2Xl" as="span" fontWeight="bold">
-                          $49.99
-                        </Text>
-                        <Text variant="bodyMd" tone="subdued" as="span">
-                          /mo
-                        </Text>
-                      </InlineStack>
-                      <Text variant="bodySm" tone="subdued">
-                        2,000 Credits
-                      </Text>
-                    </BlockStack>
-                    <BlockStack gap="200">
-                      {SCALE_FEATURES.map((item) => (
-                        <InlineStack key={item} gap="200" blockAlign="center">
-                          <Check size={16} style={{ color: TEAL, flexShrink: 0 }} aria-hidden />
-                          <Text as="span" variant="bodySm">{item}</Text>
-                        </InlineStack>
-                      ))}
-                    </BlockStack>
-                    {isScale ? (
-                      <Button fullWidth disabled>Current Plan</Button>
-                    ) : (
-                      <Button
-                        fullWidth
-                        variant="primary"
-                        loading={subscribingId === scalePlan?.id}
-                        disabled={!!subscribingId || !scalePlan}
-                        onClick={() => scalePlan && handleSubscribe(scalePlan.id)}
-                      >
-                        {subscribingId === scalePlan?.id ? 'Redirecting…' : 'Upgrade to Scale'}
-                      </Button>
-                    )}
-                  </BlockStack>
-                </Box>
-              </Card>
+            <InlineGrid columns={{ xs: 1, md: plans.length >= 3 ? 3 : plans.length }} gap="400">
+              {sortedPlans.map((plan, index) => {
+                const planFeatures = generatePlanFeatures(plan.credits_per_month, plan.price);
+                const isPopular = index === popularPlanIndex;
+                const isCurrent = isCurrentPlan(plan);
+                const CardComponent = isPopular ? ({ children, className }) => (
+                  <Card className={`billing-plan-hero ${className || ''}`}>{children}</Card>
+                ) : Card;
+                
+                return (
+                  <CardComponent key={plan.id}>
+                    <Box padding="400">
+                      {isPopular && (
+                        <Box position="absolute" insetBlockStart="200" insetInlineEnd="200">
+                          <Badge tone="info">Most Popular</Badge>
+                        </Box>
+                      )}
+                      <BlockStack gap="400">
+                        <BlockStack gap="200">
+                          <Text variant="headingLg" as="h3" fontWeight="bold">
+                            {plan.name}
+                          </Text>
+                          <InlineStack gap="100" blockAlign="baseline">
+                            <Text variant="heading2Xl" as="span" fontWeight="bold">
+                              ${plan.price.toFixed(2)}
+                            </Text>
+                            <Text variant="bodyMd" tone="subdued" as="span">
+                              /mo
+                            </Text>
+                          </InlineStack>
+                          <Text variant="bodySm" tone="subdued">
+                            {plan.credits_per_month.toLocaleString()} Credits
+                          </Text>
+                        </BlockStack>
+                        <BlockStack gap="200">
+                          {planFeatures.map((item) => (
+                            <InlineStack key={item} gap="200" blockAlign="center">
+                              <Check size={16} style={{ color: TEAL, flexShrink: 0 }} aria-hidden />
+                              <Text as="span" variant="bodySm">{item}</Text>
+                            </InlineStack>
+                          ))}
+                        </BlockStack>
+                        {isCurrent ? (
+                          <Button fullWidth disabled>Current Plan</Button>
+                        ) : plan.price === 0 ? (
+                          <Button fullWidth variant="tertiary" disabled>
+                            {plan.name}
+                          </Button>
+                        ) : isPopular ? (
+                          <MagicButton
+                            fullWidth
+                            loading={subscribingId === plan.id}
+                            disabled={!!subscribingId}
+                            onClick={() => handleSubscribe(plan.id)}
+                          >
+                            {subscribingId === plan.id ? 'Redirecting…' : `Upgrade to ${plan.name}`}
+                          </MagicButton>
+                        ) : (
+                          <Button
+                            fullWidth
+                            variant="primary"
+                            loading={subscribingId === plan.id}
+                            disabled={!!subscribingId}
+                            onClick={() => handleSubscribe(plan.id)}
+                          >
+                            {subscribingId === plan.id ? 'Redirecting…' : `Upgrade to ${plan.name}`}
+                          </Button>
+                        )}
+                      </BlockStack>
+                    </Box>
+                  </CardComponent>
+                );
+              })}
             </InlineGrid>
           </BlockStack>
 
@@ -284,7 +229,7 @@ export default function Billing({ credits, currentPlan, plans = [] }) {
                   </Text>
                   <Text variant="bodyMd" as="p" tone="subdued">
                     {isFree
-                      ? 'Top-up packs are available on Pro or Scale. Upgrade above to unlock.'
+                      ? 'Top-up packs are available on paid plans. Upgrade above to unlock.'
                       : 'Credits roll over and never expire as long as you have an active plan.'}
                   </Text>
                   {!isFree && (
@@ -345,7 +290,7 @@ export default function Billing({ credits, currentPlan, plans = [] }) {
               <div className="billing-topup-lured-overlay" role="presentation">
                 <BlockStack gap="200">
                   <Text variant="bodyMd" fontWeight="semibold" as="p">
-                    Upgrade to Pro or Scale to buy top-up packs
+                    Upgrade to a paid plan to buy top-up packs
                   </Text>
                   <Text variant="bodySm" tone="subdued" as="p">
                     Choose a plan above to unlock one-time credit packs.

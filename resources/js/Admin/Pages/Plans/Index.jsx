@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { useForm, usePage, Link } from '@inertiajs/react';
 import {
-    CreditCard, Plus, Pencil, Trash2, Users, X, Check,
+    CreditCard, Plus, Pencil, Trash2, Users, X,
     Sparkles, DollarSign, ShieldCheck, TriangleAlert,
 } from 'lucide-react';
 
@@ -380,20 +380,6 @@ export default function PlansIndex({ plans, stats }) {
             }
         >
             <div className="space-y-6">
-
-                {/* Flash messages */}
-                {flash.success && (
-                    <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-sm text-green-800 dark:text-green-300">
-                        <Check size={15} className="flex-shrink-0 text-green-600 dark:text-green-400" />
-                        {flash.success}
-                    </div>
-                )}
-                {flash.error && (
-                    <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-800 dark:text-red-300">
-                        <TriangleAlert size={15} className="flex-shrink-0 text-red-500" />
-                        {flash.error}
-                    </div>
-                )}
 
                 {/* Stats row */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
