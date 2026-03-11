@@ -101,7 +101,10 @@ export default function RoleEdit({ role, allPermissions }) {
 
     const submit = (e) => {
         e.preventDefault();
-        put(`/admin/roles/${role.id}`);
+        put(`/admin/roles/${role.id}`, {
+            preserveScroll: true,
+            preserveState: false, // Force fresh data from server
+        });
     };
 
     return (
