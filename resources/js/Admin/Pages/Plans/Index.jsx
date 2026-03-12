@@ -19,7 +19,7 @@ const TYPE_OPTS = [
 const EMPTY_PLAN = {
     name: '', type: 'RECURRING', price: '', trial_days: '0',
     monthly_credits: '', on_install: false, test: false,
-    capped_amount: '', terms: '',
+    capped_amount: '', terms: '', features: [],
 };
 
 /* ─── PlanForm (shared create / edit) ─────────────────────────────── */
@@ -141,6 +141,49 @@ function PlanForm({ plan, onClose, mode }) {
                     />
                     {errors.terms && <p className="form-error">{errors.terms}</p>}
                 </div>
+            </div>
+
+            {/* Plan Features */}
+            <div>
+                <label className="form-label">Plan Features</label>
+                <p className="text-xs text-gray-500 mb-2">Features shown to merchants on billing page</p>
+                <div className="space-y-2">
+                    {(data.features || []).map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={feature}
+                                onChange={(e) => {
+                                    const newFeatures = [...(data.features || [])];
+                                    newFeatures[index] = e.target.value;
+                                    setData('features', newFeatures);
+                                }}
+                                className="form-input flex-1"
+                                placeholder="e.g. 500 AI generations / month"
+                                maxLength={255}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const newFeatures = (data.features || []).filter((_, i) => i !== index);
+                                    setData('features', newFeatures);
+                                }}
+                                className="px-3 py-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={() => setData('features', [...(data.features || []), ''])}
+                        className="btn-secondary text-sm"
+                    >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Feature
+                    </button>
+                </div>
+                {errors.features && <p className="form-error">{errors.features}</p>}
             </div>
 
             {/* Flags */}

@@ -26,7 +26,11 @@ class BillingController extends Controller
 
         $plan = $shop->plan;
 
-        $plans = Plan::orderBy('price')->get(['id', 'name', 'price', 'trial_days', 'monthly_credits']);
+        $plans = Plan::orderBy('price')->get(['id', 'name', 'price', 'trial_days', 'monthly_credits', 'features']);
+
+        $creditPacks = \App\Models\CreditPack::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get(['id', 'credits', 'price', 'per_credit_cost', 'is_popular']);
 
         return \Inertia\Inertia::render('Shopify/Billing', [
             'credits'     => $shop->ai_credits_balance ?? 0,
@@ -42,6 +46,14 @@ class BillingController extends Controller
                 'price'            => (float) $p->price,
                 'trial_days'       => (int) ($p->trial_days ?? 0),
                 'credits_per_month'=> (int) ($p->monthly_credits ?? 0),
+                'features'         => $p->features ?? [],
+            ])->values(),
+            'creditPacks' => $creditPacks->map(fn ($pack) => [
+                'id'              => $pack->id,
+                'credits'         => $pack->credits,
+                'price'           => (float) $pack->price,
+                'per_credit_cost' => $pack->per_credit_cost ? (float) $pack->per_credit_cost : null,
+                'is_popular'      => (bool) $pack->is_popular,
             ])->values(),
         ]);
     }

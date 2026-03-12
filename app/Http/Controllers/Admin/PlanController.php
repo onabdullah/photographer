@@ -26,6 +26,7 @@ class PlanController extends Controller
             'test'           => (bool) $p->test,
             'capped_amount'  => $p->capped_amount ? (float) $p->capped_amount : null,
             'terms'          => $p->terms,
+            'features'       => $p->features ?? [],
             'merchants_count'=> Merchant::where('plan_id', $p->id)->count(),
         ])->values();
 
@@ -55,6 +56,8 @@ class PlanController extends Controller
             'test'            => ['boolean'],
             'capped_amount'   => ['nullable', 'numeric', 'min:0'],
             'terms'           => ['nullable', 'string', 'max:255'],
+            'features'        => ['nullable', 'array'],
+            'features.*'      => ['string', 'max:255'],
         ]);
 
         // Prevent multiple on_install plans
@@ -94,6 +97,8 @@ class PlanController extends Controller
             'test'            => ['boolean'],
             'capped_amount'   => ['nullable', 'numeric', 'min:0'],
             'terms'           => ['nullable', 'string', 'max:255'],
+            'features'        => ['nullable', 'array'],
+            'features.*'      => ['string', 'max:255'],
         ]);
 
         // Check if critical fields are being changed
@@ -116,6 +121,7 @@ class PlanController extends Controller
             'test'            => $data['test'] ?? false,
             'capped_amount'   => $data['capped_amount'] ?? null,
             'terms'           => $data['terms'] ?? null,
+            'features'        => $data['features'] ?? [],
         ]);
 
         // Build success message with warning if critical fields changed

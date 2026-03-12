@@ -37,7 +37,7 @@ const LINE_CLS = {
 const QUICK_GROUPS = [
     { label: 'DB',      cmds: ['migrate:status', 'migrate', 'migrate:fresh --seed', 'db:seed', 'migrate:rollback'] },
     { label: 'Roles & Permissions', cmds: ['roles:seed', 'db:seed --class=RolesAndPermissionsSeeder'] },
-    { label: 'Seeders', cmds: ['db:seed', 'db:seed --class=PlansSeeder', 'db:seed --class=RolesAndPermissionsSeeder', 'db:seed --class=AdminUserSeeder', 'db:seed --class=AppStatsSeeder', 'ai-studio:aggregate-daily'] },
+    { label: 'Seeders', cmds: ['db:seed', 'db:seed --class=PlansSeeder', 'db:seed --class=CreditPackSeeder', 'db:seed --class=RolesAndPermissionsSeeder', 'db:seed --class=AdminUserSeeder', 'db:seed --class=AppStatsSeeder', 'ai-studio:aggregate-daily'] },
     { label: 'Merchants', cmds: ['merchants:sync-shop-details --missing', 'merchants:sync-shop-details --all'] },
     { label: 'Cache',   cmds: ['cache:clear', 'config:cache', 'config:clear', 'view:clear', 'route:clear', 'optimize', 'optimize:clear'] },
     { label: 'Info',    cmds: ['about', 'version', 'env', 'route:list --compact', 'schedule:list'] },

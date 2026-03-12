@@ -29,6 +29,7 @@ import {
     Sparkles,
     DollarSign,
     CreditCard,
+    Package,
 } from 'lucide-react';
 
 // ============================================================
@@ -62,6 +63,7 @@ const SECTIONS = [
             { name: 'Merchants',     href: '/admin/merchants',     icon: Store,       permission: 'merchants.view' },
             { name: 'AI Processing', href: '/admin/ai-processing', icon: Zap,         permission: 'ai.view'        },
             { name: 'Plans',         href: '/admin/plans',         icon: CreditCard,  permission: 'plans.view'     },
+            { name: 'Credit Packs',  href: '/admin/credit-packs',  icon: Package,     permission: 'plans.view'     },
         ],
     },
     {

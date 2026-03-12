@@ -24,5 +24,15 @@ class Plan extends ShopifyPlan
         'test',
         'capped_amount',
         'terms',
+        'features',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'features' => 'array',
     ];
 }

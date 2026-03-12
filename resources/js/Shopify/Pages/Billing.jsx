@@ -19,33 +19,7 @@ import axios from 'axios';
 
 const TEAL = '#468A9A';
 
-const CREDIT_PACKS = [
-  { id: 'pack-100', credits: 100, price: '$5.99', perCredit: '6¢', popular: false },
-  { id: 'pack-250', credits: 250, price: '$8.99', perCredit: '3.6¢', popular: true },
-  { id: 'pack-500', credits: 500, price: '$16.99', perCredit: '3.4¢', popular: false },
-  { id: 'pack-1000', credits: 1000, price: '$21.99', perCredit: '2.2¢', popular: false },
-];
-
-// Generate basic features for plans based on their credits
-const generatePlanFeatures = (creditsPerMonth, price) => {
-  const features = [
-    `${creditsPerMonth.toLocaleString()} AI generation${creditsPerMonth !== 1 ? 's' : ''} ${price === 0 ? 'to start' : '/ month'}`,
-    'All AI tools unlocked',
-  ];
-  
-  if (price === 0) {
-    features.push('Export to your store');
-  } else {
-    features.push('Priority support', 'Background remover & swap');
-    if (creditsPerMonth >= 2000) {
-      features.push('Dedicated success manager');
-    }
-  }
-  
-  return features;
-};
-
-export default function Billing({ credits, currentPlan, plans = [] }) {
+export default function Billing({ credits, currentPlan, plans = [], creditPacks = [] }) {
   const planName = currentPlan?.name ?? 'Free Trial';
   const creditsRemaining = typeof credits === 'number' ? credits : 0;
   const totalCreditsPerMonth = currentPlan?.credits_per_month ?? 5;
@@ -144,7 +118,10 @@ export default function Billing({ credits, currentPlan, plans = [] }) {
             </Text>
             <InlineGrid columns={{ xs: 1, md: plans.length >= 3 ? 3 : plans.length }} gap="400">
               {sortedPlans.map((plan, index) => {
-                const planFeatures = generatePlanFeatures(plan.credits_per_month, plan.price);
+                const planFeatures = plan.features && plan.features.length > 0 ? plan.features : [
+                  `${plan.credits_per_month.toLocaleString()} AI generation${plan.credits_per_month !== 1 ? 's' : ''} ${plan.price === 0 ? 'to start' : '/ month'}`,
+                  'All AI tools unlocked',
+                ];
                 const isPopular = index === popularPlanIndex;
                 const isCurrent = isCurrentPlan(plan);
                 const CardComponent = isPopular ? ({ children, className }) => (
@@ -240,48 +217,55 @@ export default function Billing({ credits, currentPlan, plans = [] }) {
                   )}
                 </BlockStack>
                 <InlineGrid columns={{ xs: 1, sm: 2, lg: 4 }} gap="400">
-                  {CREDIT_PACKS.map((pack) => (
-                    <div
-                      key={pack.id}
-                      className={`billing-topup-card ${pack.popular ? 'billing-topup-card-popular' : ''}`}
-                    >
-                      {pack.popular && !isFree && (
-                        <div className="billing-topup-card-badge">
-                          <Badge tone="info">Best value</Badge>
-                        </div>
-                      )}
-                      <BlockStack gap="300">
-                        <div className="billing-topup-amount">
-                          <Text variant="heading2Xl" as="span" fontWeight="bold">
-                            {pack.credits.toLocaleString()}
-                          </Text>
-                          <Text variant="bodySm" as="span" tone="subdued">
-                            credits
-                          </Text>
-                        </div>
-                        <div className="billing-topup-price">
-                          <Text variant="headingLg" as="span" fontWeight="bold">
-                            {pack.price}
-                          </Text>
-                          <Text variant="bodySm" as="span" tone="subdued">
-                            {pack.perCredit}/credit
-                          </Text>
-                        </div>
-                        <Box paddingBlockStart="200">
-                          <Button
-                            fullWidth
-                            variant="tertiary"
-                            size="medium"
-                            disabled={isFree || !!toppingUpId}
-                            loading={toppingUpId === pack.id}
-                            onClick={() => !isFree && handleTopUp(pack.id)}
-                          >
-                            {toppingUpId === pack.id ? 'Redirecting…' : 'Buy Now'}
-                          </Button>
-                        </Box>
-                      </BlockStack>
-                    </div>
-                  ))}
+                  {creditPacks.map((pack) => {
+                    const formattedPrice = `$${pack.price.toFixed(2)}`;
+                    const perCreditCents = pack.per_credit_cost
+                      ? `${(pack.per_credit_cost * 100).toFixed(1)}¢`
+                      : `${((pack.price / pack.credits) * 100).toFixed(1)}¢`;
+                    
+                    return (
+                      <div
+                        key={pack.id}
+                        className={`billing-topup-card ${pack.is_popular ? 'billing-topup-card-popular' : ''}`}
+                      >
+                        {pack.is_popular && !isFree && (
+                          <div className="billing-topup-card-badge">
+                            <Badge tone="info">Best value</Badge>
+                          </div>
+                        )}
+                        <BlockStack gap="300">
+                          <div className="billing-topup-amount">
+                            <Text variant="heading2Xl" as="span" fontWeight="bold">
+                              {pack.credits.toLocaleString()}
+                            </Text>
+                            <Text variant="bodySm" as="span" tone="subdued">
+                              credits
+                            </Text>
+                          </div>
+                          <div className="billing-topup-price">
+                            <Text variant="headingLg" as="span" fontWeight="bold">
+                              {formattedPrice}
+                            </Text>
+                            <Text variant="bodySm" as="span" tone="subdued">
+                              {perCreditCents}/credit
+                            </Text>
+                          </div>
+                          <Box paddingBlockStart="200">
+                            <Button
+                              fullWidth
+                              variant="tertiary"
+                              size="medium"
+                              disabled={isFree || !!toppingUpId}
+                              loading={toppingUpId === pack.id}
+                              onClick={() => !isFree && handleTopUp(pack.id)}
+                            >
+                              {toppingUpId === pack.id ? 'Redirecting…' : 'Buy Now'}
+                            </Button>
+                          </Box>
+                        </BlockStack>
+                      </div>
+                    );
+                  })}
                 </InlineGrid>
               </BlockStack>
             </Box>

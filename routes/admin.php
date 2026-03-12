@@ -147,6 +147,22 @@ Route::middleware(['auth:admin'])->group(function () {
             ->name('destroy');
     });
 
+    // Credit Packs Management
+    Route::prefix('credit-packs')->name('credit-packs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\CreditPackController::class, 'index'])
+            ->middleware('admin.permission:plans.view')
+            ->name('index');
+        Route::post('/', [\App\Http\Controllers\Admin\CreditPackController::class, 'store'])
+            ->middleware('admin.permission:plans.manage')
+            ->name('store');
+        Route::put('/{creditPack}', [\App\Http\Controllers\Admin\CreditPackController::class, 'update'])
+            ->middleware('admin.permission:plans.manage')
+            ->name('update');
+        Route::delete('/{creditPack}', [\App\Http\Controllers\Admin\CreditPackController::class, 'destroy'])
+            ->middleware('admin.permission:plans.manage')
+            ->name('destroy');
+    });
+
     Route::get('/ai-studio-tools', \App\Http\Controllers\Admin\AiStudioToolsController::class)
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools');
