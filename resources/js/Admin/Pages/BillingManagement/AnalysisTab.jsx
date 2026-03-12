@@ -12,7 +12,7 @@ export default function AnalysisTab({ plans, creditPacks, analytics }) {
         creditPackUsage = [],
         timeline = [],
         totals = {},
-    } = analytics;
+    } = analytics || {};
 
     // Stats cards configuration
     const statsCards = [
