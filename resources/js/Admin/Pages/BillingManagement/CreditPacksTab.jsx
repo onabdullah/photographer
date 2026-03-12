@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { useForm, usePage } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import {
     Package, Plus, Pencil, Trash2, X, Star, Eye, EyeOff,
-    DollarSign, Sparkles, TrendingUp,
+    DollarSign, TriangleAlert,
 } from 'lucide-react';
 
 /* ─── helpers ─────────────────────────────────────────────────────── */
@@ -109,134 +109,202 @@ function PackForm({ pack, onClose, mode }) {
             </div>
 
             {/* Checkboxes */}
-            <div className="space-y-3">
-                <label className="flex items-center space-x-2 cursor-pointer">
+            <div className="flex flex-wrap gap-6">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                         type="checkbox"
                         checked={data.is_popular}
                         onChange={(e) => setData('is_popular', e.target.checked)}
-                        className="form-checkbox"
+                        className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
-                    <span className="text-sm text-gray-700">Mark as Popular (Best Value)</span>
+                    <div>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mark as Popular</span>
+                        <p className="text-xs text-gray-400">Highlighted as best value</p>
+                    </div>
                 </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                         type="checkbox"
                         checked={data.is_active}
                         onChange={(e) => setData('is_active', e.target.checked)}
-                        className="form-checkbox"
+                        className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
-                    <span className="text-sm text-gray-700">Active (Visible to merchants)</span>
+                    <div>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</span>
+                        <p className="text-xs text-gray-400">Visible to merchants</p>
+                    </div>
                 </label>
             </div>
 
             {/* Buttons */}
-            <div className="flex items-center justify-end space-x-3 pt-2">
-                <button
-                    type="button"
-                    onClick={onClose}
-                    disabled={processing}
-                    className="btn-secondary"
-                >
-                    Cancel
+            <div className="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+                <button type="submit" disabled={processing} className="btn btn-primary">
+                    {processing ? 'Saving…' : (isEdit ? 'Save Changes' : 'Create Pack')}
                 </button>
-                <button type="submit" disabled={processing} className="btn-primary">
-                    {processing ? 'Saving...' : (isEdit ? 'Update Pack' : 'Create Pack')}
+                <button type="button" onClick={onClose} className="btn btn-secondary">
+                    Cancel
                 </button>
             </div>
         </form>
     );
 }
 
+/* ─── Modal ───────────────────────────────────────────────────────── */
+
+function Modal({ open, onClose, title, children }) {
+    if (!open) return null;
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <div
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                        aria-label="Close"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                <div className="overflow-y-auto max-h-[calc(90vh-80px)] px-6 py-5">
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 /* ─── PackCard ─────────────────────────────────────────────────── */
 
-function PackCard({ pack, onEdit, onDelete }) {
-    const perCreditCents = pack.credits > 0
-        ? ((pack.price / pack.credits) * 100).toFixed(1) + '¢'
+function PackCard({ pack, onEdit, isConfirming, onDeleteToggle }) {
+    const perCreditFormatted = pack.credits > 0
+        ? ((pack.price / pack.credits) * 100).toFixed(2) + '¢'
         : '—';
 
     return (
-        <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                    <Package className="w-5 h-5 text-indigo-600" />
-                    <h3 className="font-semibold text-gray-900">
-                        {fmt(pack.credits)} Credits
-                    </h3>
+        <div className="card relative overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                        <Package size={18} className="text-primary-600 dark:text-primary-400" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">
+                            {fmt(pack.credits)} Credits
+                        </p>
+                        <div className="flex items-center flex-wrap gap-1.5 mt-1">
+                            {pack.is_popular && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-px rounded text-[10px] font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
+                                    <Star size={9} />
+                                    Popular
+                                </span>
+                            )}
+                            {pack.is_active ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-px rounded text-[10px] font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">
+                                    <Eye size={9} />
+                                    Active
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-px rounded text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                    <EyeOff size={9} />
+                                    Hidden
+                                </span>
+                            )}
+                        </div>
+                    </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                    {pack.is_popular && (
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                            <Star className="w-3 h-3 mr-1" />
-                            Popular
-                        </span>
-                    )}
-                    {pack.is_active ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
-                            <Eye className="w-3 h-3 mr-1" />
-                            Active
-                        </span>
-                    ) : (
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                            <EyeOff className="w-3 h-3 mr-1" />
-                            Hidden
-                        </span>
-                    )}
+                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                    <button
+                        onClick={() => onEdit(pack)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                        title="Edit"
+                    >
+                        <Pencil size={13} />
+                    </button>
+                    <button
+                        onClick={() => onDeleteToggle(pack.id)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        title="Delete"
+                    >
+                        <Trash2 size={13} />
+                    </button>
                 </div>
             </div>
 
-            <div className="space-y-2 mb-4">
-                <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Price:</span>
-                    <span className="text-lg font-bold text-gray-900">{fmtPrice(pack.price)}</span>
+            {/* Price */}
+            <div className="mb-4">
+                <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {fmtPrice(pack.price)}
+                </span>
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto">
+                <div>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Per Credit</p>
+                    <div className="flex items-center gap-1">
+                        <DollarSign size={11} className="text-orange-400 flex-shrink-0" />
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{perCreditFormatted}</span>
+                    </div>
                 </div>
-                <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Per Credit:</span>
-                    <span className="text-sm font-medium text-gray-700">{perCreditCents}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Sort Order:</span>
-                    <span className="text-sm text-gray-700">{pack.sort_order}</span>
+                <div>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Sort Order</p>
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{pack.sort_order ?? '—'}</span>
                 </div>
             </div>
 
-            <div className="flex items-center space-x-2 pt-3 border-t border-gray-100">
+            {/* Delete confirm overlay */}
+            {isConfirming && (
+                <DeleteOverlay pack={pack} onDeleteToggle={onDeleteToggle} />
+            )}
+        </div>
+    );
+}
+
+function DeleteOverlay({ pack, onDeleteToggle }) {
+    const { delete: destroy, processing } = useForm();
+    return (
+        <div className="absolute inset-0 z-10 rounded-lg bg-white/[.97] dark:bg-gray-900/[.97] flex flex-col items-center justify-center gap-3 p-6">
+            <TriangleAlert size={22} className="text-red-500" />
+            <p className="text-sm font-semibold text-gray-900 dark:text-white text-center">
+                Delete <span className="text-red-600">{fmt(pack.credits)} Credits</span> pack?
+            </p>
+            <div className="flex items-center gap-2">
                 <button
-                    onClick={onEdit}
-                    className="flex-1 btn-secondary text-sm py-2"
+                    onClick={() => destroy(`/admin/credit-packs/${pack.id}`, {
+                        preserveScroll: true,
+                        preserveState: false,
+                        onSuccess: () => onDeleteToggle(null),
+                    })}
+                    disabled={processing}
+                    className="px-4 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
                 >
-                    <Pencil className="w-4 h-4 mr-1" />
-                    Edit
+                    {processing ? 'Deleting…' : 'Confirm'}
                 </button>
                 <button
-                    onClick={onDelete}
-                    className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
+                    onClick={() => onDeleteToggle(null)}
+                    className="px-4 py-1.5 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
-                    <Trash2 className="w-4 h-4" />
+                    Cancel
                 </button>
             </div>
         </div>
     );
 }
 
-/* ─── CreditPacksIndex ─────────────────────────────────────────────── */
+/* ─── CreditPacksTab ───────────────────────────────────────────────── */
 
 export default function CreditPacksTab({ creditPacks, stats }) {
-    const { delete: destroy } = useForm();
-
     const [modal, setModal] = useState(null); // { mode: 'create' | 'edit', pack? }
+    const [confirmDelete, setConfirmDelete] = useState(null); // pack id
 
     const openCreate = () => setModal({ mode: 'create' });
     const openEdit = (pack) => setModal({ mode: 'edit', pack });
     const closeModal = () => setModal(null);
-
-    const handleDelete = useCallback((pack) => {
-        if (!confirm(`Delete "${pack.credits} credits" pack?`)) return;
-        destroy(`/admin/credit-packs/${pack.id}`, {
-            preserveScroll: true,
-            preserveState: false,
-        });
-    }, [destroy]);
 
     return (
         <div className="space-y-6">
@@ -247,104 +315,66 @@ export default function CreditPacksTab({ creditPacks, stats }) {
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">One-time credit top-up packs for merchants</p>
                 </div>
                 <button onClick={openCreate} className="btn btn-primary">
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus size={14} className="mr-1.5" />
                     Add Pack
                 </button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-indigo-100 rounded-lg">
-                            <Package className="w-5 h-5 text-indigo-600" />
+            {/* Stats row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                    { label: 'Total Packs',  value: stats.total_packs,  icon: Package, color: 'text-primary-500'   },
+                    { label: 'Active Packs', value: stats.active_packs, icon: Eye,     color: 'text-green-500'     },
+                    { label: 'Popular Pack', value: creditPacks.find(p => p.is_popular)?.credits ?? '—', icon: Star, color: 'text-amber-500' },
+                ].map(({ label, value, icon: Icon, color }) => (
+                    <div key={label} className="card flex items-center gap-4">
+                        <div className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex-shrink-0">
+                            <Icon size={18} className={color} />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Total Packs</p>
-                            <p className="text-xl font-bold text-gray-900">{stats.total_packs}</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{fmt(value)}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
                         </div>
                     </div>
-                </div>
-
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                            <Eye className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Active Packs</p>
-                            <p className="text-xl font-bold text-gray-900">{stats.active_packs}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-yellow-100 rounded-lg">
-                            <Star className="w-5 h-5 text-yellow-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Popular Pack</p>
-                            <p className="text-xl font-bold text-gray-900">
-                                {creditPacks.find(p => p.is_popular)?.credits ?? '—'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Packs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {creditPacks.map((pack) => (
-                    <PackCard
-                        key={pack.id}
-                        pack={pack}
-                        onEdit={() => openEdit(pack)}
-                        onDelete={() => handleDelete(pack)}
-                    />
                 ))}
             </div>
 
-            {creditPacks.length === 0 && (
-                <div className="text-center py-12 bg-white border border-gray-200 rounded-lg">
-                    <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-500 mb-4">No credit packs yet</p>
-                    <button onClick={openCreate} className="btn-primary">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create First Pack
-                    </button>
+            {/* Packs Grid */}
+            {creditPacks.length === 0 ? (
+                <div className="card flex flex-col items-center justify-center py-16 gap-3">
+                    <Package size={36} className="text-gray-300 dark:text-gray-600" />
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">No credit packs yet</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Click "Add Pack" to get started.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {creditPacks.map((pack) => (
+                        <PackCard
+                            key={pack.id}
+                            pack={pack}
+                            onEdit={openEdit}
+                            isConfirming={confirmDelete === pack.id}
+                            onDeleteToggle={(id) => setConfirmDelete(id === confirmDelete ? null : id)}
+                        />
+                    ))}
                 </div>
             )}
 
-            {/* Modal */}
-            {modal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={closeModal}>
-                    <div 
-                        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {modal.mode === 'create' ? 'Create Credit Pack' : 'Edit Credit Pack'}
-                            </h2>
-                            <button 
-                                onClick={closeModal} 
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                                aria-label="Close"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="overflow-y-auto max-h-[calc(90vh-80px)] px-6 py-5">
-                            <PackForm
-                                pack={modal.pack}
-                                onClose={closeModal}
-                                mode={modal.mode}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Create / Edit Modal */}
+            <Modal
+                open={modal !== null}
+                onClose={closeModal}
+                title={modal?.mode === 'edit' ? `Edit Pack — ${fmt(modal.pack?.credits)} Credits` : 'Create Credit Pack'}
+            >
+                {modal && (
+                    <PackForm
+                        key={modal.pack?.id ?? 'create'}
+                        pack={modal.mode === 'edit' ? modal.pack : null}
+                        onClose={closeModal}
+                        mode={modal.mode}
+                    />
+                )}
+            </Modal>
         </div>
     );
 }
