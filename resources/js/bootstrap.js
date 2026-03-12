@@ -28,6 +28,17 @@ axios.interceptors.request.use((config) => {
     config.headers['ngrok-skip-browser-warning'] = 'true';
     if (config.url && config.url.includes('/shopify') && window.sessionToken) {
         config.headers['Authorization'] = `Bearer ${window.sessionToken}`;
+        console.log('[Axios] Adding Authorization header:', config.headers['Authorization'].substring(0, 50) + '...');
+    } else if (config.url && config.url.includes('/shopify')) {
+        console.warn('[Axios] Shopify request but NO session token available!', {
+            url: config.url,
+            sessionToken: window.sessionToken
+        });
     }
+    console.log('[Axios] Request config:', {
+        method: config.method,
+        url: config.url,
+        headers: config.headers
+    });
     return config;
 });

@@ -66,18 +66,38 @@ class BillingController extends Controller
      */
     public function subscribe(Request $request, GetPlanUrl $getPlanUrl): JsonResponse
     {
+        Log::debug('[BillingController] Subscribe method called', [
+            'method' => $request->method(),
+            'path' => $request->path(),
+            'headers' => $request->headers->all(),
+        ]);
+
         $shop = $this->currentShop($request);
         if (! $shop) {
+            Log::error('[BillingController] No shop found');
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
+
+        Log::debug('[BillingController] Shop found', ['shop' => $shop->name]);
 
         $planId = (int) $request->input('plan_id');
         $host   = (string) $request->input('host', '');
 
+        Log::debug('[BillingController] Request params', [
+            'plan_id' => $planId,
+            'host' => $host,
+        ]);
+
         $plan = Plan::find($planId);
         if (! $plan) {
+            Log::error('[BillingController] Plan not found', ['plan_id' => $planId]);
             return response()->json(['error' => 'Plan not found'], 404);
         }
+
+        Log::debug('[BillingController] Plan found', [
+            'plan_id' => $plan->id,
+            'plan_name' => $plan->name,
+        ]);
 
         try {
             $url = $getPlanUrl(
@@ -86,12 +106,17 @@ class BillingController extends Controller
                 $host,
             );
 
+            Log::debug('[BillingController] Confirmation URL generated', [
+                'url' => $url,
+            ]);
+
             return response()->json(['confirmation_url' => $url]);
         } catch (\Throwable $e) {
-            Log::error('BillingController@subscribe error', [
+            Log::error('[BillingController] Error generating confirmation URL', [
                 'shop'    => $shop->name,
                 'plan_id' => $planId,
                 'error'   => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
             ]);
 
             return response()->json(['error' => 'Could not generate billing URL. Please try again.'], 500);
