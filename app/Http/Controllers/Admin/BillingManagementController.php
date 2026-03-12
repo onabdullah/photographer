@@ -30,8 +30,7 @@ class BillingManagementController extends Controller
         ])->values();
 
         // Plan stats for analysis
-        $planStats = Plan::select('plans.*')
-            ->leftJoin('merchants', 'plans.id', '=', 'merchants.plan_id')
+        $planStats = Plan::leftJoin('merchants', 'plans.id', '=', 'merchants.plan_id')
             ->selectRaw('plans.id, plans.name, COUNT(merchants.id) as merchant_count')
             ->selectRaw('(COUNT(merchants.id) * plans.price) as estimated_revenue')
             ->groupBy('plans.id', 'plans.name', 'plans.price')
