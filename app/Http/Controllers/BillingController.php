@@ -4,11 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsCurrentShop;
 use App\Models\Plan;
+use Gnikyt\BasicShopifyAPI\Session;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Osiset\ShopifyApp\Actions\GetPlanUrl;
-use Osiset\ShopifyApp\Objects\Values\NullablePlanId;
+use Illuminate\Support\Facades\URL;
+use Osiset\ShopifyApp\Actions\ActivatePlan;
+use Osiset\ShopifyApp\Contracts\ApiHelper as IApiHelper;
+use Osiset\ShopifyApp\Objects\Enums\ChargeType;
+use Osiset\ShopifyApp\Objects\Transfers\PlanDetails as PlanDetailsTransfer;
+use Osiset\ShopifyApp\Objects\Values\ChargeReference;
+use Osiset\ShopifyApp\Objects\Values\PlanId;
 use Osiset\ShopifyApp\Objects\Values\ShopId;
 
 class BillingController extends Controller
@@ -61,15 +69,19 @@ class BillingController extends Controller
     /* ─── Subscribe to a recurring plan ─────────────────────────── */
 
     /**
-     * Returns the Shopify billing confirmation URL for the requested plan.
-     * The frontend calls this via redirect: window.open(url) or App Bridge redirect.
+     * Creates a Shopify recurring charge and returns the confirmation URL.
+     *
+     * Shopify billing requirements:
+     * - Must use a valid offline access token (shpat_) for the API call.
+     * - Development/test stores require charges with test: true.
+     * - After merchant approves, Shopify redirects to return_url with charge_id.
+     * - The charge must then be activated via a separate API call.
      */
-    public function subscribe(Request $request, GetPlanUrl $getPlanUrl): JsonResponse
+    public function subscribe(Request $request): JsonResponse
     {
         Log::debug('[BillingController] Subscribe method called', [
             'method' => $request->method(),
-            'path' => $request->path(),
-            'headers' => $request->headers->all(),
+            'path'   => $request->path(),
         ]);
 
         $shop = $this->currentShop($request);
@@ -78,44 +90,70 @@ class BillingController extends Controller
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
-        Log::debug('[BillingController] Shop found', ['shop' => $shop->name]);
-
         $planId = (int) $request->input('plan_id');
         $host   = (string) $request->input('host', '');
 
-        Log::debug('[BillingController] Request params', [
-            'plan_id' => $planId,
-            'host' => $host,
-        ]);
-
         $plan = Plan::find($planId);
         if (! $plan) {
-            Log::error('[BillingController] Plan not found', ['plan_id' => $planId]);
             return response()->json(['error' => 'Plan not found'], 404);
         }
 
-        Log::debug('[BillingController] Plan found', [
+        Log::debug('[BillingController] Shop and plan found', [
+            'shop'    => $shop->name,
             'plan_id' => $plan->id,
-            'plan_name' => $plan->name,
+            'plan'    => $plan->name,
         ]);
 
-        Log::debug('[BillingController] Token check', [
-            'has_password' => ! empty($shop->password),
-            'token_prefix' => $shop->password ? substr($shop->password, 0, 8) . '...' : 'EMPTY',
+        // ── Step 1: Exchange the Bearer session-token for a fresh offline token ────
+        // Per-user (shpua_) tokens expire when the admin session ends. Exchanging
+        // the current id_token gives us a permanent offline token (shpat_) that
+        // works for server-side API calls like billing.
+        $bearerToken = $request->bearerToken();
+        if ($bearerToken) {
+            $freshToken = $this->exchangeForOfflineToken($shop->getDomain()->toNative(), $bearerToken);
+            if ($freshToken) {
+                DB::table('merchants')->where('id', $shop->id)->update(['password' => $freshToken]);
+                $shop->password   = $freshToken;
+                $shop->apiHelper  = null; // reset cached helper so it uses the new token
+                Log::debug('[BillingController] Token exchanged successfully');
+            } else {
+                Log::warning('[BillingController] Token exchange failed, using stored token');
+            }
+        }
+
+        // ── Step 2: Build charge details ─────────────────────────────────────────
+        // Non-production environments always set test=true.
+        // Shopify REJECTS non-test charges on development stores.
+        $isTest = ! app()->isProduction();
+
+        $returnUrl = URL::secure('shopify/billing/callback') . '?' . http_build_query([
+            'plan_id' => $plan->id,
+            'shop'    => $shop->name,
+            'host'    => $host,
         ]);
 
+        $transfer              = new PlanDetailsTransfer();
+        $transfer->name        = $plan->name;
+        $transfer->price       = (float) $plan->price;
+        $transfer->interval    = 'EVERY_30_DAYS';
+        $transfer->test        = $isTest;
+        $transfer->trialDays   = (int) ($plan->trial_days ?? 0);
+        $transfer->cappedAmount = null;
+        $transfer->terms        = null;
+        $transfer->returnUrl    = $returnUrl;
+
+        // ── Step 3: Create the charge on Shopify ──────────────────────────────────
         try {
-            $url = $getPlanUrl(
-                ShopId::fromNative($shop->getId()->toNative()),
-                NullablePlanId::fromNative($planId),
-                $host,
-            );
+            $response = $shop->apiHelper()->createCharge(ChargeType::RECURRING(), $transfer);
 
-            Log::debug('[BillingController] Confirmation URL generated', [
-                'url' => $url,
-            ]);
+            $confirmationUrl = $response['confirmation_url'] ?? null;
+            if (! $confirmationUrl) {
+                throw new \RuntimeException('Shopify did not return a confirmation_url');
+            }
 
-            return response()->json(['confirmation_url' => $url]);
+            Log::debug('[BillingController] Confirmation URL obtained', ['url' => $confirmationUrl]);
+
+            return response()->json(['confirmation_url' => $confirmationUrl]);
         } catch (\Throwable $e) {
             Log::error('[BillingController] Error generating confirmation URL', [
                 'shop'    => $shop->name,
@@ -125,6 +163,65 @@ class BillingController extends Controller
             ]);
 
             return response()->json(['error' => 'Could not generate billing URL. Please try again.'], 500);
+        }
+    }
+
+    /* ─── Billing callback (after merchant approves on Shopify) ──── */
+
+    /**
+     * Shopify redirects here after the merchant accepts/declines on the
+     * billing confirmation page. We activate the charge and set the plan.
+     */
+    public function billingCallback(Request $request, ActivatePlan $activatePlan): RedirectResponse
+    {
+        $shopDomain = $request->query('shop');
+        $chargeId   = $request->query('charge_id');
+        $planId     = (int) $request->query('plan_id');
+        $host       = (string) $request->query('host', '');
+
+        Log::debug('[BillingController] Billing callback received', [
+            'shop'      => $shopDomain,
+            'charge_id' => $chargeId,
+            'plan_id'   => $planId,
+        ]);
+
+        if (! $chargeId || ! $shopDomain || ! $planId) {
+            return redirect()->route('billing')->with('error', 'Billing was not completed.');
+        }
+
+        $shop = \App\Models\Merchant::where('name', $shopDomain)->first();
+        if (! $shop) {
+            return redirect('/')->with('error', 'Shop not found.');
+        }
+
+        try {
+            $activatePlan(
+                ShopId::fromNative($shop->id),
+                PlanId::fromNative($planId),
+                ChargeReference::fromNative((int) $chargeId),
+                $host,
+            );
+
+            Log::info('[BillingController] Plan activated', [
+                'shop'    => $shopDomain,
+                'plan_id' => $planId,
+            ]);
+
+            // Redirect back into the embedded app
+            $homeUrl = URL::secure('shopify') . '?' . http_build_query([
+                'shop' => $shopDomain,
+                'host' => $host,
+            ]);
+
+            return redirect($homeUrl)->with('success', 'Plan activated successfully!');
+        } catch (\Throwable $e) {
+            Log::error('[BillingController] Plan activation failed', [
+                'shop'    => $shopDomain,
+                'plan_id' => $planId,
+                'error'   => $e->getMessage(),
+            ]);
+
+            return redirect()->route('billing')->with('error', 'Could not activate plan. Please contact support.');
         }
     }
 
@@ -142,7 +239,7 @@ class BillingController extends Controller
         }
 
         $packId = (int) $request->input('pack_id');
-        
+
         $pack = \App\Models\CreditPack::where('id', $packId)
             ->where('is_active', true)
             ->first();
@@ -159,7 +256,7 @@ class BillingController extends Controller
                     'name'         => number_format($pack->credits) . ' AI Credits',
                     'price'        => (float) $pack->price,
                     'return_url'   => $redirectUrl,
-                    'test'         => (bool) env('SHOPIFY_TEST_CHARGES', true),
+                    'test'         => ! app()->isProduction(),
                 ],
             ]);
 
@@ -171,10 +268,10 @@ class BillingController extends Controller
             // Stash pending pack in session so callback can credit it
             session([
                 'pending_topup' => [
-                    'pack_id'    => $packId,
-                    'credits'    => $pack->credits,
-                    'charge_id'  => $response['body']['application_charge']['id'],
-                    'shop'       => $shop->name,
+                    'pack_id'   => $packId,
+                    'credits'   => $pack->credits,
+                    'charge_id' => $response['body']['application_charge']['id'],
+                    'shop'      => $shop->name,
                 ],
             ]);
 
@@ -192,7 +289,7 @@ class BillingController extends Controller
 
     /* ─── Top-up callback (after merchant approves) ──────────────── */
 
-    public function topUpCallback(Request $request): \Illuminate\Http\RedirectResponse
+    public function topUpCallback(Request $request): RedirectResponse
     {
         $shop = $this->currentShop($request);
         if (! $shop) {
@@ -217,4 +314,34 @@ class BillingController extends Controller
 
         return redirect()->route('billing')->with('error', 'Charge was not accepted.');
     }
+
+    /* ─── Private helpers ────────────────────────────────────────── */
+
+    /**
+     * Exchange a Shopify session token (id_token from App Bridge) for a
+     * permanent offline access token via Shopify's token exchange endpoint.
+     *
+     * Offline tokens never expire, making them safe for server-side API calls.
+     * See: https://shopify.dev/docs/apps/auth/get-access-tokens/token-exchange
+     */
+    private function exchangeForOfflineToken(string $shopDomain, string $idToken): ?string
+    {
+        try {
+            // Build a session with the shop domain so ApiHelper targets the right store.
+            // No access token needed – the token exchange endpoint authenticates via
+            // client_id + client_secret (loaded from SHOPIFY_API_KEY / SHOPIFY_API_SECRET).
+            $session   = new Session($shopDomain, '');
+            $apiHelper = resolve(IApiHelper::class)->make($session);
+            $data      = $apiHelper->performOfflineTokenExchange($idToken);
+
+            return $data['access_token'] ?? null;
+        } catch (\Throwable $e) {
+            Log::warning('[BillingController] Offline token exchange failed', [
+                'shop'  => $shopDomain,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
 }
+

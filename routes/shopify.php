@@ -43,6 +43,8 @@ Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMis
     Route::post('/billing/subscribe', [\App\Http\Controllers\BillingController::class, 'subscribe'])->name('billing.subscribe');
     Route::post('/billing/top-up', [\App\Http\Controllers\BillingController::class, 'topUp'])->name('billing.topup');
     Route::get('/billing/topup/callback', [\App\Http\Controllers\BillingController::class, 'topUpCallback'])->name('billing.topup.callback');
+    // Shopify redirects here after merchant approves/declines the billing confirmation
+    Route::get('/billing/callback', [\App\Http\Controllers\BillingController::class, 'billingCallback'])->name('billing.callback');
 
     // Help & Support
     Route::get('/help', [\App\Http\Controllers\HelpController::class, 'help'])->name('help');
