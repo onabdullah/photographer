@@ -44,13 +44,27 @@ export default function Billing({ credits, currentPlan, plans = [], creditPacks 
     if (subscribingId) return;
     setBillingError('');
     setSubscribingId(planId);
+    
+    console.log('[Billing] Subscribing to plan:', planId);
+    console.log('[Billing] Host parameter:', host);
+    console.log('[Billing] Session token available:', !!window.sessionToken);
+    
     try {
       const { data } = await axios.post('/shopify/billing/subscribe', { plan_id: planId, host });
+      console.log('[Billing] Subscribe response:', data);
+      
       if (data.confirmation_url) {
+        console.log('[Billing] Redirecting to:', data.confirmation_url);
         // Redirect the top-level frame so Shopify billing page loads outside the iframe
         window.top.location.replace(data.confirmation_url);
+      } else {
+        console.error('[Billing] No confirmation URL in response');
+        setBillingError('Could not start billing. No confirmation URL received.');
+        setSubscribingId(null);
       }
     } catch (err) {
+      console.error('[Billing] Subscribe error:', err);
+      console.error('[Billing] Error response:', err.response?.data);
       setBillingError(err.response?.data?.error ?? 'Could not start billing. Please try again.');
       setSubscribingId(null);
     }
