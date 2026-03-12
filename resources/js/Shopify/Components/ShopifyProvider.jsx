@@ -48,16 +48,16 @@ export default function ShopifyProvider({ children }) {
                     if (!isMounted) return;
                     
                     try {
-                        // Access the app instance - it should be auto-initialized by the token_handler partial
-                        if (window.app && typeof window.app.idToken === 'function') {
-                            const token = await window.app.idToken();
+                        // Use shopify.idToken() directly (available from App Bridge CDN)
+                        if (window.shopify && typeof window.shopify.idToken === 'function') {
+                            const token = await window.shopify.idToken();
                             
                             if (token && isMounted) {
                                 window.sessionToken = token;
                                 console.log('[Shopify] Session token refreshed successfully');
                             }
                         } else {
-                            console.warn('[Shopify] App instance not available or idToken method missing');
+                            console.warn('[Shopify] Shopify App Bridge not available or idToken method missing');
                         }
                     } catch (error) {
                         console.error('[Shopify] Failed to get session token:', error);
