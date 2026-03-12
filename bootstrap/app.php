@@ -39,6 +39,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'shopify/save-to-shopify',
             'shopify/assign-to-product',
             'shopify/settings', // Embedded app iframe often blocks cookies; route is protected by verify.shopify
+            // Billing: embedded iframe blocks XSRF-TOKEN cookie; routes are protected by verify.shopify + Bearer token
+            'shopify/billing/subscribe',
+            'shopify/billing/top-up',
+            'shopify/billing/topup/callback',
             // AI Studio Pro smart router
             'shopify/api/ai-studio/generate',
             'shopify/tools/generation/*',
