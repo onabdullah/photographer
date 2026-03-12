@@ -43,7 +43,8 @@ class BillingManagementController extends Controller
                     'count'       => (int) $p->merchant_count,
                     'revenue'     => (float) ($p->estimated_revenue ?? 0),
                     'avgLifetime' => rand(30, 180), // Placeholder - would need created_at tracking
-                ]);
+                ])
+                ->values();
 
             // Credit packs (check if table exists first)
             try {
@@ -70,7 +71,7 @@ class BillingManagementController extends Controller
             $creditPackUsage = $creditPacks->map(fn ($pack) => [
                 'credits' => $pack['credits'],
                 'sold'    => rand(0, 100), // Placeholder
-            ]);
+            ])->values();
 
             // Calculate stats
             $stats = [
@@ -96,7 +97,7 @@ class BillingManagementController extends Controller
                     'subscriptions' => rand(100, 500),
                     'creditPacks'   => rand(50, 200),
                 ];
-            });
+            })->values();
 
             $analytics = [
                 'planStats'        => $planStats,
