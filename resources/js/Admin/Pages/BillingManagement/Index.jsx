@@ -45,67 +45,57 @@ export default function BillingManagementIndex() {
     };
 
     return (
-        <>
-            {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Billing Management</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Manage subscription plans, credit packs, and view analytics
-                </p>
-            </div>
-
-            {/* Tabs */}
-            <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
-                <nav className="flex space-x-6">
+        <AdminLayout
+            title="Billing Management"
+            breadcrumbs={[{ label: 'Management' }, { label: 'Billing Management' }]}
+        >
+            <div className="space-y-4">
+                {/* Tabs: same pattern as AI Tools Analysis */}
+                <div className="flex flex-wrap gap-1 border-b border-gray-200 dark:border-gray-700 pb-2">
                     {TABS.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.key;
                         return (
                             <button
                                 key={tab.key}
+                                type="button"
                                 onClick={() => handleTabChange(tab.key)}
-                                className={`
-                                    flex items-center gap-2 px-1 py-3 border-b-2 font-medium text-sm transition-colors
-                                    ${isActive
-                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                    }
-                                `}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                    isActive
+                                        ? 'bg-primary-600 text-white'
+                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                }`}
                             >
-                                <Icon size={18} />
+                                <Icon size={16} />
                                 {tab.label}
                             </button>
                         );
                     })}
-                </nav>
-            </div>
+                </div>
 
-            {/* Tab Content */}
-            <div className="pb-8">
-                {activeTab === 'analysis' && (
-                    <AnalysisTab 
-                        plans={plans}
-                        creditPacks={creditPacks}
-                        analytics={analytics}
-                    />
-                )}
-                {activeTab === 'plans' && (
-                    <PlansTab 
-                        plans={plans}
-                        stats={stats}
-                    />
-                )}
-                {activeTab === 'credit-packs' && (
-                    <CreditPacksTab 
-                        creditPacks={creditPacks}
-                        stats={creditStats}
-                    />
-                )}
+                {/* Tab Content */}
+                <div>
+                    {activeTab === 'analysis' && (
+                        <AnalysisTab 
+                            plans={plans}
+                            creditPacks={creditPacks}
+                            analytics={analytics}
+                        />
+                    )}
+                    {activeTab === 'plans' && (
+                        <PlansTab 
+                            plans={plans}
+                            stats={stats}
+                        />
+                    )}
+                    {activeTab === 'credit-packs' && (
+                        <CreditPacksTab 
+                            creditPacks={creditPacks}
+                            stats={creditStats}
+                        />
+                    )}
+                </div>
             </div>
-        </>
+        </AdminLayout>
     );
 }
-
-BillingManagementIndex.layout = (page) => (
-    <AdminLayout children={page} title="Billing Management" />
-);
