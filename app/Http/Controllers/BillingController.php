@@ -99,6 +99,11 @@ class BillingController extends Controller
             'plan_name' => $plan->name,
         ]);
 
+        Log::debug('[BillingController] Token check', [
+            'has_password' => ! empty($shop->password),
+            'token_prefix' => $shop->password ? substr($shop->password, 0, 8) . '...' : 'EMPTY',
+        ]);
+
         try {
             $url = $getPlanUrl(
                 ShopId::fromNative($shop->getId()->toNative()),
