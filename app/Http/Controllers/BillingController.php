@@ -111,26 +111,23 @@ class BillingController extends Controller
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
-        $packs = [
-            'pack-100'  => ['credits' => 100,  'price' => 5.99,  'name' => '100 AI Credits'],
-            'pack-250'  => ['credits' => 250,  'price' => 8.99,  'name' => '250 AI Credits'],
-            'pack-500'  => ['credits' => 500,  'price' => 16.99, 'name' => '500 AI Credits'],
-            'pack-1000' => ['credits' => 1000, 'price' => 21.99, 'name' => '1,000 AI Credits'],
-        ];
+        $packId = (int) $request->input('pack_id');
+        
+        $pack = \App\Models\CreditPack::where('id', $packId)
+            ->where('is_active', true)
+            ->first();
 
-        $packId = $request->input('pack_id');
-        if (! isset($packs[$packId])) {
+        if (! $pack) {
             return response()->json(['error' => 'Invalid credit pack'], 422);
         }
 
-        $pack        = $packs[$packId];
         $redirectUrl = rtrim(config('app.url'), '/') . '/shopify/billing/topup/callback';
 
         try {
             $response = $shop->api()->rest('POST', '/admin/api/2025-10/application_charges.json', [
                 'application_charge' => [
-                    'name'         => $pack['name'],
-                    'price'        => $pack['price'],
+                    'name'         => number_format($pack->credits) . ' AI Credits',
+                    'price'        => (float) $pack->price,
                     'return_url'   => $redirectUrl,
                     'test'         => (bool) env('SHOPIFY_TEST_CHARGES', true),
                 ],
@@ -145,7 +142,7 @@ class BillingController extends Controller
             session([
                 'pending_topup' => [
                     'pack_id'    => $packId,
-                    'credits'    => $pack['credits'],
+                    'credits'    => $pack->credits,
                     'charge_id'  => $response['body']['application_charge']['id'],
                     'shop'       => $shop->name,
                 ],
