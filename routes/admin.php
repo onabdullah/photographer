@@ -131,11 +131,13 @@ Route::middleware(['auth:admin'])->group(function () {
         return Inertia::render('Admin/Pages/Finance');
     })->middleware('admin.permission:finance.view')->name('finance');
 
-    // Plans Management
+    // Billing Management (Plans + Credit Packs + Analytics)
+    Route::get('/billing-management', [\App\Http\Controllers\Admin\BillingManagementController::class, 'index'])
+        ->middleware('admin.permission:plans.view')
+        ->name('billing-management');
+
+    // Plans Management (CRUD endpoints)
     Route::prefix('plans')->name('plans.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\PlanController::class, 'index'])
-            ->middleware('admin.permission:plans.view')
-            ->name('index');
         Route::post('/', [\App\Http\Controllers\Admin\PlanController::class, 'store'])
             ->middleware('admin.permission:plans.manage')
             ->name('store');
@@ -147,11 +149,8 @@ Route::middleware(['auth:admin'])->group(function () {
             ->name('destroy');
     });
 
-    // Credit Packs Management
+    // Credit Packs Management (CRUD endpoints)
     Route::prefix('credit-packs')->name('credit-packs.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\CreditPackController::class, 'index'])
-            ->middleware('admin.permission:plans.view')
-            ->name('index');
         Route::post('/', [\App\Http\Controllers\Admin\CreditPackController::class, 'store'])
             ->middleware('admin.permission:plans.manage')
             ->name('store');

@@ -60,10 +60,9 @@ const SECTIONS = [
         id: 'management',
         label: 'MANAGEMENT',
         items: [
-            { name: 'Merchants',     href: '/admin/merchants',     icon: Store,       permission: 'merchants.view' },
-            { name: 'AI Processing', href: '/admin/ai-processing', icon: Zap,         permission: 'ai.view'        },
-            { name: 'Plans',         href: '/admin/plans',         icon: CreditCard,  permission: 'plans.view'     },
-            { name: 'Credit Packs',  href: '/admin/credit-packs',  icon: Package,     permission: 'plans.view'     },
+            { name: 'Merchants',        href: '/admin/merchants',            icon: Store,       permission: 'merchants.view' },
+            { name: 'AI Processing',    href: '/admin/ai-processing',        icon: Zap,         permission: 'ai.view'        },
+            { name: 'Billing',          href: '/admin/billing-management',   icon: CreditCard,  permission: 'plans.view'     },
         ],
     },
     {
