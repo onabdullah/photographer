@@ -318,17 +318,24 @@ export default function CreditPacksTab({ creditPacks, stats }) {
 
             {/* Modal */}
             {modal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-                        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-900">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={closeModal}>
+                    <div 
+                        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {modal.mode === 'create' ? 'Create Credit Pack' : 'Edit Credit Pack'}
                             </h2>
-                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+                            <button 
+                                onClick={closeModal} 
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                aria-label="Close"
+                            >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="p-6">
+                        <div className="overflow-y-auto max-h-[calc(90vh-80px)] px-6 py-5">
                             <PackForm
                                 pack={modal.pack}
                                 onClose={closeModal}

@@ -226,35 +226,31 @@ function PlanForm({ plan, onClose, mode }) {
     );
 }
 
-/* ─── Slide-over Panel ────────────────────────────────────────────── */
+/* ─── Modal ───────────────────────────────────────────────────────── */
 
-function SlideOver({ open, onClose, title, children }) {
+function Modal({ open, onClose, title, children }) {
     if (!open) return null;
     return (
-        <>
-            {/* backdrop */}
-            <div
-                className="fixed inset-0 bg-black/40 z-40 transition-opacity"
-                onClick={onClose}
-                aria-hidden
-            />
-            {/* panel */}
-            <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg flex flex-col bg-white dark:bg-gray-900 shadow-2xl">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
-                    <button
-                        onClick={onClose}
-                        className="flex items-center justify-center w-8 h-8 rounded-md text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <div 
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+                    <button 
+                        onClick={onClose} 
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                         aria-label="Close"
                     >
-                        <X size={16} />
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto px-6 py-5">
+                <div className="overflow-y-auto max-h-[calc(90vh-80px)] px-6 py-5">
                     {children}
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 
@@ -461,11 +457,11 @@ export default function PlansTab({ plans, stats }) {
                     </div>
                 )}
 
-            {/* Create / Edit Slide-over */}
-            <SlideOver
+            {/* Create / Edit Modal */}
+            <Modal
                 open={slideOver !== null}
                 onClose={closeSlideOver}
-                title={slideOver?.mode === 'edit' ? `Edit — ${slideOver.plan?.name}` : 'New Plan'}
+                title={slideOver?.mode === 'edit' ? `Edit Plan — ${slideOver.plan?.name}` : 'Create New Plan'}
             >
                 {slideOver && (
                     <PlanForm
@@ -475,7 +471,7 @@ export default function PlansTab({ plans, stats }) {
                         onClose={closeSlideOver}
                     />
                 )}
-            </SlideOver>
+            </Modal>
         </div>
     );
 }

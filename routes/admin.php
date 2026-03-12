@@ -136,6 +136,12 @@ Route::middleware(['auth:admin'])->group(function () {
         ->middleware('admin.permission:plans.view')
         ->name('billing-management');
 
+    // Redirects from old URLs to new unified billing page
+    Route::get('/plans', fn() => redirect('/admin/billing-management?tab=plans'))
+        ->middleware('admin.permission:plans.view');
+    Route::get('/credit-packs', fn() => redirect('/admin/billing-management?tab=credit-packs'))
+        ->middleware('admin.permission:plans.view');
+
     // Plans Management (CRUD endpoints)
     Route::prefix('plans')->name('plans.')->group(function () {
         Route::post('/', [\App\Http\Controllers\Admin\PlanController::class, 'store'])
