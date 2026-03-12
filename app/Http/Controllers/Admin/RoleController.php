@@ -120,7 +120,7 @@ class RoleController extends Controller
             $data = $request->validate([
                 'name'          => 'required|string|max:255',
                 'permissions'   => 'array',
-                'permissions.*' => 'string|in:' . implode(',', AdminRole::allPermissionKeys()),
+                'permissions.*' => 'string|in:*,' . implode(',', AdminRole::allPermissionKeys()),
             ]);
 
             \Log::channel('single')->info('Role update - Validation passed', [
