@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Models\Merchant;
+use App\Services\MerchantCreditService;
 use Illuminate\Support\Facades\Log;
 use Osiset\ShopifyApp\Messaging\Events\PlanActivatedEvent;
 
@@ -27,24 +28,14 @@ class SyncMerchantCreditsOnPlanActivated
             return;
         }
 
-        $planCredits = (int) ($plan->monthly_credits ?? 0);
-        if ($planCredits <= 0) {
-            return;
-        }
-
-        $currentBalance = (int) ($merchant->ai_credits_balance ?? 0);
-        if ($currentBalance >= $planCredits) {
-            return;
-        }
-
-        $merchant->ai_credits_balance = $planCredits;
-        $merchant->save();
+        $before = MerchantCreditService::getSummary($merchant);
+        $after = MerchantCreditService::activatePlan($merchant, $plan);
 
         Log::info('SyncMerchantCreditsOnPlanActivated: credits synced', [
             'shop' => $merchant->name,
             'plan' => $plan->name,
-            'from' => $currentBalance,
-            'to'   => $planCredits,
+            'from' => $before,
+            'to'   => $after,
         ]);
     }
 }

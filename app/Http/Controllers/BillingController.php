@@ -9,6 +9,7 @@ use App\Models\Merchant;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\MailService;
+use App\Services\MerchantCreditService;
 use Gnikyt\BasicShopifyAPI\Session;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -38,6 +39,7 @@ class BillingController extends Controller
         }
 
         $plan = $shop->plan;
+        $creditSummary = MerchantCreditService::getSummary($shop);
 
         $plans = Plan::orderBy('price')->get(['id', 'name', 'price', 'trial_days', 'monthly_credits', 'features']);
 
@@ -46,7 +48,8 @@ class BillingController extends Controller
             ->get(['id', 'credits', 'price', 'per_credit_cost', 'is_popular']);
 
         return \Inertia\Inertia::render('Shopify/Billing', [
-            'credits'     => $shop->ai_credits_balance ?? 0,
+            'credits'     => $creditSummary['total_credits'],
+            'creditSummary' => $creditSummary,
             'currentPlan' => $plan ? [
                 'id'               => $plan->id,
                 'name'             => $plan->name,
@@ -564,9 +567,9 @@ class BillingController extends Controller
 
         if ($accepted) {
             $previousCredits = (int) ($shop->ai_credits_balance ?? 0);
-            $shop->increment('ai_credits_balance', (int) $pending['credits']);
+            $summary = MerchantCreditService::addTopUpCredits($shop, (int) $pending['credits']);
             $shop->refresh();
-            $newCredits = (int) ($shop->ai_credits_balance ?? 0);
+            $newCredits = (int) ($summary['total_credits'] ?? $shop->ai_credits_balance ?? 0);
 
             $this->notifyCreditTopUpEmails($shop, $previousCredits, $newCredits);
 

@@ -19,11 +19,13 @@ import axios from 'axios';
 
 const TEAL = '#468A9A';
 
-export default function Billing({ credits, currentPlan, plans = [], creditPacks = [] }) {
+export default function Billing({ credits, creditSummary = null, currentPlan, plans = [], creditPacks = [] }) {
   const planName = currentPlan?.name ?? 'Free Trial';
   const creditsRemaining = typeof credits === 'number' ? credits : 0;
-  const totalCreditsPerMonth = currentPlan?.credits_per_month ?? 5;
-  const progress = totalCreditsPerMonth > 0 ? Math.min(100, Math.round((creditsRemaining / totalCreditsPerMonth) * 100)) : 0;
+  const monthlyAllowance = creditSummary?.plan_cycle_credits ?? currentPlan?.credits_per_month ?? 5;
+  const monthlyRemaining = creditSummary?.plan_cycle_remaining ?? Math.min(creditsRemaining, monthlyAllowance);
+  const topUpCredits = creditSummary?.top_up_credits ?? Math.max(0, creditsRemaining - monthlyRemaining);
+  const progress = monthlyAllowance > 0 ? Math.min(100, Math.round((monthlyRemaining / monthlyAllowance) * 100)) : 0;
 
   // Sort plans by price (ascending) to display consistently
   const sortedPlans = [...plans].sort((a, b) => a.price - b.price);
@@ -115,7 +117,11 @@ export default function Billing({ credits, currentPlan, plans = [], creditPacks 
                 </BlockStack>
                 <BlockStack gap="200">
                   <Text variant="bodyMd" as="p" tone="subdued">
-                    Credits Remaining: {creditsRemaining} / {totalCreditsPerMonth}
+                    Credits Available: {creditsRemaining.toLocaleString()}
+                  </Text>
+                  <Text variant="bodySm" as="p" tone="subdued">
+                    Monthly plan credits: {monthlyRemaining.toLocaleString()} / {monthlyAllowance.toLocaleString()}
+                    {topUpCredits > 0 ? ` · Extra top-up credits: ${topUpCredits.toLocaleString()}` : ''}
                   </Text>
                   <div className="billing-progress-teal">
                     <ProgressBar progress={progress} size="medium" tone="primary" />
