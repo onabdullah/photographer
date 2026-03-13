@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsCurrentShop;
+use App\Mail\Admin\MerchantCreditsUpdatedMail;
+use App\Mail\Shopify\MerchantCreditsUpdatedOwnerMail;
+use App\Models\Merchant;
 use App\Models\Plan;
+use App\Models\User;
+use App\Services\MailService;
 use Gnikyt\BasicShopifyAPI\Session;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -558,7 +563,13 @@ class BillingController extends Controller
         }
 
         if ($accepted) {
+            $previousCredits = (int) ($shop->ai_credits_balance ?? 0);
             $shop->increment('ai_credits_balance', (int) $pending['credits']);
+            $shop->refresh();
+            $newCredits = (int) ($shop->ai_credits_balance ?? 0);
+
+            $this->notifyCreditTopUpEmails($shop, $previousCredits, $newCredits);
+
             session()->forget('pending_topup');
             if ($callbackToken !== '') {
                 Cache::forget('pending_topup:'.$callbackToken);
@@ -637,6 +648,78 @@ class BillingController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Notify admins and store owner when credits are added via top-up purchase.
+     */
+    private function notifyCreditTopUpEmails(Merchant $merchant, int $previousCredits, int $newCredits): void
+    {
+        if ($newCredits <= $previousCredits) {
+            return;
+        }
+
+        $smtp = MailService::resolveSmtp();
+        if (! $smtp) {
+            Log::channel('mail')->warning('Top-up credits notification skipped: no active SMTP setting.', [
+                'merchant_id' => $merchant->id,
+                'merchant'    => $merchant->name,
+            ]);
+
+            return;
+        }
+
+        $subject = 'Merchant credits updated — ' . ($merchant->store_name ?: $merchant->name);
+        $changedAt = now()->format('D, d M Y · H:i T');
+
+        $superAdmins = User::query()
+            ->where('status', 'active')
+            ->whereNotNull('email')
+            ->where(function ($q) {
+                $q->where('role', 'super_admin')
+                    ->orWhereHas('adminRole', function ($roleQ) {
+                        $roleQ->whereJsonContains('permissions', '*')
+                            ->orWhereJsonContains('permissions', 'settings.smtp');
+                    });
+            })
+            ->get();
+
+        $notified = [];
+
+        foreach ($superAdmins as $recipient) {
+            $notified[] = mb_strtolower(trim((string) $recipient->email));
+
+            MailService::send(
+                toAddress: $recipient->email,
+                mailable: new MerchantCreditsUpdatedMail(
+                    merchant: $merchant,
+                    fromAddress: $smtp->from_address,
+                    fromName: $smtp->from_name,
+                    previousCredits: $previousCredits,
+                    newCredits: $newCredits,
+                    changedByName: 'Top-up Purchase',
+                    changedByEmail: null,
+                    changedAt: $changedAt,
+                ),
+                subject: $subject,
+            );
+        }
+
+        $ownerEmail = mb_strtolower(trim((string) ($merchant->email ?? '')));
+        if ($ownerEmail !== '' && filter_var($ownerEmail, FILTER_VALIDATE_EMAIL) && ! in_array($ownerEmail, $notified, true)) {
+            MailService::send(
+                toAddress: $ownerEmail,
+                mailable: new MerchantCreditsUpdatedOwnerMail(
+                    merchant: $merchant,
+                    fromAddress: $smtp->from_address,
+                    fromName: $smtp->from_name,
+                    previousCredits: $previousCredits,
+                    newCredits: $newCredits,
+                    changedAt: $changedAt,
+                ),
+                subject: 'Your store credits were updated — ' . ($merchant->store_name ?: $merchant->name),
+            );
+        }
     }
 }
 
