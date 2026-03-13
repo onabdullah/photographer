@@ -269,7 +269,10 @@ class BillingController extends Controller
         ]);
 
         if (! $chargeId || ! $shopDomain || ! $planId) {
-            return redirect()->route('billing')->with('error', 'Billing was not completed.');
+            return redirect()->route('shopify.billing', [
+                'shop' => $shopDomain,
+                'host' => $host,
+            ])->with('error', 'Billing was not completed.');
         }
 
         $shop = \App\Models\Merchant::where('name', $shopDomain)->first();
@@ -304,7 +307,10 @@ class BillingController extends Controller
                 'error'   => $e->getMessage(),
             ]);
 
-            return redirect()->route('billing')->with('error', 'Could not activate plan. Please contact support.');
+            return redirect()->route('shopify.billing', [
+                'shop' => $shopDomain,
+                'host' => $host,
+            ])->with('error', 'Could not activate plan. Please contact support.');
         }
     }
 
@@ -445,14 +451,23 @@ class BillingController extends Controller
 
     public function topUpCallback(Request $request): RedirectResponse
     {
+        $shopParam = (string) $request->query('shop', '');
+        $host      = (string) $request->query('host', '');
+
         $shop = $this->currentShop($request);
         if (! $shop) {
-            return redirect()->route('billing')->with('error', 'Session expired. Please try again.');
+            return redirect()->route('shopify.billing', [
+                'shop' => $shopParam,
+                'host' => $host,
+            ])->with('error', 'Session expired. Please try again.');
         }
 
         $pending = session('pending_topup');
         if (! $pending || $pending['shop'] !== $shop->name) {
-            return redirect()->route('billing')->with('error', 'Invalid callback.');
+            return redirect()->route('shopify.billing', [
+                'shop' => $shop->name,
+                'host' => $host,
+            ])->with('error', 'Invalid callback.');
         }
 
         // Verify charge is accepted
@@ -463,10 +478,16 @@ class BillingController extends Controller
         if ($status === 'accepted') {
             $shop->increment('ai_credits_balance', (int) $pending['credits']);
             session()->forget('pending_topup');
-            return redirect()->route('billing')->with('success', "Added {$pending['credits']} credits to your account!");
+            return redirect()->route('shopify.billing', [
+                'shop' => $shop->name,
+                'host' => $host,
+            ])->with('success', "Added {$pending['credits']} credits to your account!");
         }
 
-        return redirect()->route('billing')->with('error', 'Charge was not accepted.');
+        return redirect()->route('shopify.billing', [
+            'shop' => $shop->name,
+            'host' => $host,
+        ])->with('error', 'Charge was not accepted.');
     }
 
     /* ─── Private helpers ────────────────────────────────────────── */
