@@ -120,9 +120,14 @@ class BillingController extends Controller
         }
 
         // ── Step 2: Build charge details ─────────────────────────────────────────
-        // Non-production environments always set test=true.
-        // Shopify REJECTS non-test charges on development stores.
-        $isTest = ! app()->isProduction();
+        // Use test charges for non-production by default, with env override support.
+        // This prevents Shopify dev stores from showing unavailable billing screens.
+        $isTest = $this->shouldUseTestCharges($shop);
+
+        Log::debug('[BillingController] Billing mode selected', [
+            'shop'    => $shop->name,
+            'is_test' => $isTest,
+        ]);
 
         $returnUrl = URL::secure('shopify/billing/callback') . '?' . http_build_query([
             'plan_id' => $plan->id,
@@ -357,7 +362,7 @@ class BillingController extends Controller
                     'amount'       => number_format((float) $pack->price, 2, '.', ''),
                     'currencyCode' => 'USD',
                 ],
-                'test'      => ! app()->isProduction(),
+                'test'      => $this->shouldUseTestCharges($shop),
             ];
 
             $response  = $shop->api()->graph($query, $variables);
@@ -491,6 +496,41 @@ class BillingController extends Controller
             ]);
             return null;
         }
+    }
+
+    /**
+     * Decide whether billing calls should be created as test charges.
+     *
+     * Rules:
+     * - Non-production always uses test charges.
+     * - `SHOPIFY_FORCE_TEST_CHARGES=true` forces test charges in any env.
+     * - In production, try to detect partner development stores via GraphQL.
+     */
+    private function shouldUseTestCharges($shop): bool
+    {
+        if (! app()->isProduction()) {
+            return true;
+        }
+
+        if (filter_var((string) env('SHOPIFY_FORCE_TEST_CHARGES', false), FILTER_VALIDATE_BOOL)) {
+            return true;
+        }
+
+        try {
+            $response = $shop->api()->graph('query { shop { plan { partnerDevelopment } } }');
+            $partnerDevelopment = data_get($response, 'body.data.shop.plan.partnerDevelopment');
+
+            if (is_bool($partnerDevelopment)) {
+                return $partnerDevelopment;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[BillingController] Could not detect shop plan type for test billing decision', [
+                'shop'  => $shop->name,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return false;
     }
 }
 
