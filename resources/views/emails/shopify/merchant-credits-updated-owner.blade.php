@@ -19,6 +19,10 @@
         .delta-positive { color: #15803d; font-weight: 700; }
         .delta-negative { color: #b42318; font-weight: 700; }
         .delta-neutral { color: #6b7280; font-weight: 700; }
+        .tips { background-color: rgba(70, 138, 154, 0.06); border: 1px solid rgba(70, 138, 154, 0.15); border-radius: 8px; padding: 18px 20px; margin: 20px 0 0; }
+        .tips h3 { margin: 0 0 10px; font-size: 15px; font-weight: 700; color: #111827; }
+        .tips ul { margin: 0; padding-left: 18px; }
+        .tips li { margin: 8px 0; font-size: 14px; color: #374151; line-height: 1.55; }
         .footer { background-color: #F9FAFB; border-top: 1px solid #e5e7eb; padding: 20px 30px; text-align: center; font-size: 12px; color: #6B7280; }
         h1 { margin: 0; font-size: 24px; font-weight: 700; }
         p { margin: 10px 0; line-height: 1.6; }
@@ -28,12 +32,12 @@
     <div class="container">
 
         <div class="header">
-            <h1>Credits Updated</h1>
-            <p>{{ config('app.name') }} · Store Notification</p>
+            <h1>Thank you 🎉</h1>
+            <p>Your new credits are ready to help you create more and sell more.</p>
         </div>
 
         <div class="content">
-            <p class="greeting">Your store credit balance has been updated.</p>
+            <p class="greeting">Congratulations. Your store credit balance has been updated successfully, and you are ready to keep creating product visuals without interruption.</p>
 
             <div style="text-align: center;">
                 <span class="badge">{{ $shopName }}</span>
@@ -68,10 +72,20 @@
                     <div class="detail-value">{{ $changedAt }}</div>
                 </div>
             </div>
+
+            <div class="tips">
+                <h3>How to get more value from these credits</h3>
+                <ul>
+                    <li>Prioritize your top-selling products, hero images, and new launches first.</li>
+                    <li>Save and reuse prompts that produce strong results so you spend fewer credits testing from scratch.</li>
+                    <li>Create images in batches for collections or campaigns to stay consistent and save time.</li>
+                    <li>Use your best-performing visuals on product pages, ads, and social posts to stretch the business impact of every credit.</li>
+                </ul>
+            </div>
         </div>
 
         <div class="footer">
-            This is an automated notification from {{ config('app.name') }}.
+            This is an automated notification from {{ config('app.name') }}. We appreciate your business and are here to help you grow.
         </div>
 
     </div>

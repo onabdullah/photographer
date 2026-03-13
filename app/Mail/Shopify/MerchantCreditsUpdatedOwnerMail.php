@@ -35,7 +35,7 @@ class MerchantCreditsUpdatedOwnerMail extends Mailable
     {
         return new Envelope(
             from: new Address($this->fromAddress, $this->fromName ?? config('app.name')),
-            subject: 'Your store credits were updated — ' . $this->shopName,
+            subject: 'Thank you - your store credits are ready to use for ' . $this->shopName,
         );
     }
 

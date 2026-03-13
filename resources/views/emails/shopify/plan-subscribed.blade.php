@@ -25,6 +25,10 @@
         .what-next h3 { font-size: 15px; font-weight: 700; color: #111827; margin: 0 0 12px; }
         .step { display: flex; align-items: flex-start; margin: 10px 0; font-size: 14px; color: #374151; line-height: 1.5; }
         .step-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #468A9A; color: white; border-radius: 50%; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-right: 10px; margin-top: 1px; }
+        .tips { background-color: #fff7ed; border: 1px solid rgba(255,122,48,0.2); border-radius: 10px; padding: 20px 18px; margin: 24px 0; }
+        .tips h3 { font-size: 15px; font-weight: 700; color: #111827; margin: 0 0 10px; }
+        .tips ul { margin: 0; padding-left: 18px; color: #374151; }
+        .tips li { margin: 8px 0; font-size: 14px; line-height: 1.55; }
         .button { display: inline-block; padding: 14px 36px; background: #468A9A; color: white !important; text-decoration: none; border-radius: 8px; margin: 8px 0 24px; font-weight: 600; font-size: 15px; }
         .notice { background-color: rgba(70, 138, 154, 0.06); border-left: 3px solid #468A9A; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 24px 0; }
         .notice p { margin: 0; font-size: 13px; color: #374151; line-height: 1.6; }
@@ -42,8 +46,8 @@
             @if($appLogoUrl)
                 <img src="{{ $appLogoUrl }}" alt="{{ $appName }}" style="max-height: 44px; width: auto; display: inline-block; margin-bottom: 16px;"><br>
             @endif
-            <h1>You're all set 🎉</h1>
-            <p>Welcome to the {{ $planName }}. Your credits are ready to use.</p>
+            <h1>Congratulations 🎉</h1>
+            <p>Thank you for upgrading to {{ $planName }}. Your credits are live and your store is ready to grow.</p>
         </div>
 
         {{-- ── CONTENT ── --}}
@@ -59,7 +63,7 @@
                 <strong>{{ $displayName }}</strong>,
             </p>
 
-            <p>Your subscription to <strong>{{ $appName }}</strong> has been confirmed. Here's everything you need to know about your new plan.</p>
+            <p>Thank you for choosing <strong>{{ $appName }}</strong>. Your subscription is confirmed, your plan is active, and you can start creating conversion-ready product visuals right away.</p>
 
             {{-- ── Plan hero card ── --}}
             <div class="plan-hero">
@@ -121,17 +125,27 @@
                 </div>
             </div>
 
+            <div class="tips">
+                <h3>Tips to save credits and grow faster</h3>
+                <ul>
+                    <li>Start with your highest-margin or best-selling products first so each credit has a stronger sales impact.</li>
+                    <li>Reuse winning prompts, backgrounds, and styles across similar products instead of testing too many variations.</li>
+                    <li>Batch-create visuals for seasonal launches and new arrivals to keep your storefront fresh without wasting time.</li>
+                    <li>Use top-up packs only when you need them, and let your monthly plan cover your steady day-to-day content flow.</li>
+                </ul>
+            </div>
+
             {{-- ── CTA ── --}}
             <div style="text-align: center; margin: 32px 0 12px;">
                 <a href="{{ config('app.url') }}" class="button">Open {{ $appName }}</a>
             </div>
 
             <div class="notice">
-                <p>Your billing is handled securely by Shopify. You can manage or cancel your subscription at any time from your Shopify admin under <em>Apps → {{ $appName }} → Billing</em>.</p>
+                <p>Your billing is handled securely by Shopify. You can manage or cancel your subscription at any time from your Shopify admin under <em>Apps → {{ $appName }} → Billing</em>. If you want help getting more from your credits, just reply to this email.</p>
             </div>
 
             <p class="signature">
-                With gratitude,<br>
+                Thanks again for trusting us with your store growth,<br>
                 <strong>The {{ $appName }} Team</strong>
             </p>
 
