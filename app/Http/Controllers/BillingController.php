@@ -130,48 +130,98 @@ class BillingController extends Controller
             'host'    => $host,
         ]);
 
-        // ── Step 3: Create the charge on Shopify ──────────────────────────────────
-        // Use a direct REST call (same pattern as topUp) to avoid the library
-        // wrapper sending unsupported fields (interval, null terms/capped_amount)
-        // to the REST recurring_application_charges endpoint, which causes 422s.
+        // ── Step 3: Create the subscription via GraphQL (appSubscriptionCreate) ───
+        // Shopify recommends GraphQL over the deprecated REST billing endpoints.
+        // Docs: https://shopify.dev/docs/api/admin-graphql/latest/mutations/appSubscriptionCreate
+        //
+        // NOTE: This requires the app to be registered in the Shopify Partners
+        // dashboard. Custom/shop-owned apps cannot use the billing API at all.
         try {
-            $chargePayload = [
-                'recurring_application_charge' => [
-                    'name'       => $plan->name,
-                    'price'      => (float) $plan->price,
-                    'return_url' => $returnUrl,
-                    'test'       => $isTest,
-                    'trial_days' => (int) ($plan->trial_days ?? 0),
-                ],
+            $query = <<<'GQL'
+            mutation appSubscriptionCreate(
+                $name: String!,
+                $returnUrl: URL!,
+                $trialDays: Int,
+                $test: Boolean,
+                $lineItems: [AppSubscriptionLineItemInput!]!
+            ) {
+                appSubscriptionCreate(
+                    name: $name,
+                    returnUrl: $returnUrl,
+                    trialDays: $trialDays,
+                    test: $test,
+                    lineItems: $lineItems
+                ) {
+                    appSubscription { id }
+                    confirmationUrl
+                    userErrors { field message }
+                }
+            }
+            GQL;
+
+            $variables = [
+                'name'      => $plan->name,
+                'returnUrl' => $returnUrl,
+                'trialDays' => (int) ($plan->trial_days ?? 0),
+                'test'      => $isTest,
+                'lineItems' => [[
+                    'plan' => [
+                        'appRecurringPricingDetails' => [
+                            'price'    => [
+                                'amount'       => number_format((float) $plan->price, 2, '.', ''),
+                                'currencyCode' => 'USD',
+                            ],
+                            'interval' => 'EVERY_30_DAYS',
+                        ],
+                    ],
+                ]],
             ];
 
-            $apiVersion = config('shopify-app.api_version', '2025-10');
-            $response   = $shop->api()->rest(
-                'POST',
-                "/admin/api/{$apiVersion}/recurring_application_charges.json",
-                $chargePayload
-            );
+            $response  = $shop->api()->graph($query, $variables);
+            $gqlErrors = $response['errors'] ?? false;
 
-            if ($response['errors'] === true || empty($response['body']['recurring_application_charge']['confirmation_url'])) {
-                $body = $response['body'] ?? null;
-                $shopifyError = is_string($body) ? $body : json_encode($body);
-                throw new \RuntimeException('Shopify billing failed: ' . $shopifyError);
+            if ($gqlErrors !== false) {
+                $msg = is_array($gqlErrors) ? json_encode($gqlErrors) : $gqlErrors;
+                throw new \RuntimeException('GraphQL error: ' . $msg);
             }
 
-            $confirmationUrl = $response['body']['recurring_application_charge']['confirmation_url'];
+            $result     = $response['body']['data']['appSubscriptionCreate'] ?? [];
+            $userErrors = $result['userErrors'] ?? [];
+
+            if (! empty($userErrors)) {
+                throw new \RuntimeException('Shopify error: ' . json_encode($userErrors));
+            }
+
+            $confirmationUrl = $result['confirmationUrl'] ?? null;
+            if (! $confirmationUrl) {
+                throw new \RuntimeException('Shopify did not return a confirmationUrl');
+            }
 
             Log::debug('[BillingController] Confirmation URL obtained', ['url' => $confirmationUrl]);
 
             return response()->json(['confirmation_url' => $confirmationUrl]);
         } catch (\Throwable $e) {
+            $errorMessage = $e->getMessage();
+            $publicError  = 'Could not generate billing URL. Please try again.';
+
+            // Shopify returns this when the app/store install context is not eligible for billing.
+            if (str_contains($errorMessage, 'currently owned by a Shop')) {
+                $publicError = 'Billing is blocked by Shopify for this install context. Reinstall the app from Shopify Partners and try again.';
+            }
+
             Log::error('[BillingController] Error generating confirmation URL', [
                 'shop'    => $shop->name,
                 'plan_id' => $planId,
-                'error'   => $e->getMessage(),
+                'error'   => $errorMessage,
                 'trace'   => $e->getTraceAsString(),
             ]);
 
-            return response()->json(['error' => 'Could not generate billing URL. Please try again.'], 500);
+            $response = ['error' => $publicError];
+            if (config('app.debug')) {
+                $response['debug_error'] = $errorMessage;
+            }
+
+            return response()->json($response, 500);
         }
     }
 
@@ -237,8 +287,9 @@ class BillingController extends Controller
     /* ─── One-time credit top-up ─────────────────────────────────── */
 
     /**
-     * Credit top-ups are stored as Shopify ApplicationCharge (one-time).
-     * We create the charge via REST and return the confirmation URL.
+     * Credit top-ups use Shopify one-time charges (appPurchaseOneTimeCreate).
+     * We create the charge via GraphQL and return the confirmation URL.
+     * Docs: https://shopify.dev/docs/api/admin-graphql/latest/mutations/appPurchaseOneTimeCreate
      */
     public function topUp(Request $request): JsonResponse
     {
@@ -260,39 +311,91 @@ class BillingController extends Controller
         $redirectUrl = rtrim(config('app.url'), '/') . '/shopify/billing/topup/callback';
 
         try {
-            $response = $shop->api()->rest('POST', '/admin/api/2025-10/application_charges.json', [
-                'application_charge' => [
-                    'name'         => number_format($pack->credits) . ' AI Credits',
-                    'price'        => (float) $pack->price,
-                    'return_url'   => $redirectUrl,
-                    'test'         => ! app()->isProduction(),
-                ],
-            ]);
-
-            $confirmationUrl = $response['body']['application_charge']['confirmation_url'] ?? null;
-            if (! $confirmationUrl) {
-                throw new \RuntimeException('Shopify did not return a confirmation URL');
+            $query = <<<'GQL'
+            mutation appPurchaseOneTimeCreate(
+                $name: String!,
+                $returnUrl: URL!,
+                $price: MoneyInput!,
+                $test: Boolean
+            ) {
+                appPurchaseOneTimeCreate(
+                    name: $name,
+                    returnUrl: $returnUrl,
+                    price: $price,
+                    test: $test
+                ) {
+                    appPurchaseOneTime { id }
+                    confirmationUrl
+                    userErrors { field message }
+                }
             }
+            GQL;
+
+            $variables = [
+                'name'      => number_format($pack->credits) . ' AI Credits',
+                'returnUrl' => $redirectUrl,
+                'price'     => [
+                    'amount'       => number_format((float) $pack->price, 2, '.', ''),
+                    'currencyCode' => 'USD',
+                ],
+                'test'      => ! app()->isProduction(),
+            ];
+
+            $response  = $shop->api()->graph($query, $variables);
+            $gqlErrors = $response['errors'] ?? false;
+
+            if ($gqlErrors !== false) {
+                $msg = is_array($gqlErrors) ? json_encode($gqlErrors) : $gqlErrors;
+                throw new \RuntimeException('GraphQL error: ' . $msg);
+            }
+
+            $result     = $response['body']['data']['appPurchaseOneTimeCreate'] ?? [];
+            $userErrors = $result['userErrors'] ?? [];
+
+            if (! empty($userErrors)) {
+                throw new \RuntimeException('Shopify error: ' . json_encode($userErrors));
+            }
+
+            $confirmationUrl = $result['confirmationUrl'] ?? null;
+            if (! $confirmationUrl) {
+                throw new \RuntimeException('Shopify did not return a confirmationUrl');
+            }
+
+            // Extract integer charge ID from the GID (gid://shopify/AppPurchaseOneTime/12345)
+            $gid      = $result['appPurchaseOneTime']['id'] ?? '';
+            $chargeId = (int) substr($gid, strrpos($gid, '/') + 1);
 
             // Stash pending pack in session so callback can credit it
             session([
                 'pending_topup' => [
                     'pack_id'   => $packId,
                     'credits'   => $pack->credits,
-                    'charge_id' => $response['body']['application_charge']['id'],
+                    'charge_id' => $chargeId,
                     'shop'      => $shop->name,
                 ],
             ]);
 
             return response()->json(['confirmation_url' => $confirmationUrl]);
         } catch (\Throwable $e) {
+            $errorMessage = $e->getMessage();
+            $publicError  = 'Could not create charge. Please try again.';
+
+            if (str_contains($errorMessage, 'currently owned by a Shop')) {
+                $publicError = 'Credit-pack billing is blocked by Shopify for this install context. Reinstall the app from Shopify Partners and try again.';
+            }
+
             Log::error('BillingController@topUp error', [
                 'shop'    => $shop->name,
                 'pack_id' => $packId,
-                'error'   => $e->getMessage(),
+                'error'   => $errorMessage,
             ]);
 
-            return response()->json(['error' => 'Could not create charge. Please try again.'], 500);
+            $response = ['error' => $publicError];
+            if (config('app.debug')) {
+                $response['debug_error'] = $errorMessage;
+            }
+
+            return response()->json($response, 500);
         }
     }
 
