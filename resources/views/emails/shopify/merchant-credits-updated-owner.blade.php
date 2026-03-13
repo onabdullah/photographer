@@ -32,12 +32,12 @@
     <div class="container">
 
         <div class="header">
-            <h1>Thank you 🎉</h1>
-            <p>Your new credits are ready to help you create more and sell more.</p>
+            <h1>Congratulations 🎉</h1>
+            <p>Your new credits are now available and ready to power your next round of product visuals.</p>
         </div>
 
         <div class="content">
-            <p class="greeting">Congratulations. Your store credit balance has been updated successfully, and you are ready to keep creating product visuals without interruption.</p>
+            <p class="greeting">Your store credit balance has been updated successfully. You can keep creating without interruption and move faster on the products that matter most.</p>
 
             <div style="text-align: center;">
                 <span class="badge">{{ $shopName }}</span>

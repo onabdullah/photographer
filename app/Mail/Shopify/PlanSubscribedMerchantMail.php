@@ -46,7 +46,7 @@ class PlanSubscribedMerchantMail extends Mailable
     {
         return new Envelope(
             from: new Address($this->fromAddress, $this->fromName ?? $this->appName),
-            subject: 'Congratulations - your ' . $this->planName . ' plan is live with ' . $this->appName,
+            subject: 'Congratulations - your ' . $this->planName . ' plan is now active',
         );
     }
 

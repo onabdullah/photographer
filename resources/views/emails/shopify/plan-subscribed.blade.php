@@ -47,7 +47,7 @@
                 <img src="{{ $appLogoUrl }}" alt="{{ $appName }}" style="max-height: 44px; width: auto; display: inline-block; margin-bottom: 16px;"><br>
             @endif
             <h1>Congratulations 🎉</h1>
-            <p>Thank you for upgrading to {{ $planName }}. Your credits are live and your store is ready to grow.</p>
+            <p>Your {{ $planName }} plan is now active. New credits are ready, and your store is set up to create more high-converting visuals.</p>
         </div>
 
         {{-- ── CONTENT ── --}}
@@ -63,7 +63,7 @@
                 <strong>{{ $displayName }}</strong>,
             </p>
 
-            <p>Thank you for choosing <strong>{{ $appName }}</strong>. Your subscription is confirmed, your plan is active, and you can start creating conversion-ready product visuals right away.</p>
+            <p>Your subscription to <strong>{{ $appName }}</strong> has been activated successfully. Everything is ready for you to produce sharper, more persuasive product imagery right away.</p>
 
             {{-- ── Plan hero card ── --}}
             <div class="plan-hero">
@@ -145,7 +145,7 @@
             </div>
 
             <p class="signature">
-                Thanks again for trusting us with your store growth,<br>
+                Excited to see what you create next,<br>
                 <strong>The {{ $appName }} Team</strong>
             </p>
 
