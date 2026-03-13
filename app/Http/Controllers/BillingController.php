@@ -13,8 +13,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Osiset\ShopifyApp\Actions\ActivatePlan;
 use Osiset\ShopifyApp\Contracts\ApiHelper as IApiHelper;
-use Osiset\ShopifyApp\Objects\Enums\ChargeType;
-use Osiset\ShopifyApp\Objects\Transfers\PlanDetails as PlanDetailsTransfer;
 use Osiset\ShopifyApp\Objects\Values\ChargeReference;
 use Osiset\ShopifyApp\Objects\Values\PlanId;
 use Osiset\ShopifyApp\Objects\Values\ShopId;
@@ -132,24 +130,35 @@ class BillingController extends Controller
             'host'    => $host,
         ]);
 
-        $transfer              = new PlanDetailsTransfer();
-        $transfer->name        = $plan->name;
-        $transfer->price       = (float) $plan->price;
-        $transfer->interval    = 'EVERY_30_DAYS';
-        $transfer->test        = $isTest;
-        $transfer->trialDays   = (int) ($plan->trial_days ?? 0);
-        $transfer->cappedAmount = null;
-        $transfer->terms        = null;
-        $transfer->returnUrl    = $returnUrl;
-
         // ── Step 3: Create the charge on Shopify ──────────────────────────────────
+        // Use a direct REST call (same pattern as topUp) to avoid the library
+        // wrapper sending unsupported fields (interval, null terms/capped_amount)
+        // to the REST recurring_application_charges endpoint, which causes 422s.
         try {
-            $response = $shop->apiHelper()->createCharge(ChargeType::RECURRING(), $transfer);
+            $chargePayload = [
+                'recurring_application_charge' => [
+                    'name'       => $plan->name,
+                    'price'      => (float) $plan->price,
+                    'return_url' => $returnUrl,
+                    'test'       => $isTest,
+                    'trial_days' => (int) ($plan->trial_days ?? 0),
+                ],
+            ];
 
-            $confirmationUrl = $response['confirmation_url'] ?? null;
-            if (! $confirmationUrl) {
-                throw new \RuntimeException('Shopify did not return a confirmation_url');
+            $apiVersion = config('shopify-app.api_version', '2025-10');
+            $response   = $shop->api()->rest(
+                'POST',
+                "/admin/api/{$apiVersion}/recurring_application_charges.json",
+                $chargePayload
+            );
+
+            if ($response['errors'] === true || empty($response['body']['recurring_application_charge']['confirmation_url'])) {
+                $body = $response['body'] ?? null;
+                $shopifyError = is_string($body) ? $body : json_encode($body);
+                throw new \RuntimeException('Shopify billing failed: ' . $shopifyError);
             }
+
+            $confirmationUrl = $response['body']['recurring_application_charge']['confirmation_url'];
 
             Log::debug('[BillingController] Confirmation URL obtained', ['url' => $confirmationUrl]);
 
