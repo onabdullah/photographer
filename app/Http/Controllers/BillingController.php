@@ -185,15 +185,34 @@ class BillingController extends Controller
                 throw new \RuntimeException('GraphQL error: ' . $msg);
             }
 
+            // Shopify GraphQL can return API-level errors inside body.errors.
+            $bodyErrors = $response['body']['errors'] ?? null;
+            if (is_array($bodyErrors) && count($bodyErrors) > 0) {
+                throw new \RuntimeException('GraphQL body errors: ' . json_encode($bodyErrors));
+            }
+
             $result     = $response['body']['data']['appSubscriptionCreate'] ?? [];
             $userErrors = $result['userErrors'] ?? [];
 
-            if (! empty($userErrors)) {
-                throw new \RuntimeException('Shopify error: ' . json_encode($userErrors));
+            if (is_array($userErrors)) {
+                $userErrorMessages = collect($userErrors)
+                    ->pluck('message')
+                    ->filter(fn ($msg) => is_string($msg) && trim($msg) !== '')
+                    ->values()
+                    ->all();
+
+                if (count($userErrorMessages) > 0) {
+                    throw new \RuntimeException('Shopify error: ' . implode(' | ', $userErrorMessages));
+                }
             }
 
             $confirmationUrl = $result['confirmationUrl'] ?? null;
             if (! $confirmationUrl) {
+                Log::error('[BillingController] Missing confirmationUrl in appSubscriptionCreate response', [
+                    'shop'     => $shop->name,
+                    'plan_id'  => $planId,
+                    'response' => $response['body'] ?? null,
+                ]);
                 throw new \RuntimeException('Shopify did not return a confirmationUrl');
             }
 
@@ -349,15 +368,33 @@ class BillingController extends Controller
                 throw new \RuntimeException('GraphQL error: ' . $msg);
             }
 
+            $bodyErrors = $response['body']['errors'] ?? null;
+            if (is_array($bodyErrors) && count($bodyErrors) > 0) {
+                throw new \RuntimeException('GraphQL body errors: ' . json_encode($bodyErrors));
+            }
+
             $result     = $response['body']['data']['appPurchaseOneTimeCreate'] ?? [];
             $userErrors = $result['userErrors'] ?? [];
 
-            if (! empty($userErrors)) {
-                throw new \RuntimeException('Shopify error: ' . json_encode($userErrors));
+            if (is_array($userErrors)) {
+                $userErrorMessages = collect($userErrors)
+                    ->pluck('message')
+                    ->filter(fn ($msg) => is_string($msg) && trim($msg) !== '')
+                    ->values()
+                    ->all();
+
+                if (count($userErrorMessages) > 0) {
+                    throw new \RuntimeException('Shopify error: ' . implode(' | ', $userErrorMessages));
+                }
             }
 
             $confirmationUrl = $result['confirmationUrl'] ?? null;
             if (! $confirmationUrl) {
+                Log::error('BillingController@topUp missing confirmationUrl', [
+                    'shop'     => $shop->name,
+                    'pack_id'  => $packId,
+                    'response' => $response['body'] ?? null,
+                ]);
                 throw new \RuntimeException('Shopify did not return a confirmationUrl');
             }
 
