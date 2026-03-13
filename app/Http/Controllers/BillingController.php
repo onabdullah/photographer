@@ -338,7 +338,12 @@ class BillingController extends Controller
             return response()->json(['error' => 'Invalid credit pack'], 422);
         }
 
-        $redirectUrl = rtrim(config('app.url'), '/') . '/shopify/billing/topup/callback';
+        $host = (string) $request->input('host', '');
+
+        $redirectUrl = URL::secure('shopify/billing/topup/callback') . '?' . http_build_query([
+            'shop' => $shop->name,
+            'host' => $host,
+        ]);
 
         try {
             $query = <<<'GQL'
@@ -454,12 +459,20 @@ class BillingController extends Controller
         $shopParam = (string) $request->query('shop', '');
         $host      = (string) $request->query('host', '');
 
+        $billingRouteParams = array_filter([
+            'shop' => $shopParam,
+            'host' => $host,
+        ], fn ($value) => $value !== '');
+
         $shop = $this->currentShop($request);
         if (! $shop) {
-            return redirect()->route('shopify.billing', [
-                'shop' => $shopParam,
-                'host' => $host,
-            ])->with('error', 'Session expired. Please try again.');
+            if (! empty($billingRouteParams)) {
+                return redirect()->route('shopify.billing', $billingRouteParams)
+                    ->with('error', 'Session expired. Please try again.');
+            }
+
+            return redirect(URL::secure('shopify/plans'))
+                ->with('error', 'Session expired. Please reopen the app from Shopify Admin.');
         }
 
         $pending = session('pending_topup');

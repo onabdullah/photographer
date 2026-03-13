@@ -75,7 +75,7 @@ export default function Billing({ credits, currentPlan, plans = [], creditPacks 
     setBillingError('');
     setToppingUpId(packId);
     try {
-      const { data } = await axios.post('/shopify/billing/top-up', { pack_id: packId });
+      const { data } = await axios.post('/shopify/billing/top-up', { pack_id: packId, host });
       if (data.confirmation_url) {
         window.top.location.replace(data.confirmation_url);
       }
@@ -83,7 +83,7 @@ export default function Billing({ credits, currentPlan, plans = [], creditPacks 
       setBillingError(err.response?.data?.error ?? 'Could not start top-up. Please try again.');
       setToppingUpId(null);
     }
-  }, [toppingUpId]);
+  }, [toppingUpId, host]);
 
   // Check if current user is on this plan
   const isCurrentPlan = (plan) => currentPlan?.id === plan.id;
