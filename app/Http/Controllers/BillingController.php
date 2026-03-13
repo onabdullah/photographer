@@ -8,9 +8,11 @@ use Gnikyt\BasicShopifyAPI\Session;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Osiset\ShopifyApp\Actions\ActivatePlan;
 use Osiset\ShopifyApp\Contracts\ApiHelper as IApiHelper;
 use Osiset\ShopifyApp\Objects\Values\ChargeReference;
@@ -339,10 +341,12 @@ class BillingController extends Controller
         }
 
         $host = (string) $request->input('host', '');
+        $callbackToken = Str::random(40);
 
         $redirectUrl = URL::secure('shopify/billing/topup/callback') . '?' . http_build_query([
             'shop' => $shop->name,
             'host' => $host,
+            'cbt'  => $callbackToken,
         ]);
 
         try {
@@ -424,9 +428,20 @@ class BillingController extends Controller
                     'pack_id'   => $packId,
                     'credits'   => $pack->credits,
                     'charge_id' => $chargeId,
+                    'charge_gid'=> $gid,
                     'shop'      => $shop->name,
                 ],
             ]);
+
+            // Session cookies can be missing on callback in some embedded/browser contexts.
+            // Persist a short-lived backup keyed by callback token.
+            Cache::put('pending_topup:'.$callbackToken, [
+                'pack_id'    => $packId,
+                'credits'    => $pack->credits,
+                'charge_id'  => $chargeId,
+                'charge_gid' => $gid,
+                'shop'       => $shop->name,
+            ], now()->addHours(2));
 
             return response()->json(['confirmation_url' => $confirmationUrl]);
         } catch (\Throwable $e) {
@@ -458,6 +473,15 @@ class BillingController extends Controller
     {
         $shopParam = (string) $request->query('shop', '');
         $host      = (string) $request->query('host', '');
+        $callbackToken = (string) $request->query('cbt', '');
+        $chargeIdParam = (string) $request->query('charge_id', '');
+
+        Log::debug('[BillingController] Top-up callback received', [
+            'shop'      => $shopParam,
+            'host'      => $host,
+            'cbt'       => $callbackToken !== '',
+            'charge_id' => $chargeIdParam,
+        ]);
 
         $billingRouteParams = array_filter([
             'shop' => $shopParam,
@@ -465,6 +489,10 @@ class BillingController extends Controller
         ], fn ($value) => $value !== '');
 
         $shop = $this->currentShop($request);
+        if (! $shop && $shopParam !== '') {
+            $shop = \App\Models\Merchant::where('name', $shopParam)->first();
+        }
+
         if (! $shop) {
             if (! empty($billingRouteParams)) {
                 return redirect()->route('shopify.billing', $billingRouteParams)
@@ -476,6 +504,10 @@ class BillingController extends Controller
         }
 
         $pending = session('pending_topup');
+        if ((! $pending || ($pending['shop'] ?? null) !== $shop->name) && $callbackToken !== '') {
+            $pending = Cache::get('pending_topup:'.$callbackToken);
+        }
+
         if (! $pending || $pending['shop'] !== $shop->name) {
             return redirect()->route('shopify.billing', [
                 'shop' => $shop->name,
@@ -483,14 +515,54 @@ class BillingController extends Controller
             ])->with('error', 'Invalid callback.');
         }
 
-        // Verify charge is accepted
-        $chargeId = $pending['charge_id'];
-        $response = $shop->api()->rest('GET', "/admin/api/2025-10/application_charges/{$chargeId}.json");
-        $status   = $response['body']['application_charge']['status'] ?? null;
+        // Verify charge is accepted.
+        $accepted = false;
+        $chargeId = (int) ($chargeIdParam !== '' ? $chargeIdParam : ($pending['charge_id'] ?? 0));
 
-        if ($status === 'accepted') {
+        if ($chargeId > 0) {
+            try {
+                $response = $shop->api()->rest('GET', "/admin/api/2025-10/application_charges/{$chargeId}.json");
+                $status = strtolower((string) ($response['body']['application_charge']['status'] ?? ''));
+                $accepted = in_array($status, ['accepted', 'active'], true);
+            } catch (\Throwable $e) {
+                Log::warning('[BillingController] Top-up REST verification failed; trying GraphQL fallback', [
+                    'shop'      => $shop->name,
+                    'charge_id' => $chargeId,
+                    'error'     => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if (! $accepted && ! empty($pending['charge_gid'])) {
+            try {
+                $query = <<<'GQL'
+                query appPurchaseStatus($id: ID!) {
+                    node(id: $id) {
+                        ... on AppPurchaseOneTime {
+                            id
+                            status
+                        }
+                    }
+                }
+                GQL;
+                $verify = $shop->api()->graph($query, ['id' => $pending['charge_gid']]);
+                $gqlStatus = strtoupper((string) data_get($verify, 'body.data.node.status', ''));
+                $accepted = in_array($gqlStatus, ['ACTIVE', 'ACCEPTED'], true);
+            } catch (\Throwable $e) {
+                Log::warning('[BillingController] Top-up GraphQL verification failed', [
+                    'shop'       => $shop->name,
+                    'charge_gid' => $pending['charge_gid'] ?? null,
+                    'error'      => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($accepted) {
             $shop->increment('ai_credits_balance', (int) $pending['credits']);
             session()->forget('pending_topup');
+            if ($callbackToken !== '') {
+                Cache::forget('pending_topup:'.$callbackToken);
+            }
             return redirect()->route('shopify.billing', [
                 'shop' => $shop->name,
                 'host' => $host,
