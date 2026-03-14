@@ -20,26 +20,11 @@ import { router, usePage } from '@inertiajs/react';
 import { TitleBar } from '@shopify/app-bridge-react';
 
 const SETTINGS_NAV_ITEMS = [
-  { key: 'general', label: 'General', managed: true },
-  { key: 'plan', label: 'Plan', managed: true },
-  { key: 'billing', label: 'Billing', managed: true },
-  { key: 'users_permissions', label: 'Users and permissions', managed: true },
-  { key: 'payments', label: 'Payments', managed: false },
-  { key: 'checkout', label: 'Checkout', managed: false },
-  { key: 'customer_accounts', label: 'Customer accounts', managed: false },
-  { key: 'shipping_delivery', label: 'Shipping and delivery', managed: false },
-  { key: 'taxes_duties', label: 'Taxes and duties', managed: false },
-  { key: 'locations', label: 'Locations', managed: false },
-  { key: 'markets', label: 'Markets', managed: false },
-  { key: 'apps', label: 'Apps', managed: false },
-  { key: 'sales_channels', label: 'Sales channels', managed: false },
-  { key: 'domains', label: 'Domains', managed: false },
-  { key: 'customer_events', label: 'Customer events', managed: false },
-  { key: 'notifications', label: 'Notifications', managed: true },
-  { key: 'metafields', label: 'Metafields and metaobjects', managed: false },
-  { key: 'languages', label: 'Languages', managed: false },
-  { key: 'customer_privacy', label: 'Customer privacy', managed: true },
-  { key: 'policies', label: 'Policies', managed: false },
+  { key: 'general', label: 'General' },
+  { key: 'generation', label: 'Generation defaults' },
+  { key: 'store_sync', label: 'Store sync' },
+  { key: 'alerts', label: 'Alerts and reporting' },
+  { key: 'privacy', label: 'Data and privacy' },
 ];
 
 const IMAGE_FORMAT_OPTIONS = [
@@ -336,7 +321,7 @@ export default function Settings() {
       );
     }
 
-    if (activeSection === 'plan') {
+    if (activeSection === 'generation') {
       return (
         <Card>
           <Box padding="400">
@@ -376,12 +361,12 @@ export default function Settings() {
       );
     }
 
-    if (activeSection === 'billing') {
+    if (activeSection === 'alerts') {
       return (
         <Card>
           <Box padding="400">
             <BlockStack gap="400">
-              <Text as="h3" variant="headingMd">Billing and credit controls</Text>
+              <Text as="h3" variant="headingMd">Alert and reporting controls</Text>
               <Checkbox
                 label="Notify when credits are low"
                 checked={settings.notifyLowCredits}
@@ -414,7 +399,7 @@ export default function Settings() {
       );
     }
 
-    if (activeSection === 'users_permissions') {
+    if (activeSection === 'store_sync') {
       return (
         <Card>
           <Box padding="400">
@@ -449,35 +434,7 @@ export default function Settings() {
       );
     }
 
-    if (activeSection === 'notifications') {
-      return (
-        <Card>
-          <Box padding="400">
-            <BlockStack gap="400">
-              <Text as="h3" variant="headingMd">Notification preferences</Text>
-              <Checkbox
-                label="Credit threshold notifications"
-                checked={settings.notifyLowCredits}
-                onChange={(v) => setSettings((s) => ({ ...s, notifyLowCredits: v }))}
-              />
-              <Checkbox
-                label="Performance digest emails"
-                checked={settings.weeklyPerformanceDigest}
-                onChange={(v) => setSettings((s) => ({ ...s, weeklyPerformanceDigest: v }))}
-              />
-              <Select
-                label="Digest frequency"
-                options={DIGEST_OPTIONS}
-                value={settings.usageDigestFrequency}
-                onChange={(v) => setSettings((s) => ({ ...s, usageDigestFrequency: v }))}
-              />
-            </BlockStack>
-          </Box>
-        </Card>
-      );
-    }
-
-    if (activeSection === 'customer_privacy') {
+    if (activeSection === 'privacy') {
       return (
         <Card>
           <Box padding="400">
@@ -506,18 +463,7 @@ export default function Settings() {
       );
     }
 
-    return (
-      <Card>
-        <Box padding="400">
-          <BlockStack gap="300">
-            <Text as="h3" variant="headingMd">Managed in Shopify admin</Text>
-            <Text as="p" variant="bodyMd" tone="subdued">
-              This section is shown for layout parity with Shopify settings, but management happens in Shopify Admin.
-            </Text>
-          </BlockStack>
-        </Box>
-      </Card>
-    );
+    return null;
   };
 
   return (
