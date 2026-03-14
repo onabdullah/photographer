@@ -662,7 +662,35 @@ function WelcomeScreen({ recentConversations, onSelect }) {
                 </div>
                 
                 <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3">Welcome to Chat Command</h1>
-                <p className="text-gray-500 dark:text-gray-400 mb-14 text-sm max-w-md">Select a conversation from the sidebar to start providing world-class support.</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-8 text-sm max-w-md">Select a conversation from the sidebar to start providing world-class support.</p>
+
+                {/* Minimalistic Feature Blocks */}
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-14">
+                    <div className="flex items-center gap-2.5 text-gray-600 dark:text-gray-400">
+                        <div className="p-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400">
+                            <Bell size={16} />
+                        </div>
+                        <span className="text-sm font-medium">Sound Alerts</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-gray-600 dark:text-gray-400">
+                        <div className="p-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400">
+                            <Ban size={16} />
+                        </div>
+                        <span className="text-sm font-medium">Block Users</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-gray-600 dark:text-gray-400">
+                        <div className="p-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400">
+                            <Flag size={16} />
+                        </div>
+                        <span className="text-sm font-medium">Spam Control</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-gray-600 dark:text-gray-400">
+                        <div className="p-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400">
+                            <Search size={16} />
+                        </div>
+                        <span className="text-sm font-medium">Global Search</span>
+                    </div>
+                </div>
 
                 <div className="w-full max-w-lg flex flex-col items-center">
                     <div className="flex items-center gap-4 w-full mb-8 relative">
