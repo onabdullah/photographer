@@ -803,6 +803,15 @@ export default function LiveChatIndex() {
     const [kpis, setKpis] = useState(initialKpis ?? {});
     const [syncSettings, setSyncSettings] = useState(initialSyncSettings ?? {});
 
+    // Sync state with props when navigating via Inertia
+    useEffect(() => {
+        setConversations(initialConversations?.data ?? []);
+        setStatusFilter(initialFilters?.status ?? 'active');
+        setSearch(initialFilters?.search ?? '');
+        setKpis(initialKpis ?? {});
+        setSyncSettings(initialSyncSettings ?? {});
+    }, [initialConversations, initialFilters, initialKpis, initialSyncSettings]);
+
     // Active thread state
     const [activeConvId, setActiveConvId] = useState(null);
     const [activeConv, setActiveConv] = useState(null);
