@@ -30,6 +30,7 @@ import {
     DollarSign,
     CreditCard,
     Package,
+    MessageCircle,
 } from 'lucide-react';
 
 // ============================================================
@@ -79,6 +80,13 @@ const SECTIONS = [
         items: [
             { name: 'Users',         href: '/admin/users',         icon: Users,    permission: 'users.view' },
             { name: 'Roles',         href: '/admin/roles',         icon: Shield,   permission: 'roles.view' },
+        ],
+    },
+    {
+        id: 'support',
+        label: 'SUPPORT',
+        items: [
+            { name: 'Live Chat', href: '/admin/live-chat', icon: MessageCircle, permission: 'live_chat.view' },
         ],
     },
     {

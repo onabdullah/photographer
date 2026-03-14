@@ -38,6 +38,7 @@ class User extends Authenticatable
             'roles.view', 'roles.manage',
             'settings.view', 'settings.manage', 'settings.smtp',
             'developer.terminal',
+            'live_chat.view', 'live_chat.manage',
         ],
         'viewer' => [
             'dashboard.view',
@@ -50,6 +51,7 @@ class User extends Authenticatable
             'users.view',
             'roles.view',
             'settings.view',
+            'live_chat.view',
         ],
     ];
 

@@ -54,6 +54,10 @@ class AdminRole extends Model
         'DEVELOPER' => [
             'developer.terminal'=> 'Artisan Terminal',
         ],
+        'LIVE CHAT' => [
+            'live_chat.view'   => 'Live Chat View',
+            'live_chat.manage' => 'Live Chat Manage',
+        ],
     ];
 
     protected $fillable = ['name', 'permissions'];

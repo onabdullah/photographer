@@ -46,6 +46,10 @@ export const ALL_PERMISSIONS = {
     'DEVELOPER': {
         'developer.terminal': 'Artisan Terminal',
     },
+    'LIVE CHAT': {
+        'live_chat.view':   'Live Chat View',
+        'live_chat.manage': 'Live Chat Manage',
+    },
 };
 
 export const ALL_PERMISSION_KEYS = Object.values(ALL_PERMISSIONS)

@@ -253,4 +253,41 @@ Route::middleware(['auth:admin'])->group(function () {
         ->middleware('admin.permission:users.manage')->name('users.update');
     Route::post('/users/{user}/status', [\App\Http\Controllers\Admin\UserController::class, 'updateStatus'])
         ->middleware('admin.permission:users.manage')->name('users.status');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Live Chat Console
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('live-chat')->name('live-chat.')->group(function () {
+        // Inertia console page
+        Route::get('/', [\App\Http\Controllers\Admin\LiveChatController::class, 'index'])
+            ->middleware('admin.permission:live_chat.view')
+            ->name('index');
+
+        // JSON API used by the thread panel
+        Route::get('/conversations/{id}/messages', [\App\Http\Controllers\Admin\LiveChatController::class, 'messages'])
+            ->middleware('admin.permission:live_chat.view')
+            ->name('messages');
+
+        // Manual-refresh poll endpoint
+        Route::get('/conversations/{id}/poll', [\App\Http\Controllers\Admin\LiveChatController::class, 'poll'])
+            ->middleware('admin.permission:live_chat.view')
+            ->name('poll');
+
+        // Send a message / internal note
+        Route::post('/conversations/{id}/messages', [\App\Http\Controllers\Admin\LiveChatController::class, 'sendMessage'])
+            ->middleware('admin.permission:live_chat.manage')
+            ->name('send');
+
+        // Transition state (end, spam, block, mute, convert, etc.)
+        Route::post('/conversations/{id}/state', [\App\Http\Controllers\Admin\LiveChatController::class, 'updateState'])
+            ->middleware('admin.permission:live_chat.manage')
+            ->name('state');
+
+        // Sync settings (admin Section 15 of PRD)
+        Route::post('/sync-settings', [\App\Http\Controllers\Admin\LiveChatController::class, 'saveSyncSettings'])
+            ->middleware('admin.permission:live_chat.manage')
+            ->name('sync-settings');
+    });
 });
