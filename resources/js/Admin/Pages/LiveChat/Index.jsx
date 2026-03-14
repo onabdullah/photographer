@@ -648,20 +648,6 @@ function SyncSettingsPanel({ settings, onSave, onClose }) {
 // WELCOME SCREEN
 // ─────────────────────────────────────────────────────────────
 
-function FeatureCard({ icon: Icon, title, desc, colorClass }) {
-    return (
-        <div className="card-base text-left p-4 rounded-2xl flex flex-col items-start gap-3 hover:-translate-y-1 transition-transform border border-transparent dark:border-gray-800">
-            <div className={`p-2 rounded-xl ${colorClass}`}>
-                <Icon size={18} />
-            </div>
-            <div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-1">{title}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{desc}</p>
-            </div>
-        </div>
-    );
-}
-
 function WelcomeScreen({ recentConversations, onSelect }) {
     const recent = (recentConversations || []).slice(0, 3);
     
@@ -676,34 +662,7 @@ function WelcomeScreen({ recentConversations, onSelect }) {
                 </div>
                 
                 <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3">Welcome to Chat Command</h1>
-                <p className="text-gray-500 dark:text-gray-400 mb-10 text-sm max-w-md">Select a conversation from the sidebar to start providing world-class support.</p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-14">
-                    <FeatureCard 
-                        icon={Bell} 
-                        title="Sound Alerts" 
-                        desc="Toggle the Bell Icon in the sidebar to mute all system sounds." 
-                        colorClass="text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20" 
-                    />
-                    <FeatureCard 
-                        icon={Ban} 
-                        title="Customer Block" 
-                        desc="Ban troublesome guests via the Manage Session panel in details." 
-                        colorClass="text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/20" 
-                    />
-                    <FeatureCard 
-                        icon={AlertTriangle} 
-                        title="Spam Control" 
-                        desc="Mark irrelevant chats as Spam to move them to the hidden spam tab." 
-                        colorClass="text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/20" 
-                    />
-                    <FeatureCard 
-                        icon={Search} 
-                        title="Quick Find" 
-                        desc="Use the Search Bar to instantly find any customer by name or email." 
-                        colorClass="text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/20" 
-                    />
-                </div>
+                <p className="text-gray-500 dark:text-gray-400 mb-14 text-sm max-w-md">Select a conversation from the sidebar to start providing world-class support.</p>
 
                 <div className="w-full max-w-lg flex flex-col items-center">
                     <div className="flex items-center gap-4 w-full mb-8 relative">
