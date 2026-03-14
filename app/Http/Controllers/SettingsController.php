@@ -91,6 +91,14 @@ class SettingsController extends Controller
 
         return \Inertia\Inertia::render('Shopify/Settings', [
             'initialSettings' => $initialSettings,
+            'storeProfile' => [
+                'storeName' => $shop->store_name ?: $shop->name,
+                'domain' => $shop->name,
+                'email' => $shop->email,
+                'owner' => $shop->shop_owner,
+                'country' => $shop->country,
+                'installedAt' => optional($shop->created_at)?->toDateString(),
+            ],
         ]);
     }
 

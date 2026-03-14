@@ -1,7 +1,6 @@
 import ShopifyLayout from '@/Shopify/Layouts/ShopifyLayout';
 import {
   Page,
-  Layout,
   Card,
   Text,
   BlockStack,
@@ -12,7 +11,6 @@ import {
   ChoiceList,
   Button,
   Banner,
-  Divider,
   Modal,
   InlineStack,
   Badge,
@@ -20,7 +18,29 @@ import {
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { TitleBar } from '@shopify/app-bridge-react';
-import MagicButton from '@/Shopify/Components/MagicButton';
+
+const SETTINGS_NAV_ITEMS = [
+  { key: 'general', label: 'General', managed: true },
+  { key: 'plan', label: 'Plan', managed: true },
+  { key: 'billing', label: 'Billing', managed: true },
+  { key: 'users_permissions', label: 'Users and permissions', managed: true },
+  { key: 'payments', label: 'Payments', managed: false },
+  { key: 'checkout', label: 'Checkout', managed: false },
+  { key: 'customer_accounts', label: 'Customer accounts', managed: false },
+  { key: 'shipping_delivery', label: 'Shipping and delivery', managed: false },
+  { key: 'taxes_duties', label: 'Taxes and duties', managed: false },
+  { key: 'locations', label: 'Locations', managed: false },
+  { key: 'markets', label: 'Markets', managed: false },
+  { key: 'apps', label: 'Apps', managed: false },
+  { key: 'sales_channels', label: 'Sales channels', managed: false },
+  { key: 'domains', label: 'Domains', managed: false },
+  { key: 'customer_events', label: 'Customer events', managed: false },
+  { key: 'notifications', label: 'Notifications', managed: true },
+  { key: 'metafields', label: 'Metafields and metaobjects', managed: false },
+  { key: 'languages', label: 'Languages', managed: false },
+  { key: 'customer_privacy', label: 'Customer privacy', managed: true },
+  { key: 'policies', label: 'Policies', managed: false },
+];
 
 const IMAGE_FORMAT_OPTIONS = [
   { label: 'WebP', value: 'webp' },
@@ -222,6 +242,283 @@ export default function Settings() {
   }, [closeClearHistoryModal]);
 
   const successMessage = props.flash?.success ?? null;
+  const [navQuery, setNavQuery] = useState('');
+  const [activeSection, setActiveSection] = useState('general');
+
+  const storeProfile = props.storeProfile ?? {};
+  const fallbackDomain = useMemo(() => new URLSearchParams(window.location.search).get('shop') ?? '', []);
+  const storeDomain = storeProfile.domain || fallbackDomain || 'your-store.myshopify.com';
+  const storeName = storeProfile.storeName || storeDomain;
+  const storeEmail = storeProfile.email || 'No email set';
+  const storeOwner = storeProfile.owner || 'No owner set';
+  const storeCountry = storeProfile.country || 'Country not available';
+  const installedDate = storeProfile.installedAt || 'Unknown install date';
+
+  const filteredNavItems = useMemo(() => {
+    const q = navQuery.trim().toLowerCase();
+    if (! q) {
+      return SETTINGS_NAV_ITEMS;
+    }
+
+    return SETTINGS_NAV_ITEMS.filter((item) => item.label.toLowerCase().includes(q));
+  }, [navQuery]);
+
+  const activeLabel = SETTINGS_NAV_ITEMS.find((item) => item.key === activeSection)?.label ?? 'General';
+
+  const renderSectionContent = () => {
+    if (activeSection === 'general') {
+      return (
+        <BlockStack gap="400">
+          <Card>
+            <Box padding="400">
+              <BlockStack gap="300">
+                <Text as="h3" variant="headingMd">Store contact details</Text>
+
+                <InlineStack align="space-between" blockAlign="start">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd" fontWeight="semibold">{storeName}</Text>
+                    <Text as="p" variant="bodySm" tone="subdued">{storeEmail} · {storeOwner}</Text>
+                  </BlockStack>
+                  <Badge tone="info">Managed</Badge>
+                </InlineStack>
+
+                <InlineStack align="space-between" blockAlign="start">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd" fontWeight="semibold">Store address</Text>
+                    <Text as="p" variant="bodySm" tone="subdued">{storeCountry}</Text>
+                  </BlockStack>
+                  <Badge tone="info">Managed</Badge>
+                </InlineStack>
+
+                <InlineStack align="space-between" blockAlign="start">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd" fontWeight="semibold">Development store</Text>
+                    <Text as="p" variant="bodySm" tone="subdued">Installed at {installedDate}</Text>
+                  </BlockStack>
+                  <Badge tone="success">Active</Badge>
+                </InlineStack>
+              </BlockStack>
+            </Box>
+          </Card>
+
+          <Card>
+            <Box padding="400">
+              <BlockStack gap="400">
+                <Text as="h3" variant="headingMd">Store defaults</Text>
+                <Select
+                  label="Default image format"
+                  options={IMAGE_FORMAT_OPTIONS}
+                  value={settings.defaultFormat}
+                  onChange={(v) => setSettings((s) => ({ ...s, defaultFormat: v }))}
+                />
+                <Select
+                  label="Default aspect ratio"
+                  options={ASPECT_RATIO_OPTIONS}
+                  value={settings.defaultAspectRatio}
+                  onChange={(v) => setSettings((s) => ({ ...s, defaultAspectRatio: v }))}
+                />
+                <Select
+                  label="Default output resolution"
+                  options={RESOLUTION_OPTIONS}
+                  value={settings.defaultResolution}
+                  onChange={(v) => setSettings((s) => ({ ...s, defaultResolution: v, autoUpscale: v === '2k' }))}
+                />
+                <Select
+                  label="Business goal"
+                  options={BUSINESS_GOAL_OPTIONS}
+                  value={settings.businessGoal}
+                  onChange={(v) => setSettings((s) => ({ ...s, businessGoal: v }))}
+                />
+              </BlockStack>
+            </Box>
+          </Card>
+        </BlockStack>
+      );
+    }
+
+    if (activeSection === 'plan') {
+      return (
+        <Card>
+          <Box padding="400">
+            <BlockStack gap="400">
+              <Text as="h3" variant="headingMd">Plan optimization defaults</Text>
+              <Select
+                label="Generation mode"
+                options={GENERATION_MODE_OPTIONS}
+                value={settings.generationMode}
+                onChange={(v) => setSettings((s) => ({ ...s, generationMode: v }))}
+              />
+              <Select
+                label="Creativity level"
+                options={CREATIVITY_OPTIONS}
+                value={settings.defaultCreativity}
+                onChange={(v) => setSettings((s) => ({ ...s, defaultCreativity: v }))}
+              />
+              <Select
+                label="Preferred background style"
+                options={BACKGROUND_STYLE_OPTIONS}
+                value={settings.defaultBackgroundStyle}
+                onChange={(v) => setSettings((s) => ({ ...s, defaultBackgroundStyle: v }))}
+              />
+              <Checkbox
+                label="Auto-enhance faces when detected"
+                checked={settings.autoEnhanceFaces}
+                onChange={(v) => setSettings((s) => ({ ...s, autoEnhanceFaces: v }))}
+              />
+              <Checkbox
+                label="Auto background cleanup"
+                checked={settings.autoBackgroundCleanup}
+                onChange={(v) => setSettings((s) => ({ ...s, autoBackgroundCleanup: v }))}
+              />
+            </BlockStack>
+          </Box>
+        </Card>
+      );
+    }
+
+    if (activeSection === 'billing') {
+      return (
+        <Card>
+          <Box padding="400">
+            <BlockStack gap="400">
+              <Text as="h3" variant="headingMd">Billing and credit controls</Text>
+              <Checkbox
+                label="Notify when credits are low"
+                checked={settings.notifyLowCredits}
+                onChange={(v) => setSettings((s) => ({ ...s, notifyLowCredits: v }))}
+              />
+              <TextField
+                label="Low credit alert threshold"
+                type="number"
+                min={5}
+                max={1000}
+                autoComplete="off"
+                value={String(settings.lowCreditThreshold)}
+                onChange={(v) => setSettings((s) => ({ ...s, lowCreditThreshold: v }))}
+                suffix="credits"
+              />
+              <Checkbox
+                label="Send performance digest"
+                checked={settings.weeklyPerformanceDigest}
+                onChange={(v) => setSettings((s) => ({ ...s, weeklyPerformanceDigest: v }))}
+              />
+              <Select
+                label="Digest frequency"
+                options={DIGEST_OPTIONS}
+                value={settings.usageDigestFrequency}
+                onChange={(v) => setSettings((s) => ({ ...s, usageDigestFrequency: v }))}
+              />
+            </BlockStack>
+          </Box>
+        </Card>
+      );
+    }
+
+    if (activeSection === 'users_permissions') {
+      return (
+        <Card>
+          <Box padding="400">
+            <BlockStack gap="400">
+              <Text as="h3" variant="headingMd">Team workflow defaults</Text>
+              <ChoiceList
+                title="When saving to Shopify"
+                choices={SAVE_TO_SHOPIFY_CHOICES}
+                selected={settings.saveToShopify}
+                allowMultiple={false}
+                onChange={(v) => setSettings((s) => ({ ...s, saveToShopify: v }))}
+              />
+              <Checkbox
+                label="Auto-tag products"
+                helpText="Adds AI-Enhanced tag to edited products."
+                checked={settings.autoTagProducts}
+                onChange={(v) => setSettings((s) => ({ ...s, autoTagProducts: v }))}
+              />
+              <Checkbox
+                label="Auto-publish final output to product"
+                checked={settings.autoPublishToProduct}
+                onChange={(v) => setSettings((s) => ({ ...s, autoPublishToProduct: v }))}
+              />
+              <Checkbox
+                label="Watermark preview images"
+                checked={settings.watermarkPreviewImages}
+                onChange={(v) => setSettings((s) => ({ ...s, watermarkPreviewImages: v }))}
+              />
+            </BlockStack>
+          </Box>
+        </Card>
+      );
+    }
+
+    if (activeSection === 'notifications') {
+      return (
+        <Card>
+          <Box padding="400">
+            <BlockStack gap="400">
+              <Text as="h3" variant="headingMd">Notification preferences</Text>
+              <Checkbox
+                label="Credit threshold notifications"
+                checked={settings.notifyLowCredits}
+                onChange={(v) => setSettings((s) => ({ ...s, notifyLowCredits: v }))}
+              />
+              <Checkbox
+                label="Performance digest emails"
+                checked={settings.weeklyPerformanceDigest}
+                onChange={(v) => setSettings((s) => ({ ...s, weeklyPerformanceDigest: v }))}
+              />
+              <Select
+                label="Digest frequency"
+                options={DIGEST_OPTIONS}
+                value={settings.usageDigestFrequency}
+                onChange={(v) => setSettings((s) => ({ ...s, usageDigestFrequency: v }))}
+              />
+            </BlockStack>
+          </Box>
+        </Card>
+      );
+    }
+
+    if (activeSection === 'customer_privacy') {
+      return (
+        <Card>
+          <Box padding="400">
+            <BlockStack gap="400">
+              <Text as="h3" variant="headingMd">Data and privacy controls</Text>
+              <TextField
+                label="Asset retention period"
+                type="number"
+                min={7}
+                max={365}
+                autoComplete="off"
+                value={String(settings.assetRetentionDays)}
+                onChange={(v) => setSettings((s) => ({ ...s, assetRetentionDays: v }))}
+                suffix="days"
+                helpText="Used by housekeeping policies for generated assets."
+              />
+              <Button tone="critical" size="slim" onClick={openClearHistoryModal}>
+                Clear generation history
+              </Button>
+              <Text variant="bodySm" as="p" tone="subdued">
+                This permanently deletes generation records and app-hosted generated files.
+              </Text>
+            </BlockStack>
+          </Box>
+        </Card>
+      );
+    }
+
+    return (
+      <Card>
+        <Box padding="400">
+          <BlockStack gap="300">
+            <Text as="h3" variant="headingMd">Managed in Shopify admin</Text>
+            <Text as="p" variant="bodyMd" tone="subdued">
+              This section is shown for layout parity with Shopify settings, but management happens in Shopify Admin.
+            </Text>
+          </BlockStack>
+        </Box>
+      </Card>
+    );
+  };
 
   return (
     <ShopifyLayout>
@@ -238,7 +535,7 @@ export default function Settings() {
       ) : (
         <TitleBar title="App Settings" />
       )}
-      <Page title="App Settings" subtitle="Tailor AI Studio to your workflow.">
+      <Page title="Settings" subtitle="Configure your workspace with a Shopify-style settings layout.">
         <BlockStack gap="600">
           {successMessage && (
             <Banner tone="success" onDismiss={() => {}}>
@@ -246,193 +543,61 @@ export default function Settings() {
             </Banner>
           )}
 
-          <Layout>
-            <Layout.AnnotatedSection
-              title="Workspace Profile"
-              description="Set a strategic profile so the AI output matches your business priorities and brand goals."
-            >
-              <Card>
-                <Box padding="400">
-                  <BlockStack gap="400">
-                    <Select
-                      label="Business goal"
-                      options={BUSINESS_GOAL_OPTIONS}
-                      value={settings.businessGoal}
-                      onChange={(v) => setSettings((s) => ({ ...s, businessGoal: v }))}
-                    />
-                    <Select
-                      label="Generation mode"
-                      options={GENERATION_MODE_OPTIONS}
-                      value={settings.generationMode}
-                      onChange={(v) => setSettings((s) => ({ ...s, generationMode: v }))}
-                    />
-                    <Select
-                      label="Creativity level"
-                      options={CREATIVITY_OPTIONS}
-                      value={settings.defaultCreativity}
-                      onChange={(v) => setSettings((s) => ({ ...s, defaultCreativity: v }))}
-                    />
-                    <Select
-                      label="Preferred background style"
-                      options={BACKGROUND_STYLE_OPTIONS}
-                      value={settings.defaultBackgroundStyle}
-                      onChange={(v) => setSettings((s) => ({ ...s, defaultBackgroundStyle: v }))}
-                    />
-                  </BlockStack>
-                </Box>
-              </Card>
-            </Layout.AnnotatedSection>
+          <div className="grid grid-cols-1 lg:grid-cols-[270px_minmax(0,1fr)] gap-4">
+            <Card>
+              <Box padding="300">
+                <BlockStack gap="300">
+                  <InlineStack gap="200" blockAlign="center">
+                    <div className="h-8 w-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-semibold">
+                      {String(storeName).slice(0, 2).toUpperCase()}
+                    </div>
+                    <BlockStack gap="0">
+                      <Text as="p" variant="bodyMd" fontWeight="semibold">{storeName}</Text>
+                      <Text as="p" variant="bodySm" tone="subdued">{storeDomain}</Text>
+                    </BlockStack>
+                  </InlineStack>
 
-            {/* Section 1: Output Preferences */}
-            <Layout.AnnotatedSection
-              title="Image Output"
-              description="Set your global preferences for how AI generates and formats your images. WebP is recommended for store speed."
-            >
-              <Card>
-                <Box padding="400">
-                  <BlockStack gap="400">
-                    <Select
-                      label="Default Image Format"
-                      options={IMAGE_FORMAT_OPTIONS}
-                      value={settings.defaultFormat}
-                      onChange={(v) => setSettings((s) => ({ ...s, defaultFormat: v }))}
-                    />
-                    <Select
-                      label="Default Aspect Ratio"
-                      options={ASPECT_RATIO_OPTIONS}
-                      value={settings.defaultAspectRatio}
-                      onChange={(v) => setSettings((s) => ({ ...s, defaultAspectRatio: v }))}
-                    />
-                    <Select
-                      label="Default output resolution"
-                      options={RESOLUTION_OPTIONS}
-                      value={settings.defaultResolution}
-                      onChange={(v) => setSettings((s) => ({ ...s, defaultResolution: v, autoUpscale: v === '2k' }))}
-                    />
-                    <Checkbox
-                      label="Auto-enhance faces when detected"
-                      helpText="Recommended for lifestyle/product-on-model visuals."
-                      checked={settings.autoEnhanceFaces}
-                      onChange={(v) => setSettings((s) => ({ ...s, autoEnhanceFaces: v }))}
-                    />
-                    <Checkbox
-                      label="Auto background cleanup"
-                      helpText="Reduce manual edits by applying cleanup defaults automatically."
-                      checked={settings.autoBackgroundCleanup}
-                      onChange={(v) => setSettings((s) => ({ ...s, autoBackgroundCleanup: v }))}
-                    />
-                    <Checkbox
-                      label="Watermark preview images"
-                      helpText="Protect review drafts before final export or publish."
-                      checked={settings.watermarkPreviewImages}
-                      onChange={(v) => setSettings((s) => ({ ...s, watermarkPreviewImages: v }))}
-                    />
-                  </BlockStack>
-                </Box>
-              </Card>
-            </Layout.AnnotatedSection>
+                  <TextField
+                    label="Search"
+                    labelHidden
+                    autoComplete="off"
+                    value={navQuery}
+                    onChange={setNavQuery}
+                    placeholder="Search"
+                  />
 
-            {/* Section 2: Shopify Integration */}
-            <Layout.AnnotatedSection
-              title="Store Syncing"
-              description="Control how enhanced images interact with your live Shopify products."
-            >
-              <Card>
-                <Box padding="400">
-                  <BlockStack gap="400">
-                    <ChoiceList
-                      title="When saving to Shopify:"
-                      choices={SAVE_TO_SHOPIFY_CHOICES}
-                      selected={settings.saveToShopify}
-                      allowMultiple={false}
-                      onChange={(v) => setSettings((s) => ({ ...s, saveToShopify: v }))}
-                    />
-                    <Checkbox
-                      label="Auto-Tag Products"
-                      helpText='Add the tag "AI-Enhanced" to products modified by this app.'
-                      checked={settings.autoTagProducts}
-                      onChange={(v) => setSettings((s) => ({ ...s, autoTagProducts: v }))}
-                    />
-                    <Checkbox
-                      label="Auto-publish final output to product"
-                      helpText="When enabled, approved outputs are pushed automatically according to your save rule."
-                      checked={settings.autoPublishToProduct}
-                      onChange={(v) => setSettings((s) => ({ ...s, autoPublishToProduct: v }))}
-                    />
+                  <BlockStack gap="100">
+                    {filteredNavItems.map((item) => (
+                      <Button
+                        key={item.key}
+                        fullWidth
+                        variant={activeSection === item.key ? 'primary' : 'tertiary'}
+                        textAlign="left"
+                        onClick={() => setActiveSection(item.key)}
+                      >
+                        {item.label}
+                      </Button>
+                    ))}
+                    {filteredNavItems.length === 0 && (
+                      <Text as="p" variant="bodySm" tone="subdued">No matches</Text>
+                    )}
                   </BlockStack>
-                </Box>
-              </Card>
-            </Layout.AnnotatedSection>
+                </BlockStack>
+              </Box>
+            </Card>
 
-            <Layout.AnnotatedSection
-              title="Alerts & Reporting"
-              description="Keep merchants proactive with meaningful credit and performance notifications."
-            >
-              <Card>
-                <Box padding="400">
-                  <BlockStack gap="400">
-                    <Checkbox
-                      label="Notify when credits are low"
-                      checked={settings.notifyLowCredits}
-                      onChange={(v) => setSettings((s) => ({ ...s, notifyLowCredits: v }))}
-                    />
-                    <TextField
-                      label="Low credit alert threshold"
-                      type="number"
-                      min={5}
-                      max={1000}
-                      autoComplete="off"
-                      value={String(settings.lowCreditThreshold)}
-                      onChange={(v) => setSettings((s) => ({ ...s, lowCreditThreshold: v }))}
-                      suffix="credits"
-                    />
-                    <Divider />
-                    <Checkbox
-                      label="Send performance digest email"
-                      checked={settings.weeklyPerformanceDigest}
-                      onChange={(v) => setSettings((s) => ({ ...s, weeklyPerformanceDigest: v }))}
-                    />
-                    <Select
-                      label="Digest frequency"
-                      options={DIGEST_OPTIONS}
-                      value={settings.usageDigestFrequency}
-                      onChange={(v) => setSettings((s) => ({ ...s, usageDigestFrequency: v }))}
-                    />
-                  </BlockStack>
-                </Box>
-              </Card>
-            </Layout.AnnotatedSection>
+            <BlockStack gap="400">
+              <InlineStack align="space-between" blockAlign="center">
+                <Text as="h2" variant="headingLg">{activeLabel}</Text>
+                <InlineStack gap="150" blockAlign="center">
+                  <Badge tone="success">Live</Badge>
+                  {isDirty && <Badge tone="attention">Unsaved changes</Badge>}
+                </InlineStack>
+              </InlineStack>
 
-            {/* Section 3: Data Management */}
-            <Layout.AnnotatedSection
-              title="Data & Privacy"
-              description="Manage your generation history and storage."
-            >
-              <Card>
-                <Box padding="400">
-                  <BlockStack gap="300">
-                    <TextField
-                      label="Asset retention period"
-                      type="number"
-                      min={7}
-                      max={365}
-                      autoComplete="off"
-                      value={String(settings.assetRetentionDays)}
-                      onChange={(v) => setSettings((s) => ({ ...s, assetRetentionDays: v }))}
-                      suffix="days"
-                      helpText="Used by housekeeping policies for generated assets."
-                    />
-                    <Button tone="critical" size="slim" onClick={openClearHistoryModal}>
-                      Clear Generation History
-                    </Button>
-                    <Text variant="bodySm" as="p" tone="subdued">
-                      This will permanently delete your recent creations from our servers. This cannot be undone.
-                    </Text>
-                  </BlockStack>
-                </Box>
-              </Card>
-            </Layout.AnnotatedSection>
-          </Layout>
+              {renderSectionContent()}
+            </BlockStack>
+          </div>
         </BlockStack>
 
         <Modal
