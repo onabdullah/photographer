@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsCurrentShop;
+use App\Models\ImageGeneration;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -19,7 +22,33 @@ class SettingsController extends Controller
             'autoUpscale' => false,
             'saveToShopify' => ['add_secondary'],
             'autoTagProducts' => true,
+            'generationMode' => 'balanced',
+            'defaultCreativity' => 'balanced',
+            'defaultBackgroundStyle' => 'clean_studio',
+            'autoEnhanceFaces' => false,
+            'autoBackgroundCleanup' => true,
+            'autoPublishToProduct' => false,
+            'notifyLowCredits' => true,
+            'lowCreditThreshold' => 50,
+            'weeklyPerformanceDigest' => true,
+            'usageDigestFrequency' => 'weekly',
+            'businessGoal' => 'conversion',
+            'assetRetentionDays' => 30,
+            'watermarkPreviewImages' => false,
         ];
+    }
+
+    /**
+     * Keys managed by the merchant settings page.
+     *
+     * We update only these keys to avoid clobbering unrelated data inside
+     * app_settings (eg: credit wallet internals and threshold notifier state).
+     *
+     * @return array<int, string>
+     */
+    private static function managedSettingsKeys(): array
+    {
+        return array_keys(self::defaultAppSettings());
     }
 
     public function settings(Request $request)
@@ -29,8 +58,10 @@ class SettingsController extends Controller
             abort(403, 'Shop not authenticated');
         }
 
-        $stored = $shop->app_settings ?? [];
-        $initialSettings = array_merge(self::defaultAppSettings(), $stored);
+        $stored = is_array($shop->app_settings) ? $shop->app_settings : [];
+        $storedUiSettings = array_intersect_key($stored, array_flip(self::managedSettingsKeys()));
+
+        $initialSettings = array_merge(self::defaultAppSettings(), $storedUiSettings);
         if (! isset($initialSettings['saveToShopify']) || ! is_array($initialSettings['saveToShopify'])) {
             $initialSettings['saveToShopify'] = self::defaultAppSettings()['saveToShopify'];
         }
@@ -40,6 +71,23 @@ class SettingsController extends Controller
         if (! isset($initialSettings['defaultAspectRatio']) || ! in_array($initialSettings['defaultAspectRatio'], ['original', '1:1', '4:5', '16:9'], true)) {
             $initialSettings['defaultAspectRatio'] = 'original';
         }
+        if (! in_array((string) $initialSettings['generationMode'], ['balanced', 'speed', 'quality'], true)) {
+            $initialSettings['generationMode'] = 'balanced';
+        }
+        if (! in_array((string) $initialSettings['defaultCreativity'], ['safe', 'balanced', 'bold'], true)) {
+            $initialSettings['defaultCreativity'] = 'balanced';
+        }
+        if (! in_array((string) $initialSettings['defaultBackgroundStyle'], ['clean_studio', 'lifestyle', 'transparent', 'contextual'], true)) {
+            $initialSettings['defaultBackgroundStyle'] = 'clean_studio';
+        }
+        if (! in_array((string) $initialSettings['usageDigestFrequency'], ['daily', 'weekly', 'monthly'], true)) {
+            $initialSettings['usageDigestFrequency'] = 'weekly';
+        }
+        if (! in_array((string) $initialSettings['businessGoal'], ['conversion', 'catalog_velocity', 'brand_consistency'], true)) {
+            $initialSettings['businessGoal'] = 'conversion';
+        }
+        $initialSettings['lowCreditThreshold'] = max(5, min(1000, (int) ($initialSettings['lowCreditThreshold'] ?? 50)));
+        $initialSettings['assetRetentionDays'] = max(7, min(365, (int) ($initialSettings['assetRetentionDays'] ?? 30)));
 
         return \Inertia\Inertia::render('Shopify/Settings', [
             'initialSettings' => $initialSettings,
@@ -61,21 +109,96 @@ class SettingsController extends Controller
             'saveToShopify' => 'required|array',
             'saveToShopify.*' => 'string|in:add_secondary,replace_primary',
             'autoTagProducts' => 'boolean',
+            'generationMode' => 'required|string|in:balanced,speed,quality',
+            'defaultCreativity' => 'required|string|in:safe,balanced,bold',
+            'defaultBackgroundStyle' => 'required|string|in:clean_studio,lifestyle,transparent,contextual',
+            'autoEnhanceFaces' => 'boolean',
+            'autoBackgroundCleanup' => 'boolean',
+            'autoPublishToProduct' => 'boolean',
+            'notifyLowCredits' => 'boolean',
+            'lowCreditThreshold' => 'required|integer|min:5|max:1000',
+            'weeklyPerformanceDigest' => 'boolean',
+            'usageDigestFrequency' => 'required|string|in:daily,weekly,monthly',
+            'businessGoal' => 'required|string|in:conversion,catalog_velocity,brand_consistency',
+            'assetRetentionDays' => 'required|integer|min:7|max:365',
+            'watermarkPreviewImages' => 'boolean',
         ]);
 
         $resolution = $request->input('defaultResolution', 'original');
         $autoUpscale = (bool) $request->input('autoUpscale', $resolution === '2k');
 
-        $shop->app_settings = [
+        $existingSettings = is_array($shop->app_settings) ? $shop->app_settings : [];
+
+        $updatedUiSettings = [
             'defaultFormat' => $request->input('defaultFormat'),
             'defaultAspectRatio' => $request->input('defaultAspectRatio'),
             'defaultResolution' => $resolution === '2k' ? '2k' : 'original',
             'autoUpscale' => $autoUpscale,
             'saveToShopify' => $request->input('saveToShopify'),
             'autoTagProducts' => (bool) $request->input('autoTagProducts', false),
+            'generationMode' => $request->input('generationMode', 'balanced'),
+            'defaultCreativity' => $request->input('defaultCreativity', 'balanced'),
+            'defaultBackgroundStyle' => $request->input('defaultBackgroundStyle', 'clean_studio'),
+            'autoEnhanceFaces' => (bool) $request->input('autoEnhanceFaces', false),
+            'autoBackgroundCleanup' => (bool) $request->input('autoBackgroundCleanup', true),
+            'autoPublishToProduct' => (bool) $request->input('autoPublishToProduct', false),
+            'notifyLowCredits' => (bool) $request->input('notifyLowCredits', true),
+            'lowCreditThreshold' => max(5, min(1000, (int) $request->input('lowCreditThreshold', 50))),
+            'weeklyPerformanceDigest' => (bool) $request->input('weeklyPerformanceDigest', true),
+            'usageDigestFrequency' => $request->input('usageDigestFrequency', 'weekly'),
+            'businessGoal' => $request->input('businessGoal', 'conversion'),
+            'assetRetentionDays' => max(7, min(365, (int) $request->input('assetRetentionDays', 30))),
+            'watermarkPreviewImages' => (bool) $request->input('watermarkPreviewImages', false),
         ];
+
+        $shop->app_settings = array_merge($existingSettings, $updatedUiSettings);
         $shop->save();
 
         return redirect()->route('shopify.settings')->with('success', 'Settings saved.');
+    }
+
+    public function clearHistory(Request $request)
+    {
+        $shop = $this->currentShop($request);
+        if (! $shop) {
+            abort(403, 'Shop not authenticated');
+        }
+
+        $generations = ImageGeneration::where('shop_domain', $shop->name)->get();
+
+        $deletedFiles = 0;
+        foreach ($generations as $generation) {
+            foreach (['original_image_url', 'result_image_url'] as $key) {
+                $url = (string) ($generation->{$key} ?? '');
+                if ($url === '') {
+                    continue;
+                }
+
+                $path = parse_url($url, PHP_URL_PATH);
+                if (! is_string($path) || ! str_starts_with($path, '/storage/')) {
+                    continue;
+                }
+
+                $relative = ltrim(substr($path, strlen('/storage/')), '/');
+                if ($relative === '') {
+                    continue;
+                }
+
+                if (Storage::disk('public')->exists($relative)) {
+                    Storage::disk('public')->delete($relative);
+                    $deletedFiles++;
+                }
+            }
+        }
+
+        $deletedRows = ImageGeneration::where('shop_domain', $shop->name)->delete();
+
+        Log::info('[SettingsController] Generation history cleared', [
+            'shop' => $shop->name,
+            'deleted_rows' => $deletedRows,
+            'deleted_files' => $deletedFiles,
+        ]);
+
+        return redirect()->route('shopify.settings')->with('success', 'Generation history cleared successfully.');
     }
 }

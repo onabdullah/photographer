@@ -37,6 +37,7 @@ Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMis
     // Settings
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'settings'])->name('settings');
     Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'updateSettings'])->name('settings.update');
+    Route::delete('/settings/history', [\App\Http\Controllers\SettingsController::class, 'clearHistory'])->name('settings.history.clear');
 
     // Plans & Billing
     Route::get('/plans', [\App\Http\Controllers\BillingController::class, 'billing'])->name('billing');
