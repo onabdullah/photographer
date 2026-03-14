@@ -54,6 +54,7 @@ Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMis
     Route::get('/support', [\App\Http\Controllers\SupportController::class, 'index'])->name('support');
     Route::post('/support/tickets', [\App\Http\Controllers\SupportController::class, 'store'])->name('support.store');
     Route::post('/support/tickets/{id}/reply', [\App\Http\Controllers\SupportController::class, 'reply'])->name('support.reply');
+    Route::get('/support/tickets/{id}/poll', [\App\Http\Controllers\SupportController::class, 'poll'])->name('support.poll');
 
     // AI Models (Virtual Try-On) – Coming Soon
     Route::get('/ai-models', [\App\Http\Controllers\ShopifyController::class, 'aiModels'])->name('ai-models');

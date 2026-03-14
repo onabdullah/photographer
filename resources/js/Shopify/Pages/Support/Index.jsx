@@ -8,7 +8,7 @@ import { usePage, router } from '@inertiajs/react';
 import ShopifyLayout from '@/Shopify/Layouts/ShopifyLayout';
 
 export default function Support() {
-    const { tickets, filters, errors } = usePage().props;
+    const { tickets, filters, errors, syncSettings } = usePage().props;
     
     // UI States
     const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
@@ -66,6 +66,38 @@ export default function Support() {
         });
     }, [newSubject, newMessage]);
 
+    const fetchMessages = useCallback(async () => {
+        if (!activeTicket) return;
+        try {
+            const url = new URL(`/shopify/support/tickets/${activeTicket.id}/poll`, window.location.origin);
+            url.search = window.location.search; // keep shopify token
+            const res = await fetch(url.toString(), {
+                headers: {
+                    'Accept': 'application/json',
+                    ...(window.sessionToken ? { 'Authorization': `Bearer ${window.sessionToken}` } : {})
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.messages && data.messages.length > 0) {
+                    setActiveTicket(prev => ({ ...prev, messages: data.messages }));
+                }
+            }
+        } catch (err) {
+            console.error("Polled messages fail", err);
+        }
+    }, [activeTicket]);
+
+    useEffect(() => {
+        let interval;
+        if (activeTicket && syncSettings?.realtime_enabled) {
+            interval = setInterval(fetchMessages, 5000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [activeTicket, syncSettings?.realtime_enabled, fetchMessages]);
+
     const submitReply = useCallback(() => {
         if (!replyMessage.trim() || !activeTicket) return;
         setIsSubmitting(true);
@@ -116,6 +148,11 @@ export default function Support() {
                     backAction={{content: 'Support', onAction: () => setActiveTicket(null)}}
                     title={activeTicket.subject}
                     titleMetadata={getStatusBadge(activeTicket.status)}
+                    primaryAction={{
+                        content: 'Refresh Thread',
+                        onAction: fetchMessages,
+                        disabled: syncSettings?.realtime_enabled
+                    }}
                 >
                     <Layout>
                         <Layout.Section>

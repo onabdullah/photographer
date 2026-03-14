@@ -40,7 +40,8 @@ class SupportController extends Controller
             'tickets' => $tickets,
             'filters' => [
                 'status' => $status
-            ]
+            ],
+            'syncSettings' => \App\Models\SiteSetting::getChatSyncSettings(),
         ]);
     }
 
@@ -100,5 +101,27 @@ class SupportController extends Controller
         ]);
 
         return redirect()->route('shopify.support')->with('success', 'Reply sent.');
+    }
+
+    public function poll(Request $request, $id)
+    {
+        $shop = $this->currentShop($request);
+        if (! $shop) abort(403);
+
+        $conversation = LiveChatConversation::where('merchant_id', $shop->id)->findOrFail($id);
+        
+        // When polling, we mark all unread messages as read from the customer's perspective
+        $conversation->messages()
+            ->where('sender_type', LiveChatMessage::SENDER_AGENT)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json([
+            'messages' => $conversation->messages()
+                ->select('id', 'sender_type', 'body', 'created_at', 'is_internal_note')
+                ->where('is_internal_note', false)
+                ->orderBy('created_at')
+                ->get()
+        ]);
     }
 }
