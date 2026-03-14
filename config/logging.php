@@ -223,6 +223,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'chat' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/chat.log'),
+            'level' => env('LOG_CHAT_LEVEL', 'info'),
+            'days' => env('LOG_CHAT_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];
