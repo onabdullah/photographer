@@ -46,11 +46,10 @@ export default function Support() {
     const submitTicket = useCallback(() => {
         if (!newSubject.trim() || !newMessage.trim()) return;
         setIsSubmitting(true);
-        router.post(`/shopify/support/tickets${window.location.search}`, {
+        router.post(route('shopify.support.store'), {
             subject: newSubject,
             message: newMessage,
         }, {
-            headers: window.sessionToken ? { Authorization: `Bearer ${window.sessionToken}` } : {},
             onSuccess: () => {
                 setIsSubmitting(false);
                 setIsNewTicketOpen(false);
@@ -70,10 +69,9 @@ export default function Support() {
     const submitReply = useCallback(() => {
         if (!replyMessage.trim() || !activeTicket) return;
         setIsSubmitting(true);
-        router.post(`/shopify/support/tickets/${activeTicket.id}/reply${window.location.search}`, {
+        router.post(route('shopify.support.reply', activeTicket.id), {
             message: replyMessage,
         }, {
-            headers: window.sessionToken ? { Authorization: `Bearer ${window.sessionToken}` } : {},
             onSuccess: (page) => {
                 setIsSubmitting(false);
                 setReplyMessage('');

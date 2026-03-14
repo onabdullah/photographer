@@ -72,7 +72,7 @@ class SupportController extends Controller
             'is_read' => false,
         ]);
 
-        return redirect()->back();
+        return redirect()->route('shopify.support')->with('success', 'Ticket created successfully.');
     }
 
     public function reply(Request $request, $id)
@@ -99,6 +99,6 @@ class SupportController extends Controller
             'unread_count' => $conversation->unread_count + 1,
         ]);
 
-        return redirect()->back();
+        return redirect()->route('shopify.support')->with('success', 'Reply sent.');
     }
 }
