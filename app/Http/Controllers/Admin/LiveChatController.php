@@ -11,7 +11,6 @@ use App\Models\LiveChatMessage;
 use App\Models\SiteSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -76,11 +75,6 @@ class LiveChatController extends Controller
         // Reset unread counter.
         $conversation->update(['unread_count' => 0]);
 
-        $this->chatLog('Conversation opened', [
-            'conversation_id' => $conversation->id,
-            'admin_user_id' => $request->user('admin')?->id,
-        ]);
-
         return response()->json([
             'conversation' => $this->serializeConversation($conversation->fresh()),
             'messages' => $messages,
@@ -101,13 +95,6 @@ class LiveChatController extends Controller
             ->orderBy('created_at')
             ->get()
             ->map(fn (LiveChatMessage $m) => $this->serializeMessage($m));
-
-        $this->chatLog('Conversation polled', [
-            'conversation_id' => $conversation->id,
-            'since_id' => $since,
-            'returned_count' => $messages->count(),
-            'admin_user_id' => $request->user('admin')?->id,
-        ]);
 
         return response()->json([
             'messages' => $messages,
@@ -149,14 +136,6 @@ class LiveChatController extends Controller
                 : $conversation->status,
         ]);
 
-        $this->chatLog('Message sent', [
-            'conversation_id' => $conversation->id,
-            'message_id' => $message->id,
-            'admin_user_id' => $agent?->id,
-            'is_internal_note' => (bool) $message->is_internal_note,
-            'message_type' => $message->message_type,
-        ]);
-
         return response()->json([
             'message' => $this->serializeMessage($message),
         ], 201);
@@ -188,14 +167,6 @@ class LiveChatController extends Controller
             default => null,
         };
 
-        $this->chatLog('Conversation state updated', [
-            'conversation_id' => $conversation->id,
-            'action' => $action,
-            'status' => $conversation->status,
-            'admin_user_id' => $agent?->id,
-            'reason' => $reason,
-        ]);
-
         return response()->json([
             'conversation' => $this->serializeConversation($conversation->fresh()),
             'system_message' => $systemMessage ? $this->serializeMessage($systemMessage) : null,
@@ -207,14 +178,7 @@ class LiveChatController extends Controller
      */
     public function saveSyncSettings(UpdateLiveChatSyncSettingsRequest $request): JsonResponse
     {
-        $settings = $request->validated();
-
-        SiteSetting::setChatSyncSettings($settings);
-
-        $this->chatLog('Chat sync settings updated', [
-            'admin_user_id' => $request->user('admin')?->id,
-            'settings' => $settings,
-        ]);
+        SiteSetting::setChatSyncSettings($request->validated());
 
         return response()->json([
             'message' => 'Sync settings saved.',
@@ -388,12 +352,6 @@ class LiveChatController extends Controller
         }
 
         return substr($text, 0, $max - 3) . '...';
-    }
-
-    /** @param array<string, mixed> $context */
-    private function chatLog(string $message, array $context = []): void
-    {
-        Log::channel('chat')->info($message, $context);
     }
 }
 

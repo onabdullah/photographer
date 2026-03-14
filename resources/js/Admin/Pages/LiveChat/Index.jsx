@@ -8,6 +8,7 @@ import {
     XCircle, Volume2, VolumeX, Flag, Ban, Workflow,
     ChevronRight, Search, Filter, X, Wifi, WifiOff,
     AlertCircle, Info, Settings, SlidersHorizontal,
+    Bell, PanelRightClose, PanelRightOpen,
 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 
@@ -117,34 +118,24 @@ function Avatar({ name, src, size = 40, cls = '' }) {
 // ─────────────────────────────────────────────────────────────
 
 const KPI_CARDS = [
-    { key: 'waiting', label: 'Waiting', color: 'text-orange-400' },
-    { key: 'ended', label: 'Closed Today', color: 'text-emerald-400' },
-    { key: 'active', label: 'Active Chats', color: 'text-blue-400' },
-    { key: 'muted', label: 'Muted', color: 'text-rose-400' },
-    { key: 'spam', label: 'Spam Today', color: 'text-slate-200' },
+    { key: 'total',     label: 'Total',     color: 'text-gray-900 dark:text-white' },
+    { key: 'active',    label: 'Active',    color: 'text-green-600 dark:text-green-400' },
+    { key: 'waiting',   label: 'Waiting',   color: 'text-yellow-600 dark:text-yellow-400' },
+    { key: 'ended',     label: 'Ended',     color: 'text-gray-500 dark:text-gray-400' },
+    { key: 'converted', label: 'Converted', color: 'text-blue-600 dark:text-blue-400' },
+    { key: 'unread',    label: 'Unread',    color: 'text-primary-600 dark:text-primary-400' },
 ];
 
-function KpiStrip({ kpis, conversations }) {
-    const mutedCount = conversations.filter((c) => c.is_muted || c.status === 'muted').length;
-    const spamCount = conversations.filter((c) => c.is_spam || c.status === 'spam').length;
-    const data = {
-        ...kpis,
-        muted: mutedCount,
-        spam: spamCount,
-    };
-
+function KpiStrip({ kpis }) {
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
             {KPI_CARDS.map(({ key, label, color }) => (
-                <div
-                    key={key}
-                    className="rounded-xl border border-slate-700/80 bg-gradient-to-b from-slate-800 to-slate-900 px-4 py-3.5 flex flex-col gap-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-                >
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                <div key={key} className="card-base p-4 rounded-xl flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
                         {label}
                     </span>
                     <span className={`text-xl font-bold tabular-nums ${color}`}>
-                        {(data?.[key] ?? 0).toLocaleString()}
+                        {(kpis?.[key] ?? 0).toLocaleString()}
                     </span>
                 </div>
             ))}
@@ -654,6 +645,119 @@ function SyncSettingsPanel({ settings, onSave, onClose }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// WELCOME SCREEN
+// ─────────────────────────────────────────────────────────────
+
+function FeatureCard({ icon: Icon, title, desc, colorClass }) {
+    return (
+        <div className="card-base text-left p-4 rounded-2xl flex flex-col items-start gap-3 hover:-translate-y-1 transition-transform border border-transparent dark:border-gray-800">
+            <div className={`p-2 rounded-xl ${colorClass}`}>
+                <Icon size={18} />
+            </div>
+            <div>
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-1">{title}</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{desc}</p>
+            </div>
+        </div>
+    );
+}
+
+function WelcomeScreen({ recentConversations, onSelect }) {
+    const recent = (recentConversations || []).slice(0, 3);
+    
+    return (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto bg-gray-50/50 dark:bg-[#0B0F19] relative min-h-0 w-full" style={{ zIndex: 1 }}>
+            {/* Subtle background dot pattern in dark mode */}
+            <div className="absolute inset-0 z-0 pointer-events-none hidden dark:block opacity-20" style={{ backgroundImage: 'radial-gradient(circle at center, #1f2937 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+            
+            <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
+                <div className="flex-shrink-0 flex items-center justify-center w-[60px] h-[60px] rounded-2xl bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 mb-8 mt-4 shadow-sm border border-primary-200 dark:border-primary-800/50 animate-[bounce_2s_infinite]">
+                    <MessageCircle size={28} />
+                </div>
+                
+                <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3">Welcome to Chat Command</h1>
+                <p className="text-gray-500 dark:text-gray-400 mb-10 text-sm max-w-md">Select a conversation from the sidebar to start providing world-class support.</p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-14">
+                    <FeatureCard 
+                        icon={Bell} 
+                        title="Sound Alerts" 
+                        desc="Toggle the Bell Icon in the sidebar to mute all system sounds." 
+                        colorClass="text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20" 
+                    />
+                    <FeatureCard 
+                        icon={Ban} 
+                        title="Customer Block" 
+                        desc="Ban troublesome guests via the Manage Session panel in details." 
+                        colorClass="text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/20" 
+                    />
+                    <FeatureCard 
+                        icon={AlertTriangle} 
+                        title="Spam Control" 
+                        desc="Mark irrelevant chats as Spam to move them to the hidden spam tab." 
+                        colorClass="text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/20" 
+                    />
+                    <FeatureCard 
+                        icon={Search} 
+                        title="Quick Find" 
+                        desc="Use the Search Bar to instantly find any customer by name or email." 
+                        colorClass="text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/20" 
+                    />
+                </div>
+
+                {recent.length > 0 && (
+                    <div className="w-full max-w-lg flex flex-col items-center">
+                        <div className="flex items-center gap-4 w-full mb-8 relative">
+                            <hr className="flex-1 border-gray-200 dark:border-gray-800" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Recent Activity</span>
+                            <hr className="flex-1 border-gray-200 dark:border-gray-800" />
+                        </div>
+                        
+                        <div className="relative w-full pb-8 group h-28 flex justify-center">
+                           {recent.map((conv, idx) => {
+                               const styles = {
+                                  0: "z-30 translate-y-0 scale-100 opacity-100",
+                                  1: "z-20 translate-y-3 scale-[0.95] opacity-90 group-hover:translate-y-[84px] group-hover:scale-100 group-hover:opacity-100",
+                                  2: "z-10 translate-y-6 scale-[0.90] opacity-75 group-hover:translate-y-[168px] group-hover:scale-100 group-hover:opacity-100",
+                               };
+                               return (
+                                   <div 
+                                      key={conv.id} 
+                                      onClick={() => onSelect(conv.id)} 
+                                      className={`absolute top-0 left-0 right-0 w-full transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] cursor-pointer ${styles[idx] || 'hidden'}`}
+                                   >
+                                       <div className="bg-white dark:bg-[#1A1F2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] hover:border-primary-500/50 hover:shadow-primary-500/10 flex items-center justify-between mx-auto max-w-md">
+                                           <div className="flex items-center gap-3">
+                                                <Avatar name={conv.customer_name} src={conv.customer_avatar} size={42} cls="text-primary-700 bg-primary-100 dark:text-primary-300 dark:bg-primary-900/40" />
+                                                <div className="text-left w-24 sm:w-32 truncate">
+                                                    <h4 className="font-bold text-gray-900 dark:text-white text-sm truncate">{conv.customer_name}</h4>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <Clock size={10} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                                                        <span className="text-[10px] text-gray-400">{timestamp(conv.last_message_at)}</span>
+                                                    </div>
+                                                </div>
+                                           </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded tracking-wider ${STATUS_COLORS[conv.status]}`}>
+                                                    {STATUS_LABELS[conv.status]}
+                                                </span>
+                                                <button className="btn-primary !rounded-xl !py-1.5 !px-3 font-semibold text-[11px] flex items-center gap-1">
+                                                    Jump In <ChevronRight size={12} />
+                                                </button>
+                                            </div>
+                                       </div>
+                                   </div>
+                               );
+                           })}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
 // EMPTY STATE
 // ─────────────────────────────────────────────────────────────
 
@@ -662,92 +766,6 @@ function EmptyState({ message }) {
         <div className="flex flex-col items-center justify-center h-full py-20 text-center px-6">
             <MessageCircle size={40} className="text-gray-300 dark:text-gray-600 mb-3" />
             <p className="text-sm text-gray-500 dark:text-gray-400">{message}</p>
-        </div>
-    );
-}
-
-function CommandCenterWelcome({ recentConversation, onJumpIn }) {
-    const quickCards = [
-        {
-            title: 'Sound Alerts',
-            desc: 'Toggle bell notifications from the inbox to mute system sounds.',
-            icon: VolumeX,
-            accent: 'text-blue-400',
-        },
-        {
-            title: 'Customer Block',
-            desc: 'Ban troublesome guests from the session details panel.',
-            icon: Ban,
-            accent: 'text-rose-400',
-        },
-        {
-            title: 'Spam Control',
-            desc: 'Mark irrelevant chats as spam to keep the inbox clean.',
-            icon: Flag,
-            accent: 'text-orange-400',
-        },
-        {
-            title: 'Quick Find',
-            desc: 'Use search to instantly find any customer by name or email.',
-            icon: Search,
-            accent: 'text-emerald-400',
-        },
-    ];
-
-    return (
-        <div className="h-full overflow-y-auto bg-[#071636] relative">
-            <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(rgba(90,130,220,0.26) 0.6px, transparent 0.6px)', backgroundSize: '16px 16px' }} />
-
-            <div className="relative z-10 px-6 py-10 md:py-14 flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-2xl bg-fuchsia-900/35 border border-fuchsia-700/40 flex items-center justify-center mb-6">
-                    <MessageCircle size={28} className="text-fuchsia-300" />
-                </div>
-
-                <h2 className="text-4xl font-extrabold tracking-tight text-slate-100 mb-3">Welcome to Chat Command</h2>
-                <p className="text-slate-300/90 max-w-2xl text-lg mb-10">
-                    Select a conversation from the sidebar to start providing world-class support.
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 w-full max-w-5xl mb-12">
-                    {quickCards.map((card) => {
-                        const Icon = card.icon;
-                        return (
-                            <div key={card.title} className="rounded-2xl border border-slate-700/70 bg-slate-800/65 backdrop-blur px-5 py-5 text-left">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Icon size={15} className={card.accent} />
-                                    <h3 className={`text-sm font-semibold ${card.accent}`}>{card.title}</h3>
-                                </div>
-                                <p className="text-xs leading-relaxed text-slate-300/80">{card.desc}</p>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                <div className="w-full max-w-3xl text-left">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400 mb-3">Recent Activity</p>
-                    <div className="rounded-[28px] border border-slate-700/80 bg-slate-800/80 px-5 py-4 shadow-xl">
-                        <div className="flex items-center gap-4">
-                            <div className="w-11 h-11 rounded-xl bg-fuchsia-900/45 text-fuchsia-300 flex items-center justify-center font-bold">
-                                {initials(recentConversation?.customer_name ?? 'A')}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="font-semibold text-slate-100 truncate">{recentConversation?.customer_name ?? 'Amad'}</p>
-                                <p className="text-xs text-slate-400">{timestamp(recentConversation?.last_message_at) || '4 days ago'}</p>
-                            </div>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-900/40 text-emerald-300 border border-emerald-700/40">
-                                ACTIVE
-                            </span>
-                            <button
-                                onClick={() => recentConversation && onJumpIn(recentConversation.id)}
-                                disabled={!recentConversation}
-                                className="px-4 py-2 rounded-xl text-sm font-semibold bg-fuchsia-600 text-white hover:bg-fuchsia-500 disabled:opacity-50"
-                            >
-                                Jump In
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
@@ -793,7 +811,6 @@ export default function LiveChatIndex() {
     const [search, setSearch] = useState(initialFilters?.search ?? '');
     const [kpis, setKpis] = useState(initialKpis ?? {});
     const [syncSettings, setSyncSettings] = useState(initialSyncSettings ?? {});
-    const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
 
     // Active thread state
     const [activeConvId, setActiveConvId] = useState(null);
@@ -814,7 +831,8 @@ export default function LiveChatIndex() {
     const threadRef = useRef(null);
     const atBottomRef = useRef(true);
 
-    // Modals
+    // Modals & Panels
+    const [showRightPanel, setShowRightPanel] = useState(true);
     const [confirmAction, setConfirmAction] = useState(null);
     const [showSyncSettings, setShowSyncSettings] = useState(false);
 
@@ -1087,13 +1105,13 @@ export default function LiveChatIndex() {
                 </div>
 
                 {/* KPI Strip */}
-                <KpiStrip kpis={kpis} conversations={conversations} />
+                <KpiStrip kpis={kpis} />
 
                 {/* Main 3-pane shell */}
-                <div className="flex flex-1 min-h-0 gap-0 rounded-xl border border-slate-700 overflow-hidden bg-slate-900 shadow-sm">
+                <div className="flex flex-1 min-h-0 gap-0 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900 shadow-sm">
 
                     {/* ── LEFT PANEL: Conversation inbox ── */}
-                    <div className="w-80 flex-shrink-0 flex flex-col border-r border-slate-700 bg-slate-800 dark:bg-slate-800">
+                    <div className="w-80 flex-shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                         {/* Search */}
                         <div className="p-3 border-b border-gray-200 dark:border-gray-700">
                             <form onSubmit={handleSearch} className="relative">
@@ -1146,12 +1164,9 @@ export default function LiveChatIndex() {
                     </div>
 
                     {/* ── CENTER PANEL: Thread ── */}
-                    <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-white dark:bg-gray-900">
+                    <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-white dark:bg-gray-900 border-l border-transparent z-10 relative">
                         {!activeConvId ? (
-                            <CommandCenterWelcome
-                                recentConversation={conversations[0] ?? null}
-                                onJumpIn={selectConversation}
-                            />
+                            <WelcomeScreen recentConversations={conversations} onSelect={selectConversation} />
                         ) : (
                             <>
                                 {/* Thread header */}
@@ -1185,13 +1200,6 @@ export default function LiveChatIndex() {
                                     {/* Thread actions */}
                                     {canManage && activeConv && (
                                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                                            <button
-                                                onClick={() => setIsRightPanelOpen((prev) => !prev)}
-                                                title={isRightPanelOpen ? 'Hide session panel' : 'Show session panel'}
-                                                className="hidden lg:inline-flex btn-secondary p-1.5 !px-1.5 !py-1.5"
-                                            >
-                                                <ChevronRight size={14} className={isRightPanelOpen ? 'rotate-180' : ''} />
-                                            </button>
                                             {syncMode === 'manual' && (
                                                 <button
                                                     onClick={() => pollMessages()}
@@ -1223,6 +1231,14 @@ export default function LiveChatIndex() {
                                                     </button>
                                                 </>
                                             )}
+                                            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                                            <button
+                                                onClick={() => setShowRightPanel((p) => !p)}
+                                                className={`p-1.5 rounded-md transition-colors ${showRightPanel ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                                                title={showRightPanel ? "Hide details" : "Show details"}
+                                            >
+                                                {showRightPanel ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -1325,19 +1341,9 @@ export default function LiveChatIndex() {
                     </div>
 
                     {/* ── RIGHT PANEL: Session details ── */}
-                    {isRightPanelOpen && (
-                    <div className="w-72 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 overflow-y-auto bg-gray-50 dark:bg-gray-800 hidden lg:block">
+                    <div className={`w-72 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 overflow-y-auto bg-gray-50 dark:bg-gray-800 transition-all ${showRightPanel ? 'block' : 'hidden'}`}>
                         {activeConv ? (
                             <div className="p-5 space-y-5">
-                                <div className="flex justify-end">
-                                    <button
-                                        onClick={() => setIsRightPanelOpen(false)}
-                                        className="btn-secondary p-1.5 !px-1.5 !py-1.5"
-                                        title="Close session panel"
-                                    >
-                                        <X size={13} />
-                                    </button>
-                                </div>
                                 {/* Contact */}
                                 <section>
                                     <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Contact</h3>
@@ -1434,7 +1440,6 @@ export default function LiveChatIndex() {
                             <EmptyState message="Select a conversation to see details." />
                         )}
                     </div>
-                    )}
 
                 </div>
             </div>
