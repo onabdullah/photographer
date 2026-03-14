@@ -124,31 +124,50 @@ export default function Support() {
                                     <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                         {publicMessages.map((msg) => {
                                             const isMerchant = msg.sender_type === 'merchant' || msg.sender_type === 'customer';
+                                            const isSystem = msg.sender_type === 'system';
+
+                                            if (isSystem) {
+                                                return (
+                                                    <div key={msg.id} style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
+                                                        <span style={{ fontSize: '12px', color: '#6d7175', backgroundColor: '#f4f6f8', padding: '4px 12px', borderRadius: '12px' }}>
+                                                            {msg.body}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            }
+
                                             return (
                                                 <div 
                                                     key={msg.id} 
                                                     style={{
-                                                        alignSelf: isMerchant ? 'flex-end' : 'flex-start',
-                                                        maxWidth: '80%',
-                                                        backgroundColor: isMerchant ? 'var(--p-color-bg-surface-brand)' : 'var(--p-color-bg-surface-secondary)',
-                                                        color: isMerchant ? 'var(--p-color-text-brand-on-bg-fill)' : 'var(--p-color-text)',
-                                                        borderRadius: '12px',
-                                                        borderBottomRightRadius: isMerchant ? '2px' : '12px',
-                                                        borderBottomLeftRadius: !isMerchant ? '2px' : '12px',
-                                                        padding: '12px 16px',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: isMerchant ? 'flex-end' : 'flex-start',
+                                                        marginBottom: '4px'
                                                     }}
                                                 >
-                                                    <BlockStack gap="100">
-                                                        <InlineStack align="space-between" gap="400">
-                                                            <Text variant="headingSm" as="h3" tone={isMerchant ? "textInverse" : undefined}>
+                                                    <div 
+                                                        style={{
+                                                            maxWidth: '85%',
+                                                            backgroundColor: isMerchant ? '#1a1a1a' : '#f1f2f4',
+                                                            color: isMerchant ? '#ffffff' : '#202223',
+                                                            borderRadius: '16px',
+                                                            borderBottomRightRadius: isMerchant ? '4px' : '16px',
+                                                            borderBottomLeftRadius: !isMerchant ? '4px' : '16px',
+                                                            padding: '12px 16px',
+                                                            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                                                        }}
+                                                    >
+                                                        <div style={{ marginBottom: '6px', display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'center' }}>
+                                                            <span style={{ fontWeight: 600, fontSize: '13px' }}>
                                                                 {isMerchant ? 'You' : 'Support Team'}
-                                                            </Text>
-                                                            <Text variant="bodyXs" as="span" tone={isMerchant ? "textInverse" : "subdued"}>
+                                                            </span>
+                                                            <span style={{ fontSize: '11px', opacity: 0.8 }}>
                                                                 {formatDate(msg.created_at)}
-                                                            </Text>
-                                                        </InlineStack>
-                                                        <span style={{ whiteSpace: 'pre-wrap', fontSize: '14px' }}>{msg.body}</span>
-                                                    </BlockStack>
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ whiteSpace: 'pre-wrap', fontSize: '14px', lineHeight: '1.4' }}>{msg.body}</div>
+                                                    </div>
                                                 </div>
                                             );
                                         })}
