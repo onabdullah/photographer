@@ -19,6 +19,15 @@ export default function Support() {
     // Active ticket view
     const [activeTicket, setActiveTicket] = useState(null);
     const [replyMessage, setReplyMessage] = useState('');
+    const messagesEndRef = useRef(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [activeTicket?.messages]);
 
     // Filtering
     const [itemStrings, setItemStrings] = useState([
@@ -66,10 +75,12 @@ export default function Support() {
         });
     }, [newSubject, newMessage]);
 
+    const activeTicketId = activeTicket?.id;
+
     const fetchMessages = useCallback(async () => {
-        if (!activeTicket) return;
+        if (!activeTicketId) return;
         try {
-            const url = new URL(`/shopify/support/tickets/${activeTicket.id}/poll`, window.location.origin);
+            const url = new URL(`/shopify/support/tickets/${activeTicketId}/poll`, window.location.origin);
             url.search = window.location.search; // keep shopify token
             const res = await fetch(url.toString(), {
                 headers: {
@@ -79,24 +90,25 @@ export default function Support() {
             });
             if (res.ok) {
                 const data = await res.json();
-                if (data.messages && data.messages.length > 0) {
+                if (data.messages) {
                     setActiveTicket(prev => ({ ...prev, messages: data.messages }));
                 }
             }
         } catch (err) {
             console.error("Polled messages fail", err);
         }
-    }, [activeTicket]);
+    }, [activeTicketId]);
 
     useEffect(() => {
+        let intervalTime = (syncSettings?.manual_refresh_interval_seconds || 12) * 1000;
         let interval;
-        if (activeTicket && syncSettings?.realtime_enabled) {
-            interval = setInterval(fetchMessages, 5000);
+        if (activeTicketId) {
+            interval = setInterval(fetchMessages, intervalTime);
         }
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [activeTicket, syncSettings?.realtime_enabled, fetchMessages]);
+    }, [activeTicketId, syncSettings?.manual_refresh_interval_seconds, fetchMessages]);
 
     const submitReply = useCallback(() => {
         if (!replyMessage.trim() || !activeTicket) return;
@@ -211,6 +223,7 @@ export default function Support() {
                                         {publicMessages.length === 0 && (
                                             <Text alignment="center" color="subdued">No messages yet.</Text>
                                         )}
+                                        <div ref={messagesEndRef} />
                                     </div>
 
                                     {activeTicket.status !== 'ended' && (

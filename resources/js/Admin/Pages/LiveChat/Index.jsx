@@ -239,8 +239,8 @@ function MessageBubble({ message, grouped }) {
 
     if (isNote) {
         return (
-            <div className="flex justify-end my-1">
-                <div className="max-w-[65%] bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl rounded-br-sm px-4 py-2.5">
+            <div className="flex justify-center my-2 w-full">
+                <div className="max-w-[85%] w-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-2.5">
                     {!grouped && (
                         <div className="flex items-center gap-1.5 mb-1">
                             <Info size={12} className="text-yellow-600 dark:text-yellow-400" />
@@ -901,11 +901,7 @@ export default function LiveChatIndex() {
                 });
                 const maxId = Math.max(...newMsgs.map((m) => m.id));
                 setLastMessageId((prev) => Math.max(prev, maxId));
-                if (wasAtBottom) {
-                    setTimeout(() => scrollToBottom(true), 50);
-                } else {
-                    setNewMessagesBelow((c) => c + newMsgs.length);
-                }
+                setTimeout(() => scrollToBottom(true), 50);
             }
             setLastSyncedAt(data.synced_at);
         } catch (_) {
@@ -1220,9 +1216,6 @@ export default function LiveChatIndex() {
                                                             <VolumeX size={14} />
                                                         </button>
                                                     )}
-                                                    <button onClick={() => handleAction('convert')} className="btn-secondary p-1.5 !px-1.5 !py-1.5" title="Convert to ticket">
-                                                        <Workflow size={14} />
-                                                    </button>
                                                     <button onClick={() => handleAction('spam')} className="btn-sm-warning p-1.5 !px-1.5 !py-1.5" title="Mark spam">
                                                         <Flag size={14} />
                                                     </button>
