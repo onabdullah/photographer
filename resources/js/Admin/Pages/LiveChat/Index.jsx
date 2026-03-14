@@ -666,9 +666,9 @@ function WelcomeScreen({ recentConversations, onSelect }) {
     const recent = (recentConversations || []).slice(0, 3);
     
     return (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto bg-gray-50/50 dark:bg-[#0B0F19] relative min-h-0 w-full" style={{ zIndex: 1 }}>
-            {/* Subtle background dot pattern in dark mode */}
-            <div className="absolute inset-0 z-0 pointer-events-none hidden dark:block opacity-20" style={{ backgroundImage: 'radial-gradient(circle at center, #1f2937 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto bg-transparent relative min-h-0 w-full" style={{ zIndex: 1 }}>
+            {/* Subtle background dot pattern for both themes */}
+            <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03] dark:opacity-5" style={{ backgroundImage: 'radial-gradient(circle at center, currentColor 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
             
             <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
                 <div className="flex-shrink-0 flex items-center justify-center w-[60px] h-[60px] rounded-2xl bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 mb-8 mt-4 shadow-sm border border-primary-200 dark:border-primary-800/50 animate-[bounce_2s_infinite]">
@@ -705,14 +705,14 @@ function WelcomeScreen({ recentConversations, onSelect }) {
                     />
                 </div>
 
-                {recent.length > 0 && (
-                    <div className="w-full max-w-lg flex flex-col items-center">
-                        <div className="flex items-center gap-4 w-full mb-8 relative">
-                            <hr className="flex-1 border-gray-200 dark:border-gray-800" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Recent Activity</span>
-                            <hr className="flex-1 border-gray-200 dark:border-gray-800" />
-                        </div>
-                        
+                <div className="w-full max-w-lg flex flex-col items-center">
+                    <div className="flex items-center gap-4 w-full mb-8 relative">
+                        <hr className="flex-1 border-gray-200 dark:border-gray-800" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Recent Activity</span>
+                        <hr className="flex-1 border-gray-200 dark:border-gray-800" />
+                    </div>
+                    
+                    {recent.length > 0 ? (
                         <div className="relative w-full pb-8 group h-28 flex justify-center">
                            {recent.map((conv, idx) => {
                                const styles = {
@@ -750,8 +750,12 @@ function WelcomeScreen({ recentConversations, onSelect }) {
                                );
                            })}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="py-2 text-sm text-gray-400 dark:text-gray-500 italic pb-8">
+                            No recent activity found.
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
