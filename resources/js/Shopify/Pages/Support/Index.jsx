@@ -16,22 +16,6 @@ export default function Support() {
     const [newMessage, setNewMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const uiModalRef = useRef(null);
-
-    useEffect(() => {
-        const el = uiModalRef.current;
-        if (!el) return;
-        if (isNewTicketOpen) el.show?.(); else el.hide?.();
-    }, [isNewTicketOpen]);
-
-    useEffect(() => {
-        const el = uiModalRef.current;
-        if (!el) return;
-        const onHide = () => setIsNewTicketOpen(false);
-        el.addEventListener('hide', onHide);
-        return () => el.removeEventListener('hide', onHide);
-    }, []);
-
     // Active ticket view
     const [activeTicket, setActiveTicket] = useState(null);
     const [replyMessage, setReplyMessage] = useState('');
@@ -287,8 +271,25 @@ export default function Support() {
                 </Layout>
 
                 {/* New Ticket Modal */}
-                <ui-modal ref={uiModalRef} id="new-ticket-modal">
-                    <div style={{ padding: '16px' }}>
+                <Modal
+                    open={isNewTicketOpen}
+                    onClose={() => setIsNewTicketOpen(false)}
+                    title="Open a Support Ticket"
+                    primaryAction={{
+                        content: isSubmitting ? 'Submitting...' : 'Submit Ticket',
+                        onAction: submitTicket,
+                        disabled: isSubmitting || !newSubject.trim() || !newMessage.trim(),
+                        loading: isSubmitting,
+                    }}
+                    secondaryActions={[
+                        {
+                            content: 'Cancel',
+                            onAction: () => setIsNewTicketOpen(false),
+                            disabled: isSubmitting,
+                        },
+                    ]}
+                >
+                    <Modal.Section>
                         <FormLayout>
                             <TextField
                                 label="Subject"
@@ -308,14 +309,8 @@ export default function Support() {
                                 placeholder="Please provide as much detail as possible..."
                             />
                         </FormLayout>
-                    </div>
-                    <ui-title-bar title="Open a Support Ticket">
-                        <button variant="primary" onClick={submitTicket} disabled={isSubmitting}>
-                            {isSubmitting ? 'Submitting...' : 'Submit Ticket'}
-                        </button>
-                        <button onClick={() => setIsNewTicketOpen(false)}>Cancel</button>
-                    </ui-title-bar>
-                </ui-modal>
+                    </Modal.Section>
+                </Modal>
             </Page>
         </ShopifyLayout>
     );
