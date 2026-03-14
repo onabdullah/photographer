@@ -46,6 +46,7 @@ class SupportController extends Controller
 
     public function store(Request $request)
     {
+        \Illuminate\Support\Facades\Log::info("TICKET STORE HIT: ", $request->all());
         $shop = $this->currentShop($request);
         if (! $shop) abort(403);
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
     Page, Layout, Card, ResourceList, ResourceItem, Text, Badge, Button,
     Modal, FormLayout, TextField, BlockStack, InlineStack, Divider, Box, 
@@ -8,13 +8,29 @@ import { usePage, router } from '@inertiajs/react';
 import ShopifyLayout from '@/Shopify/Layouts/ShopifyLayout';
 
 export default function Support() {
-    const { tickets, filters } = usePage().props;
+    const { tickets, filters, errors } = usePage().props;
     
     // UI States
     const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
     const [newSubject, setNewSubject] = useState('');
     const [newMessage, setNewMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const uiModalRef = useRef(null);
+
+    useEffect(() => {
+        const el = uiModalRef.current;
+        if (!el) return;
+        if (isNewTicketOpen) el.show?.(); else el.hide?.();
+    }, [isNewTicketOpen]);
+
+    useEffect(() => {
+        const el = uiModalRef.current;
+        if (!el) return;
+        const onHide = () => setIsNewTicketOpen(false);
+        el.addEventListener('hide', onHide);
+        return () => el.removeEventListener('hide', onHide);
+    }, []);
 
     // Active ticket view
     const [activeTicket, setActiveTicket] = useState(null);
@@ -50,13 +66,20 @@ export default function Support() {
             subject: newSubject,
             message: newMessage,
         }, {
+            headers: window.sessionToken ? { Authorization: `Bearer ${window.sessionToken}` } : {},
             onSuccess: () => {
                 setIsSubmitting(false);
                 setIsNewTicketOpen(false);
                 setNewSubject('');
                 setNewMessage('');
             },
-            onError: (err) => { console.error("Submit error", err); setIsSubmitting(false); }
+            onError: (err) => { 
+                console.error("Submit error", err); 
+                setIsSubmitting(false); 
+            },
+            onFinish: () => {
+                setIsSubmitting(false);
+            }
         });
     }, [newSubject, newMessage]);
 
@@ -66,6 +89,7 @@ export default function Support() {
         router.post(`/shopify/support/tickets/${activeTicket.id}/reply${window.location.search}`, {
             message: replyMessage,
         }, {
+            headers: window.sessionToken ? { Authorization: `Bearer ${window.sessionToken}` } : {},
             onSuccess: (page) => {
                 setIsSubmitting(false);
                 setReplyMessage('');
@@ -73,7 +97,13 @@ export default function Support() {
                 const updated = page.props.tickets.find(t => t.id === activeTicket.id);
                 if (updated) setActiveTicket(updated);
             },
-            onError: (err) => { console.error("Submit error", err); setIsSubmitting(false); }
+            onError: (err) => { 
+                console.error("Reply error", err); 
+                setIsSubmitting(false); 
+            },
+            onFinish: () => {
+                setIsSubmitting(false);
+            }
         });
     }, [replyMessage, activeTicket]);
 
@@ -257,29 +287,15 @@ export default function Support() {
                 </Layout>
 
                 {/* New Ticket Modal */}
-                <Modal
-                    open={isNewTicketOpen}
-                    onClose={() => setIsNewTicketOpen(false)}
-                    title="Open a Support Ticket"
-                    primaryAction={{
-                        content: 'Submit Ticket',
-                        onAction: submitTicket,
-                        loading: isSubmitting,
-                    }}
-                    secondaryActions={[
-                        {
-                            content: 'Cancel',
-                            onAction: () => setIsNewTicketOpen(false),
-                        },
-                    ]}
-                >
-                    <Modal.Section>
+                <ui-modal ref={uiModalRef} id="new-ticket-modal">
+                    <div style={{ padding: '16px' }}>
                         <FormLayout>
                             <TextField
                                 label="Subject"
                                 value={newSubject}
                                 onChange={setNewSubject}
                                 autoComplete="off"
+                                error={errors?.subject}
                                 placeholder="E.g., Issue with generating product backgrounds"
                             />
                             <TextField
@@ -288,11 +304,18 @@ export default function Support() {
                                 onChange={setNewMessage}
                                 multiline={5}
                                 autoComplete="off"
+                                error={errors?.message}
                                 placeholder="Please provide as much detail as possible..."
                             />
                         </FormLayout>
-                    </Modal.Section>
-                </Modal>
+                    </div>
+                    <ui-title-bar title="Open a Support Ticket">
+                        <button variant="primary" onClick={submitTicket} disabled={isSubmitting}>
+                            {isSubmitting ? 'Submitting...' : 'Submit Ticket'}
+                        </button>
+                        <button onClick={() => setIsNewTicketOpen(false)}>Cancel</button>
+                    </ui-title-bar>
+                </ui-modal>
             </Page>
         </ShopifyLayout>
     );
