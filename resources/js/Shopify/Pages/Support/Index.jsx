@@ -38,7 +38,7 @@ export default function Support() {
         (selectedTabIndex) => {
             setSelected(selectedTabIndex);
             const statuses = ['all', 'active', 'waiting', 'ended'];
-            router.get('/shopify/support', { status: statuses[selectedTabIndex] }, { preserveState: true });
+            const params = new URLSearchParams(window.location.search); params.set('status', statuses[selectedTabIndex]); router.get(`/shopify/support?${params.toString()}`, { preserveState: true });
         },
         []
     );
@@ -46,7 +46,7 @@ export default function Support() {
     const submitTicket = useCallback(() => {
         if (!newSubject.trim() || !newMessage.trim()) return;
         setIsSubmitting(true);
-        router.post('/shopify/support/tickets', {
+        router.post(`/shopify/support/tickets${window.location.search}`, {
             subject: newSubject,
             message: newMessage,
         }, {
@@ -56,14 +56,14 @@ export default function Support() {
                 setNewSubject('');
                 setNewMessage('');
             },
-            onError: () => setIsSubmitting(false)
+            onError: (err) => { console.error("Submit error", err); setIsSubmitting(false); }
         });
     }, [newSubject, newMessage]);
 
     const submitReply = useCallback(() => {
         if (!replyMessage.trim() || !activeTicket) return;
         setIsSubmitting(true);
-        router.post(`/shopify/support/tickets/${activeTicket.id}/reply`, {
+        router.post(`/shopify/support/tickets/${activeTicket.id}/reply${window.location.search}`, {
             message: replyMessage,
         }, {
             onSuccess: (page) => {
@@ -73,7 +73,7 @@ export default function Support() {
                 const updated = page.props.tickets.find(t => t.id === activeTicket.id);
                 if (updated) setActiveTicket(updated);
             },
-            onError: () => setIsSubmitting(false)
+            onError: (err) => { console.error("Submit error", err); setIsSubmitting(false); }
         });
     }, [replyMessage, activeTicket]);
 

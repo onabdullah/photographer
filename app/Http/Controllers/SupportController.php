@@ -60,13 +60,13 @@ class SupportController extends Controller
             'customer_email' => $shop->email ?? 'no-reply@merchant.com',
             'subject' => $request->input('subject'),
             'status' => 'waiting',
-            'last_message_preview' => substr($request->input('message'), 0, 100),
+            'last_message_preview' => \Illuminate\Support\Str::limit($request->input('message'), 100),
             'last_message_at' => now(),
             'unread_count' => 1,
         ]);
 
         $conversation->messages()->create([
-            'sender_type' => LiveChatMessage::SENDER_CUSTOMER,
+            'sender_type' => LiveChatMessage::SENDER_CUSTOMER, 'sender_id' => null,
             'body' => $request->input('message'),
             'is_read' => false,
         ]);
@@ -86,13 +86,13 @@ class SupportController extends Controller
         $conversation = LiveChatConversation::where('merchant_id', $shop->id)->findOrFail($id);
 
         $conversation->messages()->create([
-            'sender_type' => LiveChatMessage::SENDER_CUSTOMER,
+            'sender_type' => LiveChatMessage::SENDER_CUSTOMER, 'sender_id' => null,
             'body' => $request->input('message'),
             'is_read' => false,
         ]);
 
         $conversation->update([
-            'last_message_preview' => substr($request->input('message'), 0, 100),
+            'last_message_preview' => \Illuminate\Support\Str::limit($request->input('message'), 100),
             'last_message_at' => now(),
             'status' => 'waiting',
             'unread_count' => $conversation->unread_count + 1,
