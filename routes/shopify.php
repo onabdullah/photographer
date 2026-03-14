@@ -50,6 +50,11 @@ Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMis
     // Help & Support
     Route::get('/help', [\App\Http\Controllers\HelpController::class, 'help'])->name('help');
 
+    // Support (Tickets)
+    Route::get('/support', [\App\Http\Controllers\SupportController::class, 'index'])->name('support');
+    Route::post('/support/tickets', [\App\Http\Controllers\SupportController::class, 'store'])->name('support.store');
+    Route::post('/support/tickets/{id}/reply', [\App\Http\Controllers\SupportController::class, 'reply'])->name('support.reply');
+
     // AI Models (Virtual Try-On) – Coming Soon
     Route::get('/ai-models', [\App\Http\Controllers\ShopifyController::class, 'aiModels'])->name('ai-models');
 

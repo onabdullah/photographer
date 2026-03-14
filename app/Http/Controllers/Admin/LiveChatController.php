@@ -59,7 +59,7 @@ class LiveChatController extends Controller
      */
     public function messages(Request $request, int $id): JsonResponse
     {
-        $conversation = LiveChatConversation::findOrFail($id);
+        $conversation = LiveChatConversation::with('merchant.imageGenerations')->findOrFail($id);
 
         $messages = $conversation->messages()
             ->orderBy('created_at')
@@ -303,6 +303,22 @@ class LiveChatController extends Controller
             'sync_status' => $c->sync_status,
             'last_synced_at' => $c->last_synced_at?->toIso8601String(),
             'created_at' => $c->created_at?->toIso8601String(),
+            'merchant' => $c->relationLoaded('merchant') && $c->merchant ? [
+                'id' => $c->merchant->id,
+                'name' => $c->merchant->name,
+                'email' => $c->merchant->email,
+                'freemium' => $c->merchant->shopify_freemium,
+                'country' => $c->merchant->country,
+                'credits_balance' => $c->merchant->ai_credits_balance,
+                'recent_creations' => $c->merchant->relationLoaded('imageGenerations') 
+                    ? $c->merchant->imageGenerations->sortByDesc('created_at')->take(4)->map(fn ($g) => [
+                        'id' => $g->id,
+                        'tool' => $g->tool_used,
+                        'url' => $g->result_image_url,
+                        'created_at' => $g->created_at->toIso8601String(),
+                    ])->values()
+                    : []
+            ] : null,
         ];
     }
 

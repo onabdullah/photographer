@@ -1376,6 +1376,60 @@ export default function LiveChatIndex() {
                                     </dl>
                                 </section>
 
+                                {/* Merchant Context (if available) */}
+                                {activeConv.merchant && (
+                                    <>
+                                        <section>
+                                            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Merchant Context</h3>
+                                            <div className="bg-white dark:bg-[#1A1F2C] border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">{activeConv.merchant.name}</span>
+                                                    {activeConv.merchant.freemium && (
+                                                        <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full uppercase font-bold">Free</span>
+                                                    )}
+                                                </div>
+                                                <dl className="space-y-1.5 text-xs">
+                                                    <div className="flex justify-between gap-2">
+                                                        <dt className="text-gray-500 dark:text-gray-400">Email</dt>
+                                                        <dd className="text-gray-700 dark:text-gray-300 truncate max-w-[100px]" title={activeConv.merchant.email}>{activeConv.merchant.email}</dd>
+                                                    </div>
+                                                    <div className="flex justify-between gap-2">
+                                                        <dt className="text-gray-500 dark:text-gray-400">Country</dt>
+                                                        <dd className="text-gray-700 dark:text-gray-300">{activeConv.merchant.country ?? 'Unknown'}</dd>
+                                                    </div>
+                                                    <div className="flex justify-between gap-2">
+                                                        <dt className="text-gray-500 dark:text-gray-400">Credits</dt>
+                                                        <dd className="text-primary-600 dark:text-primary-400 font-semibold">{activeConv.merchant.credits_balance?.toLocaleString() ?? 0}</dd>
+                                                    </div>
+                                                </dl>
+                                            </div>
+                                        </section>
+
+                                        {activeConv.merchant.recent_creations?.length > 0 && (
+                                            <section>
+                                                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3 flex items-center justify-between">
+                                                    Recent Creations
+                                                    <span className="bg-gray-100 dark:bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded-full text-[9px]">{activeConv.merchant.recent_creations.length}</span>
+                                                </h3>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {activeConv.merchant.recent_creations.map(creation => (
+                                                        <div key={creation.id} className="relative group rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-square">
+                                                            <img 
+                                                                src={creation.url} 
+                                                                alt={creation.tool} 
+                                                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                                            />
+                                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
+                                                                <p className="text-[8px] text-white font-medium capitalize truncate">{creation.tool}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </section>
+                                        )}
+                                    </>
+                                )}
+
                                 {/* Sync */}
                                 <section>
                                     <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Sync</h3>
