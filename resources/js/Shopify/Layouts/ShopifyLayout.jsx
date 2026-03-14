@@ -39,7 +39,7 @@ export default function ShopifyLayout({ children }) {
           {showProductAILab && <a href="/shopify/product-ai-lab">Product AI Lab (VTO)</a>}
           <a href="/shopify/plans">Plans & Billing</a>
           <a href="/shopify/settings">Settings</a>
-          <a href="/shopify/help">Help & Support</a>
+          <a href="/shopify/support">Live Support</a>
         </NavMenu>
         <div className="premium-page-enter" style={{ fontFamily: 'var(--font-body)' }}>
           {children}

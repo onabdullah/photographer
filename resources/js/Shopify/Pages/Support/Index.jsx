@@ -95,6 +95,9 @@ export default function Support() {
     };
 
     if (activeTicket) {
+        // Filter out internal notes completely for the merchant view
+        const publicMessages = activeTicket.messages.filter(m => !m.is_internal_note);
+
         return (
             <ShopifyLayout title={`Ticket #${activeTicket.id}`}>
                 <Page 
@@ -104,50 +107,69 @@ export default function Support() {
                 >
                     <Layout>
                         <Layout.Section>
-                            <BlockStack gap="400">
-                                {activeTicket.messages.map((msg) => (
-                                    <Card key={msg.id}>
-                                        <BlockStack gap="200">
-                                            <InlineStack align="space-between">
-                                                <Text variant="headingSm" as="h3">
-                                                    {msg.sender_type === 'merchant' || msg.sender_type === 'customer' ? 'You' : 'Support Team'}
-                                                </Text>
-                                                <Text color="subdued" as="span">{formatDate(msg.created_at)}</Text>
-                                            </InlineStack>
-                                            <Text as="p" variant="bodyMd">{msg.body}</Text>
-                                        </BlockStack>
-                                    </Card>
-                                ))}
+                            <Card padding="400">
+                                <BlockStack gap="400">
+                                    <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                        {publicMessages.map((msg) => {
+                                            const isMerchant = msg.sender_type === 'merchant' || msg.sender_type === 'customer';
+                                            return (
+                                                <div 
+                                                    key={msg.id} 
+                                                    style={{
+                                                        alignSelf: isMerchant ? 'flex-end' : 'flex-start',
+                                                        maxWidth: '80%',
+                                                        backgroundColor: isMerchant ? 'var(--p-color-bg-surface-brand)' : 'var(--p-color-bg-surface-secondary)',
+                                                        color: isMerchant ? 'var(--p-color-text-brand-on-bg-fill)' : 'var(--p-color-text)',
+                                                        borderRadius: '12px',
+                                                        borderBottomRightRadius: isMerchant ? '2px' : '12px',
+                                                        borderBottomLeftRadius: !isMerchant ? '2px' : '12px',
+                                                        padding: '12px 16px',
+                                                    }}
+                                                >
+                                                    <BlockStack gap="100">
+                                                        <InlineStack align="space-between" gap="400">
+                                                            <Text variant="headingSm" as="h3" tone={isMerchant ? "textInverse" : undefined}>
+                                                                {isMerchant ? 'You' : 'Support Team'}
+                                                            </Text>
+                                                            <Text variant="bodyXs" as="span" tone={isMerchant ? "textInverse" : "subdued"}>
+                                                                {formatDate(msg.created_at)}
+                                                            </Text>
+                                                        </InlineStack>
+                                                        <span style={{ whiteSpace: 'pre-wrap', fontSize: '14px' }}>{msg.body}</span>
+                                                    </BlockStack>
+                                                </div>
+                                            );
+                                        })}
+                                        {publicMessages.length === 0 && (
+                                            <Text alignment="center" color="subdued">No messages yet.</Text>
+                                        )}
+                                    </div>
 
-                                {activeTicket.status !== 'ended' && (
-                                    <Box paddingBlockStart="400">
-                                        <Card>
-                                            <BlockStack gap="400">
-                                                <Text variant="headingMd" as="h2">Reply</Text>
-                                                <FormLayout>
-                                                    <TextField
-                                                        value={replyMessage}
-                                                        onChange={setReplyMessage}
-                                                        multiline={4}
-                                                        autoComplete="off"
-                                                        placeholder="Write your message here..."
-                                                    />
-                                                    <InlineStack align="end">
-                                                        <Button 
-                                                            variant="primary" 
-                                                            onClick={submitReply} 
-                                                            loading={isSubmitting}
-                                                            disabled={!replyMessage.trim()}
-                                                        >
-                                                            Send Reply
-                                                        </Button>
-                                                    </InlineStack>
-                                                </FormLayout>
-                                            </BlockStack>
-                                        </Card>
-                                    </Box>
-                                )}
-                            </BlockStack>
+                                    {activeTicket.status !== 'ended' && (
+                                        <Box paddingBlockStart="400" borderBlockStartWidth="025" borderColor="border">
+                                            <FormLayout>
+                                                <TextField
+                                                    value={replyMessage}
+                                                    onChange={setReplyMessage}
+                                                    multiline={3}
+                                                    autoComplete="off"
+                                                    placeholder="Type your reply here..."
+                                                />
+                                                <InlineStack align="end">
+                                                    <Button 
+                                                        variant="primary" 
+                                                        onClick={submitReply} 
+                                                        loading={isSubmitting}
+                                                        disabled={!replyMessage.trim()}
+                                                    >
+                                                        Send Reply
+                                                    </Button>
+                                                </InlineStack>
+                                            </FormLayout>
+                                        </Box>
+                                    )}
+                                </BlockStack>
+                            </Card>
                         </Layout.Section>
                     </Layout>
                 </Page>
