@@ -2,6 +2,7 @@ import ShopifyLayout from '@/Shopify/Layouts/ShopifyLayout';
 import {
   Page,
   Card,
+  Tabs,
   Text,
   BlockStack,
   Select,
@@ -227,7 +228,6 @@ export default function Settings() {
   }, [closeClearHistoryModal]);
 
   const successMessage = props.flash?.success ?? null;
-  const [navQuery, setNavQuery] = useState('');
   const [activeSection, setActiveSection] = useState('general');
 
   const storeProfile = props.storeProfile ?? {};
@@ -239,14 +239,20 @@ export default function Settings() {
   const storeCountry = storeProfile.country || 'Country not available';
   const installedDate = storeProfile.installedAt || 'Unknown install date';
 
-  const filteredNavItems = useMemo(() => {
-    const q = navQuery.trim().toLowerCase();
-    if (! q) {
-      return SETTINGS_NAV_ITEMS;
-    }
+  const tabs = useMemo(() => SETTINGS_NAV_ITEMS.map((item) => ({
+    id: item.key,
+    content: item.label,
+    panelID: `settings-tab-${item.key}`,
+  })), []);
 
-    return SETTINGS_NAV_ITEMS.filter((item) => item.label.toLowerCase().includes(q));
-  }, [navQuery]);
+  const selectedTabIndex = Math.max(0, SETTINGS_NAV_ITEMS.findIndex((item) => item.key === activeSection));
+
+  const handleTabSelect = useCallback((index) => {
+    const selected = SETTINGS_NAV_ITEMS[index];
+    if (selected) {
+      setActiveSection(selected.key);
+    }
+  }, []);
 
   const activeLabel = SETTINGS_NAV_ITEMS.find((item) => item.key === activeSection)?.label ?? 'General';
 
@@ -489,61 +495,34 @@ export default function Settings() {
             </Banner>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-[270px_minmax(0,1fr)] gap-4">
-            <Card>
-              <Box padding="300">
-                <BlockStack gap="300">
-                  <InlineStack gap="200" blockAlign="center">
-                    <div className="h-8 w-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-semibold">
-                      {String(storeName).slice(0, 2).toUpperCase()}
-                    </div>
-                    <BlockStack gap="0">
-                      <Text as="p" variant="bodyMd" fontWeight="semibold">{storeName}</Text>
-                      <Text as="p" variant="bodySm" tone="subdued">{storeDomain}</Text>
-                    </BlockStack>
-                  </InlineStack>
-
-                  <TextField
-                    label="Search"
-                    labelHidden
-                    autoComplete="off"
-                    value={navQuery}
-                    onChange={setNavQuery}
-                    placeholder="Search"
-                  />
-
-                  <BlockStack gap="100">
-                    {filteredNavItems.map((item) => (
-                      <Button
-                        key={item.key}
-                        fullWidth
-                        variant={activeSection === item.key ? 'primary' : 'tertiary'}
-                        textAlign="left"
-                        onClick={() => setActiveSection(item.key)}
-                      >
-                        {item.label}
-                      </Button>
-                    ))}
-                    {filteredNavItems.length === 0 && (
-                      <Text as="p" variant="bodySm" tone="subdued">No matches</Text>
-                    )}
+          <Card>
+            <Box padding="300">
+              <InlineStack align="space-between" blockAlign="center" wrap>
+                <InlineStack gap="200" blockAlign="center">
+                  <div className="h-8 w-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-semibold">
+                    {String(storeName).slice(0, 2).toUpperCase()}
+                  </div>
+                  <BlockStack gap="0">
+                    <Text as="p" variant="bodyMd" fontWeight="semibold">{storeName}</Text>
+                    <Text as="p" variant="bodySm" tone="subdued">{storeDomain}</Text>
                   </BlockStack>
-                </BlockStack>
-              </Box>
-            </Card>
-
-            <BlockStack gap="400">
-              <InlineStack align="space-between" blockAlign="center">
-                <Text as="h2" variant="headingLg">{activeLabel}</Text>
+                </InlineStack>
                 <InlineStack gap="150" blockAlign="center">
                   <Badge tone="success">Live</Badge>
                   {isDirty && <Badge tone="attention">Unsaved changes</Badge>}
                 </InlineStack>
               </InlineStack>
+            </Box>
+          </Card>
 
-              {renderSectionContent()}
-            </BlockStack>
-          </div>
+          <Card>
+            <Tabs tabs={tabs} selected={selectedTabIndex} onSelect={handleTabSelect} fitted />
+          </Card>
+
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingLg">{activeLabel}</Text>
+            {renderSectionContent()}
+          </BlockStack>
         </BlockStack>
 
         <Modal
