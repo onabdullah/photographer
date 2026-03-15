@@ -26,7 +26,7 @@ class LiveChatController extends Controller
         $search = $request->input('search');
 
         $query = LiveChatConversation::query()
-            ->with('assignee:id,name')
+            ->with(['assignee:id,name', 'merchant.imageGenerations', 'merchant.plan'])
             ->when(
                 $statusFilter !== 'all',
                 fn ($q) => $q->where('status', $statusFilter),
@@ -76,7 +76,7 @@ class LiveChatController extends Controller
         $conversation->update(['unread_count' => 0]);
 
         return response()->json([
-            'conversation' => $this->serializeConversation($conversation->fresh()),
+            'conversation' => $this->serializeConversation($conversation->fresh(['assignee', 'merchant.plan', 'merchant.imageGenerations'])),
             'messages' => $messages,
             'synced_at' => now()->toIso8601String(),
         ]);
@@ -168,7 +168,7 @@ class LiveChatController extends Controller
         };
 
         return response()->json([
-            'conversation' => $this->serializeConversation($conversation->fresh()),
+            'conversation' => $this->serializeConversation($conversation->fresh(['assignee', 'merchant.plan', 'merchant.imageGenerations'])),
             'system_message' => $systemMessage ? $this->serializeMessage($systemMessage) : null,
         ]);
     }
@@ -303,15 +303,15 @@ class LiveChatController extends Controller
             'sync_status' => $c->sync_status,
             'last_synced_at' => $c->last_synced_at?->toIso8601String(),
             'created_at' => $c->created_at?->toIso8601String(),
-            'merchant' => $c->relationLoaded('merchant') && $c->merchant ? [
+            'merchant' => $c->merchant ? [
                 'id' => $c->merchant->id,
                 'name' => $c->merchant->name,
                 'email' => $c->merchant->email,
                 'freemium' => $c->merchant->shopify_freemium,
                 'country' => $c->merchant->country,
                 'credits_balance' => $c->merchant->ai_credits_balance,
-                'plan_name' => $c->merchant->relationLoaded('plan') && $c->merchant->plan ? $c->merchant->plan->name : 'Free Trial',
-                'plan_price' => $c->merchant->relationLoaded('plan') && $c->merchant->plan ? $c->merchant->plan->price : null,
+                'plan_name' => $c->merchant->plan ? $c->merchant->plan->name : 'Free Trial',
+                'plan_price' => $c->merchant->plan ? $c->merchant->plan->price : null,
                 'plan_remaining_days' => (function () use ($c) {
                     $charge = \Illuminate\Support\Facades\DB::table('charges')
                         ->where('user_id', $c->merchant->id)
@@ -324,7 +324,7 @@ class LiveChatController extends Controller
                     }
                     return 0;
                 })(),
-                'recent_creations' => $c->merchant->relationLoaded('imageGenerations')
+                'recent_creations' => $c->merchant->imageGenerations
                     ? $c->merchant->imageGenerations->sortByDesc('created_at')->take(4)->map(fn ($g) => [
                         'id' => $g->id,
                         'tool' => $g->tool_used,

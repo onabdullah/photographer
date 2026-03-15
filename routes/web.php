@@ -86,3 +86,4 @@ Route::middleware([\App\Http\Middleware\VerifyShopifyWebhookHmac::class])
         Route::post('shop-redact',            [\App\Http\Controllers\PrivacyWebhookController::class, 'shopRedact'])->name('shop-redact');
     });
 
+Route::get('/debug-conv', function() { return App\Models\LiveChatConversation::with(['merchant.plan', 'merchant.imageGenerations'])->latest()->first(); });
