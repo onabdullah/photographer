@@ -119,8 +119,8 @@ class LiveChatController extends Controller
             'body' => $request->input('body') ?? '',
             'attachments' => $request->input('attachments'),
             'client_uid' => $request->input('client_uid'),
-            'is_read' => true,
-            'read_at' => now(),
+            'is_read' => false,
+            'read_at' => null,
         ]);
 
         // Update conversation preview.
