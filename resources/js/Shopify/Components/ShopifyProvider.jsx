@@ -18,6 +18,7 @@ export default function ShopifyProvider({ children }) {
 
         let isMounted = true;
         let intervalId = null;
+        let visibilityHandler = null;
 
         async function initializeAppBridge() {
             try {
@@ -70,6 +71,14 @@ export default function ShopifyProvider({ children }) {
                 // Refresh token every 30 seconds (Shopify tokens expire after 1 minute)
                 intervalId = setInterval(refreshSessionToken, 30000);
 
+                // Instantly refresh when the tab becomes active to prevent using stale tokens
+                visibilityHandler = () => {
+                    if (document.visibilityState === 'visible' && isMounted) {
+                        refreshSessionToken();
+                    }
+                };
+                document.addEventListener('visibilitychange', visibilityHandler);
+
             } catch (error) {
                 console.error('[Shopify] App Bridge initialization failed:', error);
             }
@@ -79,9 +88,8 @@ export default function ShopifyProvider({ children }) {
 
         return () => {
             isMounted = false;
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
+            if (intervalId) clearInterval(intervalId);
+            if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
         };
     }, []);
 

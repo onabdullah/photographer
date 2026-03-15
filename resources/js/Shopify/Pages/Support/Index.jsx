@@ -47,9 +47,11 @@ export default function Support() {
         (selectedTabIndex) => {
             setSelected(selectedTabIndex);
             const statuses = ['all', 'active', 'waiting', 'ended'];
-            const params = new URLSearchParams(window.location.search); 
-            params.set('status', statuses[selectedTabIndex]);
-            router.get(`/shopify/support?${params.toString()}`, {}, { preserveState: true, preserveScroll: true });
+            router.get(
+                `/shopify/support`, 
+                { status: statuses[selectedTabIndex] }, 
+                { preserveState: true, preserveScroll: true }
+            );
         },
         []
     );
@@ -57,7 +59,7 @@ export default function Support() {
     const submitTicket = useCallback(() => {
         if (!newSubject.trim() || !newMessage.trim()) return;
         setIsSubmitting(true);
-        router.post(route('shopify.support.store') + window.location.search, {
+        router.post(route('shopify.support.store'), {
             subject: newSubject,
             message: newMessage,
         }, {
@@ -83,7 +85,17 @@ export default function Support() {
         if (!activeTicketId) return;
         try {
             const url = new URL(`/shopify/support/tickets/${activeTicketId}/poll`, window.location.origin);
-            url.search = window.location.search; // keep shopify token
+            
+            // Ensure fresh session token before polling
+            if (window.shopify && typeof window.shopify.idToken === 'function') {
+                try {
+                    const token = await window.shopify.idToken();
+                    if (token) window.sessionToken = token;
+                } catch (e) {
+                    console.warn('[Support] Failed to refresh session token:', e);
+                }
+            }
+
             const res = await fetch(url.toString(), {
                 headers: {
                     'Accept': 'application/json',
@@ -237,7 +249,7 @@ export default function Support() {
     const submitReply = useCallback(() => {
         if (!replyMessage.trim() || !activeTicket) return;
         setIsSubmitting(true);
-        router.post(route('shopify.support.reply', activeTicket.id) + window.location.search, {
+        router.post(route('shopify.support.reply', activeTicket.id), {
             message: replyMessage,
         }, {
             onSuccess: (page) => {

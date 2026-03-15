@@ -21,6 +21,12 @@ const showErrorToast = (event) => {
     }
 };
 router.on('error', showErrorToast);
+// Prevent Inertia replacing the page with a raw HTML response (like 403 Session Expired error screen).
+router.on('invalid', (event) => {
+    event.preventDefault();
+    console.error("Inertia invalid HTML response received:", event.detail.response);
+    showErrorToast({ detail: { message: "Your session may have expired or a server error occurred. Please refresh the page." } });
+});
 // Prevent Inertia replacing the page with a raw 500 HTML response (white screen).
 // Show a toast instead and stay on the current page.
 router.on('exception', (event) => {
