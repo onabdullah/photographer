@@ -286,7 +286,7 @@ class LiveChatController extends Controller
     {
         return [
             'id' => $c->id,
-            'customer_name' => $c->customer_name ?? 'Anonymous',
+            'customer_name' => $c->merchant?->store_name ?: ($c->customer_name ?? 'Anonymous'),
             'customer_email' => $c->customer_email,
             'customer_avatar' => $c->customer_avatar,
             'subject' => $c->subject ?? '(No subject)',
@@ -306,6 +306,7 @@ class LiveChatController extends Controller
             'merchant' => $c->merchant ? [
                 'id' => $c->merchant->id,
                 'name' => $c->merchant->name,
+                'store_name' => $c->merchant->store_name,
                 'email' => $c->merchant->email,
                 'freemium' => $c->merchant->shopify_freemium,
                 'country' => $c->merchant->country,
