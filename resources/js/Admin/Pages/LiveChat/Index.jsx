@@ -1414,12 +1414,12 @@ export default function LiveChatIndex() {
                                     </dl>
                                 </section>
 
-                                {/* Merchant Context (if available) */}
+                                {/* Merchant Context & Plan */}
                                 {activeConv.merchant && (
                                     <>
                                         <section>
                                             <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Merchant Context</h3>
-                                            <div className="bg-white dark:bg-[#1A1F2C] border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm">
+                                            <div className="bg-white dark:bg-[#1A1F2C] border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm mb-3">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">{activeConv.merchant.name}</span>
                                                     {activeConv.merchant.freemium && (
@@ -1429,7 +1429,7 @@ export default function LiveChatIndex() {
                                                 <dl className="space-y-1.5 text-xs">
                                                     <div className="flex justify-between gap-2">
                                                         <dt className="text-gray-500 dark:text-gray-400">Email</dt>
-                                                        <dd className="text-gray-700 dark:text-gray-300 truncate max-w-[100px]" title={activeConv.merchant.email}>{activeConv.merchant.email}</dd>
+                                                        <dd className="text-gray-700 dark:text-gray-300 truncate max-w-[120px]" title={activeConv.merchant.email}>{activeConv.merchant.email}</dd>
                                                     </div>
                                                     <div className="flex justify-between gap-2">
                                                         <dt className="text-gray-500 dark:text-gray-400">Country</dt>
@@ -1441,6 +1441,29 @@ export default function LiveChatIndex() {
                                                     </div>
                                                 </dl>
                                             </div>
+
+                                            {/* Plan Card */}
+                                            <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-16 h-16 bg-primary-500/10 dark:bg-primary-500/5 rounded-bl-full -mr-4 -mt-4"></div>
+                                                <div className="flex justify-between items-start mb-2 relative z-10">
+                                                    <div>
+                                                        <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-semibold mb-0.5">Active Plan</div>
+                                                        <div className="text-sm font-bold text-gray-900 dark:text-white">{activeConv.merchant.plan_name}</div>
+                                                    </div>
+                                                    {activeConv.merchant.plan_price > 0 && (
+                                                        <div className="text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-md">
+                                                            ${activeConv.merchant.plan_price}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex justify-between items-center text-xs mt-3 relative z-10">
+                                                    <span className="text-gray-500 dark:text-gray-400">Remaining</span>
+                                                    <span className="font-medium text-gray-700 dark:text-gray-300">{activeConv.merchant.plan_remaining_days} days</span>
+                                                </div>
+                                                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mt-1.5 relative z-10">
+                                                    <div className="bg-primary-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, Math.max(5, (activeConv.merchant.plan_remaining_days / 30) * 100))}%` }}></div>
+                                                </div>
+                                            </div>
                                         </section>
 
                                         {activeConv.merchant.recent_creations?.length > 0 && (
@@ -1449,16 +1472,16 @@ export default function LiveChatIndex() {
                                                     Recent Creations
                                                     <span className="bg-gray-100 dark:bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded-full text-[9px]">{activeConv.merchant.recent_creations.length}</span>
                                                 </h3>
-                                                <div className="grid grid-cols-2 gap-2">
+                                                <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
                                                     {activeConv.merchant.recent_creations.map(creation => (
-                                                        <div key={creation.id} className="relative group rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-square">
+                                                        <div key={creation.id} className="relative flex-shrink-0 w-16 h-16 group rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
                                                             <img 
                                                                 src={creation.url} 
                                                                 alt={creation.tool} 
-                                                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                                                             />
-                                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
-                                                                <p className="text-[8px] text-white font-medium capitalize truncate">{creation.tool}</p>
+                                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                                                <p className="text-[8px] text-white font-medium capitalize text-center px-1 leading-tight">{creation.tool.replace('_', ' ')}</p>
                                                             </div>
                                                         </div>
                                                     ))}

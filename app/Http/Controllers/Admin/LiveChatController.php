@@ -59,7 +59,7 @@ class LiveChatController extends Controller
      */
     public function messages(Request $request, int $id): JsonResponse
     {
-        $conversation = LiveChatConversation::with('merchant.imageGenerations')->findOrFail($id);
+        $conversation = LiveChatConversation::with('merchant.imageGenerations', 'merchant.plan')->findOrFail($id);
 
         $messages = $conversation->messages()
             ->orderBy('created_at')
@@ -310,7 +310,21 @@ class LiveChatController extends Controller
                 'freemium' => $c->merchant->shopify_freemium,
                 'country' => $c->merchant->country,
                 'credits_balance' => $c->merchant->ai_credits_balance,
-                'recent_creations' => $c->merchant->relationLoaded('imageGenerations') 
+                'plan_name' => $c->merchant->relationLoaded('plan') && $c->merchant->plan ? $c->merchant->plan->name : 'Free Trial',
+                'plan_price' => $c->merchant->relationLoaded('plan') && $c->merchant->plan ? $c->merchant->plan->price : null,
+                'plan_remaining_days' => (function () use ($c) {
+                    $charge = \Illuminate\Support\Facades\DB::table('charges')
+                        ->where('user_id', $c->merchant->id)
+                        ->where('status', 'ACTIVE')
+                        ->orderByDesc('created_at')
+                        ->first();
+                    if ($charge && isset($charge->created_at)) {
+                        $daysPassed = now()->diffInDays(\Carbon\Carbon::parse($charge->created_at));
+                        return max(0, 30 - ($daysPassed % 30));
+                    }
+                    return 0;
+                })(),
+                'recent_creations' => $c->merchant->relationLoaded('imageGenerations')
                     ? $c->merchant->imageGenerations->sortByDesc('created_at')->take(4)->map(fn ($g) => [
                         'id' => $g->id,
                         'tool' => $g->tool_used,
