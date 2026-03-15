@@ -89,7 +89,7 @@ class SupportController extends Controller
 
         broadcast(new \App\Events\NewChatMessage($message))->toOthers();
 
-        return redirect()->route('shopify.support')->with('success', 'Ticket created successfully.');
+        return back()->with('success', 'Ticket created successfully.');
     }
 
     public function reply(Request $request, $id)
@@ -124,7 +124,7 @@ class SupportController extends Controller
 
         broadcast(new \App\Events\NewChatMessage($message))->toOthers();
 
-        return redirect()->route('shopify.support')->with('success', 'Reply sent.');
+        return back()->with('success', 'Reply sent.');
     }
 
     public function poll(Request $request, $id)

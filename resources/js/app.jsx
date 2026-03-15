@@ -28,6 +28,17 @@ router.on('exception', (event) => {
     showErrorToast(event);
 });
 
+// App bridge token interceptor for Inertia requests
+router.on('before', (event) => {
+    const url = event.detail.visit.url;
+    const pathname = (url instanceof URL) ? url.pathname : String(url);
+    
+    if (window.sessionToken && pathname.includes('/shopify')) {
+        event.detail.visit.headers = event.detail.visit.headers || {};
+        event.detail.visit.headers['Authorization'] = `Bearer ${window.sessionToken}`;
+    }
+});
+
 // Root error boundary: if any page component throws, show message + refresh instead of white screen
 class InertiaErrorBoundary extends Component {
     state = { hasError: false };

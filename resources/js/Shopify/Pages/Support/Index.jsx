@@ -55,7 +55,7 @@ export default function Support() {
     const submitTicket = useCallback(() => {
         if (!newSubject.trim() || !newMessage.trim()) return;
         setIsSubmitting(true);
-        router.post(route('shopify.support.store'), {
+        router.post(route('shopify.support.store') + window.location.search, {
             subject: newSubject,
             message: newMessage,
         }, {
@@ -235,7 +235,7 @@ export default function Support() {
     const submitReply = useCallback(() => {
         if (!replyMessage.trim() || !activeTicket) return;
         setIsSubmitting(true);
-        router.post(route('shopify.support.reply', activeTicket.id), {
+        router.post(route('shopify.support.reply', activeTicket.id) + window.location.search, {
             message: replyMessage,
         }, {
             onSuccess: (page) => {
@@ -432,6 +432,9 @@ export default function Support() {
                                     disabled: false,
                                     loading: false,
                                 }}
+                                filters={[]}
+                                appliedFilters={[]}
+                                onClearAll={() => {}}
                             />
                             <ResourceList
                                 resourceName={{ singular: 'ticket', plural: 'tickets' }}
