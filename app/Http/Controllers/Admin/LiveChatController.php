@@ -314,7 +314,7 @@ class LiveChatController extends Controller
                 'plan_price' => $c->merchant->plan ? $c->merchant->plan->price : null,
                 'plan_remaining_days' => (function () use ($c) {
                     $charge = \Illuminate\Support\Facades\DB::table('charges')
-                        ->where('user_id', $c->merchant->id)
+                        ->where('merchant_id', $c->merchant->id)
                         ->where('status', 'ACTIVE')
                         ->orderByDesc('created_at')
                         ->first();
