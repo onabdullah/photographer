@@ -150,6 +150,8 @@ class LiveChatController extends Controller
                 : $conversation->status,
         ]);
 
+        broadcast(new \App\Events\NewChatMessage($message))->toOthers();
+
         return response()->json([
             'message' => $this->serializeMessage($message),
         ], 201);
@@ -286,7 +288,7 @@ class LiveChatController extends Controller
 
     private function insertSystemMessage(LiveChatConversation $conversation, string $body): LiveChatMessage
     {
-        return $conversation->messages()->create([
+        $message = $conversation->messages()->create([
             'sender_type' => LiveChatMessage::SENDER_SYSTEM,
             'sender_name' => 'System',
             'message_type' => LiveChatMessage::TYPE_SYSTEM,
@@ -294,6 +296,10 @@ class LiveChatController extends Controller
             'is_read' => true,
             'read_at' => now(),
         ]);
+        
+        broadcast(new \App\Events\NewChatMessage($message))->toOthers();
+        
+        return $message;
     }
 
     // ────────────────────────────────────────────────────────────────────────────

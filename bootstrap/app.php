@@ -47,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'shopify/billing/callback',
             'shopify/support/tickets',
             'shopify/support/tickets/*',
+            'shopify/broadcasting/auth',
             // AI Studio Pro smart router
             'shopify/api/ai-studio/generate',
             'shopify/tools/generation/*',

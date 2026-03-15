@@ -939,16 +939,70 @@ export default function LiveChatIndex() {
             }
         };
 
-        // We will formally connect Laravel Echo in the next phase.
-        // For UI purposes now, simulate an attempt to connect or basic setup:
-        const timer = setTimeout(() => {
-            // Placeholder: When Echo is installed, we bind to connection events here.
-            try {
-                if (window.Echo) {
-                    handleSuccess();
-                } else {
-                    handleError('Echo client not found. Connection to reverb refused.');
+        // Realtime connection check
+        let channel = null;
+        let globalChannel = null;
+
+        const setupEcho = () => {
+            if (!window.Echo) {
+                handleError('Echo client not found. Connection to reverb refused.');
+                return;
+            }
+
+            // Restore default authEndpoint for web guard (Admin)
+            window.Echo.connector.options.authEndpoint = '/broadcasting/auth';
+            window.Echo.connector.options.auth = {
+                headers: {
+                    'X-CSRF-TOKEN': document?.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
                 }
+            };
+
+            handleSuccess();
+
+            // Subscribe to global updates (for unread count, new threads)
+            globalChannel = window.Echo.private('admin.chat')
+                .listen('.message.new', (e) => {
+                    // Update global UI lists
+                    setConversations(prev => {
+                        const idx = prev.findIndex(c => c.id === e.conversation_id);
+                        if (idx > -1) {
+                            const updated = [...prev];
+                            updated[idx].last_message_preview = e.body;
+                            updated[idx].last_message_at = e.created_at;
+                            if (activeConvId !== e.conversation_id) {
+                                updated[idx].unread_count = (updated[idx].unread_count || 0) + 1;
+                            }
+                            return updated;
+                        }
+                        return prev;
+                    });
+                });
+
+            // Subscribe to active thread
+            if (activeConvId) {
+                channel = window.Echo.private(`chat.${activeConvId}`)
+                    .listen('.message.new', (e) => {
+                        setMessages((prev) => {
+                            const exists = prev.find(m => m.id === e.id);
+                            if (exists) return prev;
+                            const newMsgs = [...prev, e];
+                            
+                            // If we're scrolled down, stay there
+                            if (atBottomRef.current) {
+                                setTimeout(() => scrollToBottom(true), 50);
+                            } else {
+                                setNewMessagesBelow(curr => curr + 1);
+                            }
+                            return newMsgs;
+                        });
+                    });
+            }
+        };
+
+        const timer = setTimeout(() => {
+            try {
+                setupEcho();
             } catch (err) {
                 handleError(err.message || 'Unknown Reverb Connection Error');
             }
@@ -958,8 +1012,13 @@ export default function LiveChatIndex() {
             clearTimeout(timer);
             if (fallbackTimer) clearTimeout(fallbackTimer);
             if (recoveryTimer) clearTimeout(recoveryTimer);
+            
+            if (window.Echo) {
+                if (activeConvId) window.Echo.leave(`chat.${activeConvId}`);
+                window.Echo.leave('admin.chat');
+            }
         };
-    }, [syncSettings, setSyncMode]);
+    }, [syncSettings, setSyncMode, activeConvId]);
 
     // Manual refresh
     const refreshTimerRef = useRef(null);

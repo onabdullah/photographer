@@ -141,14 +141,53 @@ export default function Support() {
             }
         };
 
-        // Dummy connection logic to simulate Echo for fallback tests
+        // Realtime connection logic
+        let reconnectAttempts = 0;
+        let channel = null;
+
+        const setupEcho = () => {
+            if (!window.Echo) {
+                handleError();
+                return;
+            }
+
+            // Provide app bridge token for private channel auth
+            if (window.sessionToken) {
+                window.Echo.connector.options.auth = {
+                    headers: {
+                        Authorization: `Bearer ${window.sessionToken}`,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                };
+                window.Echo.connector.options.authEndpoint = '/shopify/broadcasting/auth';
+            }
+
+            handleSuccess();
+
+            // Only subscribe if we have an active ticket open
+            if (activeTicketId) {
+                // leave old channel if exists
+                if (channel) {
+                    window.Echo.leave(`chat.${activeTicketId}`);
+                }
+                
+                channel = window.Echo.private(`chat.${activeTicketId}`)
+                    .listen('.message.new', (e) => {
+                        console.log("New message via Reverb:", e);
+                        setActiveTicket(prev => {
+                            if (!prev || prev.id !== activeTicketId) return prev;
+                            const exists = prev.messages.find(m => m.id === e.id);
+                            if (exists) return prev;
+                            return { ...prev, messages: [...prev.messages, e] };
+                        });
+                        scrollToBottom();
+                    });
+            }
+        };
+
         const timer = setTimeout(() => {
             try {
-                if (window.Echo) {
-                    handleSuccess();
-                } else {
-                    handleError();
-                }
+                setupEcho();
             } catch (err) {
                 handleError();
             }
@@ -158,8 +197,11 @@ export default function Support() {
             clearTimeout(timer);
             if (fallbackTimer) clearTimeout(fallbackTimer);
             if (recoveryTimer) clearTimeout(recoveryTimer);
+            if (activeTicketId && window.Echo) {
+                window.Echo.leave(`chat.${activeTicketId}`);
+            }
         };
-    }, [syncSettings, setSyncMode]);
+    }, [syncSettings, setSyncMode, activeTicketId]);
 
     useEffect(() => {
         let intervalTime = (syncSettings?.manual_refresh_interval_seconds || 12) * 1000;

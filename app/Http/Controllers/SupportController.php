@@ -81,11 +81,13 @@ class SupportController extends Controller
             'unread_count' => 1,
         ]);
 
-        $conversation->messages()->create([
+        $message = $conversation->messages()->create([
             'sender_type' => LiveChatMessage::SENDER_CUSTOMER, 'sender_id' => null,
             'body' => $request->input('message'),
             'is_read' => false,
         ]);
+
+        broadcast(new \App\Events\NewChatMessage($message))->toOthers();
 
         return redirect()->route('shopify.support')->with('success', 'Ticket created successfully.');
     }
@@ -101,7 +103,7 @@ class SupportController extends Controller
 
         $conversation = LiveChatConversation::where('merchant_id', $shop->id)->findOrFail($id);
 
-        $conversation->messages()->create([
+        $message = $conversation->messages()->create([
             'sender_type' => LiveChatMessage::SENDER_CUSTOMER, 'sender_id' => null,
             'body' => $request->input('message'),
             'is_read' => false,
@@ -111,8 +113,10 @@ class SupportController extends Controller
             'last_message_preview' => \Illuminate\Support\Str::limit($request->input('message'), 100),
             'last_message_at' => now(),
             'status' => 'waiting',
-            'unread_count' => $conversation->unread_count + 1,
+            'unread_count' => \Illuminate\Support\Facades\DB::raw('unread_count + 1'),
         ]);
+
+        broadcast(new \App\Events\NewChatMessage($message))->toOthers();
 
         return redirect()->route('shopify.support')->with('success', 'Reply sent.');
     }

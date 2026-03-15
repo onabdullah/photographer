@@ -56,6 +56,11 @@ Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMis
     Route::post('/support/tickets/{id}/reply', [\App\Http\Controllers\SupportController::class, 'reply'])->name('support.reply');
     Route::get('/support/tickets/{id}/poll', [\App\Http\Controllers\SupportController::class, 'poll'])->name('support.poll');
 
+    // Echo Broadcasting Auth for App Bridge (Uses Shopify Session Token)
+    Route::post('/broadcasting/auth', function (\Illuminate\Http\Request $request) {
+        return \Illuminate\Support\Facades\Broadcast::auth($request);
+    });
+
     // AI Models (Virtual Try-On) – Coming Soon
     Route::get('/ai-models', [\App\Http\Controllers\ShopifyController::class, 'aiModels'])->name('ai-models');
 
