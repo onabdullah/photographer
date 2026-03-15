@@ -270,6 +270,14 @@ export default function Support() {
                     content: 'Open New Ticket',
                     onAction: () => setIsNewTicketOpen(true),
                 }}
+                secondaryActions={[
+                    {
+                        content: 'Refresh',
+                        onAction: () => {
+                            router.reload({ only: ['tickets'], preserveState: true, preserveScroll: true });
+                        },
+                    }
+                ]}
             >
                 <Layout>
                     <Layout.Section>
