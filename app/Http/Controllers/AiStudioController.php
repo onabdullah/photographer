@@ -362,10 +362,15 @@ GRAPHQL;
                     $errMsg = 'Failed to add image to product due to a Shopify API error. ' . json_encode($response['errors'] ?? $topLevelErrors);
                 }
                 
+                $exceptionString = isset($response['exception']) ? $response['exception']->getMessage() : null;
+
                 \Log::error('productCreateMedia GraphQL error', [
                     'response_errors' => $response['errors'] ?? null,
                     'top_level_errors' => $topLevelErrors,
                     'product_gid' => $gid,
+                    'status' => $response['status'] ?? null,
+                    'exception_message' => $exceptionString,
+                    'full_body' => $data,
                 ]);
                 return response()->json(['message' => $errMsg], 422);
             }
