@@ -99,26 +99,88 @@ export default function Support() {
         }
     }, [activeTicketId]);
 
+    // Realtime connection state & Fallback Mode
+    const [syncMode, setSyncMode] = useState(syncSettings?.realtime_enabled ? 'live' : 'manual');
+
+    // Manage Realtime lifecycle & Fallback thresholds
+    useEffect(() => {
+        if (!syncSettings?.realtime_enabled) {
+            setSyncMode('manual');
+            return;
+        }
+
+        setSyncMode('live');
+        let fallbackTimer = null;
+        let recoveryTimer = null;
+
+        const handleSuccess = () => {
+            setSyncMode(prev => {
+                if (prev === 'manual' && syncSettings?.auto_return_realtime) {
+                    if (!recoveryTimer) {
+                        recoveryTimer = setTimeout(() => {
+                           setSyncMode('live');
+                        }, (syncSettings?.recovery_threshold_seconds || 20) * 1000);
+                    }
+                    return 'manual'; 
+                }
+                return 'live';
+            });
+            if (fallbackTimer) clearTimeout(fallbackTimer);
+        };
+
+        const handleError = () => {
+            if (recoveryTimer) { clearTimeout(recoveryTimer); recoveryTimer = null; }
+            if (syncSettings?.auto_fallback_enabled) {
+                 if (!fallbackTimer) {
+                     fallbackTimer = setTimeout(() => {
+                         setSyncMode('manual');
+                     }, (syncSettings?.fallback_threshold_seconds || 20) * 1000);
+                 }
+            } else {
+                 setSyncMode('live'); 
+            }
+        };
+
+        // Dummy connection logic to simulate Echo for fallback tests
+        const timer = setTimeout(() => {
+            try {
+                if (window.Echo) {
+                    handleSuccess();
+                } else {
+                    handleError();
+                }
+            } catch (err) {
+                handleError();
+            }
+        }, 1500);
+
+        return () => {
+            clearTimeout(timer);
+            if (fallbackTimer) clearTimeout(fallbackTimer);
+            if (recoveryTimer) clearTimeout(recoveryTimer);
+        };
+    }, [syncSettings, setSyncMode]);
+
     useEffect(() => {
         let intervalTime = (syncSettings?.manual_refresh_interval_seconds || 12) * 1000;
         let interval;
-        if (activeTicketId && !syncSettings?.realtime_enabled) {
+        if (activeTicketId && syncMode === 'manual') {
             interval = setInterval(fetchMessages, intervalTime);
         }
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [activeTicketId, syncSettings?.manual_refresh_interval_seconds, syncSettings?.realtime_enabled, fetchMessages]);
+    }, [activeTicketId, syncSettings?.manual_refresh_interval_seconds, syncMode, fetchMessages]);
 
     // Global tickets refresh for the merchant list view
     useEffect(() => {
-        if (syncSettings?.realtime_enabled) return; // Only poll if realtime is disabled
+        if (syncMode === 'live') return; // Only poll if in manual fallback mode
         let intervalTime = (syncSettings?.manual_refresh_interval_seconds || 12) * 1000;
         const interval = setInterval(() => {
             router.reload({ only: ['tickets'], preserveState: true, preserveScroll: true });
         }, intervalTime);
         return () => clearInterval(interval);
-    }, [syncSettings?.manual_refresh_interval_seconds, syncSettings?.realtime_enabled]);
+    }, [syncSettings?.manual_refresh_interval_seconds, syncMode]);
 
     const submitReply = useCallback(() => {
         if (!replyMessage.trim() || !activeTicket) return;
@@ -169,11 +231,20 @@ export default function Support() {
                 <Page 
                     backAction={{content: 'Support', onAction: () => setActiveTicket(null)}}
                     title={activeTicket.subject}
-                    titleMetadata={getStatusBadge(activeTicket.status)}
+                    titleMetadata={
+                        <InlineStack gap="200" blockAlign="center">
+                            {getStatusBadge(activeTicket.status)}
+                            {syncSettings?.show_status_badge_customers !== false && (
+                                <Badge tone={syncMode === 'live' ? 'success' : 'info'}>
+                                    {syncMode === 'live' ? 'Live' : 'Polling'}
+                                </Badge>
+                            )}
+                        </InlineStack>
+                    }
                     primaryAction={{
                         content: 'Refresh Thread',
                         onAction: fetchMessages,
-                        disabled: syncSettings?.realtime_enabled
+                        disabled: syncMode === 'live'
                     }}
                 >
                     <Layout>

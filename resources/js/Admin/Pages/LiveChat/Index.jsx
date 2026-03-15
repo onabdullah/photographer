@@ -8,7 +8,7 @@ import {
     XCircle, Volume2, VolumeX, Flag, Ban, Workflow,
     ChevronRight, Search, Filter, X, Wifi, WifiOff,
     AlertCircle, Info, Settings, SlidersHorizontal,
-    Bell, PanelRightClose, PanelRightOpen,
+    Bell, PanelRightClose, PanelRightOpen, Copy, Check, Activity
 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 
@@ -125,7 +125,17 @@ const KPI_CARDS = [
     { key: 'unread',    label: 'Unread',    color: 'text-primary-600 dark:text-primary-400' },
 ];
 
-function KpiStrip({ kpis }) {
+function KpiStrip({ kpis, reverbStatus, reverbError }) {
+    const [copiedError, setCopiedError] = useState(false);
+
+    const handleCopyError = () => {
+        if (reverbError) {
+            navigator.clipboard.writeText(reverbError);
+            setCopiedError(true);
+            setTimeout(() => setCopiedError(false), 2000);
+        }
+    };
+
     return (
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
             {KPI_CARDS.map(({ key, label, color }) => (
@@ -138,6 +148,40 @@ function KpiStrip({ kpis }) {
                     </span>
                 </div>
             ))}
+            
+            {/* Reverb Connection Status Card */}
+            <div className="card-base p-4 rounded-xl flex flex-col gap-1 col-span-3 sm:col-span-1 border border-primary-500/20 bg-primary-50/10 dark:bg-primary-900/10 relative overflow-hidden group">
+                <div className="flex justify-between items-center w-full">
+                    <span className="text-[10px] items-center gap-1 font-semibold flex uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                        <Activity size={12} className={reverbStatus === 'connected' ? 'text-green-500' : reverbStatus === 'error' ? 'text-red-500' : 'text-yellow-500'} /> 
+                        Reverb
+                    </span>
+                    {reverbStatus === 'error' && (
+                        <button 
+                            onClick={handleCopyError}
+                            className="bg-red-500/10 hover:bg-red-500/20 text-red-600 p-1 rounded transition-colors"
+                            title="Copy Reverb Error"
+                        >
+                            {copiedError ? <Check size={12} /> : <Copy size={12} />}
+                        </button>
+                    )}
+                </div>
+
+                <div className="flex flex-col mt-0.5">
+                    <span className={`text-sm font-bold capitalize ${
+                        reverbStatus === 'connected' ? 'text-green-600 dark:text-green-400' : 
+                        reverbStatus === 'error' ? 'text-red-600 dark:text-red-400' : 
+                        'text-yellow-600 dark:text-yellow-400'
+                    }`}>
+                        {reverbStatus || 'Connecting...'}
+                    </span>
+                    {reverbStatus === 'error' && reverbError && (
+                        <p className="text-[9px] text-red-500 truncate mt-1 opacity-70 group-hover:opacity-100 transition-opacity" title={reverbError}>
+                            {reverbError}
+                        </p>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
@@ -838,6 +882,83 @@ export default function LiveChatIndex() {
     const [confirmAction, setConfirmAction] = useState(null);
     const [showSyncSettings, setShowSyncSettings] = useState(false);
 
+    // Reverb connection state
+    const [reverbStatus, setReverbStatus] = useState('connecting'); // 'connecting', 'connected', 'error', 'disconnected'
+    const [reverbError, setReverbError] = useState(null);
+
+    // Initial check for Realtime enablement & Auto-Fallback
+    useEffect(() => {
+        if (!syncSettings?.realtime_enabled) {
+            setReverbStatus('disconnected');
+            setReverbError('Realtime WebSocket sync is disabled in Sync Settings.');
+            setSyncMode('manual');
+            return;
+        }
+
+        setSyncMode('live');
+        setReverbStatus('connecting');
+
+        let fallbackTimer = null;
+        let recoveryTimer = null;
+
+        const handleSuccess = () => {
+            setReverbStatus('connected');
+            setReverbError(null);
+            
+            // Auto Return logic
+            setSyncMode(prev => {
+                if (prev === 'manual' && syncSettings?.auto_return_realtime) {
+                    if (!recoveryTimer) {
+                        recoveryTimer = setTimeout(() => {
+                           setSyncMode('live');
+                        }, (syncSettings?.recovery_threshold_seconds || 20) * 1000);
+                    }
+                    return 'manual'; 
+                }
+                return 'live';
+            });
+            if (fallbackTimer) clearTimeout(fallbackTimer);
+        };
+
+        const handleError = (errMessage) => {
+            setReverbStatus('error');
+            setReverbError(errMessage);
+            if (recoveryTimer) { clearTimeout(recoveryTimer); recoveryTimer = null; }
+
+            // Auto Fallback logic
+            if (syncSettings?.auto_fallback_enabled) {
+                 if (!fallbackTimer) {
+                     fallbackTimer = setTimeout(() => {
+                         setSyncMode('manual');
+                     }, (syncSettings?.fallback_threshold_seconds || 20) * 1000);
+                 }
+            } else {
+                 setSyncMode('live'); // Force stay broken if fallback disabled
+            }
+        };
+
+        // We will formally connect Laravel Echo in the next phase.
+        // For UI purposes now, simulate an attempt to connect or basic setup:
+        const timer = setTimeout(() => {
+            // Placeholder: When Echo is installed, we bind to connection events here.
+            try {
+                if (window.Echo) {
+                    handleSuccess();
+                } else {
+                    handleError('Echo client not found. Connection to reverb refused.');
+                }
+            } catch (err) {
+                handleError(err.message || 'Unknown Reverb Connection Error');
+            }
+        }, 1500);
+
+        return () => {
+            clearTimeout(timer);
+            if (fallbackTimer) clearTimeout(fallbackTimer);
+            if (recoveryTimer) clearTimeout(recoveryTimer);
+        };
+    }, [syncSettings, setSyncMode]);
+
     // Manual refresh
     const refreshTimerRef = useRef(null);
     const [nextRefreshIn, setNextRefreshIn] = useState(0);
@@ -1092,13 +1213,13 @@ export default function LiveChatIndex() {
     }, []);
 
     useEffect(() => {
-        if (syncSettings?.realtime_enabled) return; // Only poll if realtime is disabled
+        if (syncMode === 'live') return; // Only poll if we are actively in manual mode (or fallen back to it)
         const intervalSecs = syncSettings?.manual_refresh_interval_seconds ?? 12;
         const timer = setInterval(() => {
             handleRefreshInbox();
         }, intervalSecs * 1000);
         return () => clearInterval(timer);
-    }, [syncSettings?.manual_refresh_interval_seconds, syncSettings?.realtime_enabled, handleRefreshInbox]);
+    }, [syncSettings?.manual_refresh_interval_seconds, syncMode, handleRefreshInbox]);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -1146,7 +1267,7 @@ export default function LiveChatIndex() {
                 </div>
 
                 {/* KPI Strip */}
-                <KpiStrip kpis={kpis} />
+                <KpiStrip kpis={kpis} reverbStatus={reverbStatus} reverbError={reverbError} />
 
                 {/* Main 3-pane shell */}
                 <div className="flex flex-1 min-h-0 gap-0 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900 shadow-sm">

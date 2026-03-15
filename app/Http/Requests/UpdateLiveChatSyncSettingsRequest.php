@@ -13,7 +13,15 @@ class UpdateLiveChatSyncSettingsRequest extends FormRequest
     {
         $user = $this->user('admin') ?? $this->user();
 
-        return (bool) $user && $user->can('live_chat.manage');
+        if (! $user) {
+            return false;
+        }
+
+        if (isset($user->role) && $user->role === 'super_admin') {
+            return true;
+        }
+
+        return $user->can('live_chat.manage');
     }
 
     /**
