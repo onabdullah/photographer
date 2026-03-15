@@ -109,6 +109,12 @@ class SupportController extends Controller
             'is_read' => false,
         ]);
 
+        // When the customer replies, mark all unread agent messages as read
+        $conversation->messages()
+            ->where('sender_type', LiveChatMessage::SENDER_AGENT)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
         $conversation->update([
             'last_message_preview' => \Illuminate\Support\Str::limit($request->input('message'), 100),
             'last_message_at' => now(),
@@ -141,7 +147,8 @@ class SupportController extends Controller
                 ->where('sender_type', '!=', \App\Models\LiveChatMessage::SENDER_SYSTEM)
                 ->where('message_type', '!=', \App\Models\LiveChatMessage::TYPE_SYSTEM)
                 ->orderBy('created_at')
-                ->get()
+                ->get(),
+            'unread_count_cleared' => true
         ]);
     }
 }

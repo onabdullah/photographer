@@ -944,6 +944,10 @@ export default function LiveChatIndex() {
         let globalChannel = null;
 
         const setupEcho = () => {
+            // Disabled for now, forcing manual polling
+            handleError('Live chat disabled for now; falling back to manual polling.');
+            return;
+
             if (!window.Echo) {
                 handleError('Echo client not found. Connection to reverb refused.');
                 return;
@@ -1052,6 +1056,14 @@ export default function LiveChatIndex() {
             const data = await res.json();
             setMessages(data.messages ?? []);
             setActiveConv(data.conversation ?? null);
+            
+            // clear unread count in the global sidebar list
+            if (data.conversation) {
+                setConversations(prev => prev.map(c => 
+                    c.id === convId ? { ...c, unread_count: 0 } : c
+                ));
+            }
+            
             setLastSyncedAt(data.synced_at);
             const ids = (data.messages ?? []).map((m) => m.id);
             setLastMessageId(ids.length ? Math.max(...ids) : 0);
@@ -1075,6 +1087,13 @@ export default function LiveChatIndex() {
             if (!res.ok) return;
             const data = await res.json();
             const newMsgs = data.messages ?? [];
+            
+            if (data.unread_count_cleared) {
+                setConversations(prev => prev.map(c => 
+                    c.id === activeConvId ? { ...c, unread_count: 0 } : c
+                ));
+            }
+
             if (newMsgs.length > 0) {
                 const wasAtBottom = atBottomRef.current;
                 setMessages((prev) => {

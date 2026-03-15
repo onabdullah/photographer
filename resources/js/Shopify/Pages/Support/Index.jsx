@@ -91,7 +91,10 @@ export default function Support() {
             if (res.ok) {
                 const data = await res.json();
                 if (data.messages) {
-                    setActiveTicket(prev => ({ ...prev, messages: data.messages }));
+                    setActiveTicket(prev => {
+                        if (!prev) return prev;
+                        return { ...prev, messages: data.messages, unread_count: data.unread_count_cleared ? 0 : prev.unread_count };
+                    });
                 }
             }
         } catch (err) {
@@ -146,6 +149,10 @@ export default function Support() {
         let channel = null;
 
         const setupEcho = () => {
+            // Disabled for now, forcing manual polling
+            handleError();
+            return;
+
             if (!window.Echo) {
                 handleError();
                 return;
@@ -207,6 +214,7 @@ export default function Support() {
         let intervalTime = (syncSettings?.manual_refresh_interval_seconds || 12) * 1000;
         let interval;
         if (activeTicketId && syncMode === 'manual') {
+            fetchMessages(); // Fetch immediately to mark as read
             interval = setInterval(fetchMessages, intervalTime);
         }
         return () => {

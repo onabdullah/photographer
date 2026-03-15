@@ -110,9 +110,18 @@ class LiveChatController extends Controller
             ->get()
             ->map(fn (LiveChatMessage $m) => $this->serializeMessage($m));
 
+        // Mark fetched messages as read
+        $conversation->messages()
+            ->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)
+            ->where('is_read', false)
+            ->update(['is_read' => true, 'read_at' => now()]);
+            
+        $conversation->update(['unread_count' => 0]);
+
         return response()->json([
             'messages' => $messages,
             'synced_at' => now()->toIso8601String(),
+            'unread_count_cleared' => true,
         ]);
     }
 
@@ -142,9 +151,16 @@ class LiveChatController extends Controller
             ? '[Internal note] ' . $this->truncate($message->body, 100)
             : $this->truncate($message->body, 120);
 
+        // Mark all customer messages as read since admin sent a message.
+        $conversation->messages()
+            ->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)
+            ->where('is_read', false)
+            ->update(['is_read' => true, 'read_at' => now()]);
+
         $conversation->update([
             'last_message_preview' => $preview,
             'last_message_at' => now(),
+            'unread_count' => 0,
             'status' => $conversation->status === LiveChatConversation::STATUS_WAITING
                 ? LiveChatConversation::STATUS_ACTIVE
                 : $conversation->status,
