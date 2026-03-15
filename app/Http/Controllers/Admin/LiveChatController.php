@@ -444,28 +444,5 @@ class LiveChatController extends Controller
 
         return substr($text, 0, $max - 3) . '...';
     }
-
-    /**
-     * Upload file attachment for a conversation (returns JSON with file metadata).
-     */
-    public function uploadFile(Request $request): JsonResponse
-    {
-        $request->validate([
-            'file' => 'required|file|max:10240', // 10MB max
-        ]);
-
-        $file = $request->file('file');
-        $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $file->getClientOriginalName());
-        
-        $path = $file->storeAs('chat_attachments', $filename, 'public');
-        
-        return response()->json([
-            'preview_url' => asset('storage/' . $path),
-            'url' => asset('storage/' . $path),
-            'name' => $file->getClientOriginalName(),
-            'size' => $file->getSize(),
-            'type' => $file->getClientMimeType(),
-        ], 201);
-    }
 }
 

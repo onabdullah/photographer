@@ -2,11 +2,9 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
     Page, Layout, Card, ResourceList, ResourceItem, Text, Badge, Button,
     Modal, FormLayout, TextField, BlockStack, InlineStack, Divider, Box, 
-    IndexFilters, useSetIndexFiltersMode, useIndexResourceState, Icon
+    IndexFilters, useSetIndexFiltersMode, useIndexResourceState
 } from '@shopify/polaris';
-import { DeleteIcon } from '@shopify/polaris-icons';
 import { usePage, router } from '@inertiajs/react';
-import axios from 'axios';
 import ShopifyLayout from '@/Shopify/Layouts/ShopifyLayout';
 
 export default function Support() {
@@ -17,18 +15,10 @@ export default function Support() {
     const [newSubject, setNewSubject] = useState('');
     const [newMessage, setNewMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    // New ticket attachments
-    const [newTicketAttachments, setNewTicketAttachments] = useState([]);
-    const [uploadingNewTicketAttachment, setUploadingNewTicketAttachment] = useState(false);
-    const newTicketDragRef = useRef(null);
 
     // Active ticket view
     const [activeTicket, setActiveTicket] = useState(null);
     const [replyMessage, setReplyMessage] = useState('');
-    const [replyAttachments, setReplyAttachments] = useState([]);
-    const [uploadingReplyAttachment, setUploadingReplyAttachment] = useState(false);
-    const replyDragRef = useRef(null);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -66,166 +56,18 @@ export default function Support() {
         []
     );
 
-    /**
-     * Upload a single file to the support endpoint
-     * @param {File} file - The file to upload
-     * @param {number} ticketId - The ticket ID (0 for new tickets that don't exist yet)
-     * @returns {Promise<Object>} - The uploaded attachment metadata
-     */
-    const uploadAttachment = useCallback(async (file, ticketId = 0) => {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const response = await axios.post(
-                `/shopify/support/tickets/${ticketId}/upload`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        ...(window.sessionToken ? { 'Authorization': `Bearer ${window.sessionToken}` } : {})
-                    }
-                }
-            );
-            return response.data;
-        } catch (error) {
-            console.error('File upload failed:', error);
-            throw error;
-        }
-    }, []);
-
-    /**
-     * Handle file selection/drop for new ticket attachments
-     */
-    const handleNewTicketFileSelect = useCallback(async (files) => {
-        for (const file of files) {
-            setUploadingNewTicketAttachment(true);
-            try {
-                const attachment = await uploadAttachment(file, 0);
-                setNewTicketAttachments(prev => [...prev, attachment]);
-            } catch (error) {
-                console.error('Failed to upload attachment:', error);
-            } finally {
-                setUploadingNewTicketAttachment(false);
-            }
-        }
-    }, [uploadAttachment]);
-
-    /**
-     * Handle file selection/drop for reply attachments
-     */
-    const handleReplyFileSelect = useCallback(async (files) => {
-        if (!activeTicket) return;
-        for (const file of files) {
-            setUploadingReplyAttachment(true);
-            try {
-                const attachment = await uploadAttachment(file, activeTicket.id);
-                setReplyAttachments(prev => [...prev, attachment]);
-            } catch (error) {
-                console.error('Failed to upload attachment:', error);
-            } finally {
-                setUploadingReplyAttachment(false);
-            }
-        }
-    }, [uploadAttachment, activeTicket]);
-
-    /**
-     * Setup drag & drop for new ticket modal
-     */
-    const handleNewTicketDragOver = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (newTicketDragRef.current) {
-            newTicketDragRef.current.style.backgroundColor = '#f0f0f0';
-            newTicketDragRef.current.style.borderColor = '#0071e3';
-        }
-    };
-
-    const handleNewTicketDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (newTicketDragRef.current) {
-            newTicketDragRef.current.style.backgroundColor = 'transparent';
-            newTicketDragRef.current.style.borderColor = '#ccc';
-        }
-    };
-
-    const handleNewTicketDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (newTicketDragRef.current) {
-            newTicketDragRef.current.style.backgroundColor = 'transparent';
-            newTicketDragRef.current.style.borderColor = '#ccc';
-        }
-        if (e.dataTransfer.files) {
-            handleNewTicketFileSelect(Array.from(e.dataTransfer.files));
-        }
-    };
-
-    /**
-     * Setup drag & drop for reply area
-     */
-    const handleReplyDragOver = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (replyDragRef.current) {
-            replyDragRef.current.style.backgroundColor = '#f0f0f0';
-            replyDragRef.current.style.borderColor = '#0071e3';
-        }
-    };
-
-    const handleReplyDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (replyDragRef.current) {
-            replyDragRef.current.style.backgroundColor = 'transparent';
-            replyDragRef.current.style.borderColor = '#ccc';
-        }
-    };
-
-    const handleReplyDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (replyDragRef.current) {
-            replyDragRef.current.style.backgroundColor = 'transparent';
-            replyDragRef.current.style.borderColor = '#ccc';
-        }
-        if (e.dataTransfer.files) {
-            handleReplyFileSelect(Array.from(e.dataTransfer.files));
-        }
-    };
-
-    /**
-     * Remove an attachment from new ticket
-     */
-    const removeNewTicketAttachment = (id) => {
-        setNewTicketAttachments(prev => prev.filter(att => att.id !== id));
-    };
-
-    /**
-     * Remove an attachment from reply
-     */
-    const removeReplyAttachment = (id) => {
-        setReplyAttachments(prev => prev.filter(att => att.id !== id));
-    };
-
     const submitTicket = useCallback(() => {
         if (!newSubject.trim() || !newMessage.trim()) return;
         setIsSubmitting(true);
-        
-        const attachmentIds = newTicketAttachments.map(a => a.id);
-        
         router.post(route('shopify.support.store'), {
             subject: newSubject,
             message: newMessage,
-            attachment_ids: attachmentIds,
         }, {
             onSuccess: () => {
                 setIsSubmitting(false);
                 setIsNewTicketOpen(false);
                 setNewSubject('');
                 setNewMessage('');
-                setNewTicketAttachments([]);
             },
             onError: (err) => { 
                 console.error("Submit error", err); 
@@ -235,7 +77,7 @@ export default function Support() {
                 setIsSubmitting(false);
             }
         });
-    }, [newSubject, newMessage, newTicketAttachments]);
+    }, [newSubject, newMessage]);
 
     const activeTicketId = activeTicket?.id;
     const lastMessageIdRef = useRef(null);
@@ -422,15 +264,7 @@ export default function Support() {
     useEffect(() => {
         if (syncMode === 'live') return; // Only poll if in manual fallback mode
         let intervalTime = (syncSettings?.manual_refresh_interval_seconds || 12) * 1000;
-        const interval = setInterval(async () => {
-            if (window.shopify && typeof window.shopify.idToken === 'function') {
-                try {
-                    const token = await window.shopify.idToken();
-                    if (token) window.sessionToken = token;
-                } catch (e) {
-                    console.warn('[Support] App Bridge token error:', e);
-                }
-            }
+        const interval = setInterval(() => {
             router.reload({ only: ['tickets'], preserveState: true, preserveScroll: true });
         }, intervalTime);
         return () => clearInterval(interval);
@@ -439,17 +273,12 @@ export default function Support() {
     const submitReply = useCallback(() => {
         if (!replyMessage.trim() || !activeTicket) return;
         setIsSubmitting(true);
-        
-        const attachmentIds = replyAttachments.map(a => a.id);
-        
         router.post(route('shopify.support.reply', activeTicket.id), {
             message: replyMessage,
-            attachment_ids: attachmentIds,
         }, {
             onSuccess: (page) => {
                 setIsSubmitting(false);
                 setReplyMessage('');
-                setReplyAttachments([]);
                 // Refresh active ticket from new props
                 const updated = page.props.tickets.find(t => t.id === activeTicket.id);
                 if (updated) setActiveTicket(updated);
@@ -462,7 +291,7 @@ export default function Support() {
                 setIsSubmitting(false);
             }
         });
-    }, [replyMessage, activeTicket, replyAttachments]);
+    }, [replyMessage, activeTicket]);
 
     // Helpers
     const getStatusBadge = (status) => {
@@ -479,86 +308,6 @@ export default function Support() {
         return new Date(iso).toLocaleString(undefined, { 
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
         });
-    };
-
-    /**
-     * Render attachment list for UI display
-     */
-    const AttachmentList = ({ attachments, onRemove, isLoading }) => {
-        if (!attachments.length && !isLoading) return null;
-        
-        return (
-            <Box
-                borderColor="border"
-                borderRadius="200"
-                borderWidth="1px"
-                padding="300"
-                marginBlockStart="200"
-            >
-                <BlockStack gap="200">
-                    <Text variant="bodySm" fontWeight="semibold">
-                        Attachments ({attachments.length})
-                    </Text>
-                    {attachments.map((attachment) => (
-                        <InlineStack
-                            key={attachment.id}
-                            align="space-between"
-                            blockAlign="center"
-                            gap="200"
-                        >
-                            <Text variant="bodySm" truncate>
-                                📎 {attachment.filename} ({(attachment.file_size / 1024).toFixed(2)} KB)
-                            </Text>
-                            <Button
-                                variant="plain"
-                                size="slim"
-                                icon={DeleteIcon}
-                                onClick={() => onRemove(attachment.id)}
-                                disabled={isLoading}
-                            />
-                        </InlineStack>
-                    ))}
-                    {isLoading && (
-                        <Text variant="bodySm" color="subdued">
-                            Uploading attachment...
-                        </Text>
-                    )}
-                </BlockStack>
-            </Box>
-        );
-    };
-
-    /**
-     * Render message attachments
-     */
-    const MessageAttachments = ({ attachments }) => {
-        if (!attachments || !attachments.length) return null;
-        
-        return (
-            <div style={{ marginTop: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {attachments.map((attachment) => (
-                    <a
-                        key={attachment.id}
-                        href={attachment.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '6px 10px',
-                            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                            borderRadius: '6px',
-                            textDecoration: 'none',
-                            fontSize: '12px',
-                            color: 'inherit'
-                        }}
-                    >
-                        📎 {attachment.filename}
-                    </a>
-                ))}
-            </div>
-        );
     };
 
     if (activeTicket) {
@@ -640,7 +389,6 @@ export default function Support() {
                                                             </span>
                                                         </div>
                                                         <div style={{ whiteSpace: 'pre-wrap', fontSize: '14px', lineHeight: '1.4' }}>{msg.body}</div>
-                                                        <MessageAttachments attachments={msg.attachments} />
                                                     </div>
                                                 </div>
                                             );
@@ -654,38 +402,19 @@ export default function Support() {
                                     {activeTicket.status !== 'ended' && (
                                         <Box paddingBlockStart="400" borderBlockStartWidth="025" borderColor="border">
                                             <FormLayout>
-                                                <div
-                                                    ref={replyDragRef}
-                                                    onDragOver={handleReplyDragOver}
-                                                    onDragLeave={handleReplyDragLeave}
-                                                    onDrop={handleReplyDrop}
-                                                    style={{
-                                                        border: '1px dashed #ccc',
-                                                        borderRadius: '4px',
-                                                        padding: '12px',
-                                                        marginBottom: '12px',
-                                                        transition: 'all 0.2s ease'
-                                                    }}
-                                                >
-                                                    <TextField
-                                                        value={replyMessage}
-                                                        onChange={setReplyMessage}
-                                                        multiline={3}
-                                                        autoComplete="off"
-                                                        placeholder="Type your reply here... (Drag files to attach)"
-                                                    />
-                                                </div>
-                                                <AttachmentList 
-                                                    attachments={replyAttachments}
-                                                    onRemove={removeReplyAttachment}
-                                                    isLoading={uploadingReplyAttachment}
+                                                <TextField
+                                                    value={replyMessage}
+                                                    onChange={setReplyMessage}
+                                                    multiline={3}
+                                                    autoComplete="off"
+                                                    placeholder="Type your reply here..."
                                                 />
                                                 <InlineStack align="end">
                                                     <Button 
                                                         variant="primary" 
                                                         onClick={submitReply} 
-                                                        loading={isSubmitting || uploadingReplyAttachment}
-                                                        disabled={!replyMessage.trim() || uploadingReplyAttachment}
+                                                        loading={isSubmitting}
+                                                        disabled={!replyMessage.trim()}
                                                     >
                                                         Send Reply
                                                     </Button>
@@ -814,7 +543,7 @@ export default function Support() {
                     primaryAction={{
                         content: isSubmitting ? 'Submitting...' : 'Submit Ticket',
                         onAction: submitTicket,
-                        disabled: isSubmitting || !newSubject.trim() || !newMessage.trim() || uploadingNewTicketAttachment,
+                        disabled: isSubmitting || !newSubject.trim() || !newMessage.trim(),
                         loading: isSubmitting,
                     }}
                     secondaryActions={[
@@ -835,32 +564,14 @@ export default function Support() {
                                 error={errors?.subject}
                                 placeholder="E.g., Issue with generating product backgrounds"
                             />
-                            <div
-                                ref={newTicketDragRef}
-                                onDragOver={handleNewTicketDragOver}
-                                onDragLeave={handleNewTicketDragLeave}
-                                onDrop={handleNewTicketDrop}
-                                style={{
-                                    border: '1px dashed #ccc',
-                                    borderRadius: '4px',
-                                    padding: '12px',
-                                    transition: 'all 0.2s ease'
-                                }}
-                            >
-                                <TextField
-                                    label="Describe your issue"
-                                    value={newMessage}
-                                    onChange={setNewMessage}
-                                    multiline={5}
-                                    autoComplete="off"
-                                    error={errors?.message}
-                                    placeholder="Please provide as much detail as possible... (Drag files to attach)"
-                                />
-                            </div>
-                            <AttachmentList 
-                                attachments={newTicketAttachments}
-                                onRemove={removeNewTicketAttachment}
-                                isLoading={uploadingNewTicketAttachment}
+                            <TextField
+                                label="Describe your issue"
+                                value={newMessage}
+                                onChange={setNewMessage}
+                                multiline={5}
+                                autoComplete="off"
+                                error={errors?.message}
+                                placeholder="Please provide as much detail as possible..."
                             />
                         </FormLayout>
                     </Modal.Section>

@@ -280,11 +280,6 @@ Route::middleware(['auth:admin'])->group(function () {
             ->middleware('admin.permission:live_chat.manage')
             ->name('send');
 
-        // Upload attachment
-        Route::post('/conversations/{id}/upload', [\App\Http\Controllers\Admin\LiveChatController::class, 'uploadFile'])
-            ->middleware('admin.permission:live_chat.manage')
-            ->name('upload');
-
         // Transition state (end, spam, block, mute, convert, etc.)
         Route::post('/conversations/{id}/state', [\App\Http\Controllers\Admin\LiveChatController::class, 'updateState'])
             ->middleware('admin.permission:live_chat.manage')
