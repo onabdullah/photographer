@@ -102,13 +102,23 @@ export default function Support() {
     useEffect(() => {
         let intervalTime = (syncSettings?.manual_refresh_interval_seconds || 12) * 1000;
         let interval;
-        if (activeTicketId) {
+        if (activeTicketId && !syncSettings?.realtime_enabled) {
             interval = setInterval(fetchMessages, intervalTime);
         }
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [activeTicketId, syncSettings?.manual_refresh_interval_seconds, fetchMessages]);
+    }, [activeTicketId, syncSettings?.manual_refresh_interval_seconds, syncSettings?.realtime_enabled, fetchMessages]);
+
+    // Global tickets refresh for the merchant list view
+    useEffect(() => {
+        if (syncSettings?.realtime_enabled) return; // Only poll if realtime is disabled
+        let intervalTime = (syncSettings?.manual_refresh_interval_seconds || 12) * 1000;
+        const interval = setInterval(() => {
+            router.reload({ only: ['tickets'], preserveState: true, preserveScroll: true });
+        }, intervalTime);
+        return () => clearInterval(interval);
+    }, [syncSettings?.manual_refresh_interval_seconds, syncSettings?.realtime_enabled]);
 
     const submitReply = useCallback(() => {
         if (!replyMessage.trim() || !activeTicket) return;

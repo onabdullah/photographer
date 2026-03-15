@@ -1082,6 +1082,24 @@ export default function LiveChatIndex() {
         router.get('/admin/live-chat', { status, search }, { preserveState: true, preserveScroll: true });
     };
 
+    // ── Global Inbox Refresh (Auto & Manual) ──
+    const handleRefreshInbox = useCallback(() => {
+        router.reload({
+            only: ['conversations', 'kpis'],
+            preserveState: true,
+            preserveScroll: true,
+        });
+    }, []);
+
+    useEffect(() => {
+        if (syncSettings?.realtime_enabled) return; // Only poll if realtime is disabled
+        const intervalSecs = syncSettings?.manual_refresh_interval_seconds ?? 12;
+        const timer = setInterval(() => {
+            handleRefreshInbox();
+        }, intervalSecs * 1000);
+        return () => clearInterval(timer);
+    }, [syncSettings?.manual_refresh_interval_seconds, syncSettings?.realtime_enabled, handleRefreshInbox]);
+
     const handleSearch = (e) => {
         e.preventDefault();
         router.get('/admin/live-chat', { status: statusFilter, search }, { preserveState: true, preserveScroll: true });
@@ -1145,17 +1163,25 @@ export default function LiveChatIndex() {
                         ></div>
 
                         {/* Search */}
-                        <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-                            <form onSubmit={handleSearch} className="relative">
+                        <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+                            <form onSubmit={handleSearch} className="relative flex-1">
                                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                                 <input
                                     type="search"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Search conversations…"
-                                    className="form-input pl-9 text-xs py-1.5 h-8"
+                                    className="form-input pl-9 text-xs py-1.5 h-8 w-full"
                                 />
                             </form>
+                            <button
+                                type="button"
+                                onClick={handleRefreshInbox}
+                                className="p-1.5 text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0"
+                                title="Refresh Inbox"
+                            >
+                                <RefreshCw size={14} />
+                            </button>
                         </div>
 
                         {/* Status filters */}
@@ -1347,8 +1373,8 @@ export default function LiveChatIndex() {
                                                 onChange={handleTextareaChange}
                                                 onKeyDown={handleKeyDown}
                                                 placeholder={isInternalNote ? 'Add internal note… (only visible to agents)' : 'Type a reply… (Enter to send, Shift+Enter for newline)'}
-                                                className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none focus:outline-none min-h-[36px] leading-relaxed"
-                                                style={{ maxHeight: 112 }}
+                                                className="flex-1 bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none focus:border-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none min-h-[36px] leading-relaxed"
+                                                style={{ maxHeight: 112, boxShadow: 'none' }}
                                                 disabled={sending}
                                             />
                                             <button
