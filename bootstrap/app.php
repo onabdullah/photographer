@@ -55,6 +55,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {
+            if ($request->is('shopify/*') && ($request->hasHeader('X-Inertia') || $request->wantsJson())) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+        });
+        $exceptions->render(function (\Osiset\ShopifyApp\Exceptions\MissingShopDomainException $e, Request $request) {
+            if ($request->wantsJson() || $request->hasHeader('X-Inertia')) {
+                return response()->json(['message' => 'Missing shop domain.'], 401);
+            }
+        });
         // 419 (CSRF mismatch): redirect back with message instead of raw error page; no overhead on success path.
         $exceptions->respond(function (Response $response) {
             if ($response->getStatusCode() === 419) {
@@ -69,7 +79,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     ? $shopDomainValue->toNative()
                     : (string) $shopDomainValue;
                 if (! $shopDomainNative) {
-                    return null;
+                    return new Response(
+                        '<div style="font-family: sans-serif; text-align: center; padding: 50px;"><h2>Session Expired</h2><p>Your session has expired or no shop domain was provided. Please relaunch the app from your Shopify Admin panel.</p></div>',
+                        400,
+                        ['Content-Type' => 'text/html']
+                    );
                 }
 
                 $shop = \App\Models\Merchant::where('name', $shopDomainNative)->first();

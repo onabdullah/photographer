@@ -26,7 +26,7 @@ class SupportController extends Controller
                   ->where('is_internal_note', false);
             }])
             ->with(['messages' => function ($q) {
-                $q->select('id', 'conversation_id', 'sender_type', 'sender_name', 'body', 'created_at', 'is_internal_note', 'message_type')
+                $q->select('id', 'conversation_id', 'sender_type', 'sender_name', 'body', 'attachments', 'created_at', 'is_internal_note', 'message_type')
                   ->where('is_internal_note', false)
                   ->where('sender_type', '!=', \App\Models\LiveChatMessage::SENDER_SYSTEM)
                   ->where('message_type', '!=', \App\Models\LiveChatMessage::TYPE_SYSTEM)
@@ -70,6 +70,7 @@ class SupportController extends Controller
         $request->validate([
             'subject' => 'required|string|max:190',
             'message' => 'required|string',
+            'attachments' => 'nullable|array|max:5',
         ]);
 
         $conversation = LiveChatConversation::create([
@@ -86,6 +87,7 @@ class SupportController extends Controller
         $message = $conversation->messages()->create([
             'sender_type' => LiveChatMessage::SENDER_CUSTOMER, 'sender_id' => null,
             'body' => $request->input('message'),
+            'attachments' => $request->input('attachments'),
             'is_read' => false,
         ]);
 
@@ -101,6 +103,7 @@ class SupportController extends Controller
 
         $request->validate([
             'message' => 'required|string',
+            'attachments' => 'nullable|array|max:5',
         ]);
 
         $conversation = LiveChatConversation::where('merchant_id', $shop->id)->findOrFail($id);
@@ -108,6 +111,7 @@ class SupportController extends Controller
         $message = $conversation->messages()->create([
             'sender_type' => LiveChatMessage::SENDER_CUSTOMER, 'sender_id' => null,
             'body' => $request->input('message'),
+            'attachments' => $request->input('attachments'),
             'is_read' => false,
         ]);
 
@@ -149,7 +153,7 @@ class SupportController extends Controller
         // Only fetch messages if requested explicitly or return fully via a fast cursor
         // For backwards compatibility we still return fully, but you can append ?after_id=XX locally
         $query = $conversation->messages()
-            ->select('id', 'sender_type', 'sender_name', 'body', 'created_at', 'is_internal_note', 'message_type')
+            ->select('id', 'sender_type', 'sender_name', 'body', 'attachments', 'created_at', 'is_internal_note', 'message_type')
             ->where('is_internal_note', false)
             ->where('sender_type', '!=', \App\Models\LiveChatMessage::SENDER_SYSTEM)
             ->where('message_type', '!=', \App\Models\LiveChatMessage::TYPE_SYSTEM);
@@ -162,5 +166,34 @@ class SupportController extends Controller
             'messages' => $query->orderBy('created_at')->get(),
             'unread_count_cleared' => true
         ]);
+    }
+
+    /**
+     * Upload file attachment for a ticket (returns JSON with file metadata).
+     */
+    public function uploadFile(Request $request, $id)
+    {
+        $shop = $this->currentShop($request);
+        if (! $shop) abort(403);
+
+        // Verify conversation belongs to shop
+        LiveChatConversation::where('merchant_id', $shop->id)->findOrFail($id);
+
+        $request->validate([
+            'file' => 'required|file|max:10240', // 10MB max
+        ]);
+
+        $file = $request->file('file');
+        $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $file->getClientOriginalName());
+        
+        $path = $file->storeAs('chat_attachments', $filename, 'public');
+        
+        return response()->json([
+            'preview_url' => asset('storage/' . $path),
+            'url' => asset('storage/' . $path),
+            'name' => $file->getClientOriginalName(),
+            'size' => $file->getSize(),
+            'type' => $file->getClientMimeType(),
+        ], 201);
     }
 }
