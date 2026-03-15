@@ -31,7 +31,13 @@ class SupportController extends Controller
                     'preview' => $t->last_message_preview,
                     'created_at' => $t->created_at->toIso8601String(),
                     'updated_at' => $t->updated_at->toIso8601String(),
-                    'messages' => $t->messages()->select('id', 'sender_type', 'body', 'created_at', 'is_internal_note')->orderBy('created_at')->get(),
+                    'messages' => $t->messages()
+                        ->select('id', 'sender_type', 'sender_name', 'body', 'created_at', 'is_internal_note', 'message_type')
+                        ->where('is_internal_note', false)
+                        ->where('sender_type', '!=', \App\Models\LiveChatMessage::SENDER_SYSTEM)
+                        ->where('message_type', '!=', \App\Models\LiveChatMessage::TYPE_SYSTEM)
+                        ->orderBy('created_at')
+                        ->get(),
                 ];
             });
 
@@ -118,8 +124,10 @@ class SupportController extends Controller
 
         return response()->json([
             'messages' => $conversation->messages()
-                ->select('id', 'sender_type', 'body', 'created_at', 'is_internal_note')
+                ->select('id', 'sender_type', 'sender_name', 'body', 'created_at', 'is_internal_note', 'message_type')
                 ->where('is_internal_note', false)
+                ->where('sender_type', '!=', \App\Models\LiveChatMessage::SENDER_SYSTEM)
+                ->where('message_type', '!=', \App\Models\LiveChatMessage::TYPE_SYSTEM)
                 ->orderBy('created_at')
                 ->get()
         ]);

@@ -122,7 +122,6 @@ const KPI_CARDS = [
     { key: 'active',    label: 'Active',    color: 'text-green-600 dark:text-green-400' },
     { key: 'waiting',   label: 'Waiting',   color: 'text-yellow-600 dark:text-yellow-400' },
     { key: 'ended',     label: 'Ended',     color: 'text-gray-500 dark:text-gray-400' },
-    { key: 'converted', label: 'Converted', color: 'text-blue-600 dark:text-blue-400' },
     { key: 'unread',    label: 'Unread',    color: 'text-primary-600 dark:text-primary-400' },
 ];
 
@@ -832,6 +831,9 @@ export default function LiveChatIndex() {
     const atBottomRef = useRef(true);
 
     // Modals & Panels
+    const [sidebarWidth, setSidebarWidth] = useState(320);
+    const sidebarResizing = useRef(false);
+    const layoutXRefs = useRef({ startX: 0, startWidth: 320 });
     const [showRightPanel, setShowRightPanel] = useState(true);
     const [confirmAction, setConfirmAction] = useState(null);
     const [showSyncSettings, setShowSyncSettings] = useState(false);
@@ -1049,6 +1051,31 @@ export default function LiveChatIndex() {
         }
     };
 
+    // ── Resizer ──
+    const handleSidebarMouseMove = useCallback((e) => {
+        if (!sidebarResizing.current) return;
+        const dx = e.clientX - layoutXRefs.current.startX;
+        const newWidth = Math.max(250, Math.min(layoutXRefs.current.startWidth + dx, 800));
+        setSidebarWidth(newWidth);
+    }, []);
+
+    const handleSidebarMouseUp = useCallback(() => {
+        sidebarResizing.current = false;
+        document.removeEventListener('mousemove', handleSidebarMouseMove);
+        document.removeEventListener('mouseup', handleSidebarMouseUp);
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+    }, [handleSidebarMouseMove]);
+
+    const handleSidebarMouseDown = (e) => {
+        sidebarResizing.current = true;
+        layoutXRefs.current = { startX: e.clientX, startWidth: sidebarWidth };
+        document.addEventListener('mousemove', handleSidebarMouseMove);
+        document.addEventListener('mouseup', handleSidebarMouseUp);
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+    };
+
     // ── Filter / search ──
     const handleFilterChange = (status) => {
         setStatusFilter(status);
@@ -1072,7 +1099,7 @@ export default function LiveChatIndex() {
         }
     };
 
-    const STATUS_FILTERS = ['all', 'active', 'waiting', 'ended', 'converted', 'spam', 'blocked', 'muted'];
+    const STATUS_FILTERS = ['all', 'active', 'waiting', 'ended', 'spam', 'blocked', 'muted'];
 
     const isComposerDisabled = !canManage || (activeConv && !['active', 'waiting', 'muted'].includes(activeConv?.status));
 
@@ -1107,7 +1134,16 @@ export default function LiveChatIndex() {
                 <div className="flex flex-1 min-h-0 gap-0 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900 shadow-sm">
 
                     {/* ── LEFT PANEL: Conversation inbox ── */}
-                    <div className="w-80 flex-shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                    <div 
+                        style={{ width: sidebarWidth }}
+                        className="relative flex-shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+                    >
+                        {/* Drag Handle */}
+                        <div
+                            onMouseDown={handleSidebarMouseDown}
+                            className="absolute top-0 right-[-3px] bottom-0 w-[6px] cursor-col-resize hover:bg-primary-500/50 z-10 transition-colors"
+                        ></div>
+
                         {/* Search */}
                         <div className="p-3 border-b border-gray-200 dark:border-gray-700">
                             <form onSubmit={handleSearch} className="relative">

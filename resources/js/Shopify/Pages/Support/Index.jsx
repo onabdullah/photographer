@@ -209,7 +209,11 @@ export default function Support() {
                                                     >
                                                         <div style={{ marginBottom: '6px', display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'center' }}>
                                                             <span style={{ fontWeight: 600, fontSize: '13px' }}>
-                                                                {isMerchant ? 'You' : 'Support Team'}
+                                                                {isMerchant 
+                                                                    ? 'You' 
+                                                                    : (activeTicket.status === 'active' && msg.sender_name) 
+                                                                        ? msg.sender_name 
+                                                                        : 'Support Team'}
                                                             </span>
                                                             <span style={{ fontSize: '11px', opacity: 0.8 }}>
                                                                 {formatDate(msg.created_at)}
