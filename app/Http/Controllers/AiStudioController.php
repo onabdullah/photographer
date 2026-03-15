@@ -181,6 +181,11 @@ class AiStudioController extends Controller
         }
 
         $imageUrl = $validated['image_url'];
+        if (str_starts_with($imageUrl, '/')) {
+            $imageUrl = rtrim($request->getSchemeAndHttpHost(), '/') . $imageUrl;
+        } elseif (($path = parse_url($imageUrl, PHP_URL_PATH)) && str_starts_with($path, '/storage/')) {
+            $imageUrl = rtrim($request->getSchemeAndHttpHost(), '/') . $path;
+        }
 
         $mutation = <<<'GRAPHQL'
 mutation fileCreate($files: [FileCreateInput!]!) {
@@ -204,7 +209,29 @@ GRAPHQL;
             if ($body && method_exists($body, 'toArray')) {
                 $data = $body->toArray();
             } else {
-                $data = is_array($body) ? $body : (isset($body->container) ? $body->container : []);
+                $data = is_array($body) ? $body : (isset($body->container) ? (array)$body->container : (is_object($body) ? json_decode(json_encode($body), true) : []));
+            }
+
+            $topLevelErrors = $data['errors'] ?? [];
+            if (! empty($topLevelErrors) || !empty($response['errors'])) {
+                $errMsg = '';
+                if (!empty($topLevelErrors) && is_array($topLevelErrors)) {
+                    $errMsg = collect($topLevelErrors)->pluck('message')->filter()->implode(' ');
+                } elseif (is_array($response['errors'])) {
+                    $errMsg = collect($response['errors'])->pluck('message')->filter()->implode(' ');
+                } elseif (is_string($response['errors'])) {
+                    $errMsg = $response['errors'];
+                }
+                
+                if (empty($errMsg) || $errMsg === '1') {
+                    $errMsg = 'Failed to save file to Shopify due to an API error.';
+                }
+                
+                Log::channel('ai_studio')->error('fileCreate GraphQL error', [
+                    'response_errors' => $response['errors'] ?? null,
+                    'top_level_errors' => $topLevelErrors,
+                ]);
+                return response()->json(['message' => $errMsg], 422);
             }
 
             $fileCreate = $data['data']['fileCreate'] ?? null;
@@ -274,6 +301,13 @@ GRAPHQL;
             return response()->json(['message' => 'Invalid product.'], 422);
         }
 
+        $imageUrl = $generation->result_image_url;
+        if (str_starts_with($imageUrl, '/')) {
+            $imageUrl = rtrim($request->getSchemeAndHttpHost(), '/') . $imageUrl;
+        } elseif (($path = parse_url($imageUrl, PHP_URL_PATH)) && str_starts_with($path, '/storage/')) {
+            $imageUrl = rtrim($request->getSchemeAndHttpHost(), '/') . $path;
+        }
+
         $mutation = <<<'GRAPHQL'
 mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
   productCreateMedia(productId: $productId, media: $media) {
@@ -296,25 +330,41 @@ GRAPHQL;
                 'media' => [
                     [
                         'mediaContentType' => 'IMAGE',
-                        'originalSource'   => $generation->result_image_url,
+                        'originalSource'   => $imageUrl,
                     ],
                 ],
             ]);
 
-            // Top-level GraphQL errors (e.g. unknown field, auth failure)
-            if (! empty($response['errors'])) {
-                $errMsg = is_array($response['errors'])
-                    ? collect($response['errors'])->pluck('message')->filter()->implode(' ')
-                    : (string) $response['errors'];
-                Log::channel('ai_studio')->error('productCreateMedia GraphQL error', [
-                    'errors'      => $response['errors'],
-                    'product_gid' => $gid,
-                ]);
-                return response()->json(['message' => $errMsg ?: 'Failed to add image to product.'], 422);
+            $body = $response['body'] ?? null;
+            if ($body && method_exists($body, 'toArray')) {
+                $data = $body->toArray();
+            } else {
+                $data = is_array($body) ? $body : (isset($body->container) ? (array)$body->container : (is_object($body) ? json_decode(json_encode($body), true) : []));
             }
 
-            $body = $response['body'] ?? null;
-            $data = $body ? $body->toArray() : [];
+            // Top-level GraphQL errors (e.g. unknown field, auth failure)
+            $topLevelErrors = $data['errors'] ?? [];
+            if (! empty($topLevelErrors) || !empty($response['errors'])) {
+                $errMsg = '';
+                if (!empty($topLevelErrors) && is_array($topLevelErrors)) {
+                    $errMsg = collect($topLevelErrors)->pluck('message')->filter()->implode(' ');
+                } elseif (is_array($response['errors'])) {
+                    $errMsg = collect($response['errors'])->pluck('message')->filter()->implode(' ');
+                } elseif (is_string($response['errors'])) {
+                    $errMsg = $response['errors'];
+                }
+                
+                if (empty($errMsg) || $errMsg === '1') {
+                    $errMsg = 'Failed to add image to product due to a Shopify API error.';
+                }
+                
+                Log::channel('ai_studio')->error('productCreateMedia GraphQL error', [
+                    'response_errors' => $response['errors'] ?? null,
+                    'top_level_errors' => $topLevelErrors,
+                    'product_gid' => $gid,
+                ]);
+                return response()->json(['message' => $errMsg], 422);
+            }
 
             $mediaUserErrors = $data['data']['productCreateMedia']['mediaUserErrors'] ?? [];
             if (! empty($mediaUserErrors)) {
