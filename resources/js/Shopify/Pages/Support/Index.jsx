@@ -47,7 +47,9 @@ export default function Support() {
         (selectedTabIndex) => {
             setSelected(selectedTabIndex);
             const statuses = ['all', 'active', 'waiting', 'ended'];
-            const params = new URLSearchParams(window.location.search); params.set('status', statuses[selectedTabIndex]); router.get(`/shopify/support?${params.toString()}`, { preserveState: true });
+            const params = new URLSearchParams(window.location.search); 
+            params.set('status', statuses[selectedTabIndex]);
+            router.get(`/shopify/support?${params.toString()}`, {}, { preserveState: true, preserveScroll: true });
         },
         []
     );
