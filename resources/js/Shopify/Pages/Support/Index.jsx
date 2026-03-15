@@ -80,12 +80,27 @@ export default function Support() {
     }, [newSubject, newMessage]);
 
     const activeTicketId = activeTicket?.id;
+    const lastMessageIdRef = useRef(null);
+
+    // Update ref whenever messages change
+    useEffect(() => {
+        if (activeTicket?.messages?.length > 0) {
+            lastMessageIdRef.current = activeTicket.messages[activeTicket.messages.length - 1].id;
+        } else {
+            lastMessageIdRef.current = null;
+        }
+    }, [activeTicket?.messages]);
 
     const fetchMessages = useCallback(async () => {
         if (!activeTicketId) return;
         try {
             const url = new URL(`/shopify/support/tickets/${activeTicketId}/poll`, window.location.origin);
             
+            // Send after_id to only fetch new messages
+            if (lastMessageIdRef.current) {
+                url.searchParams.set('after_id', lastMessageIdRef.current);
+            }
+
             // Ensure fresh session token before polling
             if (window.shopify && typeof window.shopify.idToken === 'function') {
                 try {
@@ -104,10 +119,23 @@ export default function Support() {
             });
             if (res.ok) {
                 const data = await res.json();
-                if (data.messages) {
+                if (data.messages && data.messages.length > 0) {
                     setActiveTicket(prev => {
                         if (!prev) return prev;
-                        return { ...prev, messages: data.messages, unread_count: data.unread_count_cleared ? 0 : prev.unread_count };
+                        // Append new messages to existing ones, avoiding duplicates if any
+                        const existingIds = new Set(prev.messages?.map(m => m.id) || []);
+                        const newMessages = data.messages.filter(m => !existingIds.has(m.id));
+                        
+                        return { 
+                            ...prev, 
+                            messages: [...(prev.messages || []), ...newMessages], 
+                            unread_count: data.unread_count_cleared ? 0 : prev.unread_count 
+                        };
+                    });
+                } else if (data.unread_count_cleared) {
+                    setActiveTicket(prev => {
+                        if (!prev) return prev;
+                        return { ...prev, unread_count: 0 };
                     });
                 }
             }
@@ -163,10 +191,6 @@ export default function Support() {
         let channel = null;
 
         const setupEcho = () => {
-            // Disabled for now, forcing manual polling
-            handleError();
-            return;
-
             if (!window.Echo) {
                 handleError();
                 return;

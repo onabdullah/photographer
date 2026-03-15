@@ -39,9 +39,12 @@ class SiteSetting extends Model
      */
     public static function get(string $key, ?string $default = null): ?string
     {
-        $row = static::find($key);
-
-        return $row ? $row->value : $default;
+        $val = \Illuminate\Support\Facades\Cache::rememberForever("site_setting_{$key}", function () use ($key) {
+            $row = static::find($key);
+            return $row ? $row->value : null;
+        });
+        
+        return $val ?? $default;
     }
 
     /**
@@ -53,6 +56,7 @@ class SiteSetting extends Model
             ['key' => $key],
             ['value' => $value]
         );
+        \Illuminate\Support\Facades\Cache::forget("site_setting_{$key}");
     }
 
     /**

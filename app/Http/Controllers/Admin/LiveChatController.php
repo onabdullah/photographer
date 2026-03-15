@@ -29,7 +29,7 @@ class LiveChatController extends Controller
             ->with([
                 'assignee:id,name',
                 'merchant' => fn ($q) => $q->withCount('liveChatConversations'),
-                'merchant.imageGenerations',
+                'merchant.latestImageGenerations',
                 'merchant.plan'
             ])
             ->when(
@@ -66,7 +66,7 @@ class LiveChatController extends Controller
     {
         $conversation = LiveChatConversation::with([
             'merchant' => fn ($q) => $q->withCount('liveChatConversations'),
-            'merchant.imageGenerations',
+            'merchant.latestImageGenerations',
             'merchant.plan'
         ])->findOrFail($id);
 
@@ -76,20 +76,24 @@ class LiveChatController extends Controller
             ->map(fn (LiveChatMessage $m) => $this->serializeMessage($m));
 
         // Mark all customer messages as read.
-        $conversation->messages()
-            ->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)
-            ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now()]);
+        if ($conversation->messages()->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)->where('is_read', false)->exists()) {
+            $conversation->messages()
+                ->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)
+                ->where('is_read', false)
+                ->update(['is_read' => true, 'read_at' => now()]);
+        }
 
         // Reset unread counter.
-        $conversation->update(['unread_count' => 0]);
+        if ($conversation->unread_count > 0) {
+            $conversation->update(['unread_count' => 0]);
+        }
 
         return response()->json([
             'conversation' => $this->serializeConversation($conversation->fresh([
                 'assignee', 
                 'merchant' => fn ($q) => $q->withCount('liveChatConversations'), 
                 'merchant.plan', 
-                'merchant.imageGenerations'
+                'merchant.latestImageGenerations'
             ])),
             'messages' => $messages,
             'synced_at' => now()->toIso8601String(),
@@ -111,12 +115,16 @@ class LiveChatController extends Controller
             ->map(fn (LiveChatMessage $m) => $this->serializeMessage($m));
 
         // Mark fetched messages as read
-        $conversation->messages()
-            ->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)
-            ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now()]);
+        if ($conversation->messages()->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)->where('is_read', false)->exists()) {
+            $conversation->messages()
+                ->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)
+                ->where('is_read', false)
+                ->update(['is_read' => true, 'read_at' => now()]);
+        }
             
-        $conversation->update(['unread_count' => 0]);
+        if ($conversation->unread_count > 0) {
+            $conversation->update(['unread_count' => 0]);
+        }
 
         return response()->json([
             'messages' => $messages,
@@ -152,10 +160,12 @@ class LiveChatController extends Controller
             : $this->truncate($message->body, 120);
 
         // Mark all customer messages as read since admin sent a message.
-        $conversation->messages()
-            ->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)
-            ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now()]);
+        if ($conversation->messages()->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)->where('is_read', false)->exists()) {
+            $conversation->messages()
+                ->where('sender_type', LiveChatMessage::SENDER_CUSTOMER)
+                ->where('is_read', false)
+                ->update(['is_read' => true, 'read_at' => now()]);
+        }
 
         $conversation->update([
             'last_message_preview' => $preview,
@@ -204,7 +214,7 @@ class LiveChatController extends Controller
                 'assignee', 
                 'merchant' => fn ($q) => $q->withCount('liveChatConversations'), 
                 'merchant.plan', 
-                'merchant.imageGenerations'
+                'merchant.latestImageGenerations'
             ])),
             'system_message' => $systemMessage ? $this->serializeMessage($systemMessage) : null,
         ]);
@@ -367,8 +377,8 @@ class LiveChatController extends Controller
                     }
                     return 0;
                 })(),
-                'recent_creations' => $c->merchant->imageGenerations
-                    ? $c->merchant->imageGenerations->sortByDesc('created_at')->take(6)->map(fn ($g) => [
+                'recent_creations' => $c->merchant->latestImageGenerations
+                    ? $c->merchant->latestImageGenerations->map(fn ($g) => [
                         'id' => $g->id,
                         'tool' => $g->tool_used,
                         'url' => $g->result_image_url,
@@ -401,20 +411,28 @@ class LiveChatController extends Controller
 
     private function buildKpis(): array
     {
-        $total = LiveChatConversation::count();
-        $active = LiveChatConversation::where('status', LiveChatConversation::STATUS_ACTIVE)->count();
-        $waiting = LiveChatConversation::where('status', LiveChatConversation::STATUS_WAITING)->count();
-        $ended = LiveChatConversation::where('status', LiveChatConversation::STATUS_ENDED)->count();
-        $converted = LiveChatConversation::where('status', LiveChatConversation::STATUS_CONVERTED)->count();
-        $totalUnread = (int) LiveChatConversation::sum('unread_count');
+        $stats = \Illuminate\Support\Facades\DB::table('live_chat_conversations')
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as waiting,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as ended,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as converted,
+                SUM(unread_count) as total_unread
+            ', [
+                LiveChatConversation::STATUS_ACTIVE,
+                LiveChatConversation::STATUS_WAITING,
+                LiveChatConversation::STATUS_ENDED,
+                LiveChatConversation::STATUS_CONVERTED,
+            ])->first();
 
         return [
-            'total' => $total,
-            'active' => $active,
-            'waiting' => $waiting,
-            'ended' => $ended,
-            'converted' => $converted,
-            'unread' => $totalUnread,
+            'total' => (int) ($stats->total ?? 0),
+            'active' => (int) ($stats->active ?? 0),
+            'waiting' => (int) ($stats->waiting ?? 0),
+            'ended' => (int) ($stats->ended ?? 0),
+            'converted' => (int) ($stats->converted ?? 0),
+            'unread' => (int) ($stats->total_unread ?? 0),
         ];
     }
 

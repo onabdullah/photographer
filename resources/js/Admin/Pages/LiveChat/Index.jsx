@@ -944,10 +944,6 @@ export default function LiveChatIndex() {
         let globalChannel = null;
 
         const setupEcho = () => {
-            // Disabled for now, forcing manual polling
-            handleError('Live chat disabled for now; falling back to manual polling.');
-            return;
-
             if (!window.Echo) {
                 handleError('Echo client not found. Connection to reverb refused.');
                 return;

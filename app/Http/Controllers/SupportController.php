@@ -20,13 +20,25 @@ class SupportController extends Controller
         $status = $request->input('status', 'all');
 
         $tickets = LiveChatConversation::where('merchant_id', $shop->id)
+            ->withCount(['messages as unread_count' => function ($q) {
+                $q->where('sender_type', \App\Models\LiveChatMessage::SENDER_AGENT)
+                  ->where('is_read', false)
+                  ->where('is_internal_note', false);
+            }])
+            ->with(['messages' => function ($q) {
+                $q->select('id', 'conversation_id', 'sender_type', 'sender_name', 'body', 'created_at', 'is_internal_note', 'message_type')
+                  ->where('is_internal_note', false)
+                  ->where('sender_type', '!=', \App\Models\LiveChatMessage::SENDER_SYSTEM)
+                  ->where('message_type', '!=', \App\Models\LiveChatMessage::TYPE_SYSTEM)
+                  ->orderBy('created_at');
+            }])
             ->when($status !== 'all', fn ($q) => $q->where('status', $status))
             ->orderByDesc('updated_at')
             ->get()
             ->map(function ($t) {
                 // Hide internal states from merchant
                 $displayStatus = in_array($t->status, ['spam', 'blocked']) ? 'ended' : $t->status;
-                
+
                 return [
                     'id' => $t->id,
                     'subject' => $t->subject ?? 'Support Ticket #' . $t->id,
@@ -34,18 +46,8 @@ class SupportController extends Controller
                     'preview' => $t->last_message_preview,
                     'created_at' => $t->created_at->toIso8601String(),
                     'updated_at' => $t->updated_at->toIso8601String(),
-                    'unread_count' => $t->messages()
-                        ->where('sender_type', \App\Models\LiveChatMessage::SENDER_AGENT)
-                        ->where('is_read', false)
-                        ->where('is_internal_note', false)
-                        ->count(),
-                    'messages' => $t->messages()
-                        ->select('id', 'sender_type', 'sender_name', 'body', 'created_at', 'is_internal_note', 'message_type')
-                        ->where('is_internal_note', false)
-                        ->where('sender_type', '!=', \App\Models\LiveChatMessage::SENDER_SYSTEM)
-                        ->where('message_type', '!=', \App\Models\LiveChatMessage::TYPE_SYSTEM)
-                        ->orderBy('created_at')
-                        ->get(),
+                    'unread_count' => $t->unread_count,
+                    'messages' => $t->messages->values(),
                 ];
             });
 
@@ -110,10 +112,12 @@ class SupportController extends Controller
         ]);
 
         // When the customer replies, mark all unread agent messages as read
-        $conversation->messages()
-            ->where('sender_type', LiveChatMessage::SENDER_AGENT)
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
+        if ($conversation->messages()->where('sender_type', LiveChatMessage::SENDER_AGENT)->where('is_read', false)->exists()) {
+            $conversation->messages()
+                ->where('sender_type', LiveChatMessage::SENDER_AGENT)
+                ->where('is_read', false)
+                ->update(['is_read' => true, 'read_at' => now()]);
+        }
 
         $conversation->update([
             'last_message_preview' => \Illuminate\Support\Str::limit($request->input('message'), 100),
@@ -134,20 +138,28 @@ class SupportController extends Controller
 
         $conversation = LiveChatConversation::where('merchant_id', $shop->id)->findOrFail($id);
         
-        // When polling, we mark all unread messages as read from the customer's perspective
-        $conversation->messages()
-            ->where('sender_type', LiveChatMessage::SENDER_AGENT)
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
+        // Only run the update if there are unread messages to prevent useless transaction logs on every loop
+        if ($conversation->messages()->where('sender_type', LiveChatMessage::SENDER_AGENT)->where('is_read', false)->exists()) {
+            $conversation->messages()
+                ->where('sender_type', LiveChatMessage::SENDER_AGENT)
+                ->where('is_read', false)
+                ->update(['is_read' => true, 'read_at' => now()]);
+        }
+
+        // Only fetch messages if requested explicitly or return fully via a fast cursor
+        // For backwards compatibility we still return fully, but you can append ?after_id=XX locally
+        $query = $conversation->messages()
+            ->select('id', 'sender_type', 'sender_name', 'body', 'created_at', 'is_internal_note', 'message_type')
+            ->where('is_internal_note', false)
+            ->where('sender_type', '!=', \App\Models\LiveChatMessage::SENDER_SYSTEM)
+            ->where('message_type', '!=', \App\Models\LiveChatMessage::TYPE_SYSTEM);
+
+        if ($request->filled('after_id')) {
+            $query->where('id', '>', $request->input('after_id'));
+        }
 
         return response()->json([
-            'messages' => $conversation->messages()
-                ->select('id', 'sender_type', 'sender_name', 'body', 'created_at', 'is_internal_note', 'message_type')
-                ->where('is_internal_note', false)
-                ->where('sender_type', '!=', \App\Models\LiveChatMessage::SENDER_SYSTEM)
-                ->where('message_type', '!=', \App\Models\LiveChatMessage::TYPE_SYSTEM)
-                ->orderBy('created_at')
-                ->get(),
+            'messages' => $query->orderBy('created_at')->get(),
             'unread_count_cleared' => true
         ]);
     }

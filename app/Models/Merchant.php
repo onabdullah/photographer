@@ -79,6 +79,14 @@ class Merchant extends Authenticatable implements IShopModel
     }
 
     /**
+     * Get the latest image generations for this merchant (limit 6).
+     */
+    public function latestImageGenerations()
+    {
+        return $this->hasMany(ImageGeneration::class, 'shop_domain', 'name')->latest('created_at')->limit(6);
+    }
+
+    /**
      * Get the email logs for the merchant.
      */
     public function emailLogs()
