@@ -26,7 +26,12 @@ class LiveChatController extends Controller
         $search = $request->input('search');
 
         $query = LiveChatConversation::query()
-            ->with(['assignee:id,name', 'merchant.imageGenerations', 'merchant.plan'])
+            ->with([
+                'assignee:id,name',
+                'merchant' => fn ($q) => $q->withCount('liveChatConversations'),
+                'merchant.imageGenerations',
+                'merchant.plan'
+            ])
             ->when(
                 $statusFilter !== 'all',
                 fn ($q) => $q->where('status', $statusFilter),
@@ -59,7 +64,11 @@ class LiveChatController extends Controller
      */
     public function messages(Request $request, int $id): JsonResponse
     {
-        $conversation = LiveChatConversation::with('merchant.imageGenerations', 'merchant.plan')->findOrFail($id);
+        $conversation = LiveChatConversation::with([
+            'merchant' => fn ($q) => $q->withCount('liveChatConversations'),
+            'merchant.imageGenerations',
+            'merchant.plan'
+        ])->findOrFail($id);
 
         $messages = $conversation->messages()
             ->orderBy('created_at')
@@ -76,7 +85,12 @@ class LiveChatController extends Controller
         $conversation->update(['unread_count' => 0]);
 
         return response()->json([
-            'conversation' => $this->serializeConversation($conversation->fresh(['assignee', 'merchant.plan', 'merchant.imageGenerations'])),
+            'conversation' => $this->serializeConversation($conversation->fresh([
+                'assignee', 
+                'merchant' => fn ($q) => $q->withCount('liveChatConversations'), 
+                'merchant.plan', 
+                'merchant.imageGenerations'
+            ])),
             'messages' => $messages,
             'synced_at' => now()->toIso8601String(),
         ]);
@@ -168,7 +182,12 @@ class LiveChatController extends Controller
         };
 
         return response()->json([
-            'conversation' => $this->serializeConversation($conversation->fresh(['assignee', 'merchant.plan', 'merchant.imageGenerations'])),
+            'conversation' => $this->serializeConversation($conversation->fresh([
+                'assignee', 
+                'merchant' => fn ($q) => $q->withCount('liveChatConversations'), 
+                'merchant.plan', 
+                'merchant.imageGenerations'
+            ])),
             'system_message' => $systemMessage ? $this->serializeMessage($systemMessage) : null,
         ]);
     }
@@ -308,6 +327,7 @@ class LiveChatController extends Controller
                 'name' => $c->merchant->name,
                 'store_name' => $c->merchant->store_name,
                 'email' => $c->merchant->email,
+                'total_chats' => $c->merchant->live_chat_conversations_count ?? 1,
                 'freemium' => $c->merchant->shopify_freemium,
                 'country' => $c->merchant->country,
                 'credits_balance' => $c->merchant->ai_credits_balance,

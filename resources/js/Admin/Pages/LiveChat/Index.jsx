@@ -1568,15 +1568,15 @@ export default function LiveChatIndex() {
                                             <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Merchant Context</h3>
                                             <div className="bg-white dark:bg-[#1A1F2C] border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm mb-3">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">{activeConv.merchant.store_name || activeConv.merchant.name}</span>
+                                                    <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">{activeConv.merchant.name}</span>
                                                     {activeConv.merchant.freemium && (
                                                         <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full uppercase font-bold">Free</span>
                                                     )}
                                                 </div>
                                                 <dl className="space-y-1.5 text-xs">
                                                     <div className="flex justify-between gap-2">
-                                                        <dt className="text-gray-500 dark:text-gray-400">Email</dt>
-                                                        <dd className="text-gray-700 dark:text-gray-300 truncate max-w-[120px]" title={activeConv.merchant.email}>{activeConv.merchant.email}</dd>
+                                                        <dt className="text-gray-500 dark:text-gray-400">Total Chats</dt>
+                                                        <dd className="text-gray-700 dark:text-gray-300 font-semibold">{activeConv.merchant.total_chats}</dd>
                                                     </div>
                                                     <div className="flex justify-between gap-2">
                                                         <dt className="text-gray-500 dark:text-gray-400">Country</dt>

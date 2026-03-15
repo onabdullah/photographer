@@ -85,4 +85,12 @@ class Merchant extends Authenticatable implements IShopModel
     {
         return $this->hasMany(EmailLog::class);
     }
+
+    /**
+     * Get the live chat conversations for the merchant.
+     */
+    public function liveChatConversations()
+    {
+        return $this->hasMany(LiveChatConversation::class);
+    }
 }
