@@ -852,8 +852,10 @@ export default function LiveChatIndex() {
         setStatusFilter(initialFilters?.status ?? 'active');
         setSearch(initialFilters?.search ?? '');
         setKpis(initialKpis ?? {});
-        setSyncSettings(initialSyncSettings ?? {});
-    }, [initialConversations, initialFilters, initialKpis, initialSyncSettings]);
+        // We explicitly omit syncSettings here because Inertia partial reloads (like poll updates)
+        // would pass the stale syncSettings from the initial page load, overwriting our local
+        // state that gets updated when the admin saves the settings panel.
+    }, [initialConversations, initialFilters, initialKpis]);
 
     // Active thread state
     const [activeConvId, setActiveConvId] = useState(null);

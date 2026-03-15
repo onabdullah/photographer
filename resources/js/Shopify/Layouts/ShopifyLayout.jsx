@@ -1,6 +1,6 @@
 import { AppProvider } from '@shopify/polaris';
 import { NavMenu } from '@shopify/app-bridge-react';
-import { usePage } from '@inertiajs/react';
+import { usePage, Link } from '@inertiajs/react';
 import '@shopify/polaris/build/esm/styles.css';
 import WelcomeModal from '@/Shopify/Components/WelcomeModal';
 import ShopifyProvider from '@/Shopify/Components/ShopifyProvider';
@@ -34,12 +34,12 @@ export default function ShopifyLayout({ children }) {
         }}
       >
         <NavMenu>
-          <a href="/shopify" rel="home">Dashboard</a>
-          <a href="/shopify/ai-studio">General AI Studio</a>
-          {showProductAILab && <a href="/shopify/product-ai-lab">Product AI Lab (VTO)</a>}
-          <a href="/shopify/plans">Plans & Billing</a>
-          <a href="/shopify/settings">Settings</a>
-          <a href="/shopify/support">Live Support</a>
+          <Link href="/shopify" rel="home">Dashboard</Link>
+          <Link href="/shopify/ai-studio">General AI Studio</Link>
+          {showProductAILab && <Link href="/shopify/product-ai-lab">Product AI Lab (VTO)</Link>}
+          <Link href="/shopify/plans">Plans & Billing</Link>
+          <Link href="/shopify/settings">Settings</Link>
+          <Link href="/shopify/support">Live Support</Link>
         </NavMenu>
         <div className="premium-page-enter" style={{ fontFamily: 'var(--font-body)' }}>
           {children}
