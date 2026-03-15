@@ -24,13 +24,21 @@ class SupportController extends Controller
             ->orderByDesc('updated_at')
             ->get()
             ->map(function ($t) {
+                // Hide internal states from merchant
+                $displayStatus = in_array($t->status, ['spam', 'blocked']) ? 'ended' : $t->status;
+                
                 return [
                     'id' => $t->id,
                     'subject' => $t->subject ?? 'Support Ticket #' . $t->id,
-                    'status' => $t->status,
+                    'status' => $displayStatus,
                     'preview' => $t->last_message_preview,
                     'created_at' => $t->created_at->toIso8601String(),
                     'updated_at' => $t->updated_at->toIso8601String(),
+                    'unread_count' => $t->messages()
+                        ->where('sender_type', \App\Models\LiveChatMessage::SENDER_AGENT)
+                        ->where('is_read', false)
+                        ->where('is_internal_note', false)
+                        ->count(),
                     'messages' => $t->messages()
                         ->select('id', 'sender_type', 'sender_name', 'body', 'created_at', 'is_internal_note', 'message_type')
                         ->where('is_internal_note', false)

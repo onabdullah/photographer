@@ -325,7 +325,7 @@ class LiveChatController extends Controller
                     return 0;
                 })(),
                 'recent_creations' => $c->merchant->imageGenerations
-                    ? $c->merchant->imageGenerations->sortByDesc('created_at')->take(4)->map(fn ($g) => [
+                    ? $c->merchant->imageGenerations->sortByDesc('created_at')->take(6)->map(fn ($g) => [
                         'id' => $g->id,
                         'tool' => $g->tool_used,
                         'url' => $g->result_image_url,

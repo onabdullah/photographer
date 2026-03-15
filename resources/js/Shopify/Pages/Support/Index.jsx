@@ -318,7 +318,7 @@ export default function Support() {
                                     </Box>
                                 }
                                 renderItem={(item) => {
-                                    const { id, subject, status, preview, updated_at } = item;
+                                    const { id, subject, status, preview, updated_at, unread_count } = item;
                                     return (
                                         <ResourceItem
                                             id={id}
@@ -327,9 +327,23 @@ export default function Support() {
                                         >
                                             <InlineStack align="space-between" blockAlign="start">
                                                 <BlockStack gap="100">
-                                                    <Text variant="bodyMd" fontWeight="bold" as="h3">
-                                                        {subject}
-                                                    </Text>
+                                                    <InlineStack gap="200" blockAlign="center">
+                                                        <Text variant="bodyMd" fontWeight="bold" as="h3">
+                                                            {subject}
+                                                        </Text>
+                                                        {unread_count > 0 && (
+                                                            <span style={{ 
+                                                                backgroundColor: '#d82c0d', 
+                                                                color: '#fff', 
+                                                                fontSize: '11px', 
+                                                                fontWeight: 'bold', 
+                                                                padding: '2px 6px', 
+                                                                borderRadius: '10px' 
+                                                            }}>
+                                                                {unread_count} new
+                                                            </span>
+                                                        )}
+                                                    </InlineStack>
                                                     <Text variant="bodySm" color="subdued" as="p" truncate>
                                                         {preview || 'No messages yet.'}
                                                     </Text>
