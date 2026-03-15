@@ -187,6 +187,8 @@ class AiStudioController extends Controller
             $imageUrl = rtrim($request->getSchemeAndHttpHost(), '/') . $path;
         }
 
+        \Log::info("Saving image to Shopify. Public URL resolved to: " . $imageUrl);
+
         $mutation = <<<'GRAPHQL'
 mutation fileCreate($files: [FileCreateInput!]!) {
   fileCreate(files: $files) {
@@ -224,10 +226,10 @@ GRAPHQL;
                 }
                 
                 if (empty($errMsg) || $errMsg === '1') {
-                    $errMsg = 'Failed to save file to Shopify due to an API error.';
+                    $errMsg = 'Failed to save file to Shopify due to an API error. ' . json_encode($response['errors'] ?? $topLevelErrors);
                 }
                 
-                Log::channel('ai_studio')->error('fileCreate GraphQL error', [
+                \Log::error('fileCreate GraphQL error', [
                     'response_errors' => $response['errors'] ?? null,
                     'top_level_errors' => $topLevelErrors,
                 ]);
@@ -307,6 +309,8 @@ GRAPHQL;
         } elseif (($path = parse_url($imageUrl, PHP_URL_PATH)) && str_starts_with($path, '/storage/')) {
             $imageUrl = rtrim($request->getSchemeAndHttpHost(), '/') . $path;
         }
+        
+        \Log::info("Assigning image to product. Public URL resolved to: " . $imageUrl . " For product GID: " . $gid);
 
         $mutation = <<<'GRAPHQL'
 mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
@@ -355,10 +359,10 @@ GRAPHQL;
                 }
                 
                 if (empty($errMsg) || $errMsg === '1') {
-                    $errMsg = 'Failed to add image to product due to a Shopify API error.';
+                    $errMsg = 'Failed to add image to product due to a Shopify API error. ' . json_encode($response['errors'] ?? $topLevelErrors);
                 }
                 
-                Log::channel('ai_studio')->error('productCreateMedia GraphQL error', [
+                \Log::error('productCreateMedia GraphQL error', [
                     'response_errors' => $response['errors'] ?? null,
                     'top_level_errors' => $topLevelErrors,
                     'product_gid' => $gid,
