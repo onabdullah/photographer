@@ -175,6 +175,25 @@ Route::middleware(['auth:admin'])->group(function () {
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools.settings');
 
+    // Dashboard Content Management
+    Route::get('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'show'])
+        ->middleware('admin.permission:settings.manage')
+        ->name('dashboard-settings.show');
+    Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
+        ->middleware('admin.permission:settings.manage')
+        ->name('dashboard-settings.update');
+    Route::post('/dashboard-settings/reset', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'reset'])
+        ->middleware('admin.permission:settings.manage')
+        ->name('dashboard-settings.reset');
+
+    // Dashboard Media Upload
+    Route::post('/dashboard-media/upload-hero', [\App\Http\Controllers\Admin\DashboardMediaController::class, 'uploadHeroImage'])
+        ->middleware('admin.permission:settings.manage')
+        ->name('dashboard-media.upload-hero');
+    Route::delete('/dashboard-media/{path}', [\App\Http\Controllers\Admin\DashboardMediaController::class, 'deleteHeroImage'])
+        ->middleware('admin.permission:settings.manage')
+        ->name('dashboard-media.delete');
+
     // System Settings (SMTP: super_admin only, enforced in controller)
     Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])
         ->middleware('admin.permission:settings.view')->name('settings');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Traits\GetsCurrentShop;
 use App\Http\Traits\UsesShopifyTokenExchange;
 use App\Models\AiStudioToolSetting;
+use App\Models\DashboardSetting;
 use App\Models\ImageGeneration;
 use Illuminate\Http\Request;
 
@@ -71,6 +72,11 @@ class DashboardController extends Controller
             $enabledTools = ['magic_eraser', 'remove_bg', 'compressor', 'upscale', 'enhance', 'lighting'];
         }
 
+        // Fetch CMS settings for dashboard
+        $heroSettings = DashboardSetting::getHeroSettings();
+        $featuredToolsSettings = DashboardSetting::getFeaturedToolsSettings();
+        $announcementSettings = DashboardSetting::getAnnouncementSettings();
+
         return \Inertia\Inertia::render('Shopify/Dashboard', [
             'shopName' => $shop->name ?? 'Shop',
             'credits' => $credits,
@@ -79,6 +85,14 @@ class DashboardController extends Controller
             'activePlan' => $activePlan,
             'recentGenerations' => $recentGenerations,
             'enabledTools' => $enabledTools,
+            // CMS Settings
+            'heroTitle' => $heroSettings['title'],
+            'heroSubtitle' => $heroSettings['subtitle'],
+            'heroImageUrl' => $heroSettings['imageUrl'],
+            'featuredToolsEnabled' => $featuredToolsSettings['enabled'],
+            'featuredTools' => $featuredToolsSettings['tools'],
+            'announcementEnabled' => $announcementSettings['enabled'],
+            'announcementText' => $announcementSettings['text'],
         ]);
     }
 

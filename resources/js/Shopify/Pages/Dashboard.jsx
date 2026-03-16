@@ -18,8 +18,6 @@ import MagicButton from '@/Shopify/Components/MagicButton';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const HERO_ILLUSTRATION = 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&q=80';
-
 function timeAgo(dateStr) {
   const date = new Date(dateStr);
   const now = new Date();
@@ -36,7 +34,23 @@ function timeAgo(dateStr) {
 
 const ALL_TOOL_VALUES = ['magic_eraser', 'remove_bg', 'compressor', 'upscale', 'enhance', 'lighting'];
 
-export default function Dashboard({ shopName, credits, totalGenerated, totalProducts: initialProducts, activePlan, recentGenerations = [], enabledTools }) {
+export default function Dashboard({
+  shopName,
+  credits,
+  totalGenerated,
+  totalProducts: initialProducts,
+  activePlan,
+  recentGenerations = [],
+  enabledTools,
+  // CMS Settings
+  heroTitle,
+  heroSubtitle,
+  heroImageUrl,
+  featuredToolsEnabled,
+  featuredTools,
+  announcementEnabled,
+  announcementText,
+}) {
   const { props } = usePage();
   const showProductAILab = props.showProductAILab !== false;
   const enabled = Array.isArray(enabledTools) && enabledTools.length > 0 ? enabledTools : ALL_TOOL_VALUES;
@@ -64,6 +78,15 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
         ) : null}
       >
         <BlockStack gap="700">
+          {/* Announcement Banner */}
+          {announcementEnabled && announcementText && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+              <Text variant="bodySm" as="p" tone="info" fontWeight="medium">
+                {announcementText}
+              </Text>
+            </div>
+          )}
+
           {/* Hero section */}
           <Card>
             <div
@@ -86,10 +109,10 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
                       <Sparkles size={24} className="text-brand-teal" style={{ color: 'var(--premium-teal)' }} />
                     </Box>
                     <Text variant="heading2Xl" as="h2" fontWeight="bold">
-                      Let's grow your business together
+                      {heroTitle}
                     </Text>
                     <Text variant="bodyLg" tone="subdued">
-                      Our AI photographer works for you — create stunning product photos that sell. No shoots, no hassle. We're here to help you succeed.
+                      {heroSubtitle}
                     </Text>
                     <Box paddingBlockStart="200">
                       <MagicButton size="large" onClick={() => router.visit('/shopify/ai-studio')}>
@@ -103,7 +126,7 @@ export default function Dashboard({ shopName, credits, totalGenerated, totalProd
                     style={{
                       width: '100%',
                       height: 280,
-                      backgroundImage: `url(${HERO_ILLUSTRATION})`,
+                      backgroundImage: `url(${heroImageUrl})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                     }}
