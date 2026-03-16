@@ -64,29 +64,48 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
         e.preventDefault();
 
         const formData = new FormData();
-        formData.append('heroTitle', form.data.heroTitle);
-        formData.append('heroSubtitle', form.data.heroSubtitle);
+        formData.append('heroTitle', form.data.heroTitle || '');
+        formData.append('heroSubtitle', form.data.heroSubtitle || '');
         formData.append('heroImageUrl', form.data.heroImageUrl || '');
+
+        // Only add file if selected
         if (form.data.heroImageFile) {
             formData.append('heroImageFile', form.data.heroImageFile);
         }
-        formData.append('featuredToolsEnabled', form.data.featuredToolsEnabled ? 1 : 0);
-        // Append each featured tool separately for array validation
-        (form.data.featuredTools || []).forEach(tool => {
-            formData.append('featuredTools[]', tool);
+
+        // Append boolean as string (Laravel will interpret)
+        formData.append('featuredToolsEnabled', form.data.featuredToolsEnabled ? 'on' : 'off');
+
+        // Append each featured tool separately
+        const tools = form.data.featuredTools || [];
+        tools.forEach((tool, index) => {
+            formData.append(`featuredTools[${index}]`, tool);
         });
-        formData.append('announcementEnabled', form.data.announcementEnabled ? 1 : 0);
+
+        formData.append('announcementEnabled', form.data.announcementEnabled ? 'on' : 'off');
         formData.append('announcementText', form.data.announcementText || '');
+
+        console.log('Submitting dashboard form with data:', {
+            heroTitle: form.data.heroTitle,
+            heroSubtitle: form.data.heroSubtitle,
+            heroImageUrl: form.data.heroImageUrl,
+            hasFile: !!form.data.heroImageFile,
+            featuredToolsEnabled: form.data.featuredToolsEnabled,
+            featuredTools: tools,
+            announcementEnabled: form.data.announcementEnabled,
+            announcementText: form.data.announcementText,
+        });
 
         router.put(route('dashboard-settings.update'), formData, {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
+                console.log('Dashboard update success');
                 toast.success('Dashboard content updated successfully');
                 form.setData('heroImageFile', null);
             },
             onError: (errors) => {
-                console.error('Dashboard update errors:', errors);
+                console.error('Dashboard update failed with errors:', errors);
                 toast.error('Failed to update dashboard content');
             },
         });

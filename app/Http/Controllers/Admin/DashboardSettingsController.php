@@ -42,15 +42,15 @@ class DashboardSettingsController extends Controller
             'heroTitle' => 'required|string|max:255',
             'heroSubtitle' => 'required|string|max:500',
             'heroImageFile' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
-            'heroImageUrl' => 'nullable|string|url',
+            'heroImageUrl' => 'nullable|string',
 
             // Featured Tools
-            'featuredToolsEnabled' => 'boolean',
+            'featuredToolsEnabled' => 'nullable',
             'featuredTools' => 'nullable|array',
             'featuredTools.*' => 'string|in:magic_eraser,remove_bg,compressor,upscale,enhance,lighting',
 
             // Announcements
-            'announcementEnabled' => 'boolean',
+            'announcementEnabled' => 'nullable',
             'announcementText' => 'nullable|string|max:1000',
         ]);
 
@@ -80,13 +80,13 @@ class DashboardSettingsController extends Controller
 
             // Update Featured Tools
             DashboardSetting::setFeaturedToolsSettings([
-                'enabled' => $validated['featuredToolsEnabled'] ?? false,
+                'enabled' => !empty($validated['featuredToolsEnabled']),
                 'tools' => $validated['featuredTools'] ?? [],
             ]);
 
             // Update Announcements
             DashboardSetting::setAnnouncementSettings([
-                'enabled' => $validated['announcementEnabled'] ?? false,
+                'enabled' => !empty($validated['announcementEnabled']),
                 'text' => $validated['announcementText'] ?? '',
             ]);
 
