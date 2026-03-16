@@ -2012,3 +2012,43 @@
   align-items: center;
   gap: var(--space-sm);
 }
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Browse from Store Modal – Professional display & interaction fixes */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+ui-modal {
+  display: block !important;
+}
+
+#browse-from-store-modal {
+  width: 100%;
+  height: 100%;
+}
+
+#browse-from-store-modal > div {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure product row buttons are fully clickable */
+.browse-product-row {
+  pointer-events: auto !important;
+  touch-action: auto !important;
+}
+
+.browse-product-row * {
+  pointer-events: none;
+}
+
+/* Ensure image tiles are fully clickable */
+.browse-image-tile {
+  pointer-events: auto !important;
+  touch-action: auto !important;
+}
+
+.browse-image-tile img {
+  pointer-events: none;
+}
