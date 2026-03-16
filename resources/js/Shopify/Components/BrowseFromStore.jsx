@@ -116,22 +116,12 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
     return () => observer.disconnect();
   }, [open, hasMore, loadingMore, handleLoadMore]);
 
-  /* ── Handlers (guarded to prevent double-fire from onClick + onPointerUp fallback) ── */
-  const clickGuardRef = useRef(false);
-  const guardedClick = useCallback((fn) => {
-    if (clickGuardRef.current) return;
-    clickGuardRef.current = true;
-    fn();
-    setTimeout(() => { clickGuardRef.current = false; }, 300);
-  }, []);
-
+  /* ── Handlers ── */
   const handleProductClick = useCallback((product) => {
-    guardedClick(() => {
-      setSelectedProduct(product);
-      setProductImages(product.images?.length ? product.images : (product.image ? [product.image] : []));
-      setView('images');
-    });
-  }, [guardedClick]);
+    setSelectedProduct(product);
+    setProductImages(product.images?.length ? product.images : (product.image ? [product.image] : []));
+    setView('images');
+  }, []);
 
   const handleBack = useCallback(() => {
     setView('products');
@@ -140,11 +130,9 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
   }, []);
 
   const handleImageSelect = useCallback((url) => {
-    guardedClick(() => {
-      onSelectImage?.(url);
-      onClose?.();
-    });
-  }, [onSelectImage, onClose, guardedClick]);
+    onSelectImage?.(url);
+    onClose?.();
+  }, [onSelectImage, onClose]);
 
   /* ── Keyboard ── */
   useEffect(() => {
@@ -190,8 +178,10 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
             key={product.id}
             type="button"
             className="browse-product-row"
-            onClick={() => handleProductClick(product)}
-            onPointerUp={() => handleProductClick(product)}
+            ref={(el) => {
+              if (!el) return;
+              el.onclick = (e) => { e.stopPropagation(); handleProductClick(product); };
+            }}
             aria-label={`View images for ${product.title}`}
           >
             <div className="browse-product-thumb">
@@ -237,8 +227,10 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
             key={`${url}-${i}`}
             type="button"
             className="browse-image-tile"
-            onClick={() => handleImageSelect(url)}
-            onPointerUp={() => handleImageSelect(url)}
+            ref={(el) => {
+              if (!el) return;
+              el.onclick = (e) => { e.stopPropagation(); handleImageSelect(url); };
+            }}
             aria-label={`Select image ${i + 1}`}
           >
             <img src={url} alt={`Product image ${i + 1}`} onError={(e) => { e.target.src = PLACEHOLDER_IMG; }} />
@@ -259,7 +251,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
 
   /* ── Always render <ui-modal> so App Bridge can manage it ── */
   return (
-    <ui-modal id="browse-from-store-modal" ref={uiModalRef} variant="max">
+    <ui-modal id="browse-from-store-modal" ref={uiModalRef} variant="large">
       <div style={{ padding: '16px' }}>
         <BlockStack gap="400">
           {view === 'products' && (
