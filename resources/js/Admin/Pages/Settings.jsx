@@ -29,64 +29,54 @@ function formatSentAt(iso) {
 const SOCIAL_KEYS = ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube'];
 
 function DashboardContentTab({ heroSettings, featuredToolsSettings, announcementSettings, availableTools, canManageSettings }) {
-    const { data, setData, post, processing, errors } = useForm({
+    const toast = useAdminToast();
+    const form = useForm({
         heroTitle: heroSettings?.title || '',
         heroSubtitle: heroSettings?.subtitle || '',
         heroImageUrl: heroSettings?.imageUrl || '',
+        heroImageFile: null,
         featuredToolsEnabled: featuredToolsSettings?.enabled || false,
         featuredTools: featuredToolsSettings?.tools || [],
         announcementEnabled: announcementSettings?.enabled || false,
         announcementText: announcementSettings?.text || '',
     });
 
-    const [message, setMessage] = useState(null);
     const [imagePreview, setImagePreview] = useState(heroSettings?.imageUrl);
 
     const toggleTool = (toolKey) => {
-        const tools = data.featuredTools || [];
+        const tools = form.data.featuredTools || [];
         if (tools.includes(toolKey)) {
-            setData('featuredTools', tools.filter((t) => t !== toolKey));
+            form.setData('featuredTools', tools.filter((t) => t !== toolKey));
         } else {
-            setData('featuredTools', [...tools, toolKey]);
+            form.setData('featuredTools', [...tools, toolKey]);
+        }
+    };
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            form.setData('heroImageFile', file);
+            setImagePreview(URL.createObjectURL(file));
         }
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post('/admin/dashboard-settings', {
+        form.put(route('dashboard-settings.update'), {
+            forceFormData: true,
+            preserveScroll: true,
             onSuccess: () => {
-                setMessage({ type: 'success', text: 'Dashboard settings updated successfully!' });
-                setTimeout(() => setMessage(null), 3000);
+                toast.success('Dashboard content updated successfully');
+                form.setData('heroImageFile', null);
             },
             onError: () => {
-                setMessage({ type: 'error', text: 'Failed to update settings.' });
+                toast.error('Failed to update dashboard content');
             },
         });
     };
 
     return (
         <div className="space-y-4">
-            {message && (
-                <div
-                    className={`flex items-start gap-3 p-4 rounded-lg border ${
-                        message.type === 'success'
-                            ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
-                            : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
-                    }`}
-                >
-                    <div
-                        className={`mt-1 flex-shrink-0 ${
-                            message.type === 'success' ? 'text-emerald-600' : 'text-red-600'
-                        }`}
-                    >
-                        {message.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                    </div>
-                    <span className={message.type === 'success' ? 'text-emerald-700' : 'text-red-700'}>
-                        {message.text}
-                    </span>
-                </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Hero Section */}
                 <div className="space-y-4 pb-4 border-b border-gray-100 dark:border-gray-700">
@@ -96,46 +86,66 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
                             <input
                                 type="text"
-                                value={data.heroTitle}
-                                onChange={(e) => setData('heroTitle', e.target.value)}
+                                value={form.data.heroTitle}
+                                onChange={(e) => form.setData('heroTitle', e.target.value)}
                                 placeholder="e.g., Let's grow your business together"
                                 maxLength={255}
                                 className="form-input w-full text-sm"
                             />
-                            {errors.heroTitle && <p className="text-red-500 text-xs mt-1">{errors.heroTitle}</p>}
+                            {form.errors.heroTitle && <p className="text-red-500 text-xs mt-1">{form.errors.heroTitle}</p>}
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subtitle</label>
                             <textarea
-                                value={data.heroSubtitle}
-                                onChange={(e) => setData('heroSubtitle', e.target.value)}
+                                value={form.data.heroSubtitle}
+                                onChange={(e) => form.setData('heroSubtitle', e.target.value)}
                                 placeholder="Describe your offer..."
                                 maxLength={500}
                                 rows={2}
                                 className="form-input w-full text-sm"
                             />
-                            {errors.heroSubtitle && <p className="text-red-500 text-xs mt-1">{errors.heroSubtitle}</p>}
+                            {form.errors.heroSubtitle && <p className="text-red-500 text-xs mt-1">{form.errors.heroSubtitle}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Hero Image</label>
                             {imagePreview && (
-                                <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 mb-2 bg-gray-100 dark:bg-gray-700 h-20 w-full">
-                                    <img src={imagePreview} alt="Hero" className="w-full h-full object-cover" />
+                                <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 mb-3 bg-gray-100 dark:bg-gray-700 h-24 w-full">
+                                    <img src={imagePreview} alt="Hero" className="w-full h-full object-cover" onError={() => setImagePreview(null)} />
                                 </div>
                             )}
-                            <input
-                                type="url"
-                                value={data.heroImageUrl}
-                                onChange={(e) => {
-                                    setData('heroImageUrl', e.target.value);
-                                    setImagePreview(e.target.value);
-                                }}
-                                placeholder="https://images.unsplash.com/..."
-                                className="form-input w-full text-sm"
-                            />
-                            {errors.heroImageUrl && <p className="text-red-500 text-xs mt-1">{errors.heroImageUrl}</p>}
+                            <div className="space-y-2">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Or upload from file</label>
+                                    <label className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-400 dark:hover:border-primary-500 cursor-pointer transition-colors">
+                                        <Upload size={16} className="text-gray-500 dark:text-gray-400" />
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Choose image</span>
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="sr-only"
+                                            onChange={handleImageUpload}
+                                            disabled={form.processing}
+                                        />
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Or enter image URL</label>
+                                    <input
+                                        type="url"
+                                        value={form.data.heroImageUrl}
+                                        onChange={(e) => {
+                                            form.setData('heroImageUrl', e.target.value);
+                                            if (!form.data.heroImageFile) setImagePreview(e.target.value);
+                                        }}
+                                        placeholder="https://images.unsplash.com/..."
+                                        className="form-input w-full text-sm"
+                                    />
+                                </div>
+                            </div>
+                            {form.errors.heroImageUrl && <p className="text-red-500 text-xs mt-1">{form.errors.heroImageUrl}</p>}
+                            {form.errors.heroImageFile && <p className="text-red-500 text-xs mt-1">{form.errors.heroImageFile}</p>}
                         </div>
                     </div>
                 </div>
@@ -148,8 +158,8 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
                             <input
                                 type="checkbox"
                                 id="featured-tools-enabled"
-                                checked={data.featuredToolsEnabled}
-                                onChange={(e) => setData('featuredToolsEnabled', e.target.checked)}
+                                checked={form.data.featuredToolsEnabled}
+                                onChange={(e) => form.setData('featuredToolsEnabled', e.target.checked)}
                                 className="w-4 h-4 rounded border-gray-300 cursor-pointer"
                             />
                             <label htmlFor="featured-tools-enabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
@@ -157,13 +167,13 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
                             </label>
                         </div>
 
-                        {data.featuredToolsEnabled && (
+                        {form.data.featuredToolsEnabled && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 ml-6">
                                 {availableTools.map((tool) => (
                                     <label key={tool.key} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
                                         <input
                                             type="checkbox"
-                                            checked={data.featuredTools?.includes(tool.key) || false}
+                                            checked={form.data.featuredTools?.includes(tool.key) || false}
                                             onChange={() => toggleTool(tool.key)}
                                             className="w-4 h-4 rounded border-gray-300 cursor-pointer"
                                         />
@@ -182,8 +192,8 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
                         <input
                             type="checkbox"
                             id="announcement-enabled"
-                            checked={data.announcementEnabled}
-                            onChange={(e) => setData('announcementEnabled', e.target.checked)}
+                            checked={form.data.announcementEnabled}
+                            onChange={(e) => form.setData('announcementEnabled', e.target.checked)}
                             className="w-4 h-4 rounded border-gray-300 cursor-pointer"
                         />
                         <label htmlFor="announcement-enabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
@@ -191,26 +201,26 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
                         </label>
                     </div>
 
-                    {data.announcementEnabled && (
+                    {form.data.announcementEnabled && (
                         <div className="ml-6">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
                             <textarea
-                                value={data.announcementText}
-                                onChange={(e) => setData('announcementText', e.target.value)}
+                                value={form.data.announcementText}
+                                onChange={(e) => form.setData('announcementText', e.target.value)}
                                 placeholder="e.g., New feature available for all users!"
                                 maxLength={1000}
                                 rows={2}
                                 className="form-input w-full text-sm"
                             />
-                            {errors.announcementText && <p className="text-red-500 text-xs mt-1">{errors.announcementText}</p>}
+                            {form.errors.announcementText && <p className="text-red-500 text-xs mt-1">{form.errors.announcementText}</p>}
                         </div>
                     )}
                 </div>
 
                 {/* Save Button */}
                 <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <button type="submit" disabled={processing} className="btn btn-primary btn-sm">
-                        {processing ? 'Saving...' : 'Save dashboard content'}
+                    <button type="submit" disabled={form.processing} className="btn btn-primary btn-sm">
+                        {form.processing ? 'Saving...' : 'Save dashboard content'}
                     </button>
                 </div>
             </form>
@@ -480,20 +490,20 @@ export default function Settings() {
 
     const handleGeneralSubmit = (e) => {
         e.preventDefault();
-        const formData = new FormData();
-        formData.append('app_name', generalForm.data.app_name || '');
-        formData.append('footer_text', generalForm.data.footer_text || '');
-        formData.append('social_links_json', JSON.stringify(generalForm.data.social_links || {}));
-        if (generalForm.data.logo) {
-            formData.append('logo', generalForm.data.logo);
-        }
-
-        router.post(route('admin.settings.general.update'), formData, {
+        generalForm.transform((data) => ({
+            app_name: data.app_name || '',
+            footer_text: data.footer_text || '',
+            social_links_json: JSON.stringify(data.social_links || {}),
+            logo: data.logo || undefined,
+        })).post(route('admin.settings.general.update'), {
             preserveScroll: true,
+            forceFormData: true,
             onSuccess: () => {
+                toast.success('Branding updated successfully');
                 generalForm.setData('logo', null);
             },
             onError: () => {
+                toast.error('Failed to update branding');
                 console.error('Branding update failed:', generalForm.errors);
             },
         });

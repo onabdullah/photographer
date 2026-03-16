@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\DashboardSetting;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class DashboardSettingsController extends Controller
@@ -39,7 +41,8 @@ class DashboardSettingsController extends Controller
             // Hero Section
             'heroTitle' => 'required|string|max:255',
             'heroSubtitle' => 'required|string|max:500',
-            'heroImageUrl' => 'required|url',
+            'heroImageFile' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+            'heroImageUrl' => 'nullable|url',
 
             // Featured Tools
             'featuredToolsEnabled' => 'boolean',
@@ -52,11 +55,28 @@ class DashboardSettingsController extends Controller
         ]);
 
         try {
+            $heroImageUrl = $validated['heroImageUrl'] ?? '';
+
+            // Handle file upload if provided
+            if ($request->hasFile('heroImageFile')) {
+                $file = $request->file('heroImageFile');
+                $filename = 'hero-' . Str::random(16) . '.' . $file->getClientOriginalExtension();
+                $path = Storage::disk('public')->put('dashboard/hero', $file);
+                if ($path) {
+                    $heroImageUrl = Storage::disk('public')->url($path);
+                }
+            }
+
+            // Ensure we have an image URL
+            if (empty($heroImageUrl)) {
+                return back()->withErrors(['error' => 'Hero image URL or file is required.'])->withInput();
+            }
+
             // Update Hero Section
             DashboardSetting::setHeroSettings([
                 'title' => $validated['heroTitle'],
                 'subtitle' => $validated['heroSubtitle'],
-                'imageUrl' => $validated['heroImageUrl'],
+                'imageUrl' => $heroImageUrl,
             ]);
 
             // Update Featured Tools
