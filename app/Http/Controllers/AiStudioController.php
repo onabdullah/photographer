@@ -313,37 +313,34 @@ GRAPHQL;
         \Log::info("Assigning image to product. Public URL resolved to: " . $imageUrl . " For product GID: " . $gid);
 
         $mutation = <<<'GRAPHQL'
-mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
-  productCreateMedia(productId: $productId, media: $media) {
-    media {
-      ... on MediaImage {
-        id
-        image { url }
-      }
-      mediaContentType
-      status
-    }
-    mediaUserErrors { code field message }
+mutation productAppendImages($input: ProductAppendImagesInput!) {
+  productAppendImages(input: $input) {
+    newImages { id src }
+    userErrors { field message }
   }
 }
 GRAPHQL;
 
         try {
             $response = $shop->api()->graph($mutation, [
-                'productId' => $gid,
-                'media' => [
-                    [
-                        'mediaContentType' => 'IMAGE',
-                        'originalSource'   => $imageUrl,
+                'input' => [
+                    'id' => $gid,
+                    'images' => [
+                        ['src' => $imageUrl],
                     ],
                 ],
             ]);
 
             $body = $response['body'] ?? null;
+            $data = [];
             if ($body && method_exists($body, 'toArray')) {
                 $data = $body->toArray();
+            } elseif (is_array($body)) {
+                $data = $body;
+            } elseif (is_object($body) && isset($body->container)) {
+                $data = (array) $body->container;
             } else {
-                $data = is_array($body) ? $body : (isset($body->container) ? (array)$body->container : (is_object($body) ? json_decode(json_encode($body), true) : []));
+                $data = is_object($body) ? json_decode(json_encode($body), true) : [];
             }
 
             // Top-level GraphQL errors (e.g. unknown field, auth failure)
@@ -364,7 +361,7 @@ GRAPHQL;
                 
                 $exceptionString = isset($response['exception']) ? $response['exception']->getMessage() : null;
 
-                \Log::error('productCreateMedia GraphQL error', [
+                \Log::error('productAppendImages GraphQL error', [
                     'response_errors' => $response['errors'] ?? null,
                     'top_level_errors' => $topLevelErrors,
                     'product_gid' => $gid,
@@ -375,22 +372,22 @@ GRAPHQL;
                 return response()->json(['message' => $errMsg], 422);
             }
 
-            $mediaUserErrors = $data['data']['productCreateMedia']['mediaUserErrors'] ?? [];
-            if (! empty($mediaUserErrors)) {
-                $msg = collect($mediaUserErrors)->pluck('message')->filter()->implode(' ');
-                Log::channel('ai_studio')->warning('productCreateMedia mediaUserErrors', [
-                    'errors'      => $mediaUserErrors,
+            $userErrors = $data['data']['productAppendImages']['userErrors'] ?? [];
+            if (! empty($userErrors)) {
+                $msg = collect($userErrors)->pluck('message')->filter()->implode(' ');
+                \Log::warning('productAppendImages userErrors', [
+                    'errors'      => $userErrors,
                     'product_gid' => $gid,
                 ]);
                 return response()->json(['message' => $msg ?: 'Could not add image to product.'], 422);
             }
 
-            $media = $data['data']['productCreateMedia']['media'] ?? [];
-            if (empty($media)) {
-                Log::channel('ai_studio')->warning('productCreateMedia returned no media', [
+            $newImages = $data['data']['productAppendImages']['newImages'] ?? [];
+            if (empty($newImages)) {
+                \Log::warning('productAppendImages returned no images', [
                     'data'        => $data,
                     'product_gid' => $gid,
-                    'image_url'   => $generation->result_image_url,
+                    'image_url'   => $imageUrl,
                 ]);
                 return response()->json(['message' => 'Failed to add image to product.'], 422);
             }
