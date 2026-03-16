@@ -395,7 +395,7 @@ export default function GenerationsGallery({
       </Box>
 
       {/* Delete modal – ui-modal renders backdrop at Shopify admin level */}
-      <ui-modal id="gallery-delete-modal" ref={deleteModalRef}>
+      <ui-modal id="gallery-delete-modal" ref={deleteModalRef} variant="large">
         <div style={{ padding: '20px', display: deleteModalGen !== null ? undefined : 'none' }}>
           <Text as="p">
             This image will be permanently removed from your gallery. This action cannot be undone.
@@ -408,7 +408,7 @@ export default function GenerationsGallery({
       </ui-modal>
 
       {/* Export modal – ui-modal renders backdrop at Shopify admin level */}
-      <ui-modal id="gallery-export-modal" ref={exportModalRef}>
+      <ui-modal id="gallery-export-modal" ref={exportModalRef} variant="large">
         <div style={{ padding: '20px', display: exportModalOpen ? undefined : 'none' }}>
           <BlockStack gap="400">
             <Text as="p" tone="subdued">
