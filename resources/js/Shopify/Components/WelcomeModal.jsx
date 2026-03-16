@@ -91,7 +91,7 @@ export default function WelcomeModal() {
 
       <ui-modal id="welcome-modal" ref={modalRef}>
         {/* Top – 5 free credits + two lines */}
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: '20px', display: isOpen ? undefined : 'none' }}>
           <BlockStack gap="300" align="center" inlineAlign="center">
             <Text as="p" variant="bodyLg">
               You got{' '}
@@ -118,7 +118,7 @@ export default function WelcomeModal() {
         </div>
 
         {/* Value props – subtle card, left-aligned */}
-        <div style={{ padding: '0 20px' }}>
+        <div style={{ padding: '0 20px', display: isOpen ? undefined : 'none' }}>
           <Box
             padding="400"
             background="bg-surface-secondary"
@@ -145,14 +145,14 @@ export default function WelcomeModal() {
         </div>
 
         {/* CTA – small button */}
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: '20px', display: isOpen ? undefined : 'none' }}>
           <BlockStack gap="300" inlineAlign="center">
             <MagicButton size="slim" onClick={handleClose}>
               Let's Create Magic 🚀
             </MagicButton>
           </BlockStack>
         </div>
-        <ui-title-bar title="Welcome to the Future e-commerce ✨">
+        <ui-title-bar title="Welcome to the Future e-commerce ✨" style={{ display: isOpen ? undefined : 'none' }}>
           <button variant="primary" onClick={handleClose}>Let's Create Magic 🚀</button>
         </ui-title-bar>
       </ui-modal>

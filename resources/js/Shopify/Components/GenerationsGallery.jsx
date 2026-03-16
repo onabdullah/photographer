@@ -396,12 +396,12 @@ export default function GenerationsGallery({
 
       {/* Delete modal – ui-modal renders backdrop at Shopify admin level */}
       <ui-modal id="gallery-delete-modal" ref={deleteModalRef}>
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: '20px', display: deleteModalGen !== null ? undefined : 'none' }}>
           <Text as="p">
             This image will be permanently removed from your gallery. This action cannot be undone.
           </Text>
         </div>
-        <ui-title-bar title="Delete image permanently?">
+        <ui-title-bar title="Delete image permanently?" style={{ display: deleteModalGen !== null ? undefined : 'none' }}>
           <button variant="primary" tone="critical" onClick={handleDeleteConfirm}>Delete permanently</button>
           <button onClick={() => setDeleteModalGen(null)}>Cancel</button>
         </ui-title-bar>
@@ -409,7 +409,7 @@ export default function GenerationsGallery({
 
       {/* Export modal – ui-modal renders backdrop at Shopify admin level */}
       <ui-modal id="gallery-export-modal" ref={exportModalRef}>
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: '20px', display: exportModalOpen ? undefined : 'none' }}>
           <BlockStack gap="400">
             <Text as="p" tone="subdued">
               All your creations are securely processed and ready for download. Select how you'd like
@@ -458,7 +458,7 @@ export default function GenerationsGallery({
             </Text>
           </BlockStack>
         </div>
-        <ui-title-bar title="Export Your Masterpieces">
+        <ui-title-bar title="Export Your Masterpieces" style={{ display: exportModalOpen ? undefined : 'none' }}>
           <button
             variant="primary"
             onClick={handleExportZip}
