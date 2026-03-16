@@ -21,12 +21,8 @@ class SyncShopDetailsWhenMissing
         $shop = $request->user();
 
         if ($shop instanceof Merchant && (empty($shop->store_name) || empty($shop->shop_owner) || empty($shop->email))) {
-            try {
-                SyncShopDetails::dispatchSync($shop);
-                $shop->refresh();
-            } catch (\Throwable $e) {
-                report($e);
-            }
+            // Dispatch async — never block page loads with a synchronous REST API call.
+            SyncShopDetails::dispatch($shop);
         }
 
         return $next($request);

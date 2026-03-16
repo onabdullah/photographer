@@ -439,9 +439,10 @@ return [
      */
     'after_authenticate_job' => [
         [
-            'job' => \App\Jobs\SyncShopDetails::class,
-            // Keep shop data persistence immediate after OAuth/authenticate.
-            'inline' => true,
+            'job'    => \App\Jobs\SyncShopDetails::class,
+            // Run async so the OAuth callback returns immediately.
+            // SendInstallEmailsJob has a built-in fallback sync if needed.
+            'inline' => false,
         ],
     ],
 
@@ -573,7 +574,7 @@ return [
     |
     */
 
-    'session_token_refresh_interval' => env('SESSION_TOKEN_REFRESH_INTERVAL', 2000),
+    'session_token_refresh_interval' => env('SESSION_TOKEN_REFRESH_INTERVAL', 30000),
 
     /*
     |--------------------------------------------------------------------------
