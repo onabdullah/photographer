@@ -480,13 +480,22 @@ export default function Settings() {
 
     const handleGeneralSubmit = (e) => {
         e.preventDefault();
-        generalForm.transform((data) => ({
-            ...data,
-            social_links_json: JSON.stringify(data.social_links || {}),
-        })).post(route('admin.settings.general.update'), {
+        const formData = new FormData();
+        formData.append('app_name', generalForm.data.app_name || '');
+        formData.append('footer_text', generalForm.data.footer_text || '');
+        formData.append('social_links_json', JSON.stringify(generalForm.data.social_links || {}));
+        if (generalForm.data.logo) {
+            formData.append('logo', generalForm.data.logo);
+        }
+
+        router.post(route('admin.settings.general.update'), formData, {
             preserveScroll: true,
-            forceFormData: true,
-            onSuccess: () => generalForm.setData('logo', null),
+            onSuccess: () => {
+                generalForm.setData('logo', null);
+            },
+            onError: () => {
+                console.error('Branding update failed:', generalForm.errors);
+            },
         });
     };
 
