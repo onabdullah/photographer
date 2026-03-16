@@ -2,7 +2,7 @@ import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { usePage, router, useForm, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { useAdminToast } from '@/Admin/Components/AdminToast';
-import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, Check, TrendingUp, AlertCircle, ShieldOff, Image as ImageIcon, Shield, KeyRound, Lock, FileText, X, LogOut, Globe, Monitor, LogIn, Palette, Upload } from 'lucide-react';
+import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, Check, TrendingUp, AlertCircle, ShieldOff, Image as ImageIcon, Shield, KeyRound, Lock, FileText, X, LogOut, Globe, Monitor, LogIn, Palette, Upload, Sparkles } from 'lucide-react';
 
 const PURPOSE_LABELS = {
     support: 'Support',
@@ -13,7 +13,6 @@ const PURPOSE_LABELS = {
 const TABS = [
     { key: 'general', label: 'General', icon: Sliders },
     { key: 'security', label: 'System Security', icon: Lock },
-    { key: 'dashboard', label: 'Dashboard Content', icon: Palette },
     { key: 'smtp', label: 'SMTP', icon: Mail },
 ];
 
@@ -65,20 +64,8 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
         });
     };
 
-    if (!canManageSettings) {
-        return (
-            <div className="card">
-                <div className="p-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        You do not have permission to manage dashboard content. Contact an administrator if you need access.
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {message && (
                 <div
                     className={`flex items-start gap-3 p-4 rounded-lg border ${
@@ -100,44 +87,41 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Hero Section */}
-                <div className="card overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50">
-                        <Palette size={18} className="text-primary-600 dark:text-primary-400" />
-                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Hero Section</h2>
-                    </div>
-                    <div className="p-4 space-y-4">
+                <div className="space-y-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Hero Section</h3>
+                    <div className="space-y-3">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hero Title</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
                             <input
                                 type="text"
                                 value={data.heroTitle}
                                 onChange={(e) => setData('heroTitle', e.target.value)}
                                 placeholder="e.g., Let's grow your business together"
                                 maxLength={255}
-                                className="form-input w-full"
+                                className="form-input w-full text-sm"
                             />
                             {errors.heroTitle && <p className="text-red-500 text-xs mt-1">{errors.heroTitle}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hero Subtitle</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subtitle</label>
                             <textarea
                                 value={data.heroSubtitle}
                                 onChange={(e) => setData('heroSubtitle', e.target.value)}
                                 placeholder="Describe your offer..."
                                 maxLength={500}
                                 rows={2}
-                                className="form-input w-full"
+                                className="form-input w-full text-sm"
                             />
                             {errors.heroSubtitle && <p className="text-red-500 text-xs mt-1">{errors.heroSubtitle}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hero Image URL</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
                             {imagePreview && (
-                                <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 mb-3 bg-gray-100 dark:bg-gray-700 h-32 w-full">
+                                <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 mb-2 bg-gray-100 dark:bg-gray-700 h-20 w-full">
                                     <img src={imagePreview} alt="Hero" className="w-full h-full object-cover" />
                                 </div>
                             )}
@@ -149,7 +133,7 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
                                     setImagePreview(e.target.value);
                                 }}
                                 placeholder="https://images.unsplash.com/..."
-                                className="form-input w-full"
+                                className="form-input w-full text-sm"
                             />
                             {errors.heroImageUrl && <p className="text-red-500 text-xs mt-1">{errors.heroImageUrl}</p>}
                         </div>
@@ -157,12 +141,9 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
                 </div>
 
                 {/* Featured Tools */}
-                <div className="card overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50">
-                        <Sparkles size={18} className="text-primary-600 dark:text-primary-400" />
-                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Featured Tools</h2>
-                    </div>
-                    <div className="p-4 space-y-4">
+                <div className="space-y-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Featured Tools</h3>
+                    <div className="space-y-2">
                         <div className="flex items-center gap-3">
                             <input
                                 type="checkbox"
@@ -177,7 +158,7 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
                         </div>
 
                         {data.featuredToolsEnabled && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 ml-6">
                                 {availableTools.map((tool) => (
                                     <label key={tool.key} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
                                         <input
@@ -195,46 +176,41 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
                 </div>
 
                 {/* Announcements */}
-                <div className="card overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50">
-                        <AlertCircle size={18} className="text-primary-600 dark:text-primary-400" />
-                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Announcement Banner</h2>
+                <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Announcement Banner</h3>
+                    <div className="flex items-center gap-3">
+                        <input
+                            type="checkbox"
+                            id="announcement-enabled"
+                            checked={data.announcementEnabled}
+                            onChange={(e) => setData('announcementEnabled', e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                        />
+                        <label htmlFor="announcement-enabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                            Show announcement
+                        </label>
                     </div>
-                    <div className="p-4 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <input
-                                type="checkbox"
-                                id="announcement-enabled"
-                                checked={data.announcementEnabled}
-                                onChange={(e) => setData('announcementEnabled', e.target.checked)}
-                                className="w-4 h-4 rounded border-gray-300 cursor-pointer"
-                            />
-                            <label htmlFor="announcement-enabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                                Show announcement
-                            </label>
-                        </div>
 
-                        {data.announcementEnabled && (
-                            <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Announcement Text</label>
-                                <textarea
-                                    value={data.announcementText}
-                                    onChange={(e) => setData('announcementText', e.target.value)}
-                                    placeholder="e.g., New feature available for all users!"
-                                    maxLength={1000}
-                                    rows={2}
-                                    className="form-input w-full"
-                                />
-                                {errors.announcementText && <p className="text-red-500 text-xs mt-1">{errors.announcementText}</p>}
-                            </div>
-                        )}
-                    </div>
+                    {data.announcementEnabled && (
+                        <div className="ml-6">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
+                            <textarea
+                                value={data.announcementText}
+                                onChange={(e) => setData('announcementText', e.target.value)}
+                                placeholder="e.g., New feature available for all users!"
+                                maxLength={1000}
+                                rows={2}
+                                className="form-input w-full text-sm"
+                            />
+                            {errors.announcementText && <p className="text-red-500 text-xs mt-1">{errors.announcementText}</p>}
+                        </div>
+                    )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-3">
-                    <button type="submit" disabled={processing} className="btn btn-primary">
-                        {processing ? 'Saving...' : 'Save Changes'}
+                {/* Save Button */}
+                <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <button type="submit" disabled={processing} className="btn btn-primary btn-sm">
+                        {processing ? 'Saving...' : 'Save dashboard content'}
                     </button>
                 </div>
             </form>
@@ -398,7 +374,7 @@ export default function Settings() {
     useEffect(() => {
         const u = new URL(pageUrl, window.location.origin);
         const t = u.searchParams.get('tab');
-        if (t && ['general', 'security', 'dashboard', 'smtp'].includes(t)) setActiveTab(t);
+        if (t && ['general', 'security', 'smtp'].includes(t)) setActiveTab(t);
     }, [pageUrl]);
     const [copiedId, setCopiedId] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
@@ -660,6 +636,29 @@ export default function Settings() {
                                             <p className="text-xs text-gray-500 dark:text-gray-400">You don’t have permission to edit branding.</p>
                                         </div>
                                     </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Dashboard Content */}
+                        <div className="card overflow-hidden">
+                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50">
+                                <Palette size={18} className="text-primary-600 dark:text-primary-400" />
+                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Dashboard Content</h2>
+                            </div>
+                            <div className="p-4">
+                                {canManageSettings ? (
+                                    <DashboardContentTab
+                                        heroSettings={heroSettings}
+                                        featuredToolsSettings={featuredToolsSettings}
+                                        announcementSettings={announcementSettings}
+                                        availableTools={availableTools}
+                                        canManageSettings={canManageSettings}
+                                    />
+                                ) : (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        You do not have permission to manage dashboard content. Contact an administrator if you need access.
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -931,16 +930,6 @@ export default function Settings() {
 
                 {/* Log detail modal */}
                 {selectedLog && <LoginLogDetailModal log={selectedLog} onClose={() => setSelectedLog(null)} />}
-
-                {activeTab === 'dashboard' && (
-                    <DashboardContentTab
-                        heroSettings={heroSettings}
-                        featuredToolsSettings={featuredToolsSettings}
-                        announcementSettings={announcementSettings}
-                        availableTools={availableTools}
-                        canManageSettings={canManageSettings}
-                    />
-                )}
 
                 {activeTab === 'smtp' && (
                     <div className="space-y-4">
