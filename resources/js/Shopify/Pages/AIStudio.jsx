@@ -1829,17 +1829,19 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                         value={magicEraserOutputFormat}
                         onChange={setMagicEraserOutputFormat}
                       />
-                      <TextField
-                        label="Instructions for masked area"
-                        value={magicEraserPrompt}
-                        onChange={setMagicEraserPrompt}
-                        placeholder={MAGIC_ERASER_DEFAULT_PROMPT}
-                        multiline={3}
-                        autoComplete="off"
-                        characterCount={magicEraserPrompt.length}
-                        maxLength={600}
-                        helpText="Optional. Tell the AI what to place in the erased area, or leave blank for seamless background fill."
-                      />
+                      <style>{`.me-instructions textarea { max-height: 80px; overflow-y: auto; resize: none; }`}</style>
+                      <div className="me-instructions">
+                        <TextField
+                          label="Instructions for masked area"
+                          value={magicEraserPrompt}
+                          onChange={setMagicEraserPrompt}
+                          placeholder={MAGIC_ERASER_DEFAULT_PROMPT}
+                          multiline={3}
+                          autoComplete="off"
+                          characterCount={magicEraserPrompt.length}
+                          maxLength={600}
+                        />
+                      </div>
                     </BlockStack>
                   )}
 
