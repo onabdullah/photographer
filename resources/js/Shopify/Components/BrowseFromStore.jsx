@@ -24,8 +24,7 @@ const STATUS_OPTIONS = [
 const PLACEHOLDER_IMG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56"%3E%3Crect width="56" height="56" fill="%23f3f4f6"/%3E%3Cpath d="M28 22a6 6 0 1 0 0-12 6 6 0 0 0 0 12zm0 4c-8 0-14 5.4-14 12v2h28v-2c0-6.6-6-12-14-12z" fill="%239ca3af"/%3E%3C/svg%3E';
 
 /**
- * Browse from Store – Product & image picker using App Bridge ui-modal.
- * The <ui-modal> must ALWAYS be in the DOM; visibility is controlled via .show()/.hide().
+ * Browse from Store – Professional product & image picker
  */
 export default function BrowseFromStore({ open, onClose, onSelectImage }) {
   const [products, setProducts] = useState([]);
@@ -35,7 +34,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
   const [nextCursor, setNextCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [view, setView] = useState('products');
+  const [view, setView] = useState('products'); // products | images
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productImages, setProductImages] = useState([]);
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
@@ -43,14 +42,13 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
   const loadMoreRef = useRef(null);
   const uiModalRef = useRef(null);
 
-  /* ── App Bridge: show / hide ── */
+  /* ── App Bridge ui-modal show/hide ── */
   useEffect(() => {
     const el = uiModalRef.current;
     if (!el) return;
     if (open) el.show?.(); else el.hide?.();
   }, [open]);
 
-  /* ── App Bridge: sync hide event → parent ── */
   useEffect(() => {
     const el = uiModalRef.current;
     if (!el) return;
@@ -59,20 +57,23 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
     return () => el.removeEventListener('hide', onHide);
   }, [onClose]);
 
-  /* ── Fetch products ── */
   const fetchProducts = useCallback(async (cursor = null, append = false) => {
-    if (append) setLoadingMore(true); else setLoading(true);
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     try {
       const params = { limit: 24, status };
       if (cursor) params.cursor = cursor;
       if (search?.trim()) params.query = search.trim();
       const qs = new URLSearchParams(params).toString();
       const { data } = await axios.get(`/shopify/api/products?${qs}`);
-      const list = data.products || [];
-      setProducts(append ? (prev) => [...prev, ...list] : list);
+      const newProducts = data.products || [];
+      setProducts(append ? (prev) => [...prev, ...newProducts] : newProducts);
       setNextCursor(data.next_page_info || null);
       setHasMore(data.has_next || false);
-    } catch {
+    } catch (err) {
       setProducts((prev) => (append ? prev : []));
       setHasMore(false);
     } finally {
@@ -81,7 +82,6 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
     }
   }, [status, search]);
 
-  /* ── Reset & fetch when modal opens or status changes ── */
   useEffect(() => {
     if (open) {
       setView('products');
@@ -91,32 +91,22 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
     }
   }, [open, status]);
 
-  /* ── Search debounce ── */
   const searchDebounceRef = useRef(null);
   useEffect(() => {
     if (!open) return;
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(() => fetchProducts(null, false), 250);
-    return () => { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); };
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
   }, [search, open, fetchProducts]);
 
-  /* ── Infinite scroll ── */
   const handleLoadMore = useCallback(() => {
-    if (nextCursor && !loadingMore && hasMore) fetchProducts(nextCursor, true);
+    if (nextCursor && !loadingMore && hasMore) {
+      fetchProducts(nextCursor, true);
+    }
   }, [nextCursor, loadingMore, hasMore, fetchProducts]);
 
-  useEffect(() => {
-    if (!open) return;
-    const observer = new IntersectionObserver(
-      (entries) => { if (entries[0]?.isIntersecting) handleLoadMore(); },
-      { root: gridRef.current, rootMargin: '100px', threshold: 0.1 }
-    );
-    const el = loadMoreRef.current;
-    if (el) observer.observe(el);
-    return () => observer.disconnect();
-  }, [open, hasMore, loadingMore, handleLoadMore]);
-
-  /* ── Handlers ── */
   const handleProductClick = useCallback((product) => {
     setSelectedProduct(product);
     setProductImages(product.images?.length ? product.images : (product.image ? [product.image] : []));
@@ -134,17 +124,35 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
     onClose?.();
   }, [onSelectImage, onClose]);
 
-  /* ── Keyboard ── */
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Escape') {
+      if (view === 'images') {
+        handleBack();
+      } else {
+        onClose?.();
+      }
+    }
+  }, [view, handleBack, onClose]);
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e) => {
-      if (e.key === 'Escape') { view === 'images' ? handleBack() : onClose?.(); }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, view, handleBack, onClose]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, handleKeyDown]);
 
-  /* ── Product list ── */
+  useEffect(() => {
+    if (!open) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) handleLoadMore();
+      },
+      { root: gridRef.current, rootMargin: '100px', threshold: 0.1 }
+    );
+    const el = loadMoreRef.current;
+    if (el) observer.observe(el);
+    return () => observer.disconnect();
+  }, [open, hasMore, loadingMore, handleLoadMore]);
+
   const renderProductList = () => (
     <div
       ref={gridRef}
@@ -161,16 +169,40 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
     >
       {loading ? (
         Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < 7 ? '1px solid var(--p-color-border-subdued)' : 'none' }}>
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '12px 16px',
+              borderBottom: i < 7 ? '1px solid var(--p-color-border-subdued)' : 'none',
+            }}
+          >
             <SkeletonThumbnail size="small" />
             <SkeletonBodyText lines={1} />
           </div>
         ))
       ) : products.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-          <div style={{ opacity: 0.5 }}><Icon source={ImageIcon} tone="subdued" /></div>
-          <Text as="p" variant="bodyMd" tone="subdued" fontWeight="medium">No products found</Text>
-          <Text as="p" variant="bodySm" tone="subdued">Try adjusting your search or filter</Text>
+        <div
+          style={{
+            textAlign: 'center',
+            padding: 56,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <div style={{ opacity: 0.5 }}>
+            <Icon source={ImageIcon} tone="subdued" />
+          </div>
+          <Text as="p" variant="bodyMd" tone="subdued" fontWeight="medium">
+            No products found
+          </Text>
+          <Text as="p" variant="bodySm" tone="subdued">
+            Try adjusting your search or filter
+          </Text>
         </div>
       ) : (
         products.map((product) => (
@@ -182,12 +214,18 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
             aria-label={`View images for ${product.title}`}
           >
             <div className="browse-product-thumb">
-              <img src={product.image || PLACEHOLDER_IMG} alt="" onError={(e) => { e.target.src = PLACEHOLDER_IMG; }} />
+              <img
+                src={product.image || PLACEHOLDER_IMG}
+                alt={product.title ? `Product: ${product.title}` : ''}
+                onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
+              />
             </div>
             <div className="browse-product-meta">
               <div className="browse-product-title">{product.title || 'Untitled'}</div>
               <div className="browse-product-sub">
-                {product.image_count > 0 ? `${product.image_count} image${product.image_count !== 1 ? 's' : ''}` : 'No images'}
+                {product.image_count > 0
+                  ? `${product.image_count} image${product.image_count !== 1 ? 's' : ''}`
+                  : 'No images'}
               </div>
             </div>
             <span className="browse-view-hint" aria-hidden="true">View images</span>
@@ -196,11 +234,14 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
         ))
       )}
       {hasMore && !loading && <div ref={loadMoreRef} style={{ height: 1 }} />}
-      {loadingMore && <div style={{ padding: 12, textAlign: 'center' }}><SkeletonBodyText lines={1} /></div>}
+      {loadingMore && (
+        <div style={{ padding: 12, textAlign: 'center' }}>
+          <SkeletonBodyText lines={1} />
+        </div>
+      )}
     </div>
   );
 
-  /* ── Image grid ── */
   const renderImageList = () => (
     <div
       role="list"
@@ -215,7 +256,14 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
       }}
     >
       {productImages.length === 0 ? (
-        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: 'var(--p-color-text-subdued)' }}>
+        <div
+          style={{
+            gridColumn: '1 / -1',
+            textAlign: 'center',
+            padding: 40,
+            color: 'var(--p-color-text-subdued)',
+          }}
+        >
           <Text as="p" variant="bodyMd">No images for this product</Text>
         </div>
       ) : (
@@ -227,32 +275,52 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
             onClick={() => handleImageSelect(url)}
             aria-label={`Select image ${i + 1}`}
           >
-            <img src={url} alt={`Product image ${i + 1}`} onError={(e) => { e.target.src = PLACEHOLDER_IMG; }} />
+            <img
+              src={url}
+              alt={`Product image ${i + 1}`}
+              onError={(e) => { e.target.src = PLACEHOLDER_IMG; e.target.alt = 'Image unavailable'; }}
+            />
           </button>
         ))
       )}
     </div>
   );
 
-  /* ── Filter activator ── */
   const activeFilterLabel = STATUS_OPTIONS.find((o) => o.value === status)?.label || 'Status';
   const filterActivator = (
     <InlineStack gap="200" blockAlign="center">
-      {status !== 'active' && <span className="browse-filter-chip">{activeFilterLabel}</span>}
-      <Button variant="tertiary" size="slim" onClick={() => setFilterPopoverOpen(true)}>Add filter +</Button>
+      {status !== 'active' && (
+        <span className="browse-filter-chip">
+          {activeFilterLabel}
+        </span>
+      )}
+      <Button variant="tertiary" size="slim" onClick={() => setFilterPopoverOpen(true)}>
+        Add filter +
+      </Button>
     </InlineStack>
   );
 
-  /* ── Always render <ui-modal> so App Bridge can manage it ── */
   return (
-    <ui-modal id="browse-from-store-modal" ref={uiModalRef} variant="large">
-      <div style={{ padding: '16px' }}>
+    <ui-modal
+      id="browse-from-store-modal"
+      ref={uiModalRef}
+      variant="large"
+    >
+      <div style={{ padding: '16px', minHeight: '520px', display: open ? undefined : 'none' }}>
         <BlockStack gap="400">
           {view === 'products' && (
             <>
               <BlockStack gap="300">
                 <InlineStack gap="300" blockAlign="end" wrap>
-                  <div style={{ flex: 1, minWidth: 200, borderRadius: 10, overflow: 'hidden', background: 'var(--p-color-bg-surface-secondary)' }}>
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 200,
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                      background: 'var(--p-color-bg-surface-secondary)',
+                    }}
+                  >
                     <TextField
                       label="Search products"
                       labelHidden
@@ -263,7 +331,11 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
                       autoComplete="off"
                     />
                   </div>
-                  <Popover active={filterPopoverOpen} onClose={() => setFilterPopoverOpen(false)} activator={filterActivator}>
+                  <Popover
+                    active={filterPopoverOpen}
+                    onClose={() => setFilterPopoverOpen(false)}
+                    activator={filterActivator}
+                  >
                     <Popover.Pane>
                       <Box padding="300">
                         <BlockStack gap="100">
@@ -272,11 +344,20 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
                             <button
                               key={o.value}
                               type="button"
-                              onClick={() => { setStatus(o.value); setFilterPopoverOpen(false); }}
+                              onClick={() => {
+                                setStatus(o.value);
+                                setFilterPopoverOpen(false);
+                              }}
                               style={{
-                                display: 'block', width: '100%', padding: '10px 14px', textAlign: 'left',
+                                display: 'block',
+                                width: '100%',
+                                padding: '10px 14px',
+                                textAlign: 'left',
                                 background: status === o.value ? 'var(--premium-teal-muted)' : 'transparent',
-                                border: 'none', borderRadius: 8, cursor: 'pointer', font: 'inherit',
+                                border: 'none',
+                                borderRadius: 8,
+                                cursor: 'pointer',
+                                font: 'inherit',
                                 fontWeight: status === o.value ? 500 : 400,
                                 color: status === o.value ? 'var(--premium-teal)' : 'var(--p-color-text)',
                                 transition: 'all 150ms ease',
@@ -297,7 +378,14 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
           {view === 'images' && (
             <>
               <InlineStack gap="300" blockAlign="center">
-                <Button variant="plain" icon={ChevronLeftIcon} onClick={handleBack} accessibilityLabel="Back to products">Back</Button>
+                <Button
+                  variant="plain"
+                  icon={ChevronLeftIcon}
+                  onClick={handleBack}
+                  accessibilityLabel="Back to products"
+                >
+                  Back
+                </Button>
                 <Text as="span" variant="bodySm" tone="subdued" fontWeight="medium">
                   {productImages.length} image{productImages.length !== 1 ? 's' : ''} — click to select
                 </Text>
@@ -307,9 +395,9 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
           )}
         </BlockStack>
       </div>
-      <ui-title-bar title={view === 'products' ? 'Add product' : selectedProduct?.title || 'Select image'}>
+      <ui-title-bar title={view === 'products' ? 'Add product' : selectedProduct?.title || 'Select image'} style={{ display: open ? undefined : 'none' }}>
         {view === 'products' && <button onClick={onClose}>Cancel</button>}
-        {view === 'images' && <button onClick={handleBack}>Back</button>}
+        {view === 'images'   && <button onClick={handleBack}>Back</button>}
       </ui-title-bar>
     </ui-modal>
   );
