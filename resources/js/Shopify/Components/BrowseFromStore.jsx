@@ -162,8 +162,6 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
         border: '1px solid var(--p-color-border-subdued)',
         borderRadius: 12,
         overflow: 'hidden',
-        maxHeight: 'calc(70vh - 140px)',
-        overflowY: 'auto',
         boxShadow: 'var(--shadow-sm)',
       }}
     >
@@ -250,8 +248,6 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
         gap: 12,
-        overflowY: 'auto',
-        maxHeight: 'calc(70vh - 140px)',
         padding: 2,
       }}
     >
@@ -305,7 +301,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
       id="browse-from-store-modal"
       ref={uiModalRef}
     >
-      <div style={{ padding: '16px', minHeight: '520px', display: open ? undefined : 'none' }}>
+      <div style={{ padding: '16px', display: open ? undefined : 'none' }}>
         <BlockStack gap="400">
           {view === 'products' && (
             <>
