@@ -313,20 +313,33 @@ GRAPHQL;
         \Log::info("Assigning image to product. Public URL resolved to: " . $imageUrl . " For product GID: " . $gid);
 
         $mutation = <<<'GRAPHQL'
-mutation productAppendImages($input: ProductAppendImagesInput!) {
-  productAppendImages(input: $input) {
-    newImages { id src }
-    userErrors { field message }
+mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
+  productCreateMedia(productId: $productId, media: $media) {
+    media {
+      alt
+      mediaContentType
+      status
+    }
+    mediaUserErrors {
+      code
+      field
+      message
+    }
+    product {
+      id
+    }
   }
 }
 GRAPHQL;
 
         try {
             $response = $shop->api()->graph($mutation, [
-                'input' => [
-                    'id' => $gid,
-                    'images' => [
-                        ['src' => $imageUrl],
+                'productId' => $gid,
+                'media' => [
+                    [
+                        'mediaContentType' => 'IMAGE',
+                        'originalSource'   => $imageUrl,
+                        'alt' => 'Generated Image'
                     ],
                 ],
             ]);
@@ -347,44 +360,59 @@ GRAPHQL;
             $topLevelErrors = $data['errors'] ?? [];
             if (! empty($topLevelErrors) || !empty($response['errors'])) {
                 $errMsg = '';
-                if (!empty($topLevelErrors) && is_array($topLevelErrors)) {
-                    $errMsg = collect($topLevelErrors)->pluck('message')->filter()->implode(' ');
-                } elseif (is_array($response['errors'])) {
-                    $errMsg = collect($response['errors'])->pluck('message')->filter()->implode(' ');
-                } elseif (is_string($response['errors'])) {
+                $exceptionString = '';
+                $fullErrorBody = '';
+
+                if (isset($response['exception'])) {
+                    $e = $response['exception'];
+                    $exceptionString = $e->getMessage();
+                    if (method_exists($e, 'getResponse') && $e->getResponse()) {
+                        $fullErrorBody = (string) $e->getResponse()->getBody();
+                        $decoded = json_decode($fullErrorBody, true);
+                        if ($decoded && isset($decoded['errors'])) {
+                            if (is_array($decoded['errors'])) {
+                                $errMsg = collect($decoded['errors'])->pluck('message')->filter()->implode('; ');
+                            } else {
+                                $errMsg = $decoded['errors'];
+                            }
+                        }
+                    }
+                }
+
+                if (empty($errMsg) && !empty($topLevelErrors) && is_array($topLevelErrors)) {
+                    $errMsg = collect($topLevelErrors)->pluck('message')->filter()->implode('; ');
+                } elseif (empty($errMsg) && is_array($response['errors'])) {
+                    $errMsg = collect($response['errors'])->pluck('message')->filter()->implode('; ');
+                } elseif (empty($errMsg) && is_string($response['errors']) && $response['errors'] !== '1') {
                     $errMsg = $response['errors'];
                 }
                 
                 if (empty($errMsg) || $errMsg === '1') {
-                    $errMsg = 'Failed to add image to product due to a Shopify API error. ' . json_encode($response['errors'] ?? $topLevelErrors);
+                    $errMsg = 'Detailed Shopify API Error: ' . ($fullErrorBody ?: $exceptionString);
                 }
                 
-                $exceptionString = isset($response['exception']) ? $response['exception']->getMessage() : null;
-
-                \Log::error('productAppendImages GraphQL error', [
-                    'response_errors' => $response['errors'] ?? null,
-                    'top_level_errors' => $topLevelErrors,
+                \Log::error('productCreateMedia GraphQL error', [
                     'product_gid' => $gid,
                     'status' => $response['status'] ?? null,
                     'exception_message' => $exceptionString,
-                    'full_body' => $data,
+                    'full_body' => $fullErrorBody ?: $data,
                 ]);
                 return response()->json(['message' => $errMsg], 422);
             }
 
-            $userErrors = $data['data']['productAppendImages']['userErrors'] ?? [];
+            $userErrors = $data['data']['productCreateMedia']['mediaUserErrors'] ?? [];
             if (! empty($userErrors)) {
                 $msg = collect($userErrors)->pluck('message')->filter()->implode(' ');
-                \Log::warning('productAppendImages userErrors', [
+                \Log::warning('productCreateMedia userErrors', [
                     'errors'      => $userErrors,
                     'product_gid' => $gid,
                 ]);
                 return response()->json(['message' => $msg ?: 'Could not add image to product.'], 422);
             }
 
-            $newImages = $data['data']['productAppendImages']['newImages'] ?? [];
+            $newImages = $data['data']['productCreateMedia']['media'] ?? [];
             if (empty($newImages)) {
-                \Log::warning('productAppendImages returned no images', [
+                \Log::warning('productCreateMedia returned no media', [
                     'data'        => $data,
                     'product_gid' => $gid,
                     'image_url'   => $imageUrl,
