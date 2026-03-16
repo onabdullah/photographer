@@ -62,17 +62,45 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        form.put(route('dashboard-settings.update'), {
-            forceFormData: true,
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Dashboard content updated successfully');
-                form.setData('heroImageFile', null);
-            },
-            onError: () => {
-                toast.error('Failed to update dashboard content');
-            },
-        });
+
+        // For file uploads, we need to use router directly with FormData
+        if (form.data.heroImageFile) {
+            const formData = new FormData();
+            formData.append('heroTitle', form.data.heroTitle);
+            formData.append('heroSubtitle', form.data.heroSubtitle);
+            formData.append('heroImageFile', form.data.heroImageFile);
+            formData.append('featuredToolsEnabled', form.data.featuredToolsEnabled);
+            formData.append('featuredTools', JSON.stringify(form.data.featuredTools || []));
+            formData.append('announcementEnabled', form.data.announcementEnabled);
+            formData.append('announcementText', form.data.announcementText);
+
+            router.put(route('dashboard-settings.update'), formData, {
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('Dashboard content updated successfully');
+                    form.setData('heroImageFile', null);
+                },
+                onError: (errors) => {
+                    console.error('Dashboard update errors:', errors);
+                    toast.error('Failed to update dashboard content');
+                },
+            });
+        } else {
+            // No file upload, use form.put()
+            form.put(route('dashboard-settings.update'), {
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('Dashboard content updated successfully');
+                    form.setData('heroImageFile', null);
+                },
+                onError: (errors) => {
+                    console.error('Dashboard update errors:', errors);
+                    toast.error('Failed to update dashboard content');
+                },
+            });
+        }
     };
 
     return (
@@ -490,21 +518,24 @@ export default function Settings() {
 
     const handleGeneralSubmit = (e) => {
         e.preventDefault();
-        generalForm.transform((data) => ({
-            app_name: data.app_name || '',
-            footer_text: data.footer_text || '',
-            social_links_json: JSON.stringify(data.social_links || {}),
-            logo: data.logo || undefined,
-        })).post(route('admin.settings.general.update'), {
-            preserveScroll: true,
+        const formData = new FormData();
+        formData.append('app_name', generalForm.data.app_name || '');
+        formData.append('footer_text', generalForm.data.footer_text || '');
+        formData.append('social_links_json', JSON.stringify(generalForm.data.social_links || {}));
+        if (generalForm.data.logo) {
+            formData.append('logo', generalForm.data.logo);
+        }
+
+        router.post(route('admin.settings.general.update'), formData, {
             forceFormData: true,
+            preserveScroll: true,
             onSuccess: () => {
                 toast.success('Branding updated successfully');
                 generalForm.setData('logo', null);
             },
-            onError: () => {
+            onError: (errors) => {
+                console.error('Branding update errors:', errors);
                 toast.error('Failed to update branding');
-                console.error('Branding update failed:', generalForm.errors);
             },
         });
     };
