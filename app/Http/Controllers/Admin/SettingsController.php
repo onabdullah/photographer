@@ -12,6 +12,7 @@ use App\Models\LoginLog;
 use App\Models\MailLog;
 use App\Models\SiteSetting;
 use App\Models\SmtpSetting;
+use App\Models\DashboardSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
@@ -202,6 +203,19 @@ class SettingsController extends Controller
             'last_24h'  => (int) LoginLog::where('created_at', '>=', now()->subDay())->count(),
         ];
 
+        // Fetch dashboard settings
+        $heroSettings = DashboardSetting::getHeroSettings();
+        $featuredToolsSettings = DashboardSetting::getFeaturedToolsSettings();
+        $announcementSettings = DashboardSetting::getAnnouncementSettings();
+        $availableTools = [
+            ['key' => 'magic_eraser', 'label' => 'Magic Eraser'],
+            ['key' => 'remove_bg', 'label' => 'Background Remover'],
+            ['key' => 'compressor', 'label' => 'Image Compressor'],
+            ['key' => 'upscale', 'label' => 'Upscaler'],
+            ['key' => 'enhance', 'label' => 'Image Enhancer'],
+            ['key' => 'lighting', 'label' => 'Lighting Fix'],
+        ];
+
         return Inertia::render('Admin/Pages/Settings', [
             'smtpSettings' => $smtpSettings,
             'smtpPurposes' => $smtpPurposes,
@@ -235,6 +249,11 @@ class SettingsController extends Controller
             ],
             'two_factor_qr_url' => $request->session()->get('two_factor_qr_url'),
             'two_factor_secret' => $request->session()->get('two_factor_secret'),
+            // Dashboard settings
+            'heroSettings' => $heroSettings,
+            'featuredToolsSettings' => $featuredToolsSettings,
+            'announcementSettings' => $announcementSettings,
+            'availableTools' => $availableTools,
         ]);
     }
 

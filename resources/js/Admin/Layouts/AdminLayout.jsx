@@ -31,7 +31,6 @@ import {
     CreditCard,
     Package,
     MessageCircle,
-    Palette,
 } from 'lucide-react';
 
 // ============================================================
@@ -94,7 +93,6 @@ const SECTIONS = [
         id: 'system',
         label: 'SYSTEM',
         items: [
-            { name: 'Dashboard Content', href: '/admin/dashboard-settings', icon: Palette, permission: 'settings.manage' },
             { name: 'Settings', href: '/admin/settings', icon: Settings, permission: 'settings.view' },
             {
                 name: 'Coming Soon',

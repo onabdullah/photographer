@@ -2,7 +2,7 @@ import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { usePage, router, useForm, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { useAdminToast } from '@/Admin/Components/AdminToast';
-import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, Check, TrendingUp, AlertCircle, ShieldOff, Image as ImageIcon, Shield, KeyRound, Lock, FileText, X, LogOut, Globe, Monitor, LogIn } from 'lucide-react';
+import { Settings as SettingsIcon, Mail, Plus, Pencil, Trash2, Send, CheckCircle, Sliders, Inbox, Copy, Check, TrendingUp, AlertCircle, ShieldOff, Image as ImageIcon, Shield, KeyRound, Lock, FileText, X, LogOut, Globe, Monitor, LogIn, Palette, Upload } from 'lucide-react';
 
 const PURPOSE_LABELS = {
     support: 'Support',
@@ -13,6 +13,7 @@ const PURPOSE_LABELS = {
 const TABS = [
     { key: 'general', label: 'General', icon: Sliders },
     { key: 'security', label: 'System Security', icon: Lock },
+    { key: 'dashboard', label: 'Dashboard Content', icon: Palette },
     { key: 'smtp', label: 'SMTP', icon: Mail },
 ];
 
@@ -27,6 +28,219 @@ function formatSentAt(iso) {
 }
 
 const SOCIAL_KEYS = ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube'];
+
+function DashboardContentTab({ heroSettings, featuredToolsSettings, announcementSettings, availableTools, canManageSettings }) {
+    const { data, setData, post, processing, errors } = useForm({
+        heroTitle: heroSettings?.title || '',
+        heroSubtitle: heroSettings?.subtitle || '',
+        heroImageUrl: heroSettings?.imageUrl || '',
+        featuredToolsEnabled: featuredToolsSettings?.enabled || false,
+        featuredTools: featuredToolsSettings?.tools || [],
+        announcementEnabled: announcementSettings?.enabled || false,
+        announcementText: announcementSettings?.text || '',
+    });
+
+    const [message, setMessage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(heroSettings?.imageUrl);
+
+    const toggleTool = (toolKey) => {
+        const tools = data.featuredTools || [];
+        if (tools.includes(toolKey)) {
+            setData('featuredTools', tools.filter((t) => t !== toolKey));
+        } else {
+            setData('featuredTools', [...tools, toolKey]);
+        }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        post('/admin/dashboard-settings', {
+            onSuccess: () => {
+                setMessage({ type: 'success', text: 'Dashboard settings updated successfully!' });
+                setTimeout(() => setMessage(null), 3000);
+            },
+            onError: () => {
+                setMessage({ type: 'error', text: 'Failed to update settings.' });
+            },
+        });
+    };
+
+    if (!canManageSettings) {
+        return (
+            <div className="card">
+                <div className="p-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        You do not have permission to manage dashboard content. Contact an administrator if you need access.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            {message && (
+                <div
+                    className={`flex items-start gap-3 p-4 rounded-lg border ${
+                        message.type === 'success'
+                            ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
+                            : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+                    }`}
+                >
+                    <div
+                        className={`mt-1 flex-shrink-0 ${
+                            message.type === 'success' ? 'text-emerald-600' : 'text-red-600'
+                        }`}
+                    >
+                        {message.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                    </div>
+                    <span className={message.type === 'success' ? 'text-emerald-700' : 'text-red-700'}>
+                        {message.text}
+                    </span>
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Hero Section */}
+                <div className="card overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50">
+                        <Palette size={18} className="text-primary-600 dark:text-primary-400" />
+                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Hero Section</h2>
+                    </div>
+                    <div className="p-4 space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hero Title</label>
+                            <input
+                                type="text"
+                                value={data.heroTitle}
+                                onChange={(e) => setData('heroTitle', e.target.value)}
+                                placeholder="e.g., Let's grow your business together"
+                                maxLength={255}
+                                className="form-input w-full"
+                            />
+                            {errors.heroTitle && <p className="text-red-500 text-xs mt-1">{errors.heroTitle}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hero Subtitle</label>
+                            <textarea
+                                value={data.heroSubtitle}
+                                onChange={(e) => setData('heroSubtitle', e.target.value)}
+                                placeholder="Describe your offer..."
+                                maxLength={500}
+                                rows={2}
+                                className="form-input w-full"
+                            />
+                            {errors.heroSubtitle && <p className="text-red-500 text-xs mt-1">{errors.heroSubtitle}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hero Image URL</label>
+                            {imagePreview && (
+                                <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 mb-3 bg-gray-100 dark:bg-gray-700 h-32 w-full">
+                                    <img src={imagePreview} alt="Hero" className="w-full h-full object-cover" />
+                                </div>
+                            )}
+                            <input
+                                type="url"
+                                value={data.heroImageUrl}
+                                onChange={(e) => {
+                                    setData('heroImageUrl', e.target.value);
+                                    setImagePreview(e.target.value);
+                                }}
+                                placeholder="https://images.unsplash.com/..."
+                                className="form-input w-full"
+                            />
+                            {errors.heroImageUrl && <p className="text-red-500 text-xs mt-1">{errors.heroImageUrl}</p>}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Featured Tools */}
+                <div className="card overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50">
+                        <Sparkles size={18} className="text-primary-600 dark:text-primary-400" />
+                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Featured Tools</h2>
+                    </div>
+                    <div className="p-4 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="featured-tools-enabled"
+                                checked={data.featuredToolsEnabled}
+                                onChange={(e) => setData('featuredToolsEnabled', e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                            />
+                            <label htmlFor="featured-tools-enabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                Show featured tools section
+                            </label>
+                        </div>
+
+                        {data.featuredToolsEnabled && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                {availableTools.map((tool) => (
+                                    <label key={tool.key} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.featuredTools?.includes(tool.key) || false}
+                                            onChange={() => toggleTool(tool.key)}
+                                            className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-700 dark:text-gray-300">{tool.label}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Announcements */}
+                <div className="card overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50">
+                        <AlertCircle size={18} className="text-primary-600 dark:text-primary-400" />
+                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Announcement Banner</h2>
+                    </div>
+                    <div className="p-4 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="announcement-enabled"
+                                checked={data.announcementEnabled}
+                                onChange={(e) => setData('announcementEnabled', e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                            />
+                            <label htmlFor="announcement-enabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                Show announcement
+                            </label>
+                        </div>
+
+                        {data.announcementEnabled && (
+                            <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Announcement Text</label>
+                                <textarea
+                                    value={data.announcementText}
+                                    onChange={(e) => setData('announcementText', e.target.value)}
+                                    placeholder="e.g., New feature available for all users!"
+                                    maxLength={1000}
+                                    rows={2}
+                                    className="form-input w-full"
+                                />
+                                {errors.announcementText && <p className="text-red-500 text-xs mt-1">{errors.announcementText}</p>}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                    <button type="submit" disabled={processing} className="btn btn-primary">
+                        {processing ? 'Saving...' : 'Save Changes'}
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+}
 
 function LoginLogDetailModal({ log, onClose }) {
     if (!log) return null;
@@ -171,7 +385,7 @@ function LoginLogDetailModal({ log, onClose }) {
 }
 
 export default function Settings() {
-    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, recentMailLogs = [], mailOverviewStats = null, canManageSmtp = false, canManageSettings = false, general = {}, security = {}, loginLogs = { data: [] }, loginLogStats = {}, logFilters = {}, two_factor_qr_url = null, two_factor_secret = null } = usePage().props;
+    const { smtpSettings = [], smtpPurposes = {}, smtpEncryptionOptions = {}, recentMailLogs = [], mailOverviewStats = null, canManageSmtp = false, canManageSettings = false, general = {}, security = {}, loginLogs = { data: [] }, loginLogStats = {}, logFilters = {}, two_factor_qr_url = null, two_factor_secret = null, heroSettings = {}, featuredToolsSettings = {}, announcementSettings = {}, availableTools = [] } = usePage().props;
     const toast = useAdminToast();
     const [activeTab, setActiveTab] = useState(() => {
         const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
@@ -184,7 +398,7 @@ export default function Settings() {
     useEffect(() => {
         const u = new URL(pageUrl, window.location.origin);
         const t = u.searchParams.get('tab');
-        if (t && ['general', 'security', 'smtp'].includes(t)) setActiveTab(t);
+        if (t && ['general', 'security', 'dashboard', 'smtp'].includes(t)) setActiveTab(t);
     }, [pageUrl]);
     const [copiedId, setCopiedId] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
@@ -717,6 +931,16 @@ export default function Settings() {
 
                 {/* Log detail modal */}
                 {selectedLog && <LoginLogDetailModal log={selectedLog} onClose={() => setSelectedLog(null)} />}
+
+                {activeTab === 'dashboard' && (
+                    <DashboardContentTab
+                        heroSettings={heroSettings}
+                        featuredToolsSettings={featuredToolsSettings}
+                        announcementSettings={announcementSettings}
+                        availableTools={availableTools}
+                        canManageSettings={canManageSettings}
+                    />
+                )}
 
                 {activeTab === 'smtp' && (
                     <div className="space-y-4">

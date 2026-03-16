@@ -176,9 +176,6 @@ Route::middleware(['auth:admin'])->group(function () {
         ->name('ai-studio-tools.settings');
 
     // Dashboard Content Management
-    Route::get('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'show'])
-        ->middleware('admin.permission:settings.manage')
-        ->name('dashboard-settings.show');
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
         ->middleware('admin.permission:settings.manage')
         ->name('dashboard-settings.update');
