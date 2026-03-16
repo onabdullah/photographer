@@ -54,9 +54,16 @@ class SettingsController extends Controller
             $smtpEncryptionOptions = SmtpSetting::encryptionOptions();
             $settings = SmtpSetting::orderBy('purpose')->orderBy('name')->get();
 
-            $totalSent = MailLog::count();
-            $totalFailed = (int) MailLog::where('status', MailLog::STATUS_FAILED)->count();
-            $totalSuccess = (int) MailLog::where('status', MailLog::STATUS_SENT)->count();
+            // Consolidate mail stats queries - single query instead of 5+ queries
+            $mailStats = MailLog::selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as success,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as failed
+            ')->setBindings([MailLog::STATUS_SENT, MailLog::STATUS_FAILED])->first();
+
+            $totalSent = (int) $mailStats->total;
+            $totalSuccess = (int) $mailStats->success;
+            $totalFailed = (int) $mailStats->failed;
             $errorPct = $totalSent > 0 ? round(($totalFailed / $totalSent) * 100, 1) : 0;
             $topError = MailLog::where('status', MailLog::STATUS_FAILED)
                 ->whereNotNull('error_message')
@@ -65,11 +72,26 @@ class SettingsController extends Controller
                 ->orderByDesc('cnt')
                 ->first();
 
-            $smtpSettings = $settings->map(function (SmtpSetting $s) {
-                $successCount = $s->mailLogs()->where('status', MailLog::STATUS_SENT)->count();
-                $failedCount = $s->mailLogs()->where('status', MailLog::STATUS_FAILED)->count();
+            // Get all SMTP stats in single query using subqueries
+            $smtpStats = MailLog::selectRaw('
+                smtp_setting_id,
+                COUNT(*) as total,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as success,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as failed,
+                AVG(CASE WHEN duration_ms IS NOT NULL THEN duration_ms ELSE NULL END) as avg_ms
+            ')
+                ->setBindings([MailLog::STATUS_SENT, MailLog::STATUS_FAILED])
+                ->groupBy('smtp_setting_id')
+                ->get()
+                ->keyBy('smtp_setting_id')
+                ->toArray();
+
+            $smtpSettings = $settings->map(function (SmtpSetting $s) use ($smtpStats) {
+                $stats = $smtpStats[$s->id] ?? null;
+                $successCount = $stats ? (int) $stats['success'] : 0;
+                $failedCount = $stats ? (int) $stats['failed'] : 0;
                 $totalSent = $successCount + $failedCount;
-                $avgMs = $s->mailLogs()->whereNotNull('duration_ms')->avg('duration_ms');
+                $avgMs = $stats && $stats['avg_ms'] ? (float) $stats['avg_ms'] : null;
                 return [
                     'id' => $s->id,
                     'name' => $s->name,
@@ -194,13 +216,30 @@ class SettingsController extends Controller
             ];
         });
 
+        $loginLogStats = LoginLog::selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN status = ? AND event_type = ? THEN 1 ELSE 0 END) as success,
+            SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as failed,
+            SUM(CASE WHEN event_type = ? THEN 1 ELSE 0 END) as logout,
+            SUM(CASE WHEN risk_percentage >= 70 THEN 1 ELSE 0 END) as high_risk,
+            SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as last_24h
+        ')
+            ->setBindings([
+                LoginLog::STATUS_SUCCESS,
+                LoginLog::EVENT_LOGIN,
+                LoginLog::STATUS_FAILED,
+                LoginLog::EVENT_LOGOUT,
+                now()->subDay()
+            ])
+            ->first();
+
         $loginLogStats = [
-            'total'     => LoginLog::count(),
-            'success'   => (int) LoginLog::where('status', LoginLog::STATUS_SUCCESS)->where('event_type', LoginLog::EVENT_LOGIN)->count(),
-            'failed'    => (int) LoginLog::where('status', LoginLog::STATUS_FAILED)->count(),
-            'logout'    => (int) LoginLog::where('event_type', LoginLog::EVENT_LOGOUT)->count(),
-            'high_risk' => (int) LoginLog::where('risk_percentage', '>=', 70)->count(),
-            'last_24h'  => (int) LoginLog::where('created_at', '>=', now()->subDay())->count(),
+            'total'     => (int) $loginLogStats->total,
+            'success'   => (int) $loginLogStats->success,
+            'failed'    => (int) $loginLogStats->failed,
+            'logout'    => (int) $loginLogStats->logout,
+            'high_risk' => (int) $loginLogStats->high_risk,
+            'last_24h'  => (int) $loginLogStats->last_24h,
         ];
 
         // Fetch dashboard settings

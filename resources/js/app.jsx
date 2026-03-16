@@ -79,7 +79,7 @@ createInertiaApp({
             './Pages/**/*.jsx',
             './Shopify/Pages/**/*.jsx',
             './Admin/Pages/**/*.jsx',
-        ]);
+        ], { eager: false });
 
         let path = name;
 

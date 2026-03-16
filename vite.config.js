@@ -18,6 +18,7 @@ export default defineConfig({
                     if (id.includes('node_modules/@inertiajs/')) return 'inertia';
                     if (id.includes('node_modules/lucide-react/')) return 'lucide';
                     if (id.includes('node_modules/@radix-ui/')) return 'radix';
+                    if (id.includes('node_modules/apexcharts/') || id.includes('node_modules/react-apexcharts/')) return 'apexcharts';
                 },
             },
         },
