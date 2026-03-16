@@ -304,7 +304,6 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
     <ui-modal
       id="browse-from-store-modal"
       ref={uiModalRef}
-      variant="large"
     >
       <div style={{ padding: '16px', minHeight: '520px', display: open ? undefined : 'none' }}>
         <BlockStack gap="400">

@@ -89,7 +89,7 @@ export default function WelcomeModal() {
         </div>
       )}
 
-      <ui-modal id="welcome-modal" ref={modalRef} variant="large">
+      <ui-modal id="welcome-modal" ref={modalRef}>
         {/* Top – 5 free credits + two lines */}
         <div style={{ padding: '20px', display: isOpen ? undefined : 'none' }}>
           <BlockStack gap="300" align="center" inlineAlign="center">
