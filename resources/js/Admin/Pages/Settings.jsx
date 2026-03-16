@@ -584,8 +584,8 @@ export default function Settings() {
                 </div>
 
                 {activeTab === 'general' && (
-                    <div className="space-y-6">
-                        {/* Branding */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Branding - Left Side */}
                         <div className="card overflow-hidden">
                             <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
                                 <ImageIcon size={18} className="text-primary-600 dark:text-primary-400" />
@@ -679,7 +679,7 @@ export default function Settings() {
                             </div>
                         </div>
 
-                        {/* Dashboard Content */}
+                        {/* Dashboard Content - Right Side */}
                         <div className="card overflow-hidden">
                             <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50">
                                 <Palette size={18} className="text-primary-600 dark:text-primary-400" />
