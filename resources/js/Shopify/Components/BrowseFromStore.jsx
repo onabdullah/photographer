@@ -162,7 +162,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
         border: '1px solid var(--p-color-border-subdued)',
         borderRadius: 12,
         overflow: 'hidden',
-        maxHeight: 'calc(70vh - 140px)',
+        maxHeight: 400,
         overflowY: 'auto',
         boxShadow: 'var(--shadow-sm)',
       }}
@@ -251,7 +251,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
         gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
         gap: 12,
         overflowY: 'auto',
-        maxHeight: 'calc(70vh - 140px)',
+        maxHeight: 400,
         padding: 2,
       }}
     >
