@@ -21,6 +21,16 @@ Artisan::command('roles:seed', function () {
 |--------------------------------------------------------------------------
 */
 
+// Process queued jobs every minute on shared hosting.
+// --stop-when-empty: processes all pending jobs then exits (no long-running daemon).
+// withoutOverlapping: only one worker runs at a time.
+// runInBackground: scheduler does not wait for it to finish.
+Schedule::command('queue:work --stop-when-empty --tries=3 --timeout=55')
+    ->everyMinute()
+    ->withoutOverlapping(2)
+    ->runInBackground()
+    ->name('queue-worker');
+
 // Clean up large-export ZIP files older than 8 days from private storage.
 // This matches the 7-day signed-URL window plus one day of grace.
 Schedule::call(function () {
