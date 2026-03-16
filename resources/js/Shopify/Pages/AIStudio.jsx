@@ -1834,8 +1834,11 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                         value={magicEraserPrompt}
                         onChange={setMagicEraserPrompt}
                         placeholder={MAGIC_ERASER_DEFAULT_PROMPT}
-                        helpText="Optional. Describe what should appear in the erased area, or leave as-is for seamless removal."
+                        multiline={3}
                         autoComplete="off"
+                        characterCount={magicEraserPrompt.length}
+                        maxLength={600}
+                        helpText="Optional. Tell the AI what to place in the erased area, or leave blank for seamless background fill."
                       />
                     </BlockStack>
                   )}
