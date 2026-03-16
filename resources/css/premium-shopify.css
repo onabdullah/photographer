@@ -2014,41 +2014,25 @@
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/* Browse from Store Modal – Professional display & interaction fixes */
+/* Browse from Store Modal – Professional product & image picker */
 /* ────────────────────────────────────────────────────────────────────────── */
 
 ui-modal {
-  display: block !important;
+  display: block;
 }
 
 #browse-from-store-modal {
   width: 100%;
-  height: 100%;
 }
 
-#browse-from-store-modal > div {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Ensure product row buttons are fully clickable */
+/* Product row – full-width clickable button */
 .browse-product-row {
-  pointer-events: auto !important;
-  touch-action: auto !important;
+  pointer-events: auto;
+  touch-action: auto;
 }
 
-.browse-product-row * {
-  pointer-events: none;
-}
-
-/* Ensure image tiles are fully clickable */
+/* Image tile – full-width clickable button */
 .browse-image-tile {
-  pointer-events: auto !important;
-  touch-action: auto !important;
-}
-
-.browse-image-tile img {
-  pointer-events: none;
+  pointer-events: auto;
+  touch-action: auto;
 }

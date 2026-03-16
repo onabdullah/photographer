@@ -12,7 +12,6 @@ import {
 } from '@shopify/polaris';
 import { ImageIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon } from '@shopify/polaris-icons';
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import axios from 'axios';
 
 const STATUS_OPTIONS = [
@@ -301,20 +300,15 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
     </InlineStack>
   );
 
-  const modalContent = (
+  if (!open) return null;
+
+  return (
     <ui-modal
       id="browse-from-store-modal"
       ref={uiModalRef}
       variant="large"
-      style={{ display: 'block' }}
     >
-      <div style={{
-        padding: '16px',
-        minHeight: '520px',
-        height: '100%',
-        width: '100%',
-        boxSizing: 'border-box',
-      }}>
+      <div style={{ padding: '16px' }}>
         <BlockStack gap="400">
           {view === 'products' && (
             <>
@@ -409,6 +403,4 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
       </ui-title-bar>
     </ui-modal>
   );
-
-  return createPortal(modalContent, document.body);
 }
