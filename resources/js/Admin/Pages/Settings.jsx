@@ -96,7 +96,7 @@ function DashboardContentTab({ heroSettings, featuredToolsSettings, announcement
             announcementText: form.data.announcementText,
         });
 
-        router.put(route('dashboard-settings.update'), formData, {
+        router.put(route('admin.dashboard-settings.update'), formData, {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
