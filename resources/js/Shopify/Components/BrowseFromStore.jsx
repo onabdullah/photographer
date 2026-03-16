@@ -178,10 +178,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
             key={product.id}
             type="button"
             className="browse-product-row"
-            ref={(el) => {
-              if (!el) return;
-              el.onclick = (e) => { e.stopPropagation(); handleProductClick(product); };
-            }}
+            onClick={() => handleProductClick(product)}
             aria-label={`View images for ${product.title}`}
           >
             <div className="browse-product-thumb">
@@ -227,10 +224,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
             key={`${url}-${i}`}
             type="button"
             className="browse-image-tile"
-            ref={(el) => {
-              if (!el) return;
-              el.onclick = (e) => { e.stopPropagation(); handleImageSelect(url); };
-            }}
+            onClick={() => handleImageSelect(url)}
             aria-label={`Select image ${i + 1}`}
           >
             <img src={url} alt={`Product image ${i + 1}`} onError={(e) => { e.target.src = PLACEHOLDER_IMG; }} />
