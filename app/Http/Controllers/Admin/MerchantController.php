@@ -78,7 +78,7 @@ class MerchantController extends Controller
         foreach ($superAdmins as $recipient) {
             $notifiedRecipients[] = mb_strtolower(trim((string) $recipient->email));
 
-            MailService::send(
+            MailService::queue(
                 toAddress: $recipient->email,
                 mailable: new MerchantCreditsUpdatedMail(
                     merchant: $merchant,
@@ -121,7 +121,7 @@ class MerchantController extends Controller
             return;
         }
 
-        MailService::send(
+        MailService::queue(
             toAddress: $ownerEmail,
             mailable: new MerchantCreditsUpdatedOwnerMail(
                 merchant: $merchant,

@@ -41,7 +41,7 @@ class AdminActivityNotifier
         }
 
         foreach ($superAdmins as $recipient) {
-            MailService::send(
+            MailService::queue(
                 toAddress: $recipient->email,
                 mailable: new AdminActivityAlertMail(
                     fromAddress: $smtp->from_address,

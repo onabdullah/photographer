@@ -58,7 +58,7 @@ class MerchantCreditThresholdNotifier
         }
 
         if ($shouldSendHalf) {
-            MailService::send(
+            MailService::queue(
                 toAddress: $ownerEmail,
                 mailable: new CreditUsageThresholdMail(
                     merchant: $merchant,
@@ -74,7 +74,7 @@ class MerchantCreditThresholdNotifier
         }
 
         if ($shouldSendFive) {
-            MailService::send(
+            MailService::queue(
                 toAddress: $ownerEmail,
                 mailable: new CreditUsageThresholdMail(
                     merchant: $merchant,

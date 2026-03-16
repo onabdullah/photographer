@@ -32,12 +32,13 @@
     <div class="container">
 
         <div class="header">
-            <h1>Congratulations 🎉</h1>
+            <h1>Credits Updated</h1>
             <p>Your new credits are now available and ready to power your next round of product visuals.</p>
         </div>
 
         <div class="content">
-            <p class="greeting">Your store credit balance has been updated successfully. You can keep creating without interruption and move faster on the products that matter most.</p>
+            <p class="greeting">Hello <strong>{{ $shopName }}</strong>,</p>
+            <p style="margin:0 0 16px; font-size:15px; color:#374151;">Your store credit balance has been updated successfully. You can keep creating without interruption and move faster on the products that matter most.</p>
 
             <div style="text-align: center;">
                 <span class="badge">{{ $shopName }}</span>
@@ -82,6 +83,8 @@
                     <li>Use your best-performing visuals on product pages, ads, and social posts to stretch the business impact of every credit.</li>
                 </ul>
             </div>
+
+            <p style="margin-top:24px; font-size:14px; color:#374151;">Regards,<br><strong>— The {{ config('app.name') }} Team</strong></p>
         </div>
 
         <div class="footer">

@@ -13,6 +13,8 @@
         .row + .row { border-top: 1px solid #e5e7eb; }
         .label { font-size: 11px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.6px; margin-bottom: 2px; }
         .value { font-size: 14px; color: #111827; }
+        .signature { margin-top: 24px; font-size: 14px; color: #374151; }
+        .footer { background-color: #F9FAFB; border-top: 1px solid #e5e7eb; padding: 18px 28px; text-align: center; font-size: 12px; color: #6B7280; }
     </style>
 </head>
 <body>
@@ -31,6 +33,12 @@
             <div class="row"><div class="label">Created By</div><div class="value">{{ $createdByName }}@if($createdByEmail) ({{ $createdByEmail }})@endif</div></div>
             <div class="row"><div class="label">Created At</div><div class="value">{{ $createdAt }}</div></div>
         </div>
+
+        <p class="signature">Regards,<br><strong>— The {{ config('app.name') }} Team</strong></p>
+    </div>
+    <div class="footer">
+        <p style="margin:4px 0;">This is an automated notification from the <strong>{{ config('app.name') }}</strong> admin panel.</p>
+        <p style="margin:4px 0; color:#9ca3af;">Do not reply to this email.</p>
     </div>
 </div>
 </body>

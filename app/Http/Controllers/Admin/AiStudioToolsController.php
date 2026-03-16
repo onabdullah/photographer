@@ -209,7 +209,7 @@ class AiStudioToolsController extends Controller
             if ($smtp && $admin->email) {
                 $label   = AiModelVisibilityMail::TOOL_LABELS[$toolKey] ?? $toolKey;
                 $subject = $label . ' ' . ($isEnabled ? 'Shown on Store' : 'Hidden from Store') . ' — ' . config('app.name');
-                MailService::send($admin->email, new AiModelVisibilityMail(
+                MailService::queue($admin->email, new AiModelVisibilityMail(
                     user: $admin,
                     fromAddress: $smtp->from_address,
                     fromName: $smtp->from_name,

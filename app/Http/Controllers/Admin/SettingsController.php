@@ -405,7 +405,7 @@ class SettingsController extends Controller
         ]);
         $smtp = MailService::resolveSmtp();
         if ($smtp && $user->email) {
-            MailService::send($user->email, new TwoFactorEnabledMail(
+            MailService::queue($user->email, new TwoFactorEnabledMail(
                 user: $user,
                 fromAddress: $smtp->from_address,
                 fromName: $smtp->from_name,
@@ -439,7 +439,7 @@ class SettingsController extends Controller
         $request->session()->forget(['two_factor_pending_secret', 'two_factor_qr_url', 'two_factor_secret']);
         $smtp = MailService::resolveSmtp();
         if ($smtp && $user->email) {
-            MailService::send($user->email, new TwoFactorDisabledMail(
+            MailService::queue($user->email, new TwoFactorDisabledMail(
                 user: $user,
                 fromAddress: $smtp->from_address,
                 fromName: $smtp->from_name,

@@ -46,7 +46,7 @@
             @if($appLogoUrl)
                 <img src="{{ $appLogoUrl }}" alt="{{ $appName }}" style="max-height: 44px; width: auto; display: inline-block; margin-bottom: 16px;"><br>
             @endif
-            <h1>Congratulations 🎉</h1>
+            <h1>Plan Activated</h1>
             <p>Your {{ $planName }} plan is now active. New credits are ready, and your store is set up to create more high-converting visuals.</p>
         </div>
 
@@ -63,22 +63,54 @@
                 <strong>{{ $displayName }}</strong>,
             </p>
 
-            <p>Your subscription to <strong>{{ $appName }}</strong> has been activated successfully. Everything is ready for you to produce sharper, more persuasive product imagery right away.</p>
+            <p>Your {{ $planName }} plan is now active. You now have <strong>{{ number_format($planCredits) }} professional product images</strong> available every month—enough to significantly outpace competitors while maintaining complete creative control.</p>
+
+            <p style="font-size: 15px; color: #111827; font-weight: 500;">What this means for your business: unlimited professional visuals at a fraction of traditional studio costs, with zero equipment investment or scheduling delays.</p>
 
             {{-- ── Plan hero card ── --}}
             <div class="plan-hero">
-                <div class="plan-name">{{ $planName }}</div>
+                <div class="plan-name">{{ $planName }} Plan</div>
                 <div class="plan-price">
                     ${{ $planPrice }}<span>/month</span>
                 </div>
                 <div>
-                    <span class="plan-credits">{{ number_format($planCredits) }} AI Credits / month</span>
+                    <span class="plan-credits">{{ number_format($planCredits) }} Professional Images / Month</span>
                 </div>
                 @if($trialDays > 0)
                     <div>
                         <span class="trial-badge">✓ {{ $trialDays }}-day free trial included</span>
                     </div>
                 @endif
+                <div style="margin-top: 12px; font-size: 13px; color: #6b7280; font-weight: 600;">
+                    = ${{ number_format((float)$planPrice / $planCredits, 2) }} per professional image
+                </div>
+            </div>
+
+            {{-- ── Value Proposition ── --}}
+            <div class="details" style="margin: 24px 0; background-color: rgba(34, 197, 94, 0.06); border-color: rgba(34, 197, 94, 0.15);">
+                <p style="margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 0.7px; padding: 12px 20px 0;">Your Competitive Advantage Per Month</p>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td width="50%" style="padding: 12px 20px; border-right: 1px solid rgba(34, 197, 94, 0.15); border-bottom: 1px solid rgba(34, 197, 94, 0.15);">
+                            <div style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px;">Professional Images</div>
+                            <div style="font-size: 18px; font-weight: 700; color: #15803d;">{{ number_format($planCredits) }}</div>
+                        </td>
+                        <td width="50%" style="padding: 12px 20px; border-bottom: 1px solid rgba(34, 197, 94, 0.15);">
+                            <div style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px;">vs. Studio Cost</div>
+                            <div style="font-size: 18px; font-weight: 700; color: #15803d;">${{ number_format($planCredits * 300) }}+</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="50%" style="padding: 12px 20px; border-right: 1px solid rgba(34, 197, 94, 0.15);">
+                            <div style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px;">Creation Time</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #15803d;">Seconds</div>
+                        </td>
+                        <td width="50%" style="padding: 12px 20px;">
+                            <div style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px;">vs. Studio Lead Time</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #15803d;">Weeks</div>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
             {{-- ── Subscription details ── --}}
@@ -90,48 +122,52 @@
                 </div>
 
                 <div class="detail-row">
-                    <div class="detail-label">Monthly Credits</div>
-                    <div class="detail-value">{{ number_format($planCredits) }} credits refreshed every billing cycle</div>
+                    <div class="detail-label">Monthly Credits Allocation</div>
+                    <div class="detail-value"><strong>{{ number_format($planCredits) }} credits</strong> refreshed on every billing cycle</div>
                 </div>
 
                 @if($trialDays > 0)
                 <div class="detail-row">
                     <div class="detail-label">Free Trial Period</div>
-                    <div class="detail-value">{{ $trialDays }} days — no charge until trial ends</div>
+                    <div class="detail-value">{{ $trialDays }} days — start creating immediately, no charge until trial ends</div>
                 </div>
                 @endif
 
                 <div class="detail-row">
-                    <div class="detail-label">Billing</div>
-                    <div class="detail-value">Managed automatically by Shopify · Cancel anytime</div>
+                    <div class="detail-label">Billing & Cancellation</div>
+                    <div class="detail-value">Managed securely by Shopify · Cancel anytime from your admin</div>
                 </div>
 
             </div>
 
             {{-- ── What to do next ── --}}
             <div class="what-next">
-                <h3>What to do next</h3>
+                <h3>Maximizing Your Monthly Credits</h3>
                 <div class="step">
                     <span class="step-num">1</span>
-                    Open your store's <strong>{{ $appName }}</strong> app and head to the AI Studio.
+                    <strong>Prioritize your top-selling products</strong> — create professional variations for your highest-margin SKUs to drive maximum ROI.
                 </div>
                 <div class="step">
                     <span class="step-num">2</span>
-                    Generate professional product photos — your {{ number_format($planCredits) }} monthly credits are already waiting.
+                    <strong>Batch create strategically</strong> — plan your monthly image creation around product launches, seasonal campaigns, and inventory changes.
                 </div>
                 <div class="step">
                     <span class="step-num">3</span>
-                    Need more credits mid-month? Pick up a top-up pack from the Plans &amp; Billing page.
+                    <strong>Test and optimize</strong> — use A/B testing with multiple visual styles to identify what resonates best with your customers.
+                </div>
+                <div class="step">
+                    <span class="step-num">4</span>
+                    <strong>Repurpose across channels</strong> — leverage these professional images for your website, social media, email campaigns, and paid ads.
                 </div>
             </div>
 
             <div class="tips">
-                <h3>Tips to save credits and grow faster</h3>
+                <h3>Pro Strategy: Scaling Your Monthly Allocation</h3>
                 <ul>
-                    <li>Start with your highest-margin or best-selling products first so each credit has a stronger sales impact.</li>
-                    <li>Reuse winning prompts, backgrounds, and styles across similar products instead of testing too many variations.</li>
-                    <li>Batch-create visuals for seasonal launches and new arrivals to keep your storefront fresh without wasting time.</li>
-                    <li>Use top-up packs only when you need them, and let your monthly plan cover your steady day-to-day content flow.</li>
+                    <li>Create {{ round($planCredits / 4) }} images per week for consistent visual updates across your store without pressure.</li>
+                    <li>Save your highest-performing prompts and settings for instant replication across product categories.</li>
+                    <li>Document which image styles drive highest engagement to optimize future creations.</li>
+                    <li>If {{ number_format($planCredits) }} credits runs out mid-month, upgrade or purchase top-up packs instantly from your dashboard.</li>
                 </ul>
             </div>
 
@@ -145,7 +181,7 @@
             </div>
 
             <p class="signature">
-                Excited to see what you create next,<br>
+                Regards,<br>
                 <strong>The {{ $appName }} Team</strong>
             </p>
 

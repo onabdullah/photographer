@@ -83,6 +83,8 @@
                     <div class="detail-value">{{ $changedAt }}</div>
                 </div>
             </div>
+
+            <p style="margin-top:24px; font-size:14px; color:#374151;">Regards,<br><strong>— The {{ config('app.name') }} Team</strong></p>
         </div>
 
         <div class="footer">

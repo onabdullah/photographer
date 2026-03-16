@@ -12,6 +12,7 @@
         .content { padding: 30px 28px; }
         .meta { background-color: rgba(70, 138, 154, 0.06); border: 1px solid rgba(70, 138, 154, 0.15); border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; }
         .meta p { margin: 4px 0; font-size: 14px; }
+        .action-badge { display: inline-block; background: rgba(70, 138, 154, 0.12); color: #1f5f6e; border: 1px solid rgba(70, 138, 154, 0.3); font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 20px; margin-bottom: 16px; letter-spacing: 0.2px; }
         .details { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
         .row { padding: 10px 14px; }
         .row + .row { border-top: 1px solid #e5e7eb; }
@@ -21,24 +22,6 @@
     </style>
 </head>
 <body>
-    @php
-        $formatLabel = function (string $key): string {
-            return ucwords(str_replace('_', ' ', $key));
-        };
-
-        $formatSimple = function ($value): string {
-            if ($value === null || $value === '') {
-                return 'N/A';
-            }
-
-            if (is_bool($value)) {
-                return $value ? 'Yes' : 'No';
-            }
-
-            return (string) $value;
-        };
-    @endphp
-
     <div class="container">
         <div class="header">
             <h1>Admin Activity Alert</h1>
@@ -46,6 +29,9 @@
         </div>
 
         <div class="content">
+            <div style="text-align:center;">
+                <span class="action-badge">{{ $action }}</span>
+            </div>
             <div class="meta">
                 <p><strong>Action:</strong> {{ $action }}</p>
                 <p><strong>Performed By:</strong> {{ $actorName }}@if($actorEmail) ({{ $actorEmail }})@endif</p>
@@ -63,7 +49,7 @@
                                         N/A
                                     @else
                                         @foreach($value as $field => $fieldValue)
-                                            <div><strong>{{ $formatLabel((string) $field) }}:</strong> {{ $formatSimple($fieldValue) }}</div>
+                                            <div><strong>{{ $formatLabel((string) $field) }}:</strong> {{ $formatValue($fieldValue) }}</div>
                                         @endforeach
                                     @endif
                                 </div>
@@ -75,10 +61,10 @@
                                     @if(empty($value))
                                         N/A
                                     @elseif(array_is_list($value))
-                                        {{ implode(', ', array_map(fn ($item) => $formatSimple($item), $value)) }}
+                                        {{ implode(', ', array_map(fn ($item) => $formatValue($item), $value)) }}
                                     @else
                                         @foreach($value as $field => $fieldValue)
-                                            <div><strong>{{ $formatLabel((string) $field) }}:</strong> {{ $formatSimple($fieldValue) }}</div>
+                                            <div><strong>{{ $formatLabel((string) $field) }}:</strong> {{ $formatValue($fieldValue) }}</div>
                                         @endforeach
                                     @endif
                                 </div>
@@ -86,12 +72,13 @@
                         @else
                             <div class="row">
                                 <div class="label">{{ $formatLabel((string) $key) }}</div>
-                                <div class="value">{{ $formatSimple($value) }}</div>
+                                <div class="value">{{ $formatValue($value) }}</div>
                             </div>
                         @endif
                     @endforeach
                 </div>
             @endif
+            <p style="margin-top:24px; font-size:14px; color:#374151;">Regards,<br><strong>— The {{ config('app.name') }} Team</strong></p>
         </div>
 
         <div class="footer">

@@ -27,6 +27,24 @@ class AdminActivityAlertMail extends Mailable
         $this->occurredAt = $occurredAt ?: now()->format('D, d M Y · H:i T');
     }
 
+    public function formatLabel(string $key): string
+    {
+        return ucwords(str_replace('_', ' ', $key));
+    }
+
+    public function formatValue($value): string
+    {
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'Yes' : 'No';
+        }
+
+        return (string) $value;
+    }
+
     public function envelope(): Envelope
     {
         return new Envelope(

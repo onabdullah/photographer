@@ -229,7 +229,7 @@ class UserController extends Controller
         $recipientEmails = array_values(array_unique($recipientEmails));
 
         foreach ($recipientEmails as $email) {
-            MailService::send(
+            MailService::queue(
                 toAddress: $email,
                 mailable: new TeamUserCreatedNotificationMail(
                     fromAddress: $smtp->from_address,
@@ -246,7 +246,7 @@ class UserController extends Controller
         }
 
         // 2) Notify newly added team user with temporary password and security guidance.
-        MailService::send(
+        MailService::queue(
             toAddress: $newUser->email,
             mailable: new TeamUserCredentialsMail(
                 fromAddress: $smtp->from_address,

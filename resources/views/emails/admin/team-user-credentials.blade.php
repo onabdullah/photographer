@@ -11,6 +11,7 @@
         .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; margin: 16px 0; background: #f9fafb; }
         .badge { display:inline-block; background:#111827; color:#fff; padding:3px 10px; border-radius:6px; font-size:12px; font-weight:600; }
         .security { border-left: 3px solid #468A9A; background: rgba(70, 138, 154, 0.06); padding: 12px 14px; border-radius: 0 6px 6px 0; }
+        .footer { background-color: #F9FAFB; border-top: 1px solid #e5e7eb; padding: 18px 28px; text-align: center; font-size: 12px; color: #6B7280; }
     </style>
 </head>
 <body>
@@ -39,6 +40,12 @@
         </div>
 
         <p style="margin-top:18px;">If this account was not expected, contact your administrator right away.</p>
+
+        <p style="margin-top:24px; font-size:14px; color:#374151;">Regards,<br><strong>— The {{ config('app.name') }} Team</strong></p>
+    </div>
+    <div class="footer">
+        <p style="margin:4px 0;">This is an automated notification from <strong>{{ config('app.name') }}</strong>.</p>
+        <p style="margin:4px 0; color:#9ca3af;">Keep your credentials safe and never share them.</p>
     </div>
 </div>
 </body>

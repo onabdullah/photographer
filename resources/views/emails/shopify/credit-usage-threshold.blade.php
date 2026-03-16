@@ -6,7 +6,7 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #374151; background-color: #F9FAFB; margin: 0; padding: 0; }
         .container { max-width: 620px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-        .header { background: #245D6D; color: #fff; padding: 32px 28px; text-align: center; }
+        .header { background: #468A9A; color: #fff; padding: 32px 28px; text-align: center; }
         .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
         .header p { margin: 8px 0 0; font-size: 14px; opacity: 0.9; }
         .content { padding: 30px 28px; }
@@ -38,33 +38,46 @@
         <div class="content">
             <p class="lead">Hello {{ $shopName }},</p>
 
+            <p style="font-size: 15px; color: #111827; font-weight: 500; margin-bottom: 20px;">
+                Your store is now standing ahead of competitors with professional product visuals — without the cost of traditional photoshoots. Here's your usage milestone.
+            </p>
+
             @if($isCritical)
                 <div class="notice notice-danger">
-                    You are doing excellent work. To keep your publishing flow uninterrupted, please top up now: only <span class="strong">{{ number_format($remainingCredits) }}</span> credits remain ({{ rtrim(rtrim(number_format($remainingPercent, 2, '.', ''), '0'), '.') }}% of your current cycle).
+                    <strong>Outstanding Performance.</strong> Your store has created <span class="strong">{{ number_format($usedCredits) }}</span> professional images this cycle. Only <span class="strong">{{ number_format($remainingCredits) }} credits</span> remain ({{ rtrim(rtrim(number_format($remainingPercent, 2, '.', ''), '0'), '.') }}% left). Top up now to maintain your competitive edge.
                 </div>
             @else
                 <div class="notice notice-warning">
-                    Great progress. You have used <span class="strong">{{ number_format($usedCredits) }}</span> credits ({{ rtrim(rtrim(number_format($usedPercent, 2, '.', ''), '0'), '.') }}%) and reached the 50% usage milestone for your current cycle.
+                    <strong>Impressive Growth.</strong> You've used <span class="strong">{{ number_format($usedCredits) }} credits</span> to create {{ round($usedCredits / 1) }} professional images this month ({{ rtrim(rtrim(number_format($usedPercent, 2, '.', ''), '0'), '.') }}% of your cycle). You're outpacing your competition.
                 </div>
             @endif
 
             <div class="details">
                 <div class="row">
-                    <div class="label">Cycle Credits</div>
-                    <div class="value">{{ number_format($baselineCredits) }}</div>
+                    <div class="label">Monthly Allocation</div>
+                    <div class="value">{{ number_format($baselineCredits) }} credits</div>
                 </div>
                 <div class="row">
-                    <div class="label">Used Credits</div>
-                    <div class="value">{{ number_format($usedCredits) }} ({{ rtrim(rtrim(number_format($usedPercent, 2, '.', ''), '0'), '.') }}%)</div>
+                    <div class="label">Images Created</div>
+                    <div class="value"><strong>{{ number_format($usedCredits) }}</strong> credits used</div>
                 </div>
                 <div class="row">
-                    <div class="label">Remaining Credits</div>
-                    <div class="value">{{ number_format($remainingCredits) }} ({{ rtrim(rtrim(number_format($remainingPercent, 2, '.', ''), '0'), '.') }}%)</div>
+                    <div class="label">Credits Remaining</div>
+                    <div class="value"><strong>{{ number_format($remainingCredits) }}</strong> credits ({{ rtrim(rtrim(number_format($remainingPercent, 2, '.', ''), '0'), '.') }}%)</div>
+                </div>
+                <div class="row">
+                    <div class="label">Cost Comparison</div>
+                    <div class="value" style="color: #15803d; font-weight: 700;">Professional results at a fraction of traditional studio costs</div>
                 </div>
             </div>
 
+            <p style="margin: 24px 0 16px; font-size: 15px; font-weight: 600; color: #111827;">Why this matters for your business:</p>
+            <p style="margin: 0 0 16px; font-size: 14px; color: #374151; line-height: 1.6;">
+                Store owners using professional product visuals consistently achieve <strong>higher conversion rates</strong>, <strong>lower cart abandonment</strong>, and <strong>stronger customer trust</strong>. Every image you create with {{ config('app.name') }} represents hundreds in production savings compared to traditional photography.
+            </p>
+
             <p class="cta">
-                Your team is producing outstanding product visuals. We are committed to helping you scale that success with consistent quality, faster output, and reliable support at every step.
+                Your team is producing exceptional product imagery. Continue at this pace to maintain market leadership and maximize customer confidence in every product you feature.
             </p>
         </div>
 

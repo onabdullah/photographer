@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendMailJob;
 use App\Models\MailLog;
 use App\Models\SmtpSetting;
 use Illuminate\Mail\Mailable;
@@ -82,5 +83,14 @@ class MailService
 
             return false;
         }
+    }
+
+    /**
+     * Dispatch a Mailable to the queue instead of sending it inline.
+     * Use this everywhere outside of jobs — keeps HTTP responses fast.
+     */
+    public static function queue(string $toAddress, Mailable $mailable, string $subject): void
+    {
+        SendMailJob::dispatch($toAddress, $mailable, $subject);
     }
 }

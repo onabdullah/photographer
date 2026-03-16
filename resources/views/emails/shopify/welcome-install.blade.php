@@ -31,8 +31,8 @@
             @if($appLogoUrl)
                 <img src="{{ $appLogoUrl }}" alt="{{ $appName }}" style="max-height: 44px; width: auto; display: inline-block; margin-bottom: 16px;"><br>
             @endif
-            <h1>Congratulations</h1>
-            <p>Your journey to sustainable growth starts now with {{ $appName }}.</p>
+            <h1>Welcome to Professional Visuals</h1>
+            <p>Enterprise-grade product imagery without enterprise-level costs.</p>
         </div>
 
         {{-- ── CONTENT ── --}}
@@ -47,27 +47,60 @@
                 <strong>{{ $displayName }}</strong>,
             </p>
 
-            <p>Thank you for installing <strong>{{ $appName }}</strong>. You now have a professional AI workflow designed to produce high-converting product visuals with speed and consistency.</p>
-            <p>Our mission is not only to provide tools, but to build a long-term partnership with your brand. We are committed to helping you create exceptional visual results and lasting customer trust.</p>
+            <p>You've just gained access to an AI-powered platform that delivers what traditional photoshoots cost hundreds for—in seconds, for pennies. No studio rental. No equipment investment. No delays.</p>
+
+            <p style="font-weight: 600; color: #111827; margin: 20px 0;">Every image you create positions your store ahead of competitors.</p>
+
+            {{-- Impact messaging --}}
+            <div class="details" style="margin: 24px 0; background-color: rgba(34, 197, 94, 0.06); border-color: rgba(34, 197, 94, 0.15);">
+                <p style="margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 0.8px;">Why Premium Product Visuals Matter</p>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td width="30" valign="top" style="padding-top:4px; padding-right:12px;">
+                            <div style="font-size:18px; font-weight:700; color:#15803d;">✓</div>
+                        </td>
+                        <td style="font-size:13px; color:#374151; line-height:1.55; padding-bottom:10px;"><strong>Higher Conversion Rates</strong> — Stores with professional imagery convert at 2-3x higher rates.</td>
+                    </tr>
+                    <tr>
+                        <td width="30" valign="top" style="padding-top:4px; padding-right:12px;">
+                            <div style="font-size:18px; font-weight:700; color:#15803d;">✓</div>
+                        </td>
+                        <td style="font-size:13px; color:#374151; line-height:1.55; padding-bottom:10px;"><strong>Lower Return Rates</strong> — Customers make confident purchasing decisions with clear, detailed visuals.</td>
+                    </tr>
+                    <tr>
+                        <td width="30" valign="top" style="padding-top:4px; padding-right:12px;">
+                            <div style="font-size:18px; font-weight:700; color:#15803d;">✓</div>
+                        </td>
+                        <td style="font-size:13px; color:#374151; line-height:1.55; padding-bottom:10px;"><strong>Premium Brand Perception</strong> — Professional imagery establishes market authority and customer trust.</td>
+                    </tr>
+                    <tr>
+                        <td width="30" valign="top" style="padding-top:4px; padding-right:12px;">
+                            <div style="font-size:18px; font-weight:700; color:#15803d;">✓</div>
+                        </td>
+                        <td style="font-size:13px; color:#374151; line-height:1.55;"><strong>Unlimited Variations</strong> — Test styles, backgrounds, and compositions without budget constraints.</td>
+                    </tr>
+                </table>
+            </div>
 
             {{-- Credits badge --}}
-            <div style="text-align: center; margin: 20px 0;">
-                <span class="credits-badge">{{ $creditsGranted }} Free AI Credits Added to Your Account</span>
+            <div style="text-align: center; margin: 24px 0;">
+                <span class="credits-badge">{{ $creditsGranted }} Free AI Credits to Get Started</span>
             </div>
 
             {{-- Tools (minimal cards, no icons) --}}
             @php
                 $toolCards = [
-                    ['title' => 'AI Image Enhancement', 'desc' => 'Sharpen, denoise, and color-correct product images automatically.'],
-                    ['title' => 'Image Upscaler', 'desc' => 'Upscale low-resolution photos up to 4x without losing detail.'],
-                    ['title' => 'Magic Eraser', 'desc' => 'Remove unwanted objects or watermarks from any product image.'],
-                    ['title' => 'Lighting Fix', 'desc' => 'Balance exposure and fix harsh shadows for a studio-quality look.'],
-                    ['title' => 'Background Remover', 'desc' => 'Remove backgrounds instantly and keep the product clean and ready for catalogs.'],
-                    ['title' => 'Image Compressor', 'desc' => 'Reduce image size for faster storefront loading while preserving quality.'],
-                    ['title' => 'Product AI Lab', 'desc' => 'Generate high-converting product visuals and variations optimized for your store.'],
+                    ['title' => 'AI Image Enhancement', 'desc' => 'Sharpen, denoise, and color-correct product images to studio quality instantly.'],
+                    ['title' => 'Image Upscaler', 'desc' => 'Transform low-resolution photos into 4x sharper images for print and digital.'],
+                    ['title' => 'Magic Eraser', 'desc' => 'Remove unwanted objects, watermarks, or backgrounds with surgical precision.'],
+                    ['title' => 'Lighting Fix', 'desc' => 'Balance exposure and eliminate harsh shadows for consistent professional appearance.'],
+                    ['title' => 'Background Remover', 'desc' => 'Create clean, catalog-ready product images in seconds without manual editing.'],
+                    ['title' => 'Image Compressor', 'desc' => 'Optimize image sizes for lightning-fast page loads without quality loss.'],
+                    ['title' => 'Product AI Lab', 'desc' => 'Generate unlimited product variations optimized for conversion and brand consistency.'],
                 ];
             @endphp
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0 0;">
+            <p style="margin: 24px 0 16px; font-size: 13px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 0.8px;">Professional Tools at Your Fingertips</p>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px;">
                 @foreach(array_chunk($toolCards, 2) as $row)
                     <tr>
                         <td width="48%" style="background-color:#F9FAFB; border:1px solid #e5e7eb; border-radius:8px; padding:16px; vertical-align:top;">
@@ -92,7 +125,7 @@
 
             {{-- Getting started --}}
             <div class="details" style="margin-top: 24px;">
-                <p style="margin: 0 0 16px; font-size: 13px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 0.8px;">Quick Start — 3 Steps</p>
+                <p style="margin: 0 0 16px; font-size: 13px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 0.8px;">Launch in 3 Steps</p>
                 <table width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
                         <td width="30" valign="top" style="padding-top:2px;">
@@ -107,7 +140,7 @@
                             <div style="width:26px;height:26px;background-color:#468A9A;color:white;border-radius:50%;text-align:center;line-height:26px;font-size:12px;font-weight:800;">2</div>
                         </td>
                         <td style="padding-left:12px;font-size:14px;color:#374151;line-height:1.55;padding-bottom:12px;">
-                            <strong style="color:#111827;">Upload a product photo</strong> or browse your existing Shopify product images.
+                            <strong style="color:#111827;">Upload a product photo</strong> from your catalog or take a new one — your {{ $creditsGranted }} free credits await.
                         </td>
                     </tr>
                     <tr>
@@ -115,7 +148,7 @@
                             <div style="width:26px;height:26px;background-color:#468A9A;color:white;border-radius:50%;text-align:center;line-height:26px;font-size:12px;font-weight:800;">3</div>
                         </td>
                         <td style="padding-left:12px;font-size:14px;color:#374151;line-height:1.55;">
-                            <strong style="color:#111827;">Pick an AI tool</strong>, apply it with one click, and save the result back to your store.
+                            <strong style="color:#111827;">Pick a tool and transform</strong> — save publication-ready images directly to your store.
                         </td>
                     </tr>
                 </table>
@@ -123,11 +156,12 @@
 
             {{-- CTA --}}
             <div style="text-align: center;">
-                <a href="{{ url('/') }}" class="button">Open {{ $appName }} →</a>
+                <a href="{{ url('/') }}" class="button">Launch {{ $appName }} Now</a>
             </div>
 
             <div class="signature">
-                <p style="margin: 4px 0;">Regards,</p>
+                <p style="margin: 16px 0 4px; font-size: 14px; color: #374151;"><strong>Your competitive advantage starts today.</strong> Premium product visuals at scale, no traditional photography budget required.</p>
+                <p style="margin: 16px 0 4px;">Regards,</p>
                 <p style="margin: 4px 0; font-weight: 600; color: #111827;">The {{ $appName }} Team</p>
             </div>
         </div>

@@ -692,7 +692,7 @@ class BillingController extends Controller
         foreach ($superAdmins as $recipient) {
             $notified[] = mb_strtolower(trim((string) $recipient->email));
 
-            MailService::send(
+            MailService::queue(
                 toAddress: $recipient->email,
                 mailable: new MerchantCreditsUpdatedMail(
                     merchant: $merchant,
@@ -710,7 +710,7 @@ class BillingController extends Controller
 
         $ownerEmail = mb_strtolower(trim((string) ($merchant->email ?? '')));
         if ($ownerEmail !== '' && filter_var($ownerEmail, FILTER_VALIDATE_EMAIL) && ! in_array($ownerEmail, $notified, true)) {
-            MailService::send(
+            MailService::queue(
                 toAddress: $ownerEmail,
                 mailable: new MerchantCreditsUpdatedOwnerMail(
                     merchant: $merchant,

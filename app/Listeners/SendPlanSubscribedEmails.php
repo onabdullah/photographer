@@ -56,7 +56,7 @@ class SendPlanSubscribedEmails
         $notifiedAdmins = [];
         foreach ($superAdmins as $admin) {
             $notifiedAdmins[] = mb_strtolower(trim((string) $admin->email));
-            MailService::send(
+            MailService::queue(
                 toAddress: $admin->email,
                 mailable: new PlanSubscribedAdminMail(
                     merchant: $merchant,
@@ -79,7 +79,7 @@ class SendPlanSubscribedEmails
             return;
         }
 
-        MailService::send(
+        MailService::queue(
             toAddress: $ownerEmail,
             mailable: new PlanSubscribedMerchantMail(
                 merchant: $merchant,
