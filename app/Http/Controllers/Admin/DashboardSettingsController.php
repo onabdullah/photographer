@@ -42,11 +42,11 @@ class DashboardSettingsController extends Controller
             'heroTitle' => 'required|string|max:255',
             'heroSubtitle' => 'required|string|max:500',
             'heroImageFile' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
-            'heroImageUrl' => 'nullable|url',
+            'heroImageUrl' => 'nullable|string|url',
 
             // Featured Tools
             'featuredToolsEnabled' => 'boolean',
-            'featuredTools' => 'array',
+            'featuredTools' => 'nullable|array',
             'featuredTools.*' => 'string|in:magic_eraser,remove_bg,compressor,upscale,enhance,lighting',
 
             // Announcements
@@ -60,7 +60,6 @@ class DashboardSettingsController extends Controller
             // Handle file upload if provided
             if ($request->hasFile('heroImageFile')) {
                 $file = $request->file('heroImageFile');
-                $filename = 'hero-' . Str::random(16) . '.' . $file->getClientOriginalExtension();
                 $path = Storage::disk('public')->put('dashboard/hero', $file);
                 if ($path) {
                     $heroImageUrl = Storage::disk('public')->url($path);
