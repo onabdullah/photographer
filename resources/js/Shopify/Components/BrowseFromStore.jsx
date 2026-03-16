@@ -41,6 +41,8 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
   const gridRef = useRef(null);
   const loadMoreRef = useRef(null);
   const uiModalRef = useRef(null);
+  const contentRef = useRef(null);
+  const productsRef = useRef(products);
 
   /* ── App Bridge ui-modal show/hide ── */
   useEffect(() => {
@@ -123,6 +125,35 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
     onSelectImage?.(url);
     onClose?.();
   }, [onSelectImage, onClose]);
+
+  /* Keep productsRef in sync for native event handler */
+  useEffect(() => { productsRef.current = products; }, [products]);
+
+  /* Native event delegation – App Bridge ui-modal moves content outside React's event root */
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el || !open) return;
+    const handleNativeClick = (e) => {
+      const row = e.target.closest('[data-product-id]');
+      if (row) {
+        const product = productsRef.current.find((p) => String(p.id) === row.dataset.productId);
+        if (product) handleProductClick(product);
+        return;
+      }
+      const tile = e.target.closest('[data-image-url]');
+      if (tile) {
+        handleImageSelect(tile.dataset.imageUrl);
+        return;
+      }
+      const filterBtn = e.target.closest('[data-action="open-filter"]');
+      if (filterBtn) {
+        setFilterPopoverOpen(true);
+        return;
+      }
+    };
+    el.addEventListener('click', handleNativeClick);
+    return () => el.removeEventListener('click', handleNativeClick);
+  }, [open, handleProductClick, handleImageSelect]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
@@ -210,6 +241,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
             key={product.id}
             type="button"
             className="browse-product-row"
+            data-product-id={product.id}
             onClick={() => handleProductClick(product)}
             aria-label={`View images for ${product.title}`}
           >
@@ -272,6 +304,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
             key={`${url}-${i}`}
             type="button"
             className="browse-image-tile"
+            data-image-url={url}
             onClick={() => handleImageSelect(url)}
             aria-label={`Select image ${i + 1}`}
           >
@@ -294,7 +327,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
           {activeFilterLabel}
         </span>
       )}
-      <Button variant="tertiary" size="slim" onClick={() => setFilterPopoverOpen(true)}>
+      <Button variant="tertiary" size="slim" data-action="open-filter" onClick={() => setFilterPopoverOpen(true)}>
         Add filter +
       </Button>
     </InlineStack>
@@ -305,7 +338,7 @@ export default function BrowseFromStore({ open, onClose, onSelectImage }) {
       id="browse-from-store-modal"
       ref={uiModalRef}
     >
-      <div style={{ padding: '16px', display: open ? undefined : 'none' }}>
+      <div ref={contentRef} style={{ padding: '16px', display: open ? undefined : 'none' }}>
         <BlockStack gap="400">
           {view === 'products' && (
             <>
