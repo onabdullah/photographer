@@ -1,7 +1,4 @@
-import { Head } from '@inertiajs/react';
-import { useEffect } from 'react';
-
-const PAGE_STYLES = `
+import{r as w,j as i}from"./react-BHrScvB_.js";import{H as k}from"./inertia-DhWMRYOf.js";const S=`
     :root {
         --teal:       #468A9A;
         --teal-mid:   #3a7585;
@@ -941,9 +938,7 @@ const PAGE_STYLES = `
         .gv-img.tall { grid-row: auto; }
         .footer-grid { grid-template-columns: 1fr; }
     }
-`;
-
-const PAGE_MARKUP = `
+`,z=`
 <div id="bar"></div>
 
 <nav id="nav">
@@ -1396,127 +1391,4 @@ const PAGE_MARKUP = `
         </div>
     </div>
 </footer>
-`;
-
-export default function Welcome() {
-        useEffect(() => {
-                const bar = document.getElementById('bar');
-                const nav = document.getElementById('nav');
-                const heroRight = document.querySelector('.hero-right');
-                const tl = document.getElementById('toolsList');
-                const ng = document.getElementById('numGrid');
-
-                const onScrollProgress = () => {
-                        if (!bar) return;
-                        const progress = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
-                        bar.style.width = `${progress}%`;
-                };
-
-                const onScrollNav = () => {
-                        if (!nav) return;
-                        nav.style.boxShadow = window.scrollY > 40 ? '0 1px 24px rgba(70,138,154,.08)' : 'none';
-                };
-
-                const onScrollParallax = () => {
-                        if (heroRight && window.scrollY < window.innerHeight) {
-                                heroRight.style.transform = `translateY(${window.scrollY * 0.06}px)`;
-                        }
-                };
-
-                window.addEventListener('scroll', onScrollProgress, { passive: true });
-                window.addEventListener('scroll', onScrollNav, { passive: true });
-                window.addEventListener('scroll', onScrollParallax, { passive: true });
-
-                const obs = new IntersectionObserver(
-                        (entries) => {
-                                entries.forEach((entry) => {
-                                        if (entry.isIntersecting) {
-                                                entry.target.classList.add('in');
-                                                obs.unobserve(entry.target);
-                                        }
-                                });
-                        },
-                        { threshold: 0.1 },
-                );
-
-                document.querySelectorAll('.sr, .sl, .sfr').forEach((el) => obs.observe(el));
-
-                let toolsObserver = null;
-                if (tl) {
-                        toolsObserver = new IntersectionObserver(
-                                (entries) => {
-                                        entries.forEach((entry) => {
-                                                if (entry.isIntersecting) {
-                                                        entry.target.querySelectorAll('.tool-item').forEach((item, i) => {
-                                                                item.style.opacity = '0';
-                                                                item.style.transform = 'translateX(20px)';
-                                                                setTimeout(() => {
-                                                                        item.style.transition = 'opacity .6s ease, transform .6s ease';
-                                                                        item.style.opacity = '1';
-                                                                        item.style.transform = 'translateX(0)';
-                                                                }, i * 80);
-                                                        });
-                                                }
-                                        });
-                                },
-                                { threshold: 0.05 },
-                        );
-                        toolsObserver.observe(tl);
-                }
-
-                const countUp = (el, target, suffix) => {
-                        let start = null;
-                        const step = (ts) => {
-                                if (!start) start = ts;
-                                const p = Math.min((ts - start) / 1400, 1);
-                                const eased = 1 - (1 - p) ** 3;
-                                el.textContent = `${Math.floor(eased * target)}${suffix}`;
-                                if (p < 1) requestAnimationFrame(step);
-                        };
-                        requestAnimationFrame(step);
-                };
-
-                let numObserver = null;
-                if (ng) {
-                        numObserver = new IntersectionObserver(
-                                (entries) => {
-                                        entries.forEach((entry) => {
-                                                if (entry.isIntersecting) {
-                                                        entry.target.querySelectorAll('[data-target]').forEach((el) => {
-                                                                countUp(el, Number(el.dataset.target), el.dataset.suffix || '');
-                                                        });
-                                                }
-                                        });
-                                },
-                                { threshold: 0.4 },
-                        );
-                        numObserver.observe(ng);
-                }
-
-                return () => {
-                        window.removeEventListener('scroll', onScrollProgress);
-                        window.removeEventListener('scroll', onScrollNav);
-                        window.removeEventListener('scroll', onScrollParallax);
-                        obs.disconnect();
-                        if (toolsObserver) toolsObserver.disconnect();
-                        if (numObserver) numObserver.disconnect();
-                };
-        }, []);
-
-        return (
-                <>
-                        <Head title="PixelForge AI - Product Photography for Shopify">
-                                <meta charSet="UTF-8" />
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-                                <link
-                                        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Figtree:wght@300;400;500;600&display=swap"
-                                        rel="stylesheet"
-                                />
-                        </Head>
-                        <style dangerouslySetInnerHTML={{ __html: PAGE_STYLES }} />
-                        <div dangerouslySetInnerHTML={{ __html: PAGE_MARKUP }} />
-                </>
-        );
-}
+`;function P(){return w.useEffect(()=>{const l=document.getElementById("bar"),d=document.getElementById("nav"),c=document.querySelector(".hero-right"),p=document.getElementById("toolsList"),v=document.getElementById("numGrid"),g=()=>{if(!l)return;const e=window.scrollY/(document.body.scrollHeight-window.innerHeight)*100;l.style.width=`${e}%`},m=()=>{d&&(d.style.boxShadow=window.scrollY>40?"0 1px 24px rgba(70,138,154,.08)":"none")},f=()=>{c&&window.scrollY<window.innerHeight&&(c.style.transform=`translateY(${window.scrollY*.06}px)`)};window.addEventListener("scroll",g,{passive:!0}),window.addEventListener("scroll",m,{passive:!0}),window.addEventListener("scroll",f,{passive:!0});const n=new IntersectionObserver(e=>{e.forEach(t=>{t.isIntersecting&&(t.target.classList.add("in"),n.unobserve(t.target))})},{threshold:.1});document.querySelectorAll(".sr, .sl, .sfr").forEach(e=>n.observe(e));let o=null;p&&(o=new IntersectionObserver(e=>{e.forEach(t=>{t.isIntersecting&&t.target.querySelectorAll(".tool-item").forEach((a,s)=>{a.style.opacity="0",a.style.transform="translateX(20px)",setTimeout(()=>{a.style.transition="opacity .6s ease, transform .6s ease",a.style.opacity="1",a.style.transform="translateX(0)"},s*80)})})},{threshold:.05}),o.observe(p));const x=(e,t,a)=>{let s=null;const h=u=>{s||(s=u);const b=Math.min((u-s)/1400,1),y=1-(1-b)**3;e.textContent=`${Math.floor(y*t)}${a}`,b<1&&requestAnimationFrame(h)};requestAnimationFrame(h)};let r=null;return v&&(r=new IntersectionObserver(e=>{e.forEach(t=>{t.isIntersecting&&t.target.querySelectorAll("[data-target]").forEach(a=>{x(a,Number(a.dataset.target),a.dataset.suffix||"")})})},{threshold:.4}),r.observe(v)),()=>{window.removeEventListener("scroll",g),window.removeEventListener("scroll",m),window.removeEventListener("scroll",f),n.disconnect(),o&&o.disconnect(),r&&r.disconnect()}},[]),i.jsxs(i.Fragment,{children:[i.jsxs(k,{title:"PixelForge AI - Product Photography for Shopify",children:[i.jsx("meta",{charSet:"UTF-8"}),i.jsx("meta",{name:"viewport",content:"width=device-width, initial-scale=1.0"}),i.jsx("link",{rel:"preconnect",href:"https://fonts.googleapis.com"}),i.jsx("link",{rel:"preconnect",href:"https://fonts.gstatic.com",crossOrigin:"anonymous"}),i.jsx("link",{href:"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Figtree:wght@300;400;500;600&display=swap",rel:"stylesheet"})]}),i.jsx("style",{dangerouslySetInnerHTML:{__html:S}}),i.jsx("div",{dangerouslySetInnerHTML:{__html:z}})]})}export{P as default};
