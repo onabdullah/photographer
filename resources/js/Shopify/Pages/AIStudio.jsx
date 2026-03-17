@@ -1617,6 +1617,11 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
 
             {/* Command Center (right) – compact control panel */}
             <Layout.Section variant="oneThird">
+              <div style={{
+                pointerEvents: (isScanning || isProcessing) ? 'none' : undefined,
+                opacity: (isScanning || isProcessing) ? 0.5 : undefined,
+                transition: 'opacity 0.2s',
+              }}>
               <Card>
                 <BlockStack gap="400">
                   {/* For magic_eraser: show source image at top */}
@@ -2065,6 +2070,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                   </Box>
                 </BlockStack>
               </Card>
+              </div>
             </Layout.Section>
           </Layout>
 
