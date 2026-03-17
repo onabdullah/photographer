@@ -2069,17 +2069,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                       <BlockStack gap="200">
                         <Button
                           fullWidth
-                          variant="primary"
-                          size="large"
-                          onClick={handleGenerate}
-                          loading={isGenerateBusy}
-                          disabled={isGenerateDisabled}
-                          accessibilityLabel="Regenerate image"
-                        >
-                          Regenerate
-                        </Button>
-                        <Button
-                          fullWidth
                           variant="secondary"
                           size="large"
                           icon={PlusCircleIcon}
