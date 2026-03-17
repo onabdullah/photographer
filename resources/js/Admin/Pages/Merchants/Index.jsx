@@ -3,6 +3,12 @@ import { Link, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { Search, Store, Pencil, CreditCard, Sparkles, CalendarPlus, ShieldCheck, BarChart3 } from 'lucide-react';
 
+const PLAN_TAG_CLS = {
+    free: 'bg-gray-500/10 text-gray-700 dark:text-gray-300 ring-1 ring-gray-500/20',
+    paid: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/20',
+    none: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/20',
+};
+
 export default function MerchantsIndex({ merchants, quickStats, filters }) {
     const paginator = merchants;
     const items     = paginator?.data ?? [];
@@ -104,6 +110,12 @@ export default function MerchantsIndex({ merchants, quickStats, filters }) {
     const planName = (m) => {
         if (m.shopify_freemium) return 'Free';
         return m.plan?.name ?? (m.plan_id ? `Plan #${m.plan_id}` : 'None');
+    };
+
+    const planTagClass = (m) => {
+        if (m.shopify_freemium) return PLAN_TAG_CLS.free;
+        if (m.plan_id) return PLAN_TAG_CLS.paid;
+        return PLAN_TAG_CLS.none;
     };
 
     const formatDate = (iso) =>
@@ -231,7 +243,10 @@ export default function MerchantsIndex({ merchants, quickStats, filters }) {
                                         </p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{m.name || '—'}</p>
                                     </div>
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                    <span className={[
+                                        'inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium whitespace-nowrap',
+                                        planTagClass(m),
+                                    ].join(' ')}>
                                         {planName(m)}
                                     </span>
                                 </div>
