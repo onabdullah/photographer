@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 
-const BRANDS = ['Velora Goods', 'NovaHaus', 'Blend Theory', 'Studio Arc', 'Mira Living', 'Kairo Lab'];
+const BRANDS = ['VendorShendor', 'Velora Goods', 'NovaHaus', 'Blend Theory', 'Studio Arc', 'Mira Living'];
 
 const FEATURES = [
     {
@@ -19,6 +19,10 @@ const FEATURES = [
     {
         title: 'Scalable AI Infrastructure',
         text: 'From startup catalogs to high-volume enterprise stores, BFS is optimized for growth in the era of AI commerce.',
+    },
+    {
+        title: '24/7 Merchant Support',
+        text: 'Our support team is available around the clock to help merchants resolve issues fast and keep stores selling without downtime.',
     },
 ];
 
@@ -43,8 +47,8 @@ export default function Welcome({ auth }) {
                 <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
                     <div className="flex items-center gap-3">
                         <img
-                            src="https://images.unsplash.com/photo-1574226516831-e1dff420e37f?auto=format&fit=crop&w=220&q=80"
-                            alt="Nano Banana 2 Pro mark"
+                            src="https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=220&q=80"
+                            alt="BFS visual mark"
                             className="h-11 w-11 rounded-xl object-cover ring-2 ring-white/80"
                         />
                         <div>
@@ -84,7 +88,7 @@ export default function Welcome({ auth }) {
                     <section className="grid gap-12 pb-14 pt-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
                         <div className="reveal-item" style={{ animationDelay: '100ms' }}>
                             <p className="mb-4 inline-flex rounded-full border border-[#c3d5ca] bg-white/75 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#376551]">
-                                Powered By Nano Banana 2 Pro AI
+                                Shopify Embedded First AI Workflow
                             </p>
                             <h2 className="font-heading text-5xl leading-[1.02] tracking-tight text-[#0f1e17] lg:text-7xl">
                                 Stunning product visuals that grow your business.
@@ -113,14 +117,26 @@ export default function Welcome({ auth }) {
                         <div className="reveal-item" style={{ animationDelay: '240ms' }}>
                             <div className="nano-card relative overflow-hidden rounded-[32px] border border-[#b7cbbf] bg-white p-4 shadow-[0_20px_70px_rgba(28,53,42,0.15)] lg:p-6">
                                 <div className="absolute right-5 top-5 rounded-full bg-[#0d1e17] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-white">
-                                    Nano Banana 2 Pro
+                                    AI Enhanced Studio
                                 </div>
                                 <img
-                                    src="https://images.unsplash.com/photo-1556742393-d75f468bfcb0?auto=format&fit=crop&w=1200&q=80"
+                                    src="https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=1400&q=80"
                                     alt="Ecommerce hero visual"
                                     className="h-[420px] w-full rounded-[24px] object-cover"
                                 />
                             </div>
+                        </div>
+                    </section>
+
+                    <section className="reveal-item pb-6" style={{ animationDelay: '70ms' }}>
+                        <div className="rounded-3xl border border-[#9db8aa] bg-[#123124] px-6 py-5 text-white md:flex md:items-center md:justify-between md:px-8">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bed7ca]">Strategic Collaboration</p>
+                                <p className="mt-1 text-2xl font-bold md:text-3xl">Built in close collaboration with VendorShendor.</p>
+                            </div>
+                            <p className="mt-3 text-sm text-[#d4e6dd] md:mt-0 md:max-w-sm">
+                                Shared workflows, vendor-grade quality controls, and faster storefront rollout for growing Shopify merchants.
+                            </p>
                         </div>
                     </section>
 
@@ -214,7 +230,7 @@ export default function Welcome({ auth }) {
                             <h5 className="relative mt-3 font-heading text-4xl leading-tight md:text-5xl">Virtual Try-On that boosts buyer confidence.</h5>
                             <p className="relative mt-5 max-w-3xl text-base leading-relaxed text-[#d7e8df]">
                                 Our VTO pipeline helps shoppers visualize products in real context before checkout, reducing hesitation and improving conversion quality.
-                                With BFS + Nano Banana 2 Pro, your visual commerce stack stays modern, fast, and trustworthy.
+                                With BFS, your visual commerce stack stays modern, fast, and trustworthy.
                             </p>
                         </div>
                     </section>
