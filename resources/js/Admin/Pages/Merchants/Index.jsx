@@ -266,7 +266,7 @@ export default function MerchantsIndex({ merchants, quickStats, filters }) {
                                         planTagClass(m),
                                     ].join(' ')}>
                                         {isPaidPlan(m) && <Crown size={12} className="opacity-90" />}
-                                        {isPaidPlan(m) ? `Plan Bought • ${planName(m)}` : planName(m)}
+                                        {planName(m)}
                                     </span>
                                 </div>
 
