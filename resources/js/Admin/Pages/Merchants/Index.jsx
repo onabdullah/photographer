@@ -251,7 +251,7 @@ export default function MerchantsIndex({ merchants, quickStats, filters }) {
                 </div>
 
                 {items.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {items.map((m) => (
                             <div key={m.id} className="card-base p-5">
                                 <div className="flex items-start justify-between gap-3">
