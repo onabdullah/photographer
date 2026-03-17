@@ -77,18 +77,47 @@ Route::middleware(['auth:admin'])->group(function () {
 
     // Merchant Management
     Route::get('/merchants', function () {
+        $q = trim((string) request('q', ''));
+        $planFilter = (string) request('plan', 'all');
+        $sort = (string) request('sort', 'latest');
+
         $totalMerchants = \App\Models\Merchant::count();
         $merchantsWithPlan = \App\Models\Merchant::whereNotNull('plan_id')->count();
         $newMerchantsLast7Days = \App\Models\Merchant::where('created_at', '>=', now()->subDays(7))->count();
         $totalCreditsIssued = (int) \App\Models\Merchant::sum('ai_credits_balance');
         $aiStudioRunsTotal = \App\Models\ImageGeneration::where('status', 'completed')->whereNotNull('result_image_url')->count();
 
-        $merchants = \App\Models\Merchant::with('plan')
+        $query = \App\Models\Merchant::with('plan')
             ->withCount(['imageGenerations as images_generated_count' => function ($q) {
                 $q->where('status', 'completed')->whereNotNull('result_image_url');
-            }])
-            ->latest()
-            ->paginate(15);
+            }]);
+
+        if ($q !== '') {
+            $query->where(function ($inner) use ($q) {
+                $inner->where('store_name', 'like', "%{$q}%")
+                    ->orWhere('name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhere('shop_owner', 'like', "%{$q}%");
+            });
+        }
+
+        if ($planFilter === 'paid') {
+            $query->whereNotNull('plan_id')->where('shopify_freemium', false);
+        } elseif ($planFilter === 'free') {
+            $query->where(function ($inner) {
+                $inner->whereNull('plan_id')->orWhere('shopify_freemium', true);
+            });
+        }
+
+        if ($sort === 'credits_desc') {
+            $query->orderByDesc('ai_credits_balance');
+        } elseif ($sort === 'images_desc') {
+            $query->orderByDesc('images_generated_count');
+        } else {
+            $query->latest();
+        }
+
+        $merchants = $query->paginate(15)->withQueryString();
 
         return Inertia::render('Admin/Pages/Merchants/Index', [
             'merchants' => $merchants,
@@ -99,6 +128,11 @@ Route::middleware(['auth:admin'])->group(function () {
                 'total_credits_issued' => $totalCreditsIssued,
                 'total_completed_images' => $aiStudioRunsTotal,
             ],
+            'filters' => [
+                'q' => $q,
+                'plan' => $planFilter,
+                'sort' => $sort,
+            ],
         ]);
     })->middleware('admin.permission:merchants.view')->name('merchants.index');
 
@@ -107,6 +141,95 @@ Route::middleware(['auth:admin'])->group(function () {
             'merchantId' => $id,
         ]);
     })->middleware('admin.permission:merchants.view')->name('merchants.show');
+
+    Route::get('/merchants/{id}/insights', function ($id) {
+        /** @var \App\Models\Merchant|null $merchant */
+        $merchant = \App\Models\Merchant::with('plan')->find($id);
+        if (! $merchant) {
+            return response()->json(['message' => 'Merchant not found'], 404);
+        }
+
+        $baseQuery = \App\Models\ImageGeneration::where('shop_domain', $merchant->name);
+        $completedQuery = (clone $baseQuery)
+            ->where('status', 'completed')
+            ->whereNotNull('result_image_url');
+
+        $totalGenerations = (clone $baseQuery)->count();
+        $completedGenerations = (clone $completedQuery)->count();
+        $totalCreditsUsed = (int) ((clone $completedQuery)->sum('credits_used') ?: 0);
+
+        $startOfMonth = now()->startOfMonth();
+        $monthlyCompletedQuery = (clone $completedQuery)->where('created_at', '>=', $startOfMonth);
+        $monthlyCreditsUsed = (int) ((clone $monthlyCompletedQuery)->sum('credits_used') ?: 0);
+        $monthlyGenerations = (clone $monthlyCompletedQuery)->count();
+
+        $topTools = (clone $completedQuery)
+            ->selectRaw('tool_used, COUNT(*) as runs, COALESCE(SUM(credits_used), 0) as credits_used')
+            ->groupBy('tool_used')
+            ->orderByDesc('credits_used')
+            ->limit(5)
+            ->get()
+            ->map(function ($row) use ($totalCreditsUsed) {
+                $credits = (int) $row->credits_used;
+                return [
+                    'tool' => $row->tool_used ?: 'unknown',
+                    'runs' => (int) $row->runs,
+                    'credits_used' => $credits,
+                    'share_percentage' => $totalCreditsUsed > 0
+                        ? round(($credits / $totalCreditsUsed) * 100, 1)
+                        : 0,
+                ];
+            })
+            ->values();
+
+        $wallet = \App\Services\MerchantCreditService::getSummary($merchant);
+        $planMonthlyCredits = (int) ($merchant->plan?->monthly_credits ?? 0);
+        $monthlyUsagePercentage = $planMonthlyCredits > 0
+            ? min(100, round(($monthlyCreditsUsed / $planMonthlyCredits) * 100, 1))
+            : null;
+
+        $recent = (clone $baseQuery)
+            ->latest('created_at')
+            ->limit(8)
+            ->get(['id', 'tool_used', 'status', 'credits_used', 'created_at'])
+            ->map(fn ($g) => [
+                'id' => $g->id,
+                'tool' => $g->tool_used ?: 'unknown',
+                'status' => $g->status,
+                'credits_used' => (int) ($g->credits_used ?? 0),
+                'created_at' => $g->created_at?->toIso8601String(),
+            ]);
+
+        return response()->json([
+            'merchant' => [
+                'id' => $merchant->id,
+                'store_name' => $merchant->store_name ?: $merchant->name,
+                'domain' => $merchant->name,
+                'email' => $merchant->email,
+                'shop_owner' => $merchant->shop_owner,
+                'plan_name' => $merchant->shopify_freemium ? 'Free' : ($merchant->plan?->name ?? 'None'),
+                'monthly_plan_credits' => $planMonthlyCredits,
+                'installed_at' => $merchant->created_at?->toIso8601String(),
+            ],
+            'usage' => [
+                'total_generations' => $totalGenerations,
+                'completed_generations' => $completedGenerations,
+                'total_credits_used' => $totalCreditsUsed,
+                'monthly_generations' => $monthlyGenerations,
+                'monthly_credits_used' => $monthlyCreditsUsed,
+                'monthly_usage_percentage' => $monthlyUsagePercentage,
+            ],
+            'credit_breakdown' => [
+                'current_balance' => (int) ($wallet['total_credits'] ?? 0),
+                'plan_cycle_credits' => (int) ($wallet['plan_cycle_credits'] ?? 0),
+                'plan_cycle_remaining' => (int) ($wallet['plan_cycle_remaining'] ?? 0),
+                'top_up_credits' => (int) ($wallet['top_up_credits'] ?? 0),
+                'plan_cycle_used' => max(0, (int) ($wallet['plan_cycle_credits'] ?? 0) - (int) ($wallet['plan_cycle_remaining'] ?? 0)),
+            ],
+            'top_tools' => $topTools,
+            'recent_activity' => $recent,
+        ]);
+    })->middleware('admin.permission:merchants.view')->name('merchants.insights');
 
     Route::patch('/merchants/{id}/credits', [\App\Http\Controllers\Admin\MerchantController::class, 'updateCredits'])
         ->middleware('admin.permission:merchants.edit_credits')
