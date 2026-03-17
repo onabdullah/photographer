@@ -1,11 +1,4 @@
-import { Head } from '@inertiajs/react';
-import { useEffect } from 'react';
-
-const APP_NAME = import.meta.env.VITE_APP_NAME || 'Photographer';
-
-const APP_LOGO_SVG = `<svg viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M305.8 81.125C305.77 80.995 305.69 80.885 305.65 80.755C305.56 80.525 305.49 80.285 305.37 80.075C305.29 79.935 305.17 79.815 305.07 79.685C304.94 79.515 304.83 79.325 304.68 79.175C304.55 79.045 304.39 78.955 304.25 78.845C304.09 78.715 303.95 78.575 303.77 78.475L251.32 48.275C249.97 47.495 248.31 47.495 246.96 48.275L194.51 78.475C194.33 78.575 194.19 78.725 194.03 78.845C193.89 78.955 193.73 79.045 193.6 79.175C193.45 79.325 193.34 79.515 193.21 79.685C193.11 79.815 192.99 79.935 192.91 80.075C192.79 80.285 192.71 80.525 192.63 80.755C192.58 80.875 192.51 80.995 192.48 81.125C192.38 81.495 192.33 81.875 192.33 82.265V139.625L148.62 164.795V52.575C148.62 52.185 148.57 51.805 148.47 51.435C148.44 51.305 148.36 51.195 148.32 51.065C148.23 50.835 148.16 50.595 148.04 50.385C147.96 50.245 147.84 50.125 147.74 49.995C147.61 49.825 147.5 49.635 147.35 49.485C147.22 49.355 147.06 49.265 146.92 49.155C146.76 49.025 146.62 48.885 146.44 48.785L93.99 18.585C92.64 17.805 90.98 17.805 89.63 18.585L37.18 48.785C37 48.885 36.86 49.035 36.7 49.155C36.56 49.265 36.4 49.355 36.27 49.485C36.12 49.635 36.01 49.825 35.88 49.995C35.78 50.125 35.66 50.245 35.58 50.385C35.46 50.595 35.38 50.835 35.3 51.065C35.25 51.185 35.18 51.305 35.15 51.435C35.05 51.805 35 52.185 35 52.575V232.235C35 233.795 35.84 235.245 37.19 236.025L142.1 296.425C142.33 296.555 142.58 296.635 142.82 296.725C142.93 296.765 143.04 296.835 143.16 296.865C143.53 296.965 143.9 297.015 144.28 297.015C144.66 297.015 145.03 296.965 145.4 296.865C145.5 296.835 145.59 296.775 145.69 296.745C145.95 296.655 146.21 296.565 146.45 296.435L251.36 236.035C252.72 235.255 253.55 233.815 253.55 232.245V174.885L303.81 145.945C305.17 145.165 306 143.725 306 142.155V82.265C305.95 81.875 305.89 81.495 305.8 81.125ZM144.2 227.205L100.57 202.515L146.39 176.135L196.66 147.195L240.33 172.335L208.29 190.625L144.2 227.205ZM244.75 114.995V164.795L226.39 154.225L201.03 139.625V89.825L219.39 100.395L244.75 114.995ZM249.12 57.105L292.81 82.265L249.12 107.425L205.43 82.265L249.12 57.105ZM114.49 184.425L96.13 194.995V85.305L121.49 70.705L139.85 60.135V169.815L114.49 184.425ZM91.76 27.425L135.45 52.585L91.76 77.745L48.07 52.585L91.76 27.425ZM43.67 60.135L62.03 70.705L87.39 85.305V202.545V202.555V202.565C87.39 202.735 87.44 202.895 87.46 203.055C87.49 203.265 87.49 203.485 87.55 203.695V203.705C87.6 203.875 87.69 204.035 87.76 204.195C87.84 204.375 87.89 204.575 87.99 204.745C87.99 204.745 87.99 204.755 88 204.755C88.09 204.905 88.22 205.035 88.33 205.175C88.45 205.335 88.55 205.495 88.69 205.635L88.7 205.645C88.82 205.765 88.98 205.855 89.12 205.965C89.28 206.085 89.42 206.225 89.59 206.325C89.6 206.325 89.6 206.325 89.61 206.335C89.62 206.335 89.62 206.345 89.63 206.345L139.87 234.775V285.065L43.67 229.705V60.135ZM244.75 229.705L148.58 285.075V234.775L219.8 194.115L244.75 179.875V229.705ZM297.2 139.625L253.49 164.795V114.995L278.85 100.395L297.21 89.825V139.625H297.2Z"/></svg>`;
-
-const PAGE_STYLES = `
+import{r as S,j as i}from"./react-BHrScvB_.js";import{H as L}from"./inertia-DhWMRYOf.js";const x="Photographer",y='<svg viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M305.8 81.125C305.77 80.995 305.69 80.885 305.65 80.755C305.56 80.525 305.49 80.285 305.37 80.075C305.29 79.935 305.17 79.815 305.07 79.685C304.94 79.515 304.83 79.325 304.68 79.175C304.55 79.045 304.39 78.955 304.25 78.845C304.09 78.715 303.95 78.575 303.77 78.475L251.32 48.275C249.97 47.495 248.31 47.495 246.96 48.275L194.51 78.475C194.33 78.575 194.19 78.725 194.03 78.845C193.89 78.955 193.73 79.045 193.6 79.175C193.45 79.325 193.34 79.515 193.21 79.685C193.11 79.815 192.99 79.935 192.91 80.075C192.79 80.285 192.71 80.525 192.63 80.755C192.58 80.875 192.51 80.995 192.48 81.125C192.38 81.495 192.33 81.875 192.33 82.265V139.625L148.62 164.795V52.575C148.62 52.185 148.57 51.805 148.47 51.435C148.44 51.305 148.36 51.195 148.32 51.065C148.23 50.835 148.16 50.595 148.04 50.385C147.96 50.245 147.84 50.125 147.74 49.995C147.61 49.825 147.5 49.635 147.35 49.485C147.22 49.355 147.06 49.265 146.92 49.155C146.76 49.025 146.62 48.885 146.44 48.785L93.99 18.585C92.64 17.805 90.98 17.805 89.63 18.585L37.18 48.785C37 48.885 36.86 49.035 36.7 49.155C36.56 49.265 36.4 49.355 36.27 49.485C36.12 49.635 36.01 49.825 35.88 49.995C35.78 50.125 35.66 50.245 35.58 50.385C35.46 50.595 35.38 50.835 35.3 51.065C35.25 51.185 35.18 51.305 35.15 51.435C35.05 51.805 35 52.185 35 52.575V232.235C35 233.795 35.84 235.245 37.19 236.025L142.1 296.425C142.33 296.555 142.58 296.635 142.82 296.725C142.93 296.765 143.04 296.835 143.16 296.865C143.53 296.965 143.9 297.015 144.28 297.015C144.66 297.015 145.03 296.965 145.4 296.865C145.5 296.835 145.59 296.775 145.69 296.745C145.95 296.655 146.21 296.565 146.45 296.435L251.36 236.035C252.72 235.255 253.55 233.815 253.55 232.245V174.885L303.81 145.945C305.17 145.165 306 143.725 306 142.155V82.265C305.95 81.875 305.89 81.495 305.8 81.125ZM144.2 227.205L100.57 202.515L146.39 176.135L196.66 147.195L240.33 172.335L208.29 190.625L144.2 227.205ZM244.75 114.995V164.795L226.39 154.225L201.03 139.625V89.825L219.39 100.395L244.75 114.995ZM249.12 57.105L292.81 82.265L249.12 107.425L205.43 82.265L249.12 57.105ZM114.49 184.425L96.13 194.995V85.305L121.49 70.705L139.85 60.135V169.815L114.49 184.425ZM91.76 27.425L135.45 52.585L91.76 77.745L48.07 52.585L91.76 27.425ZM43.67 60.135L62.03 70.705L87.39 85.305V202.545V202.555V202.565C87.39 202.735 87.44 202.895 87.46 203.055C87.49 203.265 87.49 203.485 87.55 203.695V203.705C87.6 203.875 87.69 204.035 87.76 204.195C87.84 204.375 87.89 204.575 87.99 204.745C87.99 204.745 87.99 204.755 88 204.755C88.09 204.905 88.22 205.035 88.33 205.175C88.45 205.335 88.55 205.495 88.69 205.635L88.7 205.645C88.82 205.765 88.98 205.855 89.12 205.965C89.28 206.085 89.42 206.225 89.59 206.325C89.6 206.325 89.6 206.325 89.61 206.335C89.62 206.335 89.62 206.345 89.63 206.345L139.87 234.775V285.065L43.67 229.705V60.135ZM244.75 229.705L148.58 285.075V234.775L219.8 194.115L244.75 179.875V229.705ZM297.2 139.625L253.49 164.795V114.995L278.85 100.395L297.21 89.825V139.625H297.2Z"/></svg>',z=`
     :root {
         --teal:       #468A9A;
         --teal-mid:   #3a7585;
@@ -955,15 +948,13 @@ const PAGE_STYLES = `
         .gv-img.tall { grid-row: auto; }
         .footer-grid { grid-template-columns: 1fr; }
     }
-`;
-
-const PAGE_MARKUP = `
+`,C=`
 <div id="bar"></div>
 
 <nav id="nav">
     <div class="nav-logo">
-        <div class="logo-mark">${APP_LOGO_SVG}</div>
-        ${APP_NAME}
+        <div class="logo-mark">${y}</div>
+        ${x}
     </div>
     <ul class="nav-links">
         <li><a href="#tools">Tools</a></li>
@@ -1366,8 +1357,8 @@ const PAGE_MARKUP = `
         <div class="footer-grid">
             <div>
                 <div class="nav-logo">
-                    <div class="logo-mark">${APP_LOGO_SVG}</div>
-                    ${APP_NAME}
+                    <div class="logo-mark">${y}</div>
+                    ${x}
                 </div>
                 <p class="footer-brand-desc">Professional AI product photography for Shopify merchants. Studio-quality images, on demand.</p>
             </div>
@@ -1410,127 +1401,4 @@ const PAGE_MARKUP = `
         </div>
     </div>
 </footer>
-`;
-
-export default function Welcome() {
-        useEffect(() => {
-                const bar = document.getElementById('bar');
-                const nav = document.getElementById('nav');
-                const heroRight = document.querySelector('.hero-right');
-                const tl = document.getElementById('toolsList');
-                const ng = document.getElementById('numGrid');
-
-                const onScrollProgress = () => {
-                        if (!bar) return;
-                        const progress = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
-                        bar.style.width = `${progress}%`;
-                };
-
-                const onScrollNav = () => {
-                        if (!nav) return;
-                        nav.style.boxShadow = window.scrollY > 40 ? '0 1px 24px rgba(70,138,154,.08)' : 'none';
-                };
-
-                const onScrollParallax = () => {
-                        if (heroRight && window.scrollY < window.innerHeight) {
-                                heroRight.style.transform = `translateY(${window.scrollY * 0.06}px)`;
-                        }
-                };
-
-                window.addEventListener('scroll', onScrollProgress, { passive: true });
-                window.addEventListener('scroll', onScrollNav, { passive: true });
-                window.addEventListener('scroll', onScrollParallax, { passive: true });
-
-                const obs = new IntersectionObserver(
-                        (entries) => {
-                                entries.forEach((entry) => {
-                                        if (entry.isIntersecting) {
-                                                entry.target.classList.add('in');
-                                                obs.unobserve(entry.target);
-                                        }
-                                });
-                        },
-                        { threshold: 0.1 },
-                );
-
-                document.querySelectorAll('.sr, .sl, .sfr').forEach((el) => obs.observe(el));
-
-                let toolsObserver = null;
-                if (tl) {
-                        toolsObserver = new IntersectionObserver(
-                                (entries) => {
-                                        entries.forEach((entry) => {
-                                                if (entry.isIntersecting) {
-                                                        entry.target.querySelectorAll('.tool-item').forEach((item, i) => {
-                                                                item.style.opacity = '0';
-                                                                item.style.transform = 'translateX(20px)';
-                                                                setTimeout(() => {
-                                                                        item.style.transition = 'opacity .6s ease, transform .6s ease';
-                                                                        item.style.opacity = '1';
-                                                                        item.style.transform = 'translateX(0)';
-                                                                }, i * 80);
-                                                        });
-                                                }
-                                        });
-                                },
-                                { threshold: 0.05 },
-                        );
-                        toolsObserver.observe(tl);
-                }
-
-                const countUp = (el, target, suffix) => {
-                        let start = null;
-                        const step = (ts) => {
-                                if (!start) start = ts;
-                                const p = Math.min((ts - start) / 1400, 1);
-                                const eased = 1 - (1 - p) ** 3;
-                                el.textContent = `${Math.floor(eased * target)}${suffix}`;
-                                if (p < 1) requestAnimationFrame(step);
-                        };
-                        requestAnimationFrame(step);
-                };
-
-                let numObserver = null;
-                if (ng) {
-                        numObserver = new IntersectionObserver(
-                                (entries) => {
-                                        entries.forEach((entry) => {
-                                                if (entry.isIntersecting) {
-                                                        entry.target.querySelectorAll('[data-target]').forEach((el) => {
-                                                                countUp(el, Number(el.dataset.target), el.dataset.suffix || '');
-                                                        });
-                                                }
-                                        });
-                                },
-                                { threshold: 0.4 },
-                        );
-                        numObserver.observe(ng);
-                }
-
-                return () => {
-                        window.removeEventListener('scroll', onScrollProgress);
-                        window.removeEventListener('scroll', onScrollNav);
-                        window.removeEventListener('scroll', onScrollParallax);
-                        obs.disconnect();
-                        if (toolsObserver) toolsObserver.disconnect();
-                        if (numObserver) numObserver.disconnect();
-                };
-        }, []);
-
-        return (
-                <>
-                        <Head title="PixelForge AI - Product Photography for Shopify">
-                                <meta charSet="UTF-8" />
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-                                <link
-                                        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Figtree:wght@300;400;500;600&display=swap"
-                                        rel="stylesheet"
-                                />
-                        </Head>
-                        <style dangerouslySetInnerHTML={{ __html: PAGE_STYLES }} />
-                        <div dangerouslySetInnerHTML={{ __html: PAGE_MARKUP }} />
-                </>
-        );
-}
+`;function P(){return S.useEffect(()=>{const l=document.getElementById("bar"),d=document.getElementById("nav"),c=document.querySelector(".hero-right"),p=document.getElementById("toolsList"),v=document.getElementById("numGrid"),g=()=>{if(!l)return;const e=window.scrollY/(document.body.scrollHeight-window.innerHeight)*100;l.style.width=`${e}%`},m=()=>{d&&(d.style.boxShadow=window.scrollY>40?"0 1px 24px rgba(70,138,154,.08)":"none")},h=()=>{c&&window.scrollY<window.innerHeight&&(c.style.transform=`translateY(${window.scrollY*.06}px)`)};window.addEventListener("scroll",g,{passive:!0}),window.addEventListener("scroll",m,{passive:!0}),window.addEventListener("scroll",h,{passive:!0});const n=new IntersectionObserver(e=>{e.forEach(t=>{t.isIntersecting&&(t.target.classList.add("in"),n.unobserve(t.target))})},{threshold:.1});document.querySelectorAll(".sr, .sl, .sfr").forEach(e=>n.observe(e));let o=null;p&&(o=new IntersectionObserver(e=>{e.forEach(t=>{t.isIntersecting&&t.target.querySelectorAll(".tool-item").forEach((a,s)=>{a.style.opacity="0",a.style.transform="translateX(20px)",setTimeout(()=>{a.style.transition="opacity .6s ease, transform .6s ease",a.style.opacity="1",a.style.transform="translateX(0)"},s*80)})})},{threshold:.05}),o.observe(p));const w=(e,t,a)=>{let s=null;const f=u=>{s||(s=u);const b=Math.min((u-s)/1400,1),k=1-(1-b)**3;e.textContent=`${Math.floor(k*t)}${a}`,b<1&&requestAnimationFrame(f)};requestAnimationFrame(f)};let r=null;return v&&(r=new IntersectionObserver(e=>{e.forEach(t=>{t.isIntersecting&&t.target.querySelectorAll("[data-target]").forEach(a=>{w(a,Number(a.dataset.target),a.dataset.suffix||"")})})},{threshold:.4}),r.observe(v)),()=>{window.removeEventListener("scroll",g),window.removeEventListener("scroll",m),window.removeEventListener("scroll",h),n.disconnect(),o&&o.disconnect(),r&&r.disconnect()}},[]),i.jsxs(i.Fragment,{children:[i.jsxs(L,{title:"PixelForge AI - Product Photography for Shopify",children:[i.jsx("meta",{charSet:"UTF-8"}),i.jsx("meta",{name:"viewport",content:"width=device-width, initial-scale=1.0"}),i.jsx("link",{rel:"preconnect",href:"https://fonts.googleapis.com"}),i.jsx("link",{rel:"preconnect",href:"https://fonts.gstatic.com",crossOrigin:"anonymous"}),i.jsx("link",{href:"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Figtree:wght@300;400;500;600&display=swap",rel:"stylesheet"})]}),i.jsx("style",{dangerouslySetInnerHTML:{__html:z}}),i.jsx("div",{dangerouslySetInnerHTML:{__html:C}})]})}export{P as default};
