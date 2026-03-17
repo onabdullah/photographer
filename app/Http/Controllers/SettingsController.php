@@ -19,7 +19,6 @@ class SettingsController extends Controller
             'defaultFormat' => 'webp',
             'defaultAspectRatio' => 'original',
             'defaultResolution' => 'original',
-            'autoUpscale' => false,
             'saveToShopify' => ['add_secondary'],
             'autoTagProducts' => true,
             'generationMode' => 'balanced',
@@ -30,10 +29,9 @@ class SettingsController extends Controller
             'autoPublishToProduct' => false,
             'notifyLowCredits' => true,
             'lowCreditThreshold' => 50,
-            'weeklyPerformanceDigest' => true,
-            'usageDigestFrequency' => 'weekly',
+            'digestFrequency' => 'weekly',
             'businessGoal' => 'conversion',
-            'assetRetentionDays' => 30,
+            'autoDeleteGeneratedImagesAfterDays' => 30,
             'watermarkPreviewImages' => false,
         ];
     }
@@ -61,12 +59,29 @@ class SettingsController extends Controller
         $stored = is_array($shop->app_settings) ? $shop->app_settings : [];
         $storedUiSettings = array_intersect_key($stored, array_flip(self::managedSettingsKeys()));
 
+        // Migrate old field names to new ones for backwards compatibility
+        if (isset($storedUiSettings['weeklyPerformanceDigest']) && isset($storedUiSettings['usageDigestFrequency'])) {
+            if ($storedUiSettings['weeklyPerformanceDigest'] === false) {
+                $storedUiSettings['digestFrequency'] = 'off';
+            } else {
+                $storedUiSettings['digestFrequency'] = $storedUiSettings['usageDigestFrequency'];
+            }
+            unset($storedUiSettings['weeklyPerformanceDigest'], $storedUiSettings['usageDigestFrequency']);
+        }
+        if (isset($storedUiSettings['assetRetentionDays'])) {
+            $storedUiSettings['autoDeleteGeneratedImagesAfterDays'] = $storedUiSettings['assetRetentionDays'];
+            unset($storedUiSettings['assetRetentionDays']);
+        }
+        if (isset($storedUiSettings['autoUpscale'])) {
+            unset($storedUiSettings['autoUpscale']);
+        }
+
         $initialSettings = array_merge(self::defaultAppSettings(), $storedUiSettings);
         if (! isset($initialSettings['saveToShopify']) || ! is_array($initialSettings['saveToShopify'])) {
             $initialSettings['saveToShopify'] = self::defaultAppSettings()['saveToShopify'];
         }
         if (! isset($initialSettings['defaultResolution']) || ! in_array($initialSettings['defaultResolution'], ['original', '2k'], true)) {
-            $initialSettings['defaultResolution'] = ! empty($initialSettings['autoUpscale']) ? '2k' : 'original';
+            $initialSettings['defaultResolution'] = 'original';
         }
         if (! isset($initialSettings['defaultAspectRatio']) || ! in_array($initialSettings['defaultAspectRatio'], ['original', '1:1', '4:5', '16:9'], true)) {
             $initialSettings['defaultAspectRatio'] = 'original';
@@ -80,14 +95,14 @@ class SettingsController extends Controller
         if (! in_array((string) $initialSettings['defaultBackgroundStyle'], ['clean_studio', 'lifestyle', 'transparent', 'contextual'], true)) {
             $initialSettings['defaultBackgroundStyle'] = 'clean_studio';
         }
-        if (! in_array((string) $initialSettings['usageDigestFrequency'], ['daily', 'weekly', 'monthly'], true)) {
-            $initialSettings['usageDigestFrequency'] = 'weekly';
+        if (! in_array((string) $initialSettings['digestFrequency'], ['off', 'daily', 'weekly', 'monthly'], true)) {
+            $initialSettings['digestFrequency'] = 'weekly';
         }
         if (! in_array((string) $initialSettings['businessGoal'], ['conversion', 'catalog_velocity', 'brand_consistency'], true)) {
             $initialSettings['businessGoal'] = 'conversion';
         }
         $initialSettings['lowCreditThreshold'] = max(5, min(1000, (int) ($initialSettings['lowCreditThreshold'] ?? 50)));
-        $initialSettings['assetRetentionDays'] = max(7, min(365, (int) ($initialSettings['assetRetentionDays'] ?? 30)));
+        $initialSettings['autoDeleteGeneratedImagesAfterDays'] = max(7, min(365, (int) ($initialSettings['autoDeleteGeneratedImagesAfterDays'] ?? 30)));
 
         return \Inertia\Inertia::render('Shopify/Settings', [
             'initialSettings' => $initialSettings,
@@ -125,10 +140,9 @@ class SettingsController extends Controller
             'autoPublishToProduct' => 'boolean',
             'notifyLowCredits' => 'boolean',
             'lowCreditThreshold' => 'required|integer|min:5|max:1000',
-            'weeklyPerformanceDigest' => 'boolean',
-            'usageDigestFrequency' => 'required|string|in:daily,weekly,monthly',
+            'digestFrequency' => 'required|string|in:off,daily,weekly,monthly',
             'businessGoal' => 'required|string|in:conversion,catalog_velocity,brand_consistency',
-            'assetRetentionDays' => 'required|integer|min:7|max:365',
+            'autoDeleteGeneratedImagesAfterDays' => 'required|integer|min:7|max:365',
             'watermarkPreviewImages' => 'boolean',
         ]);
 
@@ -141,7 +155,6 @@ class SettingsController extends Controller
             'defaultFormat' => $request->input('defaultFormat'),
             'defaultAspectRatio' => $request->input('defaultAspectRatio'),
             'defaultResolution' => $resolution === '2k' ? '2k' : 'original',
-            'autoUpscale' => $autoUpscale,
             'saveToShopify' => $request->input('saveToShopify'),
             'autoTagProducts' => (bool) $request->input('autoTagProducts', false),
             'generationMode' => $request->input('generationMode', 'balanced'),
@@ -152,10 +165,9 @@ class SettingsController extends Controller
             'autoPublishToProduct' => (bool) $request->input('autoPublishToProduct', false),
             'notifyLowCredits' => (bool) $request->input('notifyLowCredits', true),
             'lowCreditThreshold' => max(5, min(1000, (int) $request->input('lowCreditThreshold', 50))),
-            'weeklyPerformanceDigest' => (bool) $request->input('weeklyPerformanceDigest', true),
-            'usageDigestFrequency' => $request->input('usageDigestFrequency', 'weekly'),
+            'digestFrequency' => $request->input('digestFrequency', 'weekly'),
             'businessGoal' => $request->input('businessGoal', 'conversion'),
-            'assetRetentionDays' => max(7, min(365, (int) $request->input('assetRetentionDays', 30))),
+            'autoDeleteGeneratedImagesAfterDays' => max(7, min(365, (int) $request->input('autoDeleteGeneratedImagesAfterDays', 30))),
             'watermarkPreviewImages' => (bool) $request->input('watermarkPreviewImages', false),
         ];
 
