@@ -36,97 +36,74 @@ export default function UsersIndex({ users }) {
                 </Link>
             }
         >
-            <div className="card-base overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-800/60">
-                            <tr>
-                                {['User', 'Email', 'Role', 'Status', 'Created', 'Actions'].map((col, i) => (
-                                    <th
-                                        key={col}
-                                        scope="col"
-                                        className={[
-                                            'py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400',
-                                            i === 0 ? 'pl-6 pr-4 text-left' : i === 5 ? 'pl-4 pr-6 text-right' : 'px-4 text-left',
-                                        ].join(' ')}
-                                    >
-                                        {col}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50 bg-white dark:bg-gray-800">
-                            {items.map((user) => (
-                                <tr
-                                    key={user.id}
-                                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                                >
-                                    <td className="whitespace-nowrap py-3.5 pl-6 pr-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0">
-                                                <span className="text-xs font-bold text-white">
-                                                    {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                                                </span>
-                                            </div>
-                                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                {user.name}
+            <div className="space-y-4">
+                {items.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        {items.map((user) => (
+                            <div key={user.id} className="card-base p-5">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0">
+                                            <span className="text-sm font-bold text-white">
+                                                {user.name?.charAt(0)?.toUpperCase() || 'U'}
                                             </span>
                                         </div>
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">
-                                        {user.email}
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                                {user.name}
+                                            </p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                                        </div>
+                                    </div>
+                                    <span className={[
+                                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap',
+                                        STATUS_CLS[user.status] ?? STATUS_CLS.active,
+                                    ].join(' ')}>
                                         <span className={[
-                                            'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                                            'w-1.5 h-1.5 rounded-full',
+                                            user.status === 'active' ? 'bg-green-500' : 'bg-gray-400',
+                                        ].join(' ')} />
+                                        {user.status === 'active' ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
+
+                                <div className="mt-4 grid grid-cols-2 gap-3">
+                                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                                        <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Role</p>
+                                        <span className={[
+                                            'mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
                                             user.admin_role
                                                 ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                                                 : ROLE_CLS[user.role] ?? ROLE_CLS.admin,
                                         ].join(' ')}>
                                             {user.admin_role?.name ?? roleLabel(user.role)}
                                         </span>
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5">
-                                        <span className={[
-                                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
-                                            STATUS_CLS[user.status] ?? STATUS_CLS.active,
-                                        ].join(' ')}>
-                                            <span className={[
-                                                'w-1.5 h-1.5 rounded-full',
-                                                user.status === 'active' ? 'bg-green-500' : 'bg-gray-400',
-                                            ].join(' ')} />
-                                            {user.status === 'active' ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-sm text-gray-500 dark:text-gray-400">
-                                        {formatDate(user.created_at)}
-                                    </td>
-                                    <td className="whitespace-nowrap py-3.5 pl-4 pr-6 text-right">
-                                        <div className="flex items-center justify-end gap-1.5">
-                                            <ActionButtons
-                                                viewHref={`/admin/users/${user.id}`}
-                                                editHref={`/admin/users/${user.id}/edit`}
-                                            />
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                    </div>
+                                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                                        <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Created</p>
+                                        <p className="mt-1 text-sm font-medium text-gray-800 dark:text-gray-200">{formatDate(user.created_at)}</p>
+                                    </div>
+                                </div>
 
-                            {items.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-14 text-center">
-                                        <Users size={32} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white">No users found</p>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                <div className="mt-4 flex items-center justify-end">
+                                    <ActionButtons
+                                        viewHref={`/admin/users/${user.id}`}
+                                        editHref={`/admin/users/${user.id}/edit`}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="card-base px-6 py-14 text-center">
+                        <Users size={32} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">No users found</p>
+                    </div>
+                )}
 
                 {/* Pagination */}
                 {users?.last_page > 1 && (
-                    <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-6 py-3">
+                    <div className="card-base px-6 py-3 flex items-center justify-between">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                             Showing{' '}
                             <span className="font-medium text-gray-900 dark:text-white">
