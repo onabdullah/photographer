@@ -564,6 +564,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const isScanning = processingStatus === 'uploading' || processingStatus === 'scanning';
   const isRemoveBgDone = isRemoveBg && processingStatus === 'done' && resultImageUrl;
   const processingLabel = PROCESSING_MESSAGES[processingMessageIndex % PROCESSING_MESSAGES.length];
+  const isGenerateBusy = isProcessing || (isRemoveBg && isScanning) || (selectedTool === 'compressor' && isScanning) || (selectedTool === 'upscale' && isScanning) || (selectedTool === 'magic_eraser' && isScanning) || (selectedTool === 'enhance' && isScanning) || (selectedTool === 'lighting' && isScanning);
+  const isGenerateDisabled = !hasValidInput || isProcessing || (isRemoveBg && isScanning) || (selectedTool === 'compressor' && isScanning) || (selectedTool === 'upscale' && isScanning) || (selectedTool === 'magic_eraser' && (isScanning || !magicEraserHasStrokes)) || (selectedTool === 'enhance' && isScanning) || (selectedTool === 'lighting' && (isScanning || !effectiveLightingPrompt));
 
   useEffect(() => {
     if (!isScanning) return;
@@ -2050,6 +2052,17 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                       <BlockStack gap="200">
                         <Button
                           fullWidth
+                          variant="primary"
+                          size="large"
+                          onClick={handleGenerate}
+                          loading={isGenerateBusy}
+                          disabled={isGenerateDisabled}
+                          accessibilityLabel="Regenerate image"
+                        >
+                          Regenerate
+                        </Button>
+                        <Button
+                          fullWidth
                           variant="secondary"
                           size="large"
                           icon={PlusCircleIcon}
@@ -2065,8 +2078,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           fullWidth
                           size="large"
                           onClick={handleGenerate}
-                          loading={isProcessing || (isRemoveBg && isScanning) || (selectedTool === 'compressor' && isScanning) || (selectedTool === 'upscale' && isScanning) || (selectedTool === 'magic_eraser' && isScanning) || (selectedTool === 'enhance' && isScanning) || (selectedTool === 'lighting' && isScanning)}
-                          disabled={!hasValidInput || isProcessing || (isRemoveBg && isScanning) || (selectedTool === 'compressor' && isScanning) || (selectedTool === 'upscale' && isScanning) || (selectedTool === 'magic_eraser' && (isScanning || !magicEraserHasStrokes)) || (selectedTool === 'enhance' && isScanning) || (selectedTool === 'lighting' && (isScanning || !effectiveLightingPrompt))}
+                          loading={isGenerateBusy}
+                          disabled={isGenerateDisabled}
                         >
                           {selectedTool === 'magic_eraser' ? '✨ Erase Object' : selectedTool === 'compressor' ? '✨ Compress' : '✨ Generate'}
                         </MagicButton>
