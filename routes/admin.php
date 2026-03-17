@@ -77,6 +77,12 @@ Route::middleware(['auth:admin'])->group(function () {
 
     // Merchant Management
     Route::get('/merchants', function () {
+        $totalMerchants = \App\Models\Merchant::count();
+        $merchantsWithPlan = \App\Models\Merchant::whereNotNull('plan_id')->count();
+        $newMerchantsLast7Days = \App\Models\Merchant::where('created_at', '>=', now()->subDays(7))->count();
+        $totalCreditsIssued = (int) \App\Models\Merchant::sum('ai_credits_balance');
+        $aiStudioRunsTotal = \App\Models\ImageGeneration::where('status', 'completed')->whereNotNull('result_image_url')->count();
+
         $merchants = \App\Models\Merchant::with('plan')
             ->withCount(['imageGenerations as images_generated_count' => function ($q) {
                 $q->where('status', 'completed')->whereNotNull('result_image_url');
@@ -86,6 +92,13 @@ Route::middleware(['auth:admin'])->group(function () {
 
         return Inertia::render('Admin/Pages/Merchants/Index', [
             'merchants' => $merchants,
+            'quickStats' => [
+                'total_merchants' => $totalMerchants,
+                'merchants_with_plan' => $merchantsWithPlan,
+                'new_last_7_days' => $newMerchantsLast7Days,
+                'total_credits_issued' => $totalCreditsIssued,
+                'total_completed_images' => $aiStudioRunsTotal,
+            ],
         ]);
     })->middleware('admin.permission:merchants.view')->name('merchants.index');
 

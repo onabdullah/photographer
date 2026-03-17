@@ -1,11 +1,12 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { Link, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Store, Pencil } from 'lucide-react';
+import { Store, Pencil, CreditCard, Sparkles, CalendarPlus, ShieldCheck } from 'lucide-react';
 
-export default function MerchantsIndex({ merchants }) {
+export default function MerchantsIndex({ merchants, quickStats }) {
     const paginator = merchants;
     const items     = paginator?.data ?? [];
+    const stats = quickStats ?? {};
     const { auth } = usePage().props;
     const permissions = auth?.user?.permissions ?? [];
     const canEditCredits = permissions.includes('*') || permissions.includes('merchants.edit_credits');
@@ -51,6 +52,57 @@ export default function MerchantsIndex({ merchants }) {
             breadcrumbs={[{ label: 'Merchants' }]}
         >
             <div className="space-y-5">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div className="card-base p-4">
+                        <div className="flex items-start justify-between">
+                            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Merchants</p>
+                            <Store size={15} className="text-gray-400" />
+                        </div>
+                        <p className="mt-2 text-xl font-semibold tabular-nums text-gray-900 dark:text-white">
+                            {Number(stats.total_merchants ?? 0).toLocaleString()}
+                        </p>
+                    </div>
+
+                    <div className="card-base p-4">
+                        <div className="flex items-start justify-between">
+                            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">On Paid Plan</p>
+                            <ShieldCheck size={15} className="text-gray-400" />
+                        </div>
+                        <p className="mt-2 text-xl font-semibold tabular-nums text-gray-900 dark:text-white">
+                            {Number(stats.merchants_with_plan ?? 0).toLocaleString()}
+                        </p>
+                    </div>
+
+                    <div className="card-base p-4">
+                        <div className="flex items-start justify-between">
+                            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">New (7 Days)</p>
+                            <CalendarPlus size={15} className="text-gray-400" />
+                        </div>
+                        <p className="mt-2 text-xl font-semibold tabular-nums text-gray-900 dark:text-white">
+                            {Number(stats.new_last_7_days ?? 0).toLocaleString()}
+                        </p>
+                    </div>
+
+                    <div className="card-base p-4">
+                        <div className="flex items-start justify-between">
+                            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Credits in Circulation</p>
+                            <CreditCard size={15} className="text-gray-400" />
+                        </div>
+                        <p className="mt-2 text-xl font-semibold tabular-nums text-gray-900 dark:text-white">
+                            {Number(stats.total_credits_issued ?? 0).toLocaleString()}
+                        </p>
+                    </div>
+
+                    <div className="card-base p-4">
+                        <div className="flex items-start justify-between">
+                            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Images</p>
+                            <Sparkles size={15} className="text-gray-400" />
+                        </div>
+                        <p className="mt-2 text-xl font-semibold tabular-nums text-gray-900 dark:text-white">
+                            {Number(stats.total_completed_images ?? 0).toLocaleString()}
+                        </p>
+                    </div>
+                </div>
 
                 {items.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
