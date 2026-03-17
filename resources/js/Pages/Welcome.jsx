@@ -1,7 +1,123 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 
+// ─── App brand palette ───────────────────────────────────────────────
+
 const BRANDS = ['VendorShendor', 'Velora Goods', 'NovaHaus', 'Blend Theory', 'Studio Arc', 'Mira Living'];
+
+const TOOLS = [
+    {
+        key: 'universal_generate',
+        label: 'Product AI Lab',
+        badge: 'VTO',
+        accent: '#0f2018',
+        accentLight: '#e3f0e9',
+        model: 'Google Gemini · Replicate',
+        description:
+            'Place any product into any lifestyle scene without a studio. Upload your product image and let AI generate photorealistic environments around it — perfect for seasonal campaigns, social ads, and storefront heroes. This is your Virtual Try-On engine.',
+        icon: (
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                <circle cx="12" cy="12" r="3" />
+            </svg>
+        ),
+    },
+    {
+        key: 'magic_eraser',
+        label: 'Magic Eraser',
+        badge: null,
+        accent: '#2b1a70',
+        accentLight: '#ede9fc',
+        model: 'Google Gemini · Replicate',
+        description:
+            'Remove any unwanted object, person, or distraction from a product image with a single selection. The AI inpaints the removed area seamlessly — no masking skills required. Ideal for cleaning up cluttered backgrounds or removing price tags and reflections.',
+        icon: (
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M20 20H7L3 16l9-9 8 8-2.5 2.5" />
+                <path d="M6.9 13.2L10.8 9.3" />
+            </svg>
+        ),
+    },
+    {
+        key: 'background_remover',
+        label: 'Background Remover',
+        badge: null,
+        accent: '#0f4c6e',
+        accentLight: '#e1f1f9',
+        model: 'BiRefNet · Replicate',
+        description:
+            'Isolate any product from its background with pixel-precise accuracy using the BiRefNet deep-learning model. Export a clean transparent PNG ready for any marketplace listing, ad creative, or white-background store requirement — in under five seconds.',
+        icon: (
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <path d="M3 9h18M9 21V9" />
+            </svg>
+        ),
+    },
+    {
+        key: 'compressor',
+        label: 'Image Compressor',
+        badge: 'Free',
+        accent: '#1a4a1a',
+        accentLight: '#e2f4e2',
+        model: 'PHP GD · Built-in',
+        description:
+            'Reduce image file size by up to 80% without visible quality loss. Faster-loading product pages directly improve Core Web Vitals scores and Shopify storefront SEO ranking. Runs entirely on-server — no third-party API cost, no per-image charge.',
+        icon: (
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M12 3v10m0 0l-3-3m3 3l3-3" />
+                <path d="M5 17a7 7 0 0 0 14 0" />
+            </svg>
+        ),
+    },
+    {
+        key: 'upscaler',
+        label: 'AI Upscaler',
+        badge: null,
+        accent: '#6b3a00',
+        accentLight: '#fdf0e0',
+        model: 'Real-ESRGAN · Replicate',
+        description:
+            'Enlarge low-resolution or compressed product photos up to 4× without blur or pixelation. Real-ESRGAN reconstructs fine textures and sharp edges so you can use older catalog images in high-resolution banners, print ads, and full-width hero sections.',
+        icon: (
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg>
+        ),
+    },
+    {
+        key: 'enhance',
+        label: 'Image Enhancer',
+        badge: null,
+        accent: '#4a0f3a',
+        accentLight: '#f8e9f5',
+        model: 'GFPGAN · Replicate',
+        description:
+            'Automatically improve overall image quality — sharpen blurry edges, restore detail in under-exposed areas, and increase perceived sharpness using AI face and texture restoration. Great for older product photos that need a quick refresh without a reshoot.',
+        icon: (
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4l3 3" />
+            </svg>
+        ),
+    },
+    {
+        key: 'lighting',
+        label: 'Lighting Fix',
+        badge: null,
+        accent: '#4a3800',
+        accentLight: '#fdf6e0',
+        model: 'IC-Light · Replicate',
+        description:
+            'Correct flat, harsh, or inconsistent lighting across your entire product range using the IC-Light relighting model. Achieve studio-quality illumination consistency across your catalog so every product card looks like it was shot under professional lighting — no reshooting required.',
+        icon: (
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+        ),
+    },
+];
 
 const FEATURES = [
     {
@@ -201,6 +317,46 @@ export default function Welcome({ auth }) {
                                 className="mt-4 w-full"
                                 aria-label="Realtime before and after image slider"
                             />
+                        </div>
+                    </section>
+
+                    <section id="tools" className="reveal-item py-14" style={{ animationDelay: '90ms' }}>
+                        <div className="mb-10 text-center">
+                            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#3a6854]">Inside BFS</p>
+                            <h3 className="font-heading text-4xl leading-tight text-[#10231a] lg:text-5xl">Every tool, explained.</h3>
+                            <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[#325543]">
+                                BFS ships seven purpose-built AI tools directly inside your Shopify admin. No external apps, no complex setup — each one solves a specific visual problem for your store.
+                            </p>
+                        </div>
+
+                        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                            {TOOLS.map((tool, index) => (
+                                <article
+                                    key={tool.key}
+                                    className="reveal-item flex flex-col rounded-3xl border border-[#c8d8ce] bg-white p-6"
+                                    style={{ animationDelay: `${120 + index * 80}ms` }}
+                                >
+                                    <div className="mb-4 flex items-center justify-between">
+                                        <div
+                                            className="inline-flex h-12 w-12 items-center justify-center rounded-2xl"
+                                            style={{ backgroundColor: tool.accentLight, color: tool.accent }}
+                                        >
+                                            {tool.icon}
+                                        </div>
+                                        {tool.badge && (
+                                            <span
+                                                className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide"
+                                                style={{ backgroundColor: tool.accentLight, color: tool.accent }}
+                                            >
+                                                {tool.badge}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h4 className="text-lg font-bold text-[#10231a]">{tool.label}</h4>
+                                    <p className="mt-1 text-xs font-medium text-[#7a9e8c]">Powered by {tool.model}</p>
+                                    <p className="mt-3 flex-1 text-sm leading-relaxed text-[#365948]">{tool.description}</p>
+                                </article>
+                            ))}
                         </div>
                     </section>
 
