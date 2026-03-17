@@ -571,7 +571,25 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     return () => clearInterval(id);
   }, [isScanning]);
 
-  const handleToolChange = useCallback((value) => setSelectedTool(value), []);
+  const handleToolChange = useCallback((value) => {
+    setSelectedTool(value);
+    setInputImage(null);
+    setInputImageSize(null);
+    setCompressorSizes(null);
+    setResultImageUrl(null);
+    setProcessingStatus('idle');
+    setJobId(null);
+    setGenerationId(null);
+    setLastCompletedTool(null);
+    setCompareSliderPosition(50);
+    setMagicEraserHasStrokes(false);
+    const canvas = magicEraserCanvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
 
   const handleFileDrop = useCallback((_allFiles, acceptedFiles) => {
     const file = acceptedFiles[0];
