@@ -493,6 +493,13 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                 Control Panel (right)
             ────────────────────────────────────────────────────── */}
             <Layout.Section variant="oneThird">
+              <div
+                style={{
+                  pointerEvents: isScanning ? 'none' : undefined,
+                  opacity: isScanning ? 0.5 : undefined,
+                  transition: 'opacity 0.2s',
+                }}
+              >
               <Card>
                 <BlockStack gap="400">
                   <Text as="h2" variant="headingMd">Create scenes that sell</Text>
@@ -746,6 +753,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                   </Box>
                 </BlockStack>
               </Card>
+              </div>
             </Layout.Section>
           </Layout>
 
