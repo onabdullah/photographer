@@ -512,7 +512,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [resultImageUrl, setResultImageUrl] = useState(null);
   const [jobId, setJobId] = useState(null);
   const [generationId, setGenerationId] = useState(null);
-  const [recentGenerations, setRecentGenerations] = useState([]);
+  const [recentGenerations, setRecentGenerations] = useState(null);
   const [lastCompletedTool, setLastCompletedTool] = useState(null); // 'remove_bg' | 'compressor' | 'upscale' | 'magic_eraser' | 'enhance' | 'lighting'
   const [compressorLevel, setCompressorLevel] = useState(40); // 0–100: how much to compress (0=minimal, 100=max). Maps to quality 95→60.
   const [inputImageSize, setInputImageSize] = useState(null); // bytes when known (e.g. from file upload)
@@ -549,8 +549,10 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
 
   const refetchRecentGenerations = useCallback(() => {
     axios.get('/shopify/recent-generations').then((res) => {
-      if (res.data?.generations) setRecentGenerations(res.data.generations);
-    }).catch(() => { });
+      setRecentGenerations(res.data?.generations ?? []);
+    }).catch(() => {
+      setRecentGenerations([]);
+    });
   }, []);
 
   const hasValidInput = inputImage && !inputImage.includes('placeholder') && !inputImage.includes('Select+a+Product');
@@ -1036,7 +1038,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const effectiveGenerationId =
     generationId ??
     (resultImageUrl
-      ? recentGenerations.find((g) => g.result_image_url === resultImageUrl)?.id
+      ? recentGenerations?.find((g) => g.result_image_url === resultImageUrl)?.id
       : null);
 
   const handleSaveToProduct = useCallback(async () => {
@@ -1606,7 +1608,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                       </div>
                       <Text as="h2" variant="headingLg">Your masterpiece awaits</Text>
                       <Text as="p" variant="bodyMd" tone="subdued">
-                        {recentGenerations.length > 0
+                        {recentGenerations?.length > 0
                           ? "You are doing a great job creating stunning visuals!"
                           : "Upload an image and let the AI do the magic."}
                       </Text>
@@ -2093,7 +2095,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
           </Layout>
 
           <GenerationsGallery
-            generations={recentGenerations}
+            generations={recentGenerations ?? []}
+            isLoading={recentGenerations === null}
             toolFilterOptions={GALLERY_TOOL_OPTIONS}
             shopifyAppBridge={shopifyAppBridge}
             showToast={showToast}

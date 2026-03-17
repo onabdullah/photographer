@@ -19,6 +19,7 @@ import {
   Button,
   Box,
   Icon,
+  Spinner,
   Tooltip,
   ChoiceList,
 } from '@shopify/polaris';
@@ -70,6 +71,7 @@ function resolveImagePath(src) {
 /* ─── component ──────────────────────────────────────────────────── */
 export default function GenerationsGallery({
   generations,
+  isLoading = false,
   toolFilterOptions,
   shopifyAppBridge,
   showToast,
@@ -130,6 +132,7 @@ export default function GenerationsGallery({
 
   /* ── filtered list ── */
   const filtered = useMemo(() => {
+    if (!generations) return [];
     let list = galleryToolFilter === 'all'
       ? generations
       : generations.filter((g) => (g.tool_used || '') === galleryToolFilter);
@@ -308,7 +311,25 @@ export default function GenerationsGallery({
             </InlineStack>
 
             {/* Gallery grid */}
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              <div className="aistudio-masonry" style={{ '--gallery-columns': gridColumns }}>
+                {Array.from({ length: gridColumns }, (_, col) => (
+                  <div key={col} className="aistudio-masonry-col">
+                    {[180, 220, 160, 200, 140, 240, 180, 200, 160, 220, 200, 160]
+                      .filter((_, i) => i % gridColumns === col)
+                      .map((h, i) => (
+                        <div key={i} className="aistudio-gallery-card">
+                          <div className="aistudio-gallery-card-image-wrap">
+                            <div className="aistudio-gallery-card-checkerboard" style={{ minHeight: h }}>
+                              <div className="aistudio-gallery-card-skeleton" aria-hidden="true" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="aistudio-gallery-empty">
                 <div className="aistudio-gallery-empty-icon" aria-hidden>
                   <Icon source={ImageMagicIcon} tone="subdued" />
