@@ -2,7 +2,6 @@ import ShopifyLayout from '@/Shopify/Layouts/ShopifyLayout';
 import {
   Page,
   Card,
-  Tabs,
   Text,
   BlockStack,
   Select,
@@ -19,6 +18,8 @@ import {
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { TitleBar } from '@shopify/app-bridge-react';
+
+const TEAL = '#468A9A';
 
 const SETTINGS_NAV_ITEMS = [
   { key: 'general', label: 'General' },
@@ -238,21 +239,6 @@ export default function Settings() {
   const storeOwner = storeProfile.owner || 'No owner set';
   const storeCountry = storeProfile.country || 'Country not available';
   const installedDate = storeProfile.installedAt || 'Unknown install date';
-
-  const tabs = useMemo(() => SETTINGS_NAV_ITEMS.map((item) => ({
-    id: item.key,
-    content: item.label,
-    panelID: `settings-tab-${item.key}`,
-  })), []);
-
-  const selectedTabIndex = Math.max(0, SETTINGS_NAV_ITEMS.findIndex((item) => item.key === activeSection));
-
-  const handleTabSelect = useCallback((index) => {
-    const selected = SETTINGS_NAV_ITEMS[index];
-    if (selected) {
-      setActiveSection(selected.key);
-    }
-  }, []);
 
   const activeLabel = SETTINGS_NAV_ITEMS.find((item) => item.key === activeSection)?.label ?? 'General';
 
@@ -515,9 +501,37 @@ export default function Settings() {
             </Box>
           </Card>
 
-          <Card>
-            <Tabs tabs={tabs} selected={selectedTabIndex} onSelect={handleTabSelect} fitted />
-          </Card>
+          <div
+            role="tablist"
+            aria-label="Settings sections"
+            style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+          >
+            {SETTINGS_NAV_ITEMS.map((item) => (
+              <button
+                key={item.key}
+                role="tab"
+                aria-selected={activeSection === item.key}
+                type="button"
+                onClick={() => setActiveSection(item.key)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 8,
+                  border: `2px solid ${activeSection === item.key ? TEAL : 'var(--p-color-border)'}`,
+                  background: activeSection === item.key ? `rgba(70,138,154,0.10)` : 'var(--p-color-bg-surface)',
+                  color: activeSection === item.key ? TEAL : 'var(--p-color-text)',
+                  fontWeight: activeSection === item.key ? 600 : 400,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  lineHeight: '1.4',
+                  outline: 'none',
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
 
           <BlockStack gap="400">
             <Text as="h2" variant="headingLg">{activeLabel}</Text>
