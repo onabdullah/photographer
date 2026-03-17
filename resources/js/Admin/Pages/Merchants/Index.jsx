@@ -1,7 +1,7 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { Link, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Search, Store, Pencil, CreditCard, Sparkles, CalendarPlus, ShieldCheck, BarChart3, Filter } from 'lucide-react';
+import { Search, Store, Pencil, CreditCard, Sparkles, CalendarPlus, ShieldCheck, BarChart3, Filter, Crown } from 'lucide-react';
 
 const PLAN_TAG_CLS = {
     free: 'bg-gray-500/10 text-gray-700 dark:text-gray-300 ring-1 ring-gray-500/20',
@@ -118,6 +118,8 @@ export default function MerchantsIndex({ merchants, quickStats, filters }) {
         if (m.plan_id) return PLAN_TAG_CLS.paid;
         return PLAN_TAG_CLS.none;
     };
+
+    const isPaidPlan = (m) => !m.shopify_freemium && !!m.plan_id;
 
     const formatDate = (iso) =>
         iso
@@ -260,10 +262,11 @@ export default function MerchantsIndex({ merchants, quickStats, filters }) {
                                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{m.name || '—'}</p>
                                     </div>
                                     <span className={[
-                                        'inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium whitespace-nowrap',
+                                        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium whitespace-nowrap',
                                         planTagClass(m),
                                     ].join(' ')}>
-                                        {planName(m)}
+                                        {isPaidPlan(m) && <Crown size={12} className="opacity-90" />}
+                                        {isPaidPlan(m) ? `Plan Bought • ${planName(m)}` : planName(m)}
                                     </span>
                                 </div>
 
