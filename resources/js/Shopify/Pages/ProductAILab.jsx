@@ -162,7 +162,6 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
   const [scenePrompt, setScenePrompt]             = useState('');
   const [processingStatus, setProcessingStatus]   = useState('idle');
   const [processingMsgIdx, setProcessingMsgIdx]   = useState(0);
-  const [compareSliderPosition, setCompareSliderPosition] = useState(50);
   const [resultImageUrl, setResultImageUrl]       = useState(null);
   const [jobId, setJobId]                         = useState(null);
   const [generationId, setGenerationId]           = useState(null);
@@ -276,7 +275,6 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
     setProductImage(null);
     setScenePrompt('');
     setResultImageUrl(null);
-    setCompareSliderPosition(50);
     setProcessingStatus('idle');
     setJobId(null);
     setGenerationId(null);
@@ -296,7 +294,6 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
     }
     try {
       setProcessingStatus('uploading');
-      setCompareSliderPosition(50);
       const form = new FormData();
       form.append('product_category', 'universal');
       form.append('prompt', scenePrompt);
@@ -390,81 +387,26 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                       </div>
                     </div>
 
-                  ) : isDone && resultImageUrl && productImage ? (
-                    /* Result (AI Studio style compare) */
+                  ) : isDone && resultImageUrl ? (
+                    /* Result */
                     <div className="aistudio-hero-result-container">
-                      <div className="aistudio-compare-slider-wrap">
-                        <div className="aistudio-compare-labels">
-                          <span className="aistudio-compare-label aistudio-compare-label-before">Before</span>
-                          <span className="aistudio-compare-label aistudio-compare-label-after">After</span>
-                        </div>
-                        <div className="aistudio-compare-slider">
-                          <div className="aistudio-compare-before" style={{ clipPath: `inset(0 ${100 - compareSliderPosition}% 0 0)` }}>
-                            <img src={productImage} alt="Before" />
-                          </div>
-                          <div className="aistudio-compare-after" style={{ clipPath: `inset(0 0 0 ${compareSliderPosition}%)` }}>
-                            <img
-                              src={resultImageUrl}
-                              alt="After"
-                              onError={(e) => {
-                                const img = e.target;
-                                const src = img?.src || resultImageUrl;
-                                let path = src;
-                                try {
-                                  if (typeof src === 'string' && src.startsWith('http')) path = new URL(src).pathname;
-                                } catch (_) { /* ignore */ }
-                                if (path && typeof path === 'string' && path.startsWith('/storage/') && typeof window !== 'undefined') {
-                                  const sameOriginUrl = window.location.origin + path;
-                                  if (sameOriginUrl !== src) {
-                                    img.src = sameOriginUrl;
-                                    return;
-                                  }
-                                }
-                                showToast('Result image could not be loaded. The link may have expired.', true);
-                                setResultImageUrl(null);
-                              }}
-                            />
-                          </div>
-                          <div
-                            className="aistudio-compare-divider"
-                            style={{ left: `${compareSliderPosition}%` }}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              const wrap = e.target?.closest('.aistudio-compare-slider-wrap');
-                              if (!wrap) return;
-                              const move = (e2) => {
-                                const rect = wrap.getBoundingClientRect();
-                                const x = ((e2.clientX - rect.left) / rect.width) * 100;
-                                setCompareSliderPosition(Math.min(100, Math.max(0, x)));
-                              };
-                              const up = () => {
-                                document.removeEventListener('mousemove', move);
-                                document.removeEventListener('mouseup', up);
-                              };
-                              document.addEventListener('mousemove', move);
-                              document.addEventListener('mouseup', up);
-                            }}
-                            role="slider"
-                            aria-valuenow={compareSliderPosition}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                            aria-label="Before / After comparison - drag to compare"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              const step = e.key === 'ArrowLeft' ? -2 : e.key === 'ArrowRight' ? 2 : 0;
-                              if (step) {
-                                e.preventDefault();
-                                setCompareSliderPosition((p) => Math.min(100, Math.max(0, p + step)));
+                      <div className="aistudio-hero-result-wrap">
+                        <div className="aistudio-result-checkerboard aistudio-result-image-wrap">
+                          <img
+                            src={resultImageUrl}
+                            alt="Generated scene"
+                            className="aistudio-hero-result-img"
+                            onError={(e) => {
+                              const img = e.target;
+                              const src = img?.src || resultImageUrl;
+                              let path = src;
+                              try { if (typeof src === 'string' && src.startsWith('http')) path = new URL(src).pathname; } catch { /* ignore */ }
+                              if (path?.startsWith('/storage/') && typeof window !== 'undefined') {
+                                img.src = window.location.origin + path;
                               }
                             }}
-                          >
-                            <span className="aistudio-compare-handle">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M14 8L10 12L14 16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M10 8L14 12L10 16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                            </span>
-                          </div>
+                          />
                         </div>
-                        <p className="aistudio-compare-hint">Drag the center handle left or right to compare before and after</p>
                       </div>
                       <div className="aistudio-hero-actions aistudio-hero-actions--outside">
                         <InlineStack gap="300">
