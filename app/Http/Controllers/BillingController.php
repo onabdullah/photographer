@@ -38,6 +38,12 @@ class BillingController extends Controller
             abort(403, 'Shop not authenticated');
         }
 
+        // Check if subscription cycle needs renewal (graceful handling)
+        if ($shop->plan) {
+            MerchantCreditService::checkAndRenewSubscription($shop);
+            $shop->refresh(); // Reload in case renewal happened
+        }
+
         $plan = $shop->plan;
         $creditSummary = MerchantCreditService::getSummary($shop);
 

@@ -43,6 +43,10 @@ class Merchant extends Authenticatable implements IShopModel
         'country',
         'ai_credits_balance',
         'app_settings',
+        // Subscription cycle tracking
+        'subscription_cycle_started_at',
+        'subscription_renewed_at',
+        'subscription_renews_at',
     ];
 
 
@@ -59,6 +63,10 @@ class Merchant extends Authenticatable implements IShopModel
             'shopify_freemium' => 'boolean',
             'ai_credits_balance' => 'integer',
             'app_settings' => 'array',
+            // Subscription cycle dates
+            'subscription_cycle_started_at' => 'datetime',
+            'subscription_renewed_at' => 'datetime',
+            'subscription_renews_at' => 'datetime',
         ];
     }
 

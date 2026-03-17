@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Merchant;
 use App\Models\Plan;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Carbon;
 
 class MerchantCreditService
 {
@@ -65,6 +67,97 @@ class MerchantCreditService
         $wallet['top_up_credits'] = $topUpCredits;
 
         return self::persist($merchant, $wallet);
+    }
+
+    /**
+     * Start a new subscription cycle.
+     *
+     * Called when a merchant first subscribes to a plan.
+     * Records when the cycle started and when it will renew (in 30 days).
+     *
+     * @return array The updated wallet summary
+     */
+    public static function startSubscriptionCycle(Merchant $merchant, Plan $plan): array
+    {
+        $now = now();
+        $renewsAt = $now->clone()->addMonth();
+
+        $merchant->forceFill([
+            'subscription_cycle_started_at' => $now,
+            'subscription_renewed_at' => $now,
+            'subscription_renews_at' => $renewsAt,
+        ])->save();
+
+        // Initialize or update the wallet with plan credits
+        return self::activatePlan($merchant, $plan);
+    }
+
+    /**
+     * Renew subscription credits for a merchant.
+     *
+     * Called when a subscription cycle ends. This:
+     * - Resets plan_cycle_remaining to plan_cycle_credits (monthly refresh)
+     * - Preserves top_up_credits indefinitely (one-time purchases)
+     * - Records the renewal timestamp
+     *
+     * @return array The updated wallet summary
+     */
+    public static function renewSubscriptionCycle(Merchant $merchant): array
+    {
+        $plan = $merchant->plan;
+        if (! $plan) {
+            return self::getSummary($merchant);
+        }
+
+        $wallet = self::wallet($merchant);
+        $planCredits = (int) ($plan->monthly_credits ?? 0);
+
+        // Reset plan cycle credits to full amount, keep top-up credits
+        $wallet['plan_cycle_credits'] = $planCredits;
+        $wallet['plan_cycle_remaining'] = $planCredits;
+        // top_up_credits is NOT reset - they're indefinite
+
+        $now = now();
+        $merchant->forceFill([
+            'subscription_renewed_at' => $now,
+            'subscription_renews_at' => $now->clone()->addMonth(),
+        ])->save();
+
+        return self::persist($merchant, $wallet);
+    }
+
+    /**
+     * Check if a merchant's subscription cycle has ended and needs renewal.
+     *
+     * Returns true if the subscription_renews_at date has passed.
+     *
+     * @return bool True if renewal is needed
+     */
+    public static function needsSubscriptionRenewal(Merchant $merchant): bool
+    {
+        if (! $merchant->plan_id || ! $merchant->subscription_renews_at) {
+            return false;
+        }
+
+        return now()->isAfter($merchant->subscription_renews_at);
+    }
+
+    /**
+     * Automatically check and renew subscription cycle if needed.
+     *
+     * Safe to call multiple times - idempotent because subscription_renews_at
+     * is updated each time so subsequent calls in the same hour won't re-renew.
+     *
+     * @return bool True if renewal was performed
+     */
+    public static function checkAndRenewSubscription(Merchant $merchant): bool
+    {
+        if (! self::needsSubscriptionRenewal($merchant)) {
+            return false;
+        }
+
+        self::renewSubscriptionCycle($merchant);
+        return true;
     }
 
     private static function wallet(Merchant $merchant): array

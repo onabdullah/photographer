@@ -121,5 +121,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('ai-studio:aggregate-daily')->daily();
+        // Renew subscription credits for merchants whose billing cycles have ended
+        // Runs at 1:00 AM UTC daily. Subscription credits reset, but top-up credits remain indefinite.
+        $schedule->command('credits:renew-subscriptions')->dailyAt('01:00');
     })
     ->create();

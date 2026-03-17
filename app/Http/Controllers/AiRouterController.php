@@ -6,6 +6,7 @@ use App\Http\Traits\GetsCurrentShop;
 use App\Models\ImageGeneration;
 use App\Models\Merchant;
 use App\Services\AiUniversalService;
+use App\Services\MerchantCreditService;
 use App\Services\MerchantCreditThresholdNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -142,16 +143,20 @@ class AiRouterController extends Controller
                 return null;
             }
 
-            $balance = (int) ($merchant->ai_credits_balance ?? 0);
-            if ($balance < $credits) {
+            // Gracefully renew subscription credits if cycle has ended
+            MerchantCreditService::checkAndRenewSubscription($merchant);
+
+            $summary = MerchantCreditService::getSummary($merchant);
+            $availableCredits = (int) ($summary['total_credits'] ?? 0);
+
+            if ($availableCredits < $credits) {
                 return null;
             }
 
-            $newBalance = max(0, $balance - $credits);
-            $merchant->ai_credits_balance = $newBalance;
-            $merchant->save();
+            $newSummary = MerchantCreditService::deductCredits($merchant, $credits);
+            $newBalance = (int) ($newSummary['total_credits'] ?? 0);
 
-            MerchantCreditThresholdNotifier::notifyOnConsumption($merchant, $balance, $newBalance);
+            MerchantCreditThresholdNotifier::notifyOnConsumption($merchant, $availableCredits, $newBalance);
 
             return $newBalance;
         });

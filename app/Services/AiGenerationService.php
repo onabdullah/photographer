@@ -52,6 +52,10 @@ class AiGenerationService
             if (! $merchant) {
                 return null;
             }
+
+            // Gracefully renew subscription credits if cycle has ended
+            MerchantCreditService::checkAndRenewSubscription($merchant);
+
             $balance = (int) ($merchant->ai_credits_balance ?? 0);
             $summary = MerchantCreditService::deductCredits($merchant, $credits);
             $newBalance = (int) ($summary['total_credits'] ?? 0);
