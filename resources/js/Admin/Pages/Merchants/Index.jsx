@@ -1,7 +1,7 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { Link, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Search, Store, Pencil, CreditCard, Sparkles, CalendarPlus, ShieldCheck, BarChart3 } from 'lucide-react';
+import { Search, Store, Pencil, CreditCard, Sparkles, CalendarPlus, ShieldCheck, BarChart3, Filter } from 'lucide-react';
 
 const PLAN_TAG_CLS = {
     free: 'bg-gray-500/10 text-gray-700 dark:text-gray-300 ring-1 ring-gray-500/20',
@@ -23,6 +23,7 @@ export default function MerchantsIndex({ merchants, quickStats, filters }) {
     const [search, setSearch] = useState(initialFilters.q ?? '');
     const [planFilter, setPlanFilter] = useState(initialFilters.plan ?? 'all');
     const [sortBy, setSortBy] = useState(initialFilters.sort ?? 'latest');
+    const [showFilters, setShowFilters] = useState(false);
 
     const [detailsMerchant, setDetailsMerchant] = useState(null);
     const [detailsLoading, setDetailsLoading] = useState(false);
@@ -134,50 +135,65 @@ export default function MerchantsIndex({ merchants, quickStats, filters }) {
         >
             <div className="space-y-5">
                 <div className="card-base p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <div className="md:col-span-2">
-                            <label className="form-label">Search merchants</label>
-                            <div className="relative">
-                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                                    placeholder="Store, domain, email, or owner"
-                                    className="form-input pl-9"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="form-label">Plan</label>
-                            <select className="form-input" value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}>
-                                <option value="all">All</option>
-                                <option value="paid">Paid</option>
-                                <option value="free">Free</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="form-label">Sort</label>
-                            <select className="form-input" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                                <option value="latest">Latest install</option>
-                                <option value="credits_desc">Highest credits</option>
-                                <option value="images_desc">Most images generated</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-3">
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                             Showing {items.length} merchant(s) on this page • {Number(paginator?.total ?? 0).toLocaleString()} total matches
                         </p>
-                        <div className="flex items-center gap-2">
-                            <button type="button" onClick={resetFilters} className="btn btn-secondary">Reset</button>
-                            <button type="button" onClick={applyFilters} className="btn btn-primary">Apply Filters</button>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowFilters((prev) => !prev)}
+                            className="inline-flex items-center gap-2 rounded-md border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            aria-expanded={showFilters}
+                            aria-label="Toggle filters"
+                        >
+                            <Filter size={15} />
+                            Filters
+                        </button>
                     </div>
+
+                    {showFilters && (
+                        <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                <div className="md:col-span-2">
+                                    <label className="form-label">Search merchants</label>
+                                    <div className="relative">
+                                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+                                            placeholder="Store, domain, email, or owner"
+                                            className="form-input pl-9"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="form-label">Plan</label>
+                                    <select className="form-input" value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}>
+                                        <option value="all">All</option>
+                                        <option value="paid">Paid</option>
+                                        <option value="free">Free</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="form-label">Sort</label>
+                                    <select className="form-input" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                                        <option value="latest">Latest install</option>
+                                        <option value="credits_desc">Highest credits</option>
+                                        <option value="images_desc">Most images generated</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="mt-3 flex items-center justify-end gap-2">
+                                <button type="button" onClick={resetFilters} className="btn btn-secondary">Reset</button>
+                                <button type="button" onClick={applyFilters} className="btn btn-primary">Apply Filters</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
