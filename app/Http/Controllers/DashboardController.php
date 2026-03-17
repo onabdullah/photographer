@@ -79,6 +79,7 @@ class DashboardController extends Controller
 
         return \Inertia\Inertia::render('Shopify/Dashboard', [
             'shopName' => $shop->name ?? 'Shop',
+            'ownerName' => $shop->shop_owner ?? null,
             'credits' => $credits,
             'totalGenerated' => $totalGenerated,
             'totalProducts' => $totalProducts,

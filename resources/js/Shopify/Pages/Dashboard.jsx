@@ -25,6 +25,7 @@ const ALL_TOOL_VALUES = ['magic_eraser', 'remove_bg', 'compressor', 'upscale', '
 
 export default function Dashboard({
   shopName,
+  ownerName,
   credits,
   totalGenerated,
   totalProducts: initialProducts,
@@ -43,6 +44,7 @@ export default function Dashboard({
   const { props } = usePage();
   const showProductAILab = props.showProductAILab !== false;
   const enabled = Array.isArray(enabledTools) && enabledTools.length > 0 ? enabledTools : ALL_TOOL_VALUES;
+  const welcomeName = ownerName || shopName;
   const [totalProducts, setTotalProducts] = useState(initialProducts);
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function Dashboard({
     <ShopifyLayout>
       <TitleBar title="Dashboard" />
       <Page
-        title={`Welcome, ${shopName}`}
+        title={`Welcome, ${welcomeName}`}
         subtitle="We'll help you grow your business. Our AI photographer works for you — professional product photos, on demand."
         titleMetadata={credits < 5 ? (
           <Box paddingInlineStart="200">
