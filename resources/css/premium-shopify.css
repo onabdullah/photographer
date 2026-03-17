@@ -42,6 +42,13 @@
   --transition-fast: 150ms var(--ease-smooth);
   --transition-normal: 200ms var(--ease-smooth);
   --transition-slow: 250ms var(--ease-smooth);
+
+  /* Polaris brand color tokens – configure primary button color via the Polaris CSS API */
+  --p-color-bg-fill-brand: #468A9A;
+  --p-color-bg-fill-brand-hover: #3d7988;
+  --p-color-bg-fill-brand-active: #355e6d;
+  --p-color-bg-fill-brand-selected: #3d7988;
+  --p-color-bg-fill-brand-disabled: rgba(70, 138, 154, 0.35);
 }
 
 /* Recent Creations empty state – icon and CTA */
@@ -320,31 +327,13 @@
   color: var(--premium-teal);
 }
 
-/* Magic Button overrides (brand orange) */
-.magic-button-wrapper button {
-  background: var(--premium-orange) !important;
-  border-color: var(--premium-orange) !important;
-  color: white !important;
-  font-weight: 500 !important;
-  transition: background-color var(--transition-normal), transform var(--transition-fast) !important;
-  opacity: 1;
-}
-
+/* Magic Button – micro-interaction animation only (color inherits from Polaris brand token) */
 .magic-button-wrapper button:hover:not([disabled]):not([aria-busy="true"]) {
-  background: var(--premium-orange-hover) !important;
-  border-color: var(--premium-orange-hover) !important;
   transform: translateY(-1px);
 }
 
 .magic-button-wrapper button:active:not([disabled]) {
   transform: translateY(0);
-}
-
-.magic-button-wrapper button[disabled],
-.magic-button-wrapper button[aria-busy="true"] {
-  background: var(--p-color-bg-fill-disabled, #e1e3e5) !important;
-  border-color: var(--p-color-bg-fill-disabled, #e1e3e5) !important;
-  opacity: 0.7 !important;
 }
 
 /* Help & Support – Open Priority Ticket: dark button */
