@@ -27,7 +27,7 @@ export default function AiModels() {
             {/* Logo */}
             <img
               src="/assets/logo/logo.png"
-              alt=""
+              alt="Coming soon feature icon"
               width={80}
               height={80}
               style={{ marginBottom: '8px', display: 'block' }}

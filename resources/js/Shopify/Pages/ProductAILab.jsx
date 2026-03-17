@@ -387,7 +387,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                     /* Scanning animation — shows the product as backdrop */
                     <div className="aistudio-scanning">
                       <div className="premium-scanning-wrapper">
-                        <img src={productImage} alt="" className="premium-scanning-img" />
+                        <img src={productImage} alt="Product image being processed" className="premium-scanning-img" />
                         <div className="premium-scanning-badge" aria-live="polite">
                           ✨ {processingLabel}
                         </div>

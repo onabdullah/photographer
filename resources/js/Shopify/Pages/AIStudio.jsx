@@ -1349,7 +1349,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                       <div className="premium-scanning-wrapper">
                         <img
                           src={inputImage}
-                          alt=""
+                          alt="Source image being processed by AI"
                           className="premium-scanning-img"
                         />
                         <div className="premium-scanning-badge" aria-live="polite">
@@ -1374,7 +1374,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                         <img
                           ref={magicEraserImageRef}
                           src={inputImage}
-                          alt=""
+                          alt="Image for magic eraser tool - draw areas to remove"
                           className="aistudio-magic-eraser-img"
                         />
                         <canvas
@@ -1546,7 +1546,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                   ) : isProcessing && hasValidInput ? (
                     <>
                       <div className="aistudio-hero-loading-bg">
-                        <img src={inputImage} alt="" />
+                        <img src={inputImage} alt="Background image during processing" />
                       </div>
                       <div className="aistudio-hero-loading-overlay">
                         <div className="aistudio-hero-pulse" />

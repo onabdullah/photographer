@@ -406,7 +406,7 @@ export default function Dashboard({
                               aria-label={`View creation from ${timeAgo(item.updated_at)} in AI Studio`}
                             >
                               <div className="dashboard-recent-checkerboard">
-                                <img src={item.result_image_url} alt="" loading="lazy" />
+                                <img src={item.result_image_url} alt={`AI-generated creation from ${timeAgo(item.updated_at)}`} loading="lazy" />
                               </div>
                               <div className="dashboard-recent-meta">
                                 <Text as="span" variant="bodySm" tone="subdued">

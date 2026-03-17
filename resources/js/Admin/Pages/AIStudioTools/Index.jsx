@@ -651,7 +651,7 @@ export default function AIStudioToolsIndex({
                                                         <td className="py-2 px-4">
                                                             {gen.result_image_url ? (
                                                                 <a href={gen.result_image_url} target="_blank" rel="noopener noreferrer" className="block w-10 h-10 rounded border border-gray-200 dark:border-gray-600 overflow-hidden bg-gray-100 dark:bg-gray-700">
-                                                                    <img src={gen.result_image_url} alt="" className="w-full h-full object-cover" />
+                                                                    <img src={gen.result_image_url} alt="Generated image thumbnail" className="w-full h-full object-cover" />
                                                                 </a>
                                                             ) : (
                                                                 <span className="text-gray-400">—</span>

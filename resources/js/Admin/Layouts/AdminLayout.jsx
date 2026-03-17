@@ -603,7 +603,7 @@ export default function AdminLayout({ children, title, subtitle, breadcrumbs, he
                 {/* ── Brand: logo + name (from Settings > General) ── */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                     {branding?.app_logo_url ? (
-                        <img src={branding.app_logo_url} alt="" className="w-6 h-6 rounded-md object-contain flex-shrink-0" />
+                        <img src={branding.app_logo_url} alt={`${branding.app_name || 'App'} logo`} className="w-6 h-6 rounded-md object-contain flex-shrink-0" />
                     ) : (
                         <div className="w-6 h-6 rounded-md bg-primary-600 flex items-center justify-center flex-shrink-0">
                             <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white" fill="currentColor" aria-hidden="true">

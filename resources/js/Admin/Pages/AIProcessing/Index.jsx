@@ -190,7 +190,7 @@ export default function AIProcessingIndex({
                                                     <div className="aiprocessing-card-skeleton" aria-hidden="true" />
                                                     <img
                                                         src={gen.result_image_url}
-                                                        alt=""
+                                                        alt="Generated image"
                                                         className="absolute inset-0 w-full h-full object-cover"
                                                         loading="lazy"
                                                         decoding="async"

@@ -290,9 +290,9 @@
   box-shadow: var(--shadow-lg);
 }
 
-/* Overview cards – plan value (orange), counts (larger), Manage button (dark) */
+/* Overview cards – plan value (teal for WCAG contrast compliance), counts (larger), Manage button (dark) */
 .overview-plan-value {
-  color: var(--premium-orange) !important;
+  color: var(--premium-teal) !important;
 }
 
 .overview-manage-btn {

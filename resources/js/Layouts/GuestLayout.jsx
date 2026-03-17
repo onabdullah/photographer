@@ -45,7 +45,7 @@ export default function GuestLayout({ children }) {
                 aria-label="Home"
             >
                 {appLogoUrl ? (
-                    <img src={appLogoUrl} alt="" className="h-14 w-14 object-contain transition-opacity group-hover:opacity-90" />
+                    <img src={appLogoUrl} alt={`${appName} logo`} className="h-14 w-14 object-contain transition-opacity group-hover:opacity-90" />
                 ) : (
                     <ApplicationLogo className="h-14 w-14 text-primary-600 dark:text-primary-400 transition-colors group-hover:text-primary-700 dark:group-hover:text-primary-300" />
                 )}

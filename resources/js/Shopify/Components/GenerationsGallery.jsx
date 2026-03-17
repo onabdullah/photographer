@@ -353,7 +353,7 @@ export default function GenerationsGallery({
                         <div className="aistudio-gallery-card-skeleton" aria-hidden="true" />
                         <img
                           src={gen.result_image_url}
-                          alt=""
+                          alt={`Generated image from ${gen.tool_used || 'AI Studio'}`}
                           loading="lazy"
                           decoding="async"
                           onLoad={() => setLoadedIds((prev) => new Set(prev).add(gen.id))}

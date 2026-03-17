@@ -1,0 +1,1 @@
+import{j as l}from"./react-BHrScvB_.js";function a({message:t,className:r="",id:e="",...n}){return t?l.jsx("p",{...n,id:e,className:"text-sm text-red-600 "+r,role:"alert",children:t}):null}function o({value:t,className:r="",children:e,...n}){return l.jsx("label",{...n,className:"block text-sm font-medium text-gray-700 "+r,children:t||e})}export{o as I,a};

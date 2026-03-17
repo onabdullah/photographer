@@ -180,7 +180,7 @@ export default function Dashboard({ data }) {
                                             <div className="aspect-square relative bg-gray-200 dark:bg-gray-700">
                                                 <img
                                                     src={img.generated_image_url}
-                                                    alt=""
+                                                    alt={`Generated image from ${img.store_name || 'Store'}`}
                                                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
                                                 />
                                                 <span className="absolute bottom-0 left-0 right-0 bg-black/50 px-1.5 py-0.5 text-[10px] text-white truncate">
