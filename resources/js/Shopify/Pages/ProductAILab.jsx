@@ -37,11 +37,6 @@ import GenerationsGallery from '@/Shopify/Components/GenerationsGallery';
 const TEAL   = '#468A9A';
 const ORANGE = '#FF7A30';
 
-const INTENT_OPTIONS = [
-  { value: 'environment', label: 'Create Environment' },
-  { value: 'on_human',    label: 'Place on a Human' },
-];
-
 const ASPECT_RATIO_OPTIONS = [
   { value: '1:1',  label: '1:1' },
   { value: '4:3',  label: '4:3' },
@@ -162,7 +157,6 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
   /* ── State ── */
   const [credits, setCredits]                     = useState(() => Math.max(0, parseInt(initialCredits, 10) || 0));
   const [productImage, setProductImage]           = useState(null);
-  const [intent, setIntent]                       = useState('environment');
   const [aspectRatio, setAspectRatio]             = useState('1:1');
   const [resolution, setResolution]               = useState('1K');
   const [scenePrompt, setScenePrompt]             = useState('');
@@ -302,7 +296,6 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
       setProcessingStatus('uploading');
       const form = new FormData();
       form.append('product_category', 'universal');
-      form.append('intent', intent);
       form.append('prompt', scenePrompt);
       form.append('aspect_ratio', aspectRatio);
       form.append('resolution', resolution);
@@ -552,45 +545,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                     )}
                   </BlockStack>
 
-                  {/* Step 2 – Intent */}
-                  <BlockStack gap="200">
-                    <Text variant="bodySm" tone="subdued" as="p">Choose Intent</Text>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      {INTENT_OPTIONS.map((opt) => (
-                        <PillButton
-                          key={opt.value}
-                          selected={intent === opt.value}
-                          onClick={() => setIntent(opt.value)}
-                        >
-                          {opt.value === 'environment' ? '🌄' : '🧑'}&nbsp;{opt.label}
-                        </PillButton>
-                      ))}
-                    </div>
-                    {intent === 'on_human' && (
-                      <Text variant="bodySm" tone="subdued" as="p">
-                        AI will place the product on a human model in a natural setting.
-                      </Text>
-                    )}
-                  </BlockStack>
-
-                  {/* Step 3 – Scene description */}
-                  <TextField
-                    label="Describe the scene"
-                    value={scenePrompt}
-                    onChange={setScenePrompt}
-                    placeholder={
-                      intent === 'on_human'
-                        ? 'e.g. Young woman in a sunlit café, casual lifestyle look'
-                        : 'e.g. Luxury marble surface, warm studio lighting, minimalist background'
-                    }
-                    multiline={3}
-                    autoComplete="off"
-                    characterCount={scenePrompt.length}
-                    maxLength={600}
-                    helpText="Be specific, the AI reads every detail."
-                  />
-
-                  {/* Step 4 – Aspect Ratio */}
+                  {/* Step 2 – Aspect Ratio */}
                   <BlockStack gap="200">
                     <Text variant="bodySm" tone="subdued" as="p">Aspect Ratio</Text>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -606,7 +561,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                     </div>
                   </BlockStack>
 
-                  {/* Step 5 – Resolution */}
+                  {/* Step 3 – Resolution */}
                   <BlockStack gap="200">
                     <Text variant="bodySm" tone="subdued" as="p">Resolution</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
@@ -630,8 +585,9 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                     </div>
                   </BlockStack>
 
-                  {/* References (Optional) */}
+                  {/* Step 4 – Preferences */}
                   <Box>
+                    <Text variant="bodySm" tone="subdued" as="p">Preferences</Text>
                     <button
                       type="button"
                       onClick={() => setDrawerOpen((v) => !v)}
@@ -649,7 +605,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                       }}
                     >
                       <Icon source={drawerOpen ? MinusCircleIcon : PlusCircleIcon} />
-                      {drawerOpen ? 'Hide References' : '+ Add References (Optional)'}
+                      {drawerOpen ? 'Hide Preferences' : '+ Add Preferences (Optional)'}
                       {hasRefs && !drawerOpen && (
                         <span
                           style={{
@@ -706,6 +662,19 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                       </Box>
                     )}
                   </Box>
+
+                  {/* Step 5 – Input Prompt */}
+                  <TextField
+                    label="Describe the scene"
+                    value={scenePrompt}
+                    onChange={setScenePrompt}
+                    placeholder="e.g. Luxury marble surface, warm studio lighting, minimalist background"
+                    multiline={3}
+                    autoComplete="off"
+                    characterCount={scenePrompt.length}
+                    maxLength={600}
+                    helpText="Be specific, the AI reads every detail."
+                  />
 
                   {/* Generate / Reset */}
                   <Box paddingBlockStart="200">
