@@ -540,6 +540,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, []);
   const dismissToast = useCallback(() => setToast(null), []);
   const fileInputRef = useRef(null);
+  const sourceImageRef = useRef(initialImage || null);
   const magicEraserCanvasRef = useRef(null);
   const magicEraserWrapRef = useRef(null);
   const magicEraserImageRef = useRef(null);
@@ -556,7 +557,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     });
   }, []);
 
-  const hasValidInput = inputImage && !inputImage.includes('placeholder') && !inputImage.includes('Select+a+Product');
+  const activeInputImage = inputImage || sourceImageRef.current || null;
+  const hasValidInput = Boolean(activeInputImage) && !activeInputImage.includes('placeholder') && !activeInputImage.includes('Select+a+Product');
   const displayGenerated = generatedImages[selectedGeneratedIndex] || null;
   const outputImageUrl = resultImageUrl || displayGenerated;
   const hasOutput = Boolean(outputImageUrl);
@@ -579,6 +581,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const handleToolChange = useCallback((value) => {
     setSelectedTool(value);
     setInputImage(null);
+    sourceImageRef.current = null;
     setInputImageSize(null);
     setCompressorSizes(null);
     setResultImageUrl(null);
@@ -599,7 +602,9 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const handleFileDrop = useCallback((_allFiles, acceptedFiles) => {
     const file = acceptedFiles[0];
     if (file) {
-      setInputImage(URL.createObjectURL(file));
+      const imageUrl = URL.createObjectURL(file);
+      setInputImage(imageUrl);
+      sourceImageRef.current = imageUrl;
       setInputImageSize(file.size ?? null);
       setCompressorSizes(null);
       setResultImageUrl(null);
@@ -611,7 +616,9 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const handleFileUpload = useCallback((e) => {
     const file = e.target.files?.[0];
     if (file) {
-      setInputImage(URL.createObjectURL(file));
+      const imageUrl = URL.createObjectURL(file);
+      setInputImage(imageUrl);
+      sourceImageRef.current = imageUrl;
       setInputImageSize(file.size ?? null);
       setCompressorSizes(null);
       setResultImageUrl(null);
@@ -622,6 +629,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
 
   const handleBrowseSelectImage = useCallback((url) => {
     setInputImage(url);
+    sourceImageRef.current = url;
     setInputImageSize(null);
     setCompressorSizes(null);
     setBrowseModalOpen(false);
@@ -629,7 +637,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [showToast]);
 
   const handleRemoveBackground = useCallback(async () => {
-    if (!hasValidInput) return;
+    const sourceImage = inputImage || sourceImageRef.current;
+    if (!sourceImage || !hasValidInput) return;
     setProcessingStatus('uploading');
     setResultImageUrl(null);
     setJobId(null);
@@ -637,11 +646,11 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
 
     try {
       const formData = new FormData();
-      if (inputImage.startsWith('blob:')) {
-        const blob = await fetch(inputImage).then((r) => r.blob());
+      if (sourceImage.startsWith('blob:')) {
+        const blob = await fetch(sourceImage).then((r) => r.blob());
         formData.append('image', blob, 'upload.png');
-      } else if (inputImage.startsWith('http')) {
-        formData.append('image', inputImage);
+      } else if (sourceImage.startsWith('http')) {
+        formData.append('image', sourceImage);
       } else {
         throw new Error('Invalid image source');
       }
@@ -688,7 +697,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [hasValidInput, inputImage, showToast, refetchRecentGenerations]);
 
   const handleCompress = useCallback(async () => {
-    if (!hasValidInput) return;
+    const sourceImage = inputImage || sourceImageRef.current;
+    if (!sourceImage || !hasValidInput) return;
     setProcessingStatus('uploading');
     setResultImageUrl(null);
     setCompressorSizes(null);
@@ -696,11 +706,11 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     showToast('Compressing...');
     try {
       const formData = new FormData();
-      if (inputImage.startsWith('blob:')) {
-        const blob = await fetch(inputImage).then((r) => r.blob());
+      if (sourceImage.startsWith('blob:')) {
+        const blob = await fetch(sourceImage).then((r) => r.blob());
         formData.append('image', blob, 'upload.png');
-      } else if (inputImage.startsWith('http')) {
-        formData.append('image', inputImage);
+      } else if (sourceImage.startsWith('http')) {
+        formData.append('image', sourceImage);
       } else {
         throw new Error('Invalid image source');
       }
@@ -737,18 +747,19 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [hasValidInput, inputImage, compressorLevel, showToast, refetchRecentGenerations]);
 
   const handleUpscale = useCallback(async () => {
-    if (!hasValidInput) return;
+    const sourceImage = inputImage || sourceImageRef.current;
+    if (!sourceImage || !hasValidInput) return;
     setProcessingStatus('uploading');
     setResultImageUrl(null);
     setJobId(null);
     showToast('Starting upscale...');
     try {
       const formData = new FormData();
-      if (inputImage.startsWith('blob:')) {
-        const blob = await fetch(inputImage).then((r) => r.blob());
+      if (sourceImage.startsWith('blob:')) {
+        const blob = await fetch(sourceImage).then((r) => r.blob());
         formData.append('image', blob, 'upload.png');
-      } else if (inputImage.startsWith('http')) {
-        formData.append('image', inputImage);
+      } else if (sourceImage.startsWith('http')) {
+        formData.append('image', sourceImage);
       } else {
         throw new Error('Invalid image source');
       }
@@ -775,18 +786,19 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [hasValidInput, inputImage, upscaleScale, upscaleFaceEnhance, showToast]);
 
   const handleEnhance = useCallback(async () => {
-    if (!hasValidInput) return;
+    const sourceImage = inputImage || sourceImageRef.current;
+    if (!sourceImage || !hasValidInput) return;
     setProcessingStatus('uploading');
     setResultImageUrl(null);
     setJobId(null);
     showToast('Starting enhance...');
     try {
       const formData = new FormData();
-      if (inputImage.startsWith('blob:')) {
-        const blob = await fetch(inputImage).then((r) => r.blob());
+      if (sourceImage.startsWith('blob:')) {
+        const blob = await fetch(sourceImage).then((r) => r.blob());
         formData.append('image', blob, 'upload.png');
-      } else if (inputImage.startsWith('http')) {
-        formData.append('image', inputImage);
+      } else if (sourceImage.startsWith('http')) {
+        formData.append('image', sourceImage);
       } else {
         throw new Error('Invalid image source');
       }
@@ -815,7 +827,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const effectiveLightingPrompt = lightingPromptText.trim();
 
   const handleLighting = useCallback(async () => {
-    if (!hasValidInput || !effectiveLightingPrompt) {
+    const sourceImage = inputImage || sourceImageRef.current;
+    if (!sourceImage || !hasValidInput || !effectiveLightingPrompt) {
       showToast('Select a lighting preset or enter a custom prompt.', true);
       return;
     }
@@ -825,11 +838,11 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     showToast('Starting lighting fix...');
     try {
       const formData = new FormData();
-      if (inputImage.startsWith('blob:')) {
-        const blob = await fetch(inputImage).then((r) => r.blob());
+      if (sourceImage.startsWith('blob:')) {
+        const blob = await fetch(sourceImage).then((r) => r.blob());
         formData.append('image', blob, 'upload.png');
-      } else if (inputImage.startsWith('http')) {
-        formData.append('image', inputImage);
+      } else if (sourceImage.startsWith('http')) {
+        formData.append('image', sourceImage);
       } else {
         throw new Error('Invalid image source');
       }
@@ -855,7 +868,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [hasValidInput, inputImage, effectiveLightingPrompt, showToast]);
 
   const handleMagicEraser = useCallback(async () => {
-    if (!hasValidInput || selectedTool !== 'magic_eraser') return;
+    const sourceImage = inputImage || sourceImageRef.current;
+    if (!sourceImage || !hasValidInput || selectedTool !== 'magic_eraser') return;
     const canvas = magicEraserCanvasRef.current;
     const img = magicEraserImageRef.current;
     if (!canvas || !img || !magicEraserHasStrokes) {
@@ -905,11 +919,11 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     showToast('Starting magic eraser...');
     try {
       const formData = new FormData();
-      if (inputImage.startsWith('blob:')) {
-        const blob = await fetch(inputImage).then((r) => r.blob());
+      if (sourceImage.startsWith('blob:')) {
+        const blob = await fetch(sourceImage).then((r) => r.blob());
         formData.append('image', blob, 'upload.png');
-      } else if (inputImage.startsWith('http')) {
-        formData.append('image', inputImage);
+      } else if (sourceImage.startsWith('http')) {
+        formData.append('image', sourceImage);
       } else {
         throw new Error('Invalid image source');
       }
@@ -1087,6 +1101,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
 
   const handleReset = useCallback(() => {
     setInputImage(null);
+    sourceImageRef.current = null;
     setInputImageSize(null);
     setCompressorSizes(null);
     setResultImageUrl(null);
@@ -1154,7 +1169,10 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [resultImageUrl, displayGenerated, showToast, generationId]);
 
   useEffect(() => {
-    if (initialImage && !inputImage) setInputImage(initialImage);
+    if (initialImage && !inputImage) {
+      setInputImage(initialImage);
+      sourceImageRef.current = initialImage;
+    }
   }, [initialImage]);
 
   useEffect(() => {
@@ -1249,7 +1267,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
 
   useEffect(() => {
     if (processingStatus !== 'error') return;
-    setInputImage(null);
     setInputImageSize(null);
     setCompressorSizes(null);
     setResultImageUrl(null);
