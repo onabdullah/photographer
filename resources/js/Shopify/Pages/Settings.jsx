@@ -67,6 +67,7 @@ const BACKGROUND_STYLE_OPTIONS = [
 ];
 
 const DIGEST_OPTIONS = [
+  { label: 'Off', value: 'off' },
   { label: 'Daily', value: 'daily' },
   { label: 'Weekly', value: 'weekly' },
   { label: 'Monthly', value: 'monthly' },
@@ -87,7 +88,6 @@ const DEFAULT_SETTINGS = {
   defaultFormat: 'webp',
   defaultAspectRatio: 'original',
   defaultResolution: 'original',
-  autoUpscale: false,
   saveToShopify: ['add_secondary'],
   autoTagProducts: true,
   generationMode: 'balanced',
@@ -98,10 +98,9 @@ const DEFAULT_SETTINGS = {
   autoPublishToProduct: false,
   notifyLowCredits: true,
   lowCreditThreshold: 50,
-  weeklyPerformanceDigest: true,
-  usageDigestFrequency: 'weekly',
+  digestFrequency: 'weekly',
   businessGoal: 'conversion',
-  assetRetentionDays: 30,
+  autoDeleteGeneratedImagesAfterDays: 30,
   watermarkPreviewImages: false,
 };
 
@@ -113,7 +112,6 @@ function normalizeInitial(propsInitial) {
       base.defaultAspectRatio = propsInitial.defaultAspectRatio;
     }
     base.defaultResolution = propsInitial.defaultResolution === '2k' ? '2k' : 'original';
-    base.autoUpscale = Boolean(propsInitial.autoUpscale);
     base.autoTagProducts = Boolean(propsInitial.autoTagProducts);
     if (typeof propsInitial.generationMode === 'string' && ['balanced', 'speed', 'quality'].includes(propsInitial.generationMode)) {
       base.generationMode = propsInitial.generationMode;
@@ -131,15 +129,19 @@ function normalizeInitial(propsInitial) {
     base.lowCreditThreshold = Number.isFinite(Number(propsInitial.lowCreditThreshold))
       ? Math.max(5, Math.min(1000, Number(propsInitial.lowCreditThreshold)))
       : 50;
-    base.weeklyPerformanceDigest = propsInitial.weeklyPerformanceDigest !== false;
-    if (typeof propsInitial.usageDigestFrequency === 'string' && ['daily', 'weekly', 'monthly'].includes(propsInitial.usageDigestFrequency)) {
-      base.usageDigestFrequency = propsInitial.usageDigestFrequency;
+    // Backwards compatibility: map old digest fields to new digestFrequency
+    if (typeof propsInitial.digestFrequency === 'string' && ['off', 'daily', 'weekly', 'monthly'].includes(propsInitial.digestFrequency)) {
+      base.digestFrequency = propsInitial.digestFrequency;
+    } else if (propsInitial.weeklyPerformanceDigest === false) {
+      base.digestFrequency = 'off';
+    } else if (typeof propsInitial.usageDigestFrequency === 'string' && ['daily', 'weekly', 'monthly'].includes(propsInitial.usageDigestFrequency)) {
+      base.digestFrequency = propsInitial.usageDigestFrequency;
     }
     if (typeof propsInitial.businessGoal === 'string' && ['conversion', 'catalog_velocity', 'brand_consistency'].includes(propsInitial.businessGoal)) {
       base.businessGoal = propsInitial.businessGoal;
     }
-    base.assetRetentionDays = Number.isFinite(Number(propsInitial.assetRetentionDays))
-      ? Math.max(7, Math.min(365, Number(propsInitial.assetRetentionDays)))
+    base.autoDeleteGeneratedImagesAfterDays = Number.isFinite(Number(propsInitial.autoDeleteGeneratedImagesAfterDays || propsInitial.assetRetentionDays))
+      ? Math.max(7, Math.min(365, Number(propsInitial.autoDeleteGeneratedImagesAfterDays || propsInitial.assetRetentionDays)))
       : 30;
     base.watermarkPreviewImages = Boolean(propsInitial.watermarkPreviewImages);
     if (Array.isArray(propsInitial.saveToShopify) && propsInitial.saveToShopify.length) {
@@ -166,7 +168,6 @@ export default function Settings() {
     settings.defaultFormat !== initialFromServer.defaultFormat ||
     settings.defaultAspectRatio !== initialFromServer.defaultAspectRatio ||
     settings.defaultResolution !== initialFromServer.defaultResolution ||
-    settings.autoUpscale !== initialFromServer.autoUpscale ||
     JSON.stringify(settings.saveToShopify) !== JSON.stringify(initialFromServer.saveToShopify) ||
     settings.autoTagProducts !== initialFromServer.autoTagProducts ||
     settings.generationMode !== initialFromServer.generationMode ||
@@ -177,10 +178,9 @@ export default function Settings() {
     settings.autoPublishToProduct !== initialFromServer.autoPublishToProduct ||
     settings.notifyLowCredits !== initialFromServer.notifyLowCredits ||
     Number(settings.lowCreditThreshold) !== Number(initialFromServer.lowCreditThreshold) ||
-    settings.weeklyPerformanceDigest !== initialFromServer.weeklyPerformanceDigest ||
-    settings.usageDigestFrequency !== initialFromServer.usageDigestFrequency ||
+    settings.digestFrequency !== initialFromServer.digestFrequency ||
     settings.businessGoal !== initialFromServer.businessGoal ||
-    Number(settings.assetRetentionDays) !== Number(initialFromServer.assetRetentionDays) ||
+    Number(settings.autoDeleteGeneratedImagesAfterDays) !== Number(initialFromServer.autoDeleteGeneratedImagesAfterDays) ||
     settings.watermarkPreviewImages !== initialFromServer.watermarkPreviewImages;
 
   const handleSave = useCallback(() => {
@@ -200,10 +200,9 @@ export default function Settings() {
       autoPublishToProduct: settings.autoPublishToProduct,
       notifyLowCredits: settings.notifyLowCredits,
       lowCreditThreshold: Math.max(5, Number(settings.lowCreditThreshold) || 50),
-      weeklyPerformanceDigest: settings.weeklyPerformanceDigest,
-      usageDigestFrequency: settings.usageDigestFrequency,
+      digestFrequency: settings.digestFrequency,
       businessGoal: settings.businessGoal,
-      assetRetentionDays: Math.max(7, Number(settings.assetRetentionDays) || 30),
+      autoDeleteGeneratedImagesAfterDays: Math.max(7, Number(settings.autoDeleteGeneratedImagesAfterDays) || 30),
       watermarkPreviewImages: settings.watermarkPreviewImages,
     }, {
       preserveScroll: true,
@@ -298,13 +297,14 @@ export default function Settings() {
                   label="Default output resolution"
                   options={RESOLUTION_OPTIONS}
                   value={settings.defaultResolution}
-                  onChange={(v) => setSettings((s) => ({ ...s, defaultResolution: v, autoUpscale: v === '2k' }))}
+                  onChange={(v) => setSettings((s) => ({ ...s, defaultResolution: v }))}
                 />
                 <Select
                   label="Business goal"
                   options={BUSINESS_GOAL_OPTIONS}
                   value={settings.businessGoal}
                   onChange={(v) => setSettings((s) => ({ ...s, businessGoal: v }))}
+                  helpText="AI optimizes image generation priorities. Conversions: visual appeal and product highlights. Catalog: consistency and speed. Brand: style and guidelines."
                 />
               </BlockStack>
             </Box>
@@ -374,16 +374,12 @@ export default function Settings() {
                 onChange={(v) => setSettings((s) => ({ ...s, lowCreditThreshold: v }))}
                 suffix="credits"
               />
-              <Checkbox
-                label="Send performance digest"
-                checked={settings.weeklyPerformanceDigest}
-                onChange={(v) => setSettings((s) => ({ ...s, weeklyPerformanceDigest: v }))}
-              />
               <Select
-                label="Digest frequency"
+                label="Performance digest frequency"
                 options={DIGEST_OPTIONS}
-                value={settings.usageDigestFrequency}
-                onChange={(v) => setSettings((s) => ({ ...s, usageDigestFrequency: v }))}
+                value={settings.digestFrequency}
+                onChange={(v) => setSettings((s) => ({ ...s, digestFrequency: v }))}
+                helpText="Receive email summaries of your AI image generation activity and performance metrics."
               />
             </BlockStack>
           </Box>
@@ -433,15 +429,15 @@ export default function Settings() {
             <BlockStack gap="400">
               <Text as="h3" variant="headingMd">Data and privacy controls</Text>
               <TextField
-                label="Asset retention period"
+                label="Auto-delete generated images after"
                 type="number"
                 min={7}
                 max={365}
                 autoComplete="off"
-                value={String(settings.assetRetentionDays)}
-                onChange={(v) => setSettings((s) => ({ ...s, assetRetentionDays: v }))}
+                value={String(settings.autoDeleteGeneratedImagesAfterDays)}
+                onChange={(v) => setSettings((s) => ({ ...s, autoDeleteGeneratedImagesAfterDays: v }))}
                 suffix="days"
-                helpText="Used by housekeeping policies for generated assets."
+                helpText="Generated images older than this will be automatically deleted. Does not affect product images in Shopify."
               />
               <Button tone="critical" size="slim" onClick={openClearHistoryModal}>
                 Clear generation history
