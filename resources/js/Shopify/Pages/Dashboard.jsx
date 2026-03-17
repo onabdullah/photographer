@@ -88,19 +88,21 @@ export default function Dashboard({
               <InlineGrid columns={{ xs: 1, md: 2 }} gap="0">
                 <Box padding="800">
                   <BlockStack gap="400">
-                    <Box
-                      padding="300"
-                      background="bg-surface-secondary"
-                      borderRadius="300"
-                      minWidth="fit-content"
-                    >
-                      <div style={{ color: 'var(--premium-teal)' }}>
-                        <Icon source={MagicIcon} tone="inherit" />
-                      </div>
-                    </Box>
-                    <Text variant="heading2Xl" as="h2" fontWeight="bold">
-                      {heroTitle}
-                    </Text>
+                    <InlineStack gap="300" blockAlign="center" wrap={false}>
+                      <Box
+                        padding="300"
+                        background="bg-surface-secondary"
+                        borderRadius="300"
+                        minWidth="fit-content"
+                      >
+                        <div style={{ color: 'var(--premium-teal)' }}>
+                          <Icon source={MagicIcon} tone="inherit" />
+                        </div>
+                      </Box>
+                      <Text variant="heading2Xl" as="h2" fontWeight="bold">
+                        {heroTitle}
+                      </Text>
+                    </InlineStack>
                     <Text variant="bodyLg" tone="subdued">
                       {heroSubtitle}
                     </Text>
@@ -206,9 +208,6 @@ export default function Dashboard({
             <div className="dashboard-tools-section">
               <div className="dashboard-tools-header">
                 <Text as="h2" className="dashboard-tools-heading">All Tools</Text>
-                <Text variant="bodyMd" tone="subdued" as="p" className="dashboard-tools-subtitle">
-                  Professional AI tools to edit, enhance, and optimize your product photos. Click any tool to open it in AI Studio or Product AI Lab.
-                </Text>
               </div>
               {showProductAILab && (
                 <div className="dashboard-tools-vto-wrap">
@@ -297,20 +296,22 @@ export default function Dashboard({
                     onClick={() => router.visit('/shopify/ai-studio')}
                   >
                     <BlockStack gap="400">
-                      <Box
-                        padding="300"
-                        background="bg-surface-secondary"
-                        borderRadius="300"
-                        minWidth="fit-content"
-                      >
-                        <div style={{ color: 'var(--premium-teal)' }}>
-                          <Icon source={WandIcon} tone="inherit" />
-                        </div>
-                      </Box>
                       <BlockStack gap="200">
-                        <Text variant="headingMd" as="h3" fontWeight="semibold">
-                          AI Studio
-                        </Text>
+                        <InlineStack gap="300" blockAlign="center" wrap={false}>
+                          <Box
+                            padding="300"
+                            background="bg-surface-secondary"
+                            borderRadius="300"
+                            minWidth="fit-content"
+                          >
+                            <div style={{ color: 'var(--premium-teal)' }}>
+                              <Icon source={WandIcon} tone="inherit" />
+                            </div>
+                          </Box>
+                          <Text variant="headingMd" as="h3" fontWeight="semibold">
+                            AI Studio
+                          </Text>
+                        </InlineStack>
                         <Text variant="bodyMd" tone="subdued">
                           Our AI photographer is ready to help you create stunning photos for your store.
                         </Text>
@@ -331,20 +332,22 @@ export default function Dashboard({
                     onClick={() => router.visit('/shopify/help')}
                   >
                     <BlockStack gap="400">
-                      <Box
-                        padding="300"
-                        background="bg-surface-secondary"
-                        borderRadius="300"
-                        minWidth="fit-content"
-                      >
-                        <div style={{ color: 'var(--premium-teal)' }}>
-                          <Icon source={QuestionCircleIcon} tone="inherit" />
-                        </div>
-                      </Box>
                       <BlockStack gap="200">
-                        <Text variant="headingMd" as="h3" fontWeight="semibold">
-                          Help & Tutorials
-                        </Text>
+                        <InlineStack gap="300" blockAlign="center" wrap={false}>
+                          <Box
+                            padding="300"
+                            background="bg-surface-secondary"
+                            borderRadius="300"
+                            minWidth="fit-content"
+                          >
+                            <div style={{ color: 'var(--premium-teal)' }}>
+                              <Icon source={QuestionCircleIcon} tone="inherit" />
+                            </div>
+                          </Box>
+                          <Text variant="headingMd" as="h3" fontWeight="semibold">
+                            Help & Tutorials
+                          </Text>
+                        </InlineStack>
                         <Text variant="bodyMd" tone="subdued">
                           We're here to help — learn tips and make the most of your credits.
                         </Text>
