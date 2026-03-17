@@ -353,21 +353,8 @@ export default function Billing({ credits, creditSummary = null, currentPlan, pl
                   </div>
                 </InlineGrid>
                 <div className="billing-why-cta">
-                  <BlockStack gap="300">
-                    <Text variant="bodyMd" as="p" fontWeight="semibold">
-                      Running low? Upgrade your plan or grab a Top-Up Pack above so you never hit a wall.
-                    </Text>
-                    <InlineStack gap="300" blockAlign="center">
-                      <MagicButton
-                        onClick={() => document.getElementById('billing-topup-section')?.scrollIntoView({ behavior: 'smooth' })}
-                      >
-                        Get more credits
-                      </MagicButton>
-                      <Text variant="bodySm" as="span" tone="subdued">
-                        Credits roll over — use them when you need them.
-                      </Text>
-                    </InlineStack>
-                  </BlockStack>
+                  <Text variant="bodySm" as="p" tone="subdued">Your credits never expire.</Text>
+                  <Text variant="bodySm" as="p" tone="subdued">Create more, stress less.</Text>
                 </div>
               </BlockStack>
             </Box>
