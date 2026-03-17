@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { BlockStack, Text, Box, InlineStack } from '@shopify/polaris';
+import { BlockStack, Text, Box, InlineStack, Icon } from '@shopify/polaris';
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
-import { Sparkles, Rocket, TrendingUp } from 'lucide-react';
+import { MagicIcon, SendIcon, ChartHistogramGrowthIcon } from '@shopify/polaris-icons';
 import MagicButton from '@/Shopify/Components/MagicButton';
 
 const STORAGE_KEY = 'hasSeenWelcomeModal';
@@ -11,17 +11,17 @@ const BRAND_TEAL = 'var(--premium-teal, #468A9A)';
 
 const VALUE_PROPS = [
   {
-    icon: Sparkles,
+    source: MagicIcon,
     title: 'Studio Quality in Seconds',
     description: 'Flawless background removal, lighting, and enhancement.',
   },
   {
-    icon: Rocket,
+    source: SendIcon,
     title: 'Scale Without Limits',
     description: 'Generate infinite professional variations for every product.',
   },
   {
-    icon: TrendingUp,
+    source: ChartHistogramGrowthIcon,
     title: 'Turn Browsers into Buyers',
     description: 'High-end visuals proven to skyrocket your conversion rates.',
   },
@@ -125,10 +125,12 @@ export default function WelcomeModal() {
             borderRadius="300"
           >
             <BlockStack gap="400">
-              {VALUE_PROPS.map(({ icon: Icon, title, description }) => (
+              {VALUE_PROPS.map(({ source, title, description }) => (
                 <InlineStack key={title} wrap={false} gap="300" blockAlign="center">
                   <Box minWidth="fit-content">
-                    <Icon size={24} style={{ color: BRAND_TEAL }} aria-hidden />
+                    <div style={{ color: BRAND_TEAL }} aria-hidden>
+                      <Icon source={source} tone="inherit" />
+                    </div>
                   </Box>
                   <BlockStack gap="100">
                     <Text as="span" variant="bodyMd" fontWeight="bold">

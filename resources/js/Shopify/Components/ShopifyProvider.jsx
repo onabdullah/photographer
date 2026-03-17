@@ -38,11 +38,13 @@ export default function ShopifyProvider({ children }) {
                 }
 
                 if (!window.shopify) {
+                    const shopParam = new URLSearchParams(window.location.search).get('shop');
                     console.error('[Shopify] App Bridge not loaded after waiting');
+                    if (shopParam) {
+                        window.location.href = `/authenticate?shop=${shopParam}`;
+                    }
                     return;
                 }
-
-                console.log('[Shopify] App Bridge available, initializing...');
 
                 // Function to get and store session token
                 async function refreshSessionToken() {
@@ -55,7 +57,6 @@ export default function ShopifyProvider({ children }) {
                             
                             if (token && isMounted) {
                                 window.sessionToken = token;
-                                console.log('[Shopify] Session token refreshed successfully');
                             }
                         } else {
                             console.warn('[Shopify] Shopify App Bridge not available or idToken method missing');

@@ -28,6 +28,7 @@ import {
 } from '@shopify/polaris-icons';
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { TitleBar } from '@shopify/app-bridge-react';
 import axios from 'axios';
 import MagicButton from '@/Shopify/Components/MagicButton';
 import BrowseFromStore from '@/Shopify/Components/BrowseFromStore';
@@ -1269,6 +1270,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
 
   return (
     <ShopifyLayout>
+      <TitleBar title="AI Studio" />
       <Page
         title="AI Studio"
         subtitle="Professional-grade image enhancement. Create in seconds."

@@ -45,8 +45,9 @@
 }
 
 /* Recent Creations empty state – icon and CTA */
-.recent-creations-empty .Polaris-Icon {
+.recent-creations-empty svg {
   color: var(--premium-teal);
+  fill: var(--premium-teal);
 }
 
 /* Dashboard section headings – professional, uncluttered */
@@ -287,24 +288,22 @@
   color: var(--premium-orange) !important;
 }
 
-.overview-manage-btn,
-.overview-manage-btn span {
-  background: #1a1a1a !important;
-  border-color: #1a1a1a !important;
-  color: #fff !important;
+.overview-manage-btn {
+  background: var(--p-color-text) !important;
+  border-color: var(--p-color-text) !important;
+  color: var(--p-color-bg) !important;
   font-weight: 600;
   transition: background-color var(--transition-normal), border-color var(--transition-normal) !important;
 }
 
-.overview-manage-btn:hover,
-.overview-manage-btn:hover span {
+.overview-manage-btn:hover {
   background: #333 !important;
   border-color: #333 !important;
-  color: #fff !important;
+  color: var(--p-color-bg) !important;
 }
 
 .overview-manage-btn:focus-visible {
-  outline: 2px solid #1a1a1a;
+  outline: 2px solid var(--p-color-text);
   outline-offset: 2px;
 }
 
@@ -322,7 +321,7 @@
 }
 
 /* Magic Button overrides (brand orange) */
-.magic-button-wrapper .Polaris-Button--variantPrimary {
+.magic-button-wrapper button {
   background: var(--premium-orange) !important;
   border-color: var(--premium-orange) !important;
   color: white !important;
@@ -331,43 +330,40 @@
   opacity: 1;
 }
 
-.magic-button-wrapper .Polaris-Button--variantPrimary:hover:not(.Polaris-Button--disabled):not([aria-busy="true"]) {
+.magic-button-wrapper button:hover:not([disabled]):not([aria-busy="true"]) {
   background: var(--premium-orange-hover) !important;
   border-color: var(--premium-orange-hover) !important;
   transform: translateY(-1px);
 }
 
-.magic-button-wrapper .Polaris-Button--variantPrimary:active:not(.Polaris-Button--disabled) {
+.magic-button-wrapper button:active:not([disabled]) {
   transform: translateY(0);
 }
 
-.magic-button-wrapper .Polaris-Button--disabled,
-.magic-button-wrapper .Polaris-Button[aria-busy="true"] {
-  background: #e1e3e5 !important;
-  border-color: #e1e3e5 !important;
+.magic-button-wrapper button[disabled],
+.magic-button-wrapper button[aria-busy="true"] {
+  background: var(--p-color-bg-fill-disabled, #e1e3e5) !important;
+  border-color: var(--p-color-bg-fill-disabled, #e1e3e5) !important;
   opacity: 0.7 !important;
 }
 
 /* Help & Support – Open Priority Ticket: dark button */
-.priority-ticket-callout .Polaris-Button--variantPrimary,
-.priority-ticket-callout .Polaris-Button--variantSecondary {
-  background: #1a1a1a !important;
-  border-color: #1a1a1a !important;
-  color: #fff !important;
+.priority-ticket-callout button {
+  background: var(--p-color-text) !important;
+  border-color: var(--p-color-text) !important;
+  color: var(--p-color-bg) !important;
   font-weight: 500 !important;
   transition: background-color var(--transition-normal), border-color var(--transition-normal) !important;
 }
 
-.priority-ticket-callout .Polaris-Button--variantPrimary:hover:not(.Polaris-Button--disabled):not([aria-busy="true"]),
-.priority-ticket-callout .Polaris-Button--variantSecondary:hover:not(.Polaris-Button--disabled):not([aria-busy="true"]) {
+.priority-ticket-callout button:hover:not([disabled]):not([aria-busy="true"]) {
   background: #333 !important;
   border-color: #333 !important;
-  color: #fff !important;
+  color: var(--p-color-bg) !important;
 }
 
-.priority-ticket-callout .Polaris-Button--variantPrimary:focus,
-.priority-ticket-callout .Polaris-Button--variantSecondary:focus {
-  outline: 2px solid #1a1a1a;
+.priority-ticket-callout button:focus-visible {
+  outline: 2px solid var(--p-color-text);
   outline-offset: 2px;
 }
 
@@ -1029,43 +1025,37 @@
 }
 
 /* Teal primary (Download): Polaris button shape, our brand fill */
-.aistudio-hero-actions .aistudio-btn-download,
-.aistudio-hero-actions .Polaris-Button:first-of-type {
+.aistudio-hero-actions .aistudio-btn-download {
   background: var(--premium-teal) !important;
   border-color: var(--premium-teal) !important;
   color: #fff !important;
 }
 
-.aistudio-hero-actions .aistudio-btn-download:hover,
-.aistudio-hero-actions .Polaris-Button:first-of-type:hover {
+.aistudio-hero-actions .aistudio-btn-download:hover {
   background: var(--premium-teal-light) !important;
   border-color: var(--premium-teal-light) !important;
   color: #fff !important;
 }
 
-.aistudio-hero-actions .aistudio-btn-download:focus-visible,
-.aistudio-hero-actions .Polaris-Button:first-of-type:focus-visible {
+.aistudio-hero-actions .aistudio-btn-download:focus-visible {
   outline: 2px solid var(--premium-teal);
   outline-offset: 2px;
 }
 
 /* Orange secondary (Save to Store): Polaris button shape, our brand fill */
-.aistudio-hero-actions .aistudio-btn-save,
-.aistudio-hero-actions .Polaris-Button:last-of-type {
+.aistudio-hero-actions .aistudio-btn-save {
   background: var(--premium-orange) !important;
   border-color: var(--premium-orange) !important;
   color: #fff !important;
 }
 
-.aistudio-hero-actions .aistudio-btn-save:hover,
-.aistudio-hero-actions .Polaris-Button:last-of-type:hover {
+.aistudio-hero-actions .aistudio-btn-save:hover {
   background: var(--premium-orange-hover) !important;
   border-color: var(--premium-orange-hover) !important;
   color: #fff !important;
 }
 
-.aistudio-hero-actions .aistudio-btn-save:focus-visible,
-.aistudio-hero-actions .Polaris-Button:last-of-type:focus-visible {
+.aistudio-hero-actions .aistudio-btn-save:focus-visible {
   outline: 2px solid var(--premium-orange);
   outline-offset: 2px;
 }
@@ -1327,26 +1317,26 @@
   opacity: 1;
 }
 
-.aistudio-gallery-card-overlay .Polaris-Button {
+.aistudio-gallery-card-overlay button {
   background: rgba(255, 255, 255, 0.95) !important;
   border-color: rgba(255, 255, 255, 0.95) !important;
   color: var(--p-color-text) !important;
 }
 
 /* Ensure all icons within overlay buttons are always visible regardless of tone */
-.aistudio-gallery-card-overlay .Polaris-Button .Polaris-Icon svg {
+.aistudio-gallery-card-overlay button svg {
   fill: currentColor !important;
 }
-.aistudio-gallery-card-overlay .Polaris-Button .Polaris-Icon {
-  color: var(--p-color-text) !important;
+.aistudio-gallery-card-overlay button svg path {
+  fill: currentColor !important;
 }
 
-.aistudio-gallery-card-overlay .Polaris-Button:hover {
+.aistudio-gallery-card-overlay button:hover {
   background: #fff !important;
   border-color: #fff !important;
 }
 
-.aistudio-gallery-card-overlay .Polaris-Button:focus-visible {
+.aistudio-gallery-card-overlay button:focus-visible {
   outline: 2px solid var(--premium-teal);
   outline-offset: 2px;
 }
@@ -1361,7 +1351,7 @@
   flex-wrap: wrap;
 }
 
-.aistudio-gallery-card-meta .Polaris-Text {
+.aistudio-gallery-card-meta {
   font-size: 12px;
 }
 
@@ -1384,16 +1374,16 @@
   color: var(--p-color-icon-subdued);
 }
 
-.aistudio-gallery-empty-icon .Polaris-Icon {
+.aistudio-gallery-empty-icon svg {
   width: 40px;
   height: 40px;
 }
 
-.aistudio-gallery-empty .Polaris-Text--headingMd {
+.aistudio-gallery-empty h3 {
   margin-bottom: var(--p-space-200);
 }
 
-.aistudio-gallery-empty .Polaris-Text--bodyMd {
+.aistudio-gallery-empty p {
   max-width: 36ch;
   margin-left: auto;
   margin-right: auto;

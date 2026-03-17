@@ -1,4 +1,5 @@
 import { AppProvider } from '@shopify/polaris';
+import en from '@shopify/polaris/locales/en.json';
 import { NavMenu } from '@shopify/app-bridge-react';
 import { usePage, Link } from '@inertiajs/react';
 import '@shopify/polaris/build/esm/styles.css';
@@ -15,24 +16,7 @@ export default function ShopifyLayout({ children }) {
 
   return (
     <ShopifyProvider>
-      <AppProvider
-        i18n={{
-          Polaris: {
-            ResourceList: {
-              sortingLabel: 'Sort by',
-              defaultItemSingular: 'item',
-              defaultItemPlural: 'items',
-              showing: 'Showing {itemsCount} {resource}',
-              Item: {
-                viewItem: 'View details for {itemName}',
-              },
-            },
-            Common: {
-              checkbox: 'checkbox',
-            },
-          },
-        }}
-      >
+      <AppProvider i18n={en}>
         <NavMenu>
           <Link href="/shopify" rel="home">Dashboard</Link>
           <Link href="/shopify/ai-studio">General AI Studio</Link>

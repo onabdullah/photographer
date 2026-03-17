@@ -12,12 +12,12 @@ import {
   Box,
   ProgressBar,
   Banner,
+  Icon,
 } from '@shopify/polaris';
-import { Camera, Zap, Clock, Check } from 'lucide-react';
+import { CameraIcon, MagicIcon, ClockIcon, CheckIcon } from '@shopify/polaris-icons';
+import { TitleBar } from '@shopify/app-bridge-react';
 import MagicButton from '@/Shopify/Components/MagicButton';
 import axios from 'axios';
-
-const TEAL = '#468A9A';
 
 export default function Billing({ credits, creditSummary = null, currentPlan, plans = [], creditPacks = [] }) {
   const planName = currentPlan?.name ?? 'Free Trial';
@@ -46,27 +46,16 @@ export default function Billing({ credits, creditSummary = null, currentPlan, pl
     if (subscribingId) return;
     setBillingError('');
     setSubscribingId(planId);
-    
-    console.log('[Billing] Subscribing to plan:', planId);
-    console.log('[Billing] Host parameter:', host);
-    console.log('[Billing] Session token available:', !!window.sessionToken);
-    
     try {
       const { data } = await axios.post('/shopify/billing/subscribe', { plan_id: planId, host });
-      console.log('[Billing] Subscribe response:', data);
-      
       if (data.confirmation_url) {
-        console.log('[Billing] Redirecting to:', data.confirmation_url);
-        // Redirect the top-level frame so Shopify billing page loads outside the iframe
         window.top.location.replace(data.confirmation_url);
       } else {
-        console.error('[Billing] No confirmation URL in response');
         setBillingError('Could not start billing. No confirmation URL received.');
         setSubscribingId(null);
       }
     } catch (err) {
-      console.error('[Billing] Subscribe error:', err);
-      console.error('[Billing] Error response:', err.response?.data);
+      console.error('[Billing] Subscribe error:', err.response?.data);
       setBillingError(err.response?.data?.error ?? 'Could not start billing. Please try again.');
       setSubscribingId(null);
     }
@@ -92,6 +81,7 @@ export default function Billing({ credits, creditSummary = null, currentPlan, pl
 
   return (
     <ShopifyLayout>
+      <TitleBar title="Plans & Billing" />
       <Page
         title="Plans & Billing"
         subtitle="Manage your AI credits and choose the plan that fits your business scale."
@@ -176,7 +166,9 @@ export default function Billing({ credits, creditSummary = null, currentPlan, pl
                         <BlockStack gap="200">
                           {planFeatures.map((item) => (
                             <InlineStack key={item} gap="200" blockAlign="center">
-                              <Check size={16} style={{ color: TEAL, flexShrink: 0 }} aria-hidden />
+                              <div style={{ flexShrink: 0, color: 'var(--premium-teal)' }} aria-hidden>
+                                <Icon source={CheckIcon} tone="inherit" />
+                              </div>
                               <Text as="span" variant="bodySm">{item}</Text>
                             </InlineStack>
                           ))}
@@ -320,7 +312,9 @@ export default function Billing({ credits, creditSummary = null, currentPlan, pl
                 <InlineGrid columns={{ xs: 1, md: 3 }} gap="500">
                   <div className="billing-why-card">
                     <div className="billing-benefit-icon" aria-hidden>
-                      <Camera size={24} style={{ color: TEAL }} />
+                      <div style={{ color: 'var(--premium-teal)' }}>
+                        <Icon source={CameraIcon} tone="inherit" />
+                      </div>
                     </div>
                     <Text variant="headingSm" as="h3" fontWeight="semibold">
                       Product photos drive sales
@@ -331,7 +325,9 @@ export default function Billing({ credits, creditSummary = null, currentPlan, pl
                   </div>
                   <div className="billing-why-card">
                     <div className="billing-benefit-icon" aria-hidden>
-                      <Zap size={24} style={{ color: TEAL }} />
+                      <div style={{ color: 'var(--premium-teal)' }}>
+                        <Icon source={MagicIcon} tone="inherit" />
+                      </div>
                     </div>
                     <Text variant="headingSm" as="h3" fontWeight="semibold">
                       Studio quality at a fraction of the cost
@@ -342,7 +338,9 @@ export default function Billing({ credits, creditSummary = null, currentPlan, pl
                   </div>
                   <div className="billing-why-card">
                     <div className="billing-benefit-icon" aria-hidden>
-                      <Clock size={24} style={{ color: TEAL }} />
+                      <div style={{ color: 'var(--premium-teal)' }}>
+                        <Icon source={ClockIcon} tone="inherit" />
+                      </div>
                     </div>
                     <Text variant="headingSm" as="h3" fontWeight="semibold">
                       Your time stays on your business

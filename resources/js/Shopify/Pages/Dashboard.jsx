@@ -1,19 +1,8 @@
 import ShopifyLayout from '@/Shopify/Layouts/ShopifyLayout';
-import { Page, Layout, Card, Text, BlockStack, InlineGrid, Button, InlineStack, Box, Icon } from '@shopify/polaris';
-import { ImageIcon } from '@shopify/polaris-icons';
+import { Page, Layout, Card, Text, BlockStack, InlineGrid, Button, InlineStack, Box, Icon, Banner } from '@shopify/polaris';
+import { ImageIcon, WandIcon, QuestionCircleIcon, MagicIcon, RemoveBackgroundIcon, MaximizeIcon, MinimizeIcon, SunIcon, ArrowRightIcon, ProductIcon } from '@shopify/polaris-icons';
+import { TitleBar } from '@shopify/app-bridge-react';
 import { router, usePage } from '@inertiajs/react';
-import {
-  Wand2,
-  HelpCircle,
-  Sparkles,
-  ImageMinus,
-  Maximize2,
-  Minimize2,
-  Eraser,
-  Sun,
-  ArrowRight,
-  Shirt,
-} from 'lucide-react';
 import MagicButton from '@/Shopify/Components/MagicButton';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -66,6 +55,7 @@ export default function Dashboard({
 
   return (
     <ShopifyLayout>
+      <TitleBar title="Dashboard" />
       <Page
         title={`Welcome, ${shopName}`}
         subtitle="We'll help you grow your business. Our AI photographer works for you — professional product photos, on demand."
@@ -80,11 +70,9 @@ export default function Dashboard({
         <BlockStack gap="700">
           {/* Announcement Banner */}
           {announcementEnabled && announcementText && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-              <Text variant="bodySm" as="p" tone="info" fontWeight="medium">
-                {announcementText}
-              </Text>
-            </div>
+            <Banner tone="info">
+              <Text variant="bodySm" as="p">{announcementText}</Text>
+            </Banner>
           )}
 
           {/* Hero section */}
@@ -106,7 +94,9 @@ export default function Dashboard({
                       borderRadius="300"
                       minWidth="fit-content"
                     >
-                      <Sparkles size={24} className="text-brand-teal" style={{ color: 'var(--premium-teal)' }} />
+                      <div style={{ color: 'var(--premium-teal)' }}>
+                        <Icon source={MagicIcon} tone="inherit" />
+                      </div>
                     </Box>
                     <Text variant="heading2Xl" as="h2" fontWeight="bold">
                       {heroTitle}
@@ -138,7 +128,7 @@ export default function Dashboard({
 
           {/* Metrics grid */}
           <Box paddingBlockStart="600">
-            <h2 className="dashboard-section-heading">Overview</h2>
+            <Text as="h2" className="dashboard-section-heading">Overview</Text>
             <Box paddingBlockStart="200">
               <InlineGrid columns={{ xs: 1, sm: 2, md: 4 }} gap="400">
                 <Card>
@@ -215,7 +205,7 @@ export default function Dashboard({
           <Box paddingBlockStart="800">
             <div className="dashboard-tools-section">
               <div className="dashboard-tools-header">
-                <h2 className="dashboard-tools-heading">All Tools</h2>
+                <Text as="h2" className="dashboard-tools-heading">All Tools</Text>
                 <Text variant="bodyMd" tone="subdued" as="p" className="dashboard-tools-subtitle">
                   Professional AI tools to edit, enhance, and optimize your product photos. Click any tool to open it in AI Studio or Product AI Lab.
                 </Text>
@@ -233,7 +223,7 @@ export default function Dashboard({
                           title="Product AI Lab (VTO)"
                         >
                           <span className="dashboard-tool-icon dashboard-tool-icon-vto">
-                            <Shirt size={28} strokeWidth={1.75} aria-hidden />
+                            <Icon source={ProductIcon} />
                           </span>
                           <span className="dashboard-tool-content">
                             <Text variant="headingMd" fontWeight="bold" as="span" className="dashboard-tool-name">
@@ -244,7 +234,7 @@ export default function Dashboard({
                             </Text>
                           </span>
                           <span className="dashboard-tool-arrow" aria-hidden>
-                            <ArrowRight size={20} strokeWidth={2} />
+                            <Icon source={ArrowRightIcon} />
                           </span>
                         </button>
                       </Card>
@@ -254,15 +244,15 @@ export default function Dashboard({
               )}
               <div className="dashboard-tools-grid">
                 {[
-                  { name: 'Magic Eraser', desc: 'Remove unwanted objects', value: 'magic_eraser', Icon: Eraser },
-                  { name: 'Background Remover', desc: 'Clean your image background', value: 'remove_bg', Icon: ImageMinus },
-                  { name: 'Image Compressor', desc: 'Reduce file size, keep quality', value: 'compressor', Icon: Minimize2 },
-                  { name: 'Upscaler', desc: 'Increase resolution 4×', value: 'upscale', Icon: Maximize2 },
-                  { name: 'Image Enhancer', desc: 'Boost clarity & detail', value: 'enhance', Icon: Sparkles },
-                  { name: 'Lighting Fix', desc: 'Adjust exposure & balance', value: 'lighting', Icon: Sun },
+                  { name: 'Magic Eraser', desc: 'Remove unwanted objects', value: 'magic_eraser', source: MagicIcon },
+                  { name: 'Background Remover', desc: 'Clean your image background', value: 'remove_bg', source: RemoveBackgroundIcon },
+                  { name: 'Image Compressor', desc: 'Reduce file size, keep quality', value: 'compressor', source: MinimizeIcon },
+                  { name: 'Upscaler', desc: 'Increase resolution 4×', value: 'upscale', source: MaximizeIcon },
+                  { name: 'Image Enhancer', desc: 'Boost clarity & detail', value: 'enhance', source: MagicIcon },
+                  { name: 'Lighting Fix', desc: 'Adjust exposure & balance', value: 'lighting', source: SunIcon },
                 ]
                   .filter((t) => enabled.includes(t.value))
-                  .map(({ name, desc, value, Icon }) => (
+                  .map(({ name, desc, value, source }) => (
                   <Card key={name}>
                     <button
                       type="button"
@@ -272,7 +262,7 @@ export default function Dashboard({
                       title={`${name}: ${desc}`}
                     >
                       <span className="dashboard-tool-icon">
-                        <Icon size={22} strokeWidth={1.75} aria-hidden />
+                        <Icon source={source} />
                       </span>
                       <span className="dashboard-tool-content">
                         <Text variant="bodyMd" fontWeight="semibold" as="span" className="dashboard-tool-name">
@@ -283,7 +273,7 @@ export default function Dashboard({
                         </Text>
                       </span>
                       <span className="dashboard-tool-arrow" aria-hidden>
-                        <ArrowRight size={18} strokeWidth={2} />
+                        <Icon source={ArrowRightIcon} />
                       </span>
                     </button>
                   </Card>
@@ -294,7 +284,7 @@ export default function Dashboard({
 
           {/* Quick actions */}
           <Box paddingBlockStart="800">
-            <h2 className="dashboard-section-heading">Quick Actions</h2>
+            <Text as="h2" className="dashboard-section-heading">Quick Actions</Text>
             <Box paddingBlockStart="200">
               <InlineGrid columns={{ xs: 1, sm: 2 }} gap="400">
                 <Card>
@@ -305,9 +295,6 @@ export default function Dashboard({
                       cursor: 'pointer',
                     }}
                     onClick={() => router.visit('/shopify/ai-studio')}
-                    onKeyDown={(e) => e.key === 'Enter' && router.visit('/shopify/ai-studio')}
-                    role="button"
-                    tabIndex={0}
                   >
                     <BlockStack gap="400">
                       <Box
@@ -316,7 +303,9 @@ export default function Dashboard({
                         borderRadius="300"
                         minWidth="fit-content"
                       >
-                        <Wand2 size={22} style={{ color: 'var(--premium-teal)' }} />
+                        <div style={{ color: 'var(--premium-teal)' }}>
+                          <Icon source={WandIcon} tone="inherit" />
+                        </div>
                       </Box>
                       <BlockStack gap="200">
                         <Text variant="headingMd" as="h3" fontWeight="semibold">
@@ -340,9 +329,6 @@ export default function Dashboard({
                       cursor: 'pointer',
                     }}
                     onClick={() => router.visit('/shopify/help')}
-                    onKeyDown={(e) => e.key === 'Enter' && router.visit('/shopify/help')}
-                    role="button"
-                    tabIndex={0}
                   >
                     <BlockStack gap="400">
                       <Box
@@ -351,7 +337,9 @@ export default function Dashboard({
                         borderRadius="300"
                         minWidth="fit-content"
                       >
-                        <HelpCircle size={22} style={{ color: 'var(--premium-teal)' }} />
+                        <div style={{ color: 'var(--premium-teal)' }}>
+                          <Icon source={QuestionCircleIcon} tone="inherit" />
+                        </div>
                       </Box>
                       <BlockStack gap="200">
                         <Text variant="headingMd" as="h3" fontWeight="semibold">
@@ -374,11 +362,11 @@ export default function Dashboard({
           {/* Recent creations – AI Studio generations */}
           <Box paddingBlockStart="800" paddingBlockEnd="800">
             <div className="dashboard-recent-header">
-              <h2 className="dashboard-section-heading">Recent Creations</h2>
+              <Text as="h2" className="dashboard-section-heading">Recent Creations</Text>
               {recentGenerations.length > 0 && (
                 <Button variant="plain" onClick={() => router.visit('/shopify/ai-studio')}>
                   View all in AI Studio
-                  <span className="dashboard-recent-arrow" aria-hidden><ArrowRight size={18} strokeWidth={2} /></span>
+                <div className="dashboard-recent-arrow" aria-hidden><Icon source={ArrowRightIcon} /></div>
                 </Button>
               )}
             </div>
@@ -399,7 +387,9 @@ export default function Dashboard({
                               aria-label="Generate another image in AI Studio"
                             >
                               <span className="dashboard-recent-create-icon" aria-hidden>
-                                <Sparkles size={24} strokeWidth={1.5} style={{ color: 'var(--premium-teal)' }} />
+                                <div style={{ color: 'var(--premium-teal)' }}>
+                                  <Icon source={MagicIcon} tone="inherit" />
+                                </div>
                               </span>
                               <Text as="span" variant="bodySm" tone="subdued">
                                 Create another

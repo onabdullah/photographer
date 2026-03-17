@@ -12,9 +12,11 @@ import {
   CalloutCard,
   List,
   Box,
+  Icon,
 } from '@shopify/polaris';
+import { ChevronDownIcon, ChevronUpIcon, BookOpenIcon, AlertCircleIcon, ImageIcon } from '@shopify/polaris-icons';
+import { TitleBar } from '@shopify/app-bridge-react';
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, BookOpen, AlertCircle, Image as ImageIcon } from 'lucide-react';
 
 const SUPPORT_ILLUSTRATION = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80';
 
@@ -33,19 +35,20 @@ export default function Support({ shopName }) {
     {
       id: 'background',
       title: 'The anatomy of a perfect background prompt',
-      icon: BookOpen,
+      icon: BookOpenIcon,
       content: 'Be specific but concise. Instead of "table", try "rustic wooden table with morning sunlight". Mentioning textures (marble, silk, wood) helps the AI separate the object from the scene.',
     },
     {
       id: 'distortion',
       title: 'Troubleshooting: Why did the AI distort my product?',
-      icon: AlertCircle,
+      icon: AlertCircleIcon,
       content: 'Distortion often happens when the product edges are blurry in the original photo, or if the product has complex transparency (like clear glass). Ensure the product is in sharp focus against a simple background.',
     },
   ];
 
   return (
     <ShopifyLayout>
+      <TitleBar title="Help & Support" />
       <Page
         title="Help & Support"
         subtitle="Everything you need to create stunning product imagery."
@@ -92,7 +95,6 @@ export default function Support({ shopName }) {
               <Card>
                 <BlockStack gap="0">
                   {guides.map((guide, index) => {
-                    const IconComponent = guide.icon;
                     return (
                       <div
                         key={guide.id}
@@ -119,16 +121,20 @@ export default function Support({ shopName }) {
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{ color: 'var(--premium-teal)' }}>
-                              <IconComponent size={20} />
+                              <Icon source={guide.icon} tone="inherit" />
                             </div>
                             <Text variant="bodyMd" fontWeight="semibold">
                               {guide.title}
                             </Text>
                           </div>
                           {openGuide === guide.id ? (
-                            <ChevronUp size={20} style={{ color: 'var(--p-color-text-subdued)' }} />
+                            <div style={{ color: 'var(--p-color-text-subdued)' }}>
+                              <Icon source={ChevronUpIcon} tone="inherit" />
+                            </div>
                           ) : (
-                            <ChevronDown size={20} style={{ color: 'var(--p-color-text-subdued)' }} />
+                            <div style={{ color: 'var(--p-color-text-subdued)' }}>
+                              <Icon source={ChevronDownIcon} tone="inherit" />
+                            </div>
                           )}
                         </button>
                         <Collapsible open={openGuide === guide.id} id={guide.id}>

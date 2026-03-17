@@ -24,6 +24,7 @@ import {
 } from '@shopify/polaris-icons';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { TitleBar } from '@shopify/app-bridge-react';
 import axios from 'axios';
 
 import MagicButton from '@/Shopify/Components/MagicButton';
@@ -351,6 +352,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
   ───────────────────────────────────────────────────────────── */
   return (
     <ShopifyLayout>
+      <TitleBar title="Product AI Lab" />
       <Page
         title="Product AI Lab (VTO)"
         subtitle="Turn product shots into scroll-stopping imagery — no studio, no models, just results that sell."
