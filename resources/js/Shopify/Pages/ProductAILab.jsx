@@ -153,13 +153,27 @@ function MiniDropZone({ label, preview, onDrop, onRemove }) {
 /* ─────────────────────────────────────────────────────────────────
    Component
 ───────────────────────────────────────────────────────────────── */
-export default function ProductAILab({ credits: initialCredits = 0 }) {
+export default function ProductAILab({ credits: initialCredits = 0, nanoBanana = {} }) {
+  const featureFlags = nanoBanana?.features || {};
+  const defaultConfig = nanoBanana?.defaults || {};
+  const defaultAspect = ASPECT_RATIO_OPTIONS.some((o) => o.value === defaultConfig.aspect_ratio)
+    ? defaultConfig.aspect_ratio
+    : '1:1';
+  const defaultResolution = RESOLUTION_OPTIONS.some((o) => o.value === defaultConfig.resolution)
+    ? defaultConfig.resolution
+    : '1K';
+
+  const googleSearchAvailable = !!featureFlags.google_search;
+  const imageSearchAvailable = !!featureFlags.image_search;
+
   /* ── State ── */
   const [credits, setCredits]                     = useState(() => Math.max(0, parseInt(initialCredits, 10) || 0));
   const [productImage, setProductImage]           = useState(null);
-  const [aspectRatio, setAspectRatio]             = useState('1:1');
-  const [resolution, setResolution]               = useState('1K');
+  const [aspectRatio, setAspectRatio]             = useState(defaultAspect);
+  const [resolution, setResolution]               = useState(defaultResolution);
   const [scenePrompt, setScenePrompt]             = useState('');
+  const [googleSearchEnabled, setGoogleSearchEnabled] = useState(false);
+  const [imageSearchEnabled, setImageSearchEnabled] = useState(false);
   const [processingStatus, setProcessingStatus]   = useState('idle');
   const [processingMsgIdx, setProcessingMsgIdx]   = useState(0);
   const [resultImageUrl, setResultImageUrl]       = useState(null);
@@ -185,6 +199,7 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
   const hasProduct     = Boolean(productImage);
   const hasPrompt      = scenePrompt.trim().length > 0;
   const hasRefs        = Boolean(styleRef || faceRef || poseRef);
+  const hasSearchGrounding = (googleSearchAvailable && googleSearchEnabled) || (imageSearchAvailable && imageSearchEnabled);
   const creditsNeeded  = 2 + resolutionExtraCredits(resolution) + (hasRefs ? 2 : 0);
   const canGenerate    = hasProduct && hasPrompt && !isScanning;
   const remainingAfter = Math.max(0, credits - creditsNeeded);
@@ -281,6 +296,8 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
     setStyleRef(null);
     setFaceRef(null);
     setPoseRef(null);
+    setGoogleSearchEnabled(false);
+    setImageSearchEnabled(false);
     setDrawerOpen(false);
   }, []);
 
@@ -299,6 +316,9 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
       form.append('prompt', scenePrompt);
       form.append('aspect_ratio', aspectRatio);
       form.append('resolution', resolution);
+      form.append('output_format', defaultConfig.output_format || 'jpg');
+      form.append('google_search', googleSearchAvailable && googleSearchEnabled ? '1' : '0');
+      form.append('image_search', imageSearchAvailable && imageSearchEnabled ? '1' : '0');
 
       const productBlob = await fetch(productImage).then((r) => r.blob());
       form.append('main_image', productBlob, 'product.png');
@@ -625,6 +645,34 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                     {drawerOpen && (
                       <Box paddingBlockStart="300">
                         <BlockStack gap="300">
+                          {(googleSearchAvailable || imageSearchAvailable) && (
+                            <BlockStack gap="200">
+                              <Text variant="bodySm" tone="subdued" as="p">
+                                Grounding Options
+                              </Text>
+                              {googleSearchAvailable && (
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--p-color-text)' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={googleSearchEnabled}
+                                    onChange={(e) => setGoogleSearchEnabled(e.target.checked)}
+                                  />
+                                  Enable Google Search grounding (+50% API cost)
+                                </label>
+                              )}
+                              {imageSearchAvailable && (
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--p-color-text)' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={imageSearchEnabled}
+                                    onChange={(e) => setImageSearchEnabled(e.target.checked)}
+                                  />
+                                  Enable Image Search grounding (+50% API cost)
+                                </label>
+                              )}
+                            </BlockStack>
+                          )}
+
                           <Text variant="bodySm" tone="subdued" as="p">
                             Reference images shape the AI's output — all are optional. Adding references costs +2 credits.
                           </Text>
@@ -713,6 +761,11 @@ export default function ProductAILab({ credits: initialCredits = 0 }) {
                               </Text>
                             )}
                           </Text>
+                          {hasSearchGrounding && (
+                            <Text variant="bodySm" tone="subdued" as="p">
+                              Search grounding enabled: Replicate runtime cost multiplier may apply.
+                            </Text>
+                          )}
                           <Text variant="bodySm" tone="subdued" as="p">
                             Remaining after: <strong className="tabular-nums">{remainingAfter.toLocaleString()}</strong>
                           </Text>

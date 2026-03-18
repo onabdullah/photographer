@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsCurrentShop;
 use App\Models\AiStudioToolSetting;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 
 class ShopifyController extends Controller
@@ -211,9 +212,33 @@ class ShopifyController extends Controller
         }
 
         $credits = (int) ($shop->ai_credits_balance ?? 0);
+        $nanoSettings = SiteSetting::getNanoBananaSettings();
+        $features = is_array($nanoSettings['features_enabled'] ?? null) ? $nanoSettings['features_enabled'] : [];
+        $guardrails = is_array($nanoSettings['cost_guardrails'] ?? null) ? $nanoSettings['cost_guardrails'] : [];
+
+        $googleFeatureEnabled = (bool) ($features['google_search'] ?? false);
+        $imageFeatureEnabled = (bool) ($features['image_search'] ?? false);
+
+        if (array_key_exists('allow_google_search', $guardrails) && ! (bool) $guardrails['allow_google_search']) {
+            $googleFeatureEnabled = false;
+        }
+        if (array_key_exists('allow_image_search', $guardrails) && ! (bool) $guardrails['allow_image_search']) {
+            $imageFeatureEnabled = false;
+        }
 
         return \Inertia\Inertia::render('Shopify/ProductAILab', [
             'credits' => $credits,
+            'nanoBanana' => [
+                'features' => [
+                    'google_search' => $googleFeatureEnabled,
+                    'image_search' => $imageFeatureEnabled,
+                ],
+                'defaults' => [
+                    'aspect_ratio' => (string) ($nanoSettings['default_aspect_ratio'] ?? '1:1'),
+                    'resolution' => (string) ($nanoSettings['default_resolution'] ?? '1K'),
+                    'output_format' => (string) ($nanoSettings['default_output_format'] ?? 'jpg'),
+                ],
+            ],
         ]);
     }
 }
