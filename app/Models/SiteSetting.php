@@ -34,6 +34,17 @@ class SiteSetting extends Model
     public const KEY_CHAT_SHOW_STATUS_BADGE_AGENTS = 'chat_show_status_badge_agents';
     public const KEY_CHAT_SHOW_STATUS_BADGE_CUSTOMERS = 'chat_show_status_badge_customers';
 
+    // Nano Banana 2 Configuration Keys
+    public const KEY_NANO_BANANA_MODEL_VERSION = 'nano_banana_model_version';
+    public const KEY_NANO_BANANA_DEFAULT_RESOLUTION = 'nano_banana_default_resolution';
+    public const KEY_NANO_BANANA_DEFAULT_ASPECT_RATIO = 'nano_banana_default_aspect_ratio';
+    public const KEY_NANO_BANANA_DEFAULT_OUTPUT_FORMAT = 'nano_banana_default_output_format';
+    public const KEY_NANO_BANANA_PROMPT_TEMPLATE = 'nano_banana_prompt_template';
+    public const KEY_NANO_BANANA_CURRENT_PRESET = 'nano_banana_current_preset';
+    public const KEY_NANO_BANANA_ADVANCED_CONFIG = 'nano_banana_advanced_config'; // JSON: guid_scale, seed_policy, etc.
+    public const KEY_NANO_BANANA_FEATURES_ENABLED = 'nano_banana_features_enabled'; // JSON: google_search, image_search
+    public const KEY_NANO_BANANA_COST_GUARDRAILS = 'nano_banana_cost_guardrails'; // JSON: max_cost_usd, enabled_resolutions
+
     /**
      * Get a setting value by key.
      */
@@ -144,5 +155,92 @@ class SiteSetting extends Model
     private static function asBoolString(bool $value): string
     {
         return $value ? '1' : '0';
+    }
+
+    /**
+     * Get complete Nano Banana 2 configuration (merged from config + SiteSetting overrides).
+     * Provides fallback to config defaults if not yet customized in database.
+     */
+    public static function getNanoBananaSettings(): array
+    {
+        $configDefaults = config('ai_studio_tools.nano_banana', []);
+        $rawFeatures = json_decode(static::get(self::KEY_NANO_BANANA_FEATURES_ENABLED, json_encode($configDefaults['features'] ?? [])), true) ?: [];
+        $normalizeFeature = function (mixed $featureValue, bool $fallback): bool {
+            if (is_array($featureValue)) {
+                return (bool) ($featureValue['enabled'] ?? $fallback);
+            }
+            if ($featureValue === null) {
+                return $fallback;
+            }
+            return (bool) $featureValue;
+        };
+        $normalizedFeatures = [
+            'google_search' => $normalizeFeature($rawFeatures['google_search'] ?? null, (bool) (($configDefaults['features']['google_search']['enabled'] ?? false))),
+            'image_search' => $normalizeFeature($rawFeatures['image_search'] ?? null, (bool) (($configDefaults['features']['image_search']['enabled'] ?? false))),
+            'seed_reproducibility' => $normalizeFeature($rawFeatures['seed_reproducibility'] ?? null, (bool) (($configDefaults['features']['seed_reproducibility']['enabled'] ?? true))),
+        ];
+        
+        return [
+            'model_version' => static::get(self::KEY_NANO_BANANA_MODEL_VERSION, $configDefaults['model_version'] ?? ''),
+            'default_resolution' => static::get(self::KEY_NANO_BANANA_DEFAULT_RESOLUTION, $configDefaults['defaults']['resolution'] ?? '1K'),
+            'default_aspect_ratio' => static::get(self::KEY_NANO_BANANA_DEFAULT_ASPECT_RATIO, $configDefaults['defaults']['aspect_ratio'] ?? 'match_input_image'),
+            'default_output_format' => static::get(self::KEY_NANO_BANANA_DEFAULT_OUTPUT_FORMAT, $configDefaults['defaults']['output_format'] ?? 'jpg'),
+            'prompt_template' => static::get(self::KEY_NANO_BANANA_PROMPT_TEMPLATE, ''),
+            'current_preset' => static::get(self::KEY_NANO_BANANA_CURRENT_PRESET, 'balanced'),
+            'advanced_config' => json_decode(static::get(self::KEY_NANO_BANANA_ADVANCED_CONFIG, '{}'), true) ?: [],
+            'features_enabled' => $normalizedFeatures,
+            'cost_guardrails' => json_decode(static::get(self::KEY_NANO_BANANA_COST_GUARDRAILS, '{}'), true) ?: [],
+        ];
+    }
+
+    /** Update multiple Nano Banana settings at once. */
+    public static function setNanoBananaSettings(array $settings): void
+    {
+        if (isset($settings['model_version'])) {
+            static::set(self::KEY_NANO_BANANA_MODEL_VERSION, $settings['model_version']);
+        }
+        if (isset($settings['default_resolution'])) {
+            static::set(self::KEY_NANO_BANANA_DEFAULT_RESOLUTION, $settings['default_resolution']);
+        }
+        if (isset($settings['default_aspect_ratio'])) {
+            static::set(self::KEY_NANO_BANANA_DEFAULT_ASPECT_RATIO, $settings['default_aspect_ratio']);
+        }
+        if (isset($settings['default_output_format'])) {
+            static::set(self::KEY_NANO_BANANA_DEFAULT_OUTPUT_FORMAT, $settings['default_output_format']);
+        }
+        if (isset($settings['prompt_template'])) {
+            static::set(self::KEY_NANO_BANANA_PROMPT_TEMPLATE, $settings['prompt_template']);
+        }
+        if (isset($settings['current_preset'])) {
+            static::set(self::KEY_NANO_BANANA_CURRENT_PRESET, $settings['current_preset']);
+        }
+        if (isset($settings['advanced_config'])) {
+            static::set(self::KEY_NANO_BANANA_ADVANCED_CONFIG, json_encode($settings['advanced_config']));
+        }
+        if (isset($settings['features_enabled'])) {
+            static::set(self::KEY_NANO_BANANA_FEATURES_ENABLED, json_encode($settings['features_enabled']));
+        }
+        if (isset($settings['cost_guardrails'])) {
+            static::set(self::KEY_NANO_BANANA_COST_GUARDRAILS, json_encode($settings['cost_guardrails']));
+        }
+    }
+
+    /** Get a specific Nano Banana preset by name. */
+    public static function getNanoBananaPreset(string $presetName): ?array
+    {
+        $presets = config('ai_studio_tools.nano_banana.presets', []);
+        return $presets[$presetName] ?? null;
+    }
+
+    /** Apply a preset and save it as current. */
+    public static function applyNanoBananaPreset(string $presetName): bool
+    {
+        $preset = static::getNanoBananaPreset($presetName);
+        if (!$preset) {
+            return false;
+        }
+        static::set(self::KEY_NANO_BANANA_CURRENT_PRESET, $presetName);
+        // Optionally sync preset values to individual settings
+        return true;
     }
 }

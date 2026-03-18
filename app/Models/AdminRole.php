@@ -58,6 +58,9 @@ class AdminRole extends Model
             'live_chat.view'   => 'Live Chat View',
             'live_chat.manage' => 'Live Chat Manage',
         ],
+        'AI TOOLS' => [
+            'ai.tools.manage'  => 'AI Tools Manage (Nano Banana, model versions, guardrails)',
+        ],
     ];
 
     protected $fillable = ['name', 'permissions'];

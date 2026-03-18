@@ -2,7 +2,8 @@ import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { router } from '@inertiajs/react';
-import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag } from 'lucide-react';
+import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag, Settings } from 'lucide-react';
+import NanoBananaSettings from './NanoBananaSettings';
 
 const TOOL_COLORS = [
     '#0ea5e9',
@@ -37,9 +38,9 @@ export default function AIStudioToolsIndex({
     initialTab = 'overview',
 }) {
     const [selectedTool, setSelectedTool] = useState('all');
-    const [mainTab, setMainTab] = useState(initialTab === 'models' ? 'models' : 'overview');
+    const [mainTab, setMainTab] = useState(initialTab === 'models' ? 'models' : initialTab === 'nano-banana' ? 'nano-banana' : 'overview');
     useEffect(() => {
-        setMainTab(initialTab === 'models' ? 'models' : 'overview');
+        setMainTab(initialTab === 'models' ? 'models' : initialTab === 'nano-banana' ? 'nano-banana' : 'overview');
     }, [initialTab]);
 
     const toolOptions = useMemo(() => {
@@ -174,7 +175,7 @@ export default function AIStudioToolsIndex({
             breadcrumbs={[{ label: 'Reports' }, { label: 'AI Tools Analysis' }]}
         >
             <div className="space-y-4">
-                {/* Main tabs: Overview | Models */}
+                {/* Main tabs: Overview | Models | Nano Banana */}
                 <div className="flex flex-wrap gap-1 border-b border-gray-200 dark:border-gray-700 pb-2">
                     <button
                         type="button"
@@ -199,6 +200,18 @@ export default function AIStudioToolsIndex({
                     >
                         <Cpu size={16} />
                         Models
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setMainTab('nano-banana')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            mainTab === 'nano-banana'
+                                ? 'bg-primary-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                    >
+                        <Settings size={16} />
+                        Nano Banana Config
                     </button>
                 </div>
 
@@ -705,6 +718,12 @@ export default function AIStudioToolsIndex({
                             )}
                         </div>
                     </>
+                )}
+
+                {mainTab === 'nano-banana' && (
+                    <div className="card p-4">
+                        <NanoBananaSettings />
+                    </div>
                 )}
             </div>
         </AdminLayout>

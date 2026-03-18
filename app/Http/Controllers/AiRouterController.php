@@ -45,8 +45,12 @@ class AiRouterController extends Controller
             'main_image'          => 'required',
             'prompt'              => 'nullable|string|max:600',
             'intent'              => 'nullable|string|in:environment,on_human',
-            'aspect_ratio'        => 'nullable|string|in:1:1,4:3,3:4,16:9,9:16',
+            'aspect_ratio'        => 'nullable|string|in:match_input_image,1:1,1:4,1:8,2:3,3:2,3:4,4:1,4:3,4:5,5:4,8:1,9:16,16:9,21:9',
             'resolution'          => 'nullable|string|in:1K,2K,4K',
+            'output_format'       => 'nullable|string|in:jpg,png',
+            'google_search'       => 'nullable|boolean',
+            'image_search'        => 'nullable|boolean',
+            'seed'                => 'nullable|integer|min:0|max:2147483647',
             'reference_images'    => 'nullable|array',
             'reference_images.*'  => 'nullable',
         ]);

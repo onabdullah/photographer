@@ -33,6 +33,13 @@ class MagicEraserController extends Controller
         $request->validate([
             'image' => 'required',
             'mask_base64' => 'required|string',
+            'prompt' => 'nullable|string|max:1200',
+            'aspect_ratio' => 'nullable|string|in:match_input_image,1:1,1:4,1:8,2:3,3:2,3:4,4:1,4:3,4:5,5:4,8:1,9:16,16:9,21:9',
+            'resolution' => 'nullable|string|in:1K,2K,4K',
+            'output_format' => 'nullable|string|in:jpg,png',
+            'google_search' => 'nullable|boolean',
+            'image_search' => 'nullable|boolean',
+            'seed' => 'nullable|integer|min:0|max:2147483647',
         ]);
 
         $imageUrl = $this->aiGenerationService->resolveImageUrlFromRequest($request);
@@ -61,6 +68,15 @@ class MagicEraserController extends Controller
             }
             if ($request->filled('output_format')) {
                 $payload['output_format'] = $request->input('output_format');
+            }
+            if ($request->has('google_search')) {
+                $payload['google_search'] = $request->boolean('google_search');
+            }
+            if ($request->has('image_search')) {
+                $payload['image_search'] = $request->boolean('image_search');
+            }
+            if ($request->filled('seed')) {
+                $payload['seed'] = (int) $request->input('seed');
             }
             $result = $this->aiGenerationService->startGeneration('magic_eraser', $payload, $shopDomain);
             return response()->json($result);
