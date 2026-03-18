@@ -119,6 +119,29 @@ class SiteSetting extends Model
         static::set(self::KEY_CHAT_SHOW_STATUS_BADGE_CUSTOMERS, static::asBoolString($settings['show_status_badge_customers'] ?? true));
     }
 
+    /**
+     * Temporary compatibility accessor for Nano Banana settings.
+     *
+     * We currently keep behavior aligned with existing defaults and do not
+     * require DB-backed admin settings for storefront flows.
+     */
+    public static function getNanoBananaSettings(): array
+    {
+        return [
+            'default_aspect_ratio' => '1:1',
+            'default_resolution' => '1K',
+            'default_output_format' => 'jpg',
+            'features_enabled' => [
+                'google_search' => false,
+                'image_search' => false,
+            ],
+            'cost_guardrails' => [
+                'allow_google_search' => true,
+                'allow_image_search' => true,
+            ],
+        ];
+    }
+
     private static function getBoolean(string $key, bool $default): bool
     {
         $value = static::get($key);
