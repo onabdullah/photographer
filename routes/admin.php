@@ -311,20 +311,6 @@ Route::middleware(['auth:admin'])->group(function () {
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools.settings');
 
-    // Nano Banana 2 Configuration (requires ai.tools.manage)
-    Route::get('/ai-studio-tools/nano-banana/settings', [\App\Http\Controllers\Admin\AiStudioToolsController::class, 'getNanoBananaSettings'])
-        ->middleware('admin.permission:ai.tools.manage')
-        ->name('ai-studio-tools.nano-banana.settings');
-    Route::post('/ai-studio-tools/nano-banana/settings', [\App\Http\Controllers\Admin\AiStudioToolsController::class, 'updateNanoBananaSettings'])
-        ->middleware('admin.permission:ai.tools.manage')
-        ->name('ai-studio-tools.nano-banana.settings.update');
-    Route::post('/ai-studio-tools/nano-banana/preset', [\App\Http\Controllers\Admin\AiStudioToolsController::class, 'applyNanoBananaPreset'])
-        ->middleware('admin.permission:ai.tools.manage')
-        ->name('ai-studio-tools.nano-banana.preset.apply');
-    Route::get('/ai-studio-tools/nano-banana/status', [\App\Http\Controllers\Admin\AiStudioToolsController::class, 'getNanoBananaStatus'])
-        ->middleware('admin.permission:ai.tools.manage')
-        ->name('ai-studio-tools.nano-banana.status');
-
     // Dashboard Content Management
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
         ->middleware('admin.permission:settings.manage')

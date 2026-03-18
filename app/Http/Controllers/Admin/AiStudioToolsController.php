@@ -7,8 +7,6 @@ use App\Mail\Admin\AiModelVisibilityMail;
 use App\Models\AiStudioToolSetting;
 use App\Models\AppStat;
 use App\Models\ImageGeneration;
-use App\Models\NanoBananaSetting;
-use App\Models\SiteSetting;
 use App\Services\MailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -175,7 +173,7 @@ class AiStudioToolsController extends Controller
         }
 
         $tab = $request->input('tab', 'overview');
-        if (! in_array($tab, ['overview', 'models', 'nano-banana'], true)) {
+        if (! in_array($tab, ['overview', 'models'], true)) {
             $tab = 'overview';
         }
 
@@ -224,154 +222,5 @@ class AiStudioToolsController extends Controller
         }
 
         return redirect()->back()->with('success', 'Tool setting updated.');
-    }
-
-    /**
-     * Get current Nano Banana 2 configuration.
-     * Requires ai.tools.manage permission.
-     */
-    public function getNanoBananaSettings(Request $request)
-    {
-        $admin = $request->user('admin');
-        if (!$admin || !$admin->can('ai.tools.manage')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $settings = SiteSetting::getNanoBananaSettings();
-        $configDefaults = config('ai_studio_tools.nano_banana', []);
-
-        return response()->json([
-            'settings' => $settings,
-            'supported_fields' => $configDefaults['supported_fields'] ?? [],
-            'presets' => $configDefaults['presets'] ?? [],
-            'cost_per_resolution' => $configDefaults['cost_per_resolution'] ?? [],
-            'features' => $configDefaults['features'] ?? [],
-        ]);
-    }
-
-    /**
-     * Update Nano Banana 2 configuration.
-     * Requires ai.tools.manage permission.
-     */
-    public function updateNanoBananaSettings(Request $request)
-    {
-        $admin = $request->user('admin');
-        if (!$admin || !$admin->can('ai.tools.manage')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $validated = $request->validate([
-            'model_version' => 'nullable|string|max:255',
-            'default_resolution' => 'nullable|string|in:1K,2K,4K',
-            'default_aspect_ratio' => 'nullable|string|in:match_input_image,1:1,1:4,1:8,2:3,3:2,3:4,4:1,4:3,4:5,5:4,8:1,9:16,16:9,21:9',
-            'default_output_format' => 'nullable|string|in:jpg,png',
-            'prompt_template' => 'nullable|string|max:2000',
-            'current_preset' => 'nullable|string|in:balanced,quality,fast',
-            'advanced_config' => 'nullable|array',
-            'features_enabled' => 'nullable|array',
-            'cost_guardrails' => 'nullable|array',
-        ]);
-
-        $before = SiteSetting::getNanoBananaSettings();
-
-        // Update via SiteSetting (which caches properly)
-        SiteSetting::setNanoBananaSettings($validated);
-        $after = SiteSetting::getNanoBananaSettings();
-
-        // Log the change for audit trail when activitylog helper is available.
-        if (function_exists('activity')) {
-            activity()
-                ->causedBy($admin)
-                ->withProperties([
-                    'updated_fields' => array_keys($validated),
-                    'before' => $before,
-                    'after' => $after,
-                ])
-                ->log('Updated Nano Banana 2 settings');
-        }
-
-        return response()->json([
-            'message' => 'Nano Banana settings updated successfully',
-            'settings' => SiteSetting::getNanoBananaSettings(),
-        ]);
-    }
-
-    /**
-     * Apply a preset configuration for Nano Banana 2.
-     * Requires ai.tools.manage permission.
-     */
-    public function applyNanoBananaPreset(Request $request)
-    {
-        $admin = $request->user('admin');
-        if (!$admin || !$admin->can('ai.tools.manage')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $validated = $request->validate([
-            'preset_name' => 'required|string|in:balanced,quality,fast',
-        ]);
-
-        $presetName = $validated['preset_name'];
-        $preset = SiteSetting::getNanoBananaPreset($presetName);
-
-        if (!$preset) {
-            return response()->json(['message' => 'Preset not found'], 404);
-        }
-
-        // Apply preset values
-        SiteSetting::setNanoBananaSettings([
-            'current_preset' => $presetName,
-            'default_resolution' => $preset['resolution'] ?? '1K',
-            'default_output_format' => $preset['output_format'] ?? 'jpg',
-            'advanced_config' => [
-                'guidance_scale' => $preset['guidance_scale'] ?? 7.5,
-                'num_inference_steps' => $preset['num_inference_steps'] ?? 28,
-            ],
-            'features_enabled' => [
-                'google_search' => (bool) ($preset['google_search'] ?? false),
-                'image_search' => (bool) ($preset['image_search'] ?? false),
-            ],
-        ]);
-
-        if (function_exists('activity')) {
-            activity()
-                ->causedBy($admin)
-                ->withProperties(['preset' => $presetName])
-                ->log('Applied Nano Banana 2 preset');
-        }
-
-        return response()->json([
-            'message' => "Preset '{$presetName}' applied successfully",
-            'settings' => SiteSetting::getNanoBananaSettings(),
-        ]);
-    }
-
-    /**
-     * Get all Nano Banana runtime states (for diagnostics).
-     * Requires ai.tools.manage permission.
-     */
-    public function getNanoBananaStatus(Request $request)
-    {
-        $admin = $request->user('admin');
-        if (!$admin || !$admin->can('ai.tools.manage')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $configDefaults = config('ai_studio_tools.nano_banana', []);
-        $settings = SiteSetting::getNanoBananaSettings();
-
-        return response()->json([
-            'status' => 'configured',
-            'model_version' => $settings['model_version'],
-            'defaults' => [
-                'resolution' => $settings['default_resolution'],
-                'format' => $settings['default_output_format'],
-                'aspect_ratio' => $settings['default_aspect_ratio'],
-            ],
-            'features' => $settings['features_enabled'],
-            'presets' => $configDefaults['presets'] ?? [],
-            'retry_config' => $configDefaults['retry'] ?? [],
-            'cost_multipliers' => $configDefaults['cost_per_resolution'] ?? [],
-        ]);
     }
 }
