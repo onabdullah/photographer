@@ -278,15 +278,17 @@ class AiStudioToolsController extends Controller
         SiteSetting::setNanoBananaSettings($validated);
         $after = SiteSetting::getNanoBananaSettings();
 
-        // Log the change for audit trail
-        activity()
-            ->causedBy($admin)
-            ->withProperties([
-                'updated_fields' => array_keys($validated),
-                'before' => $before,
-                'after' => $after,
-            ])
-            ->log('Updated Nano Banana 2 settings');
+        // Log the change for audit trail when activitylog helper is available.
+        if (function_exists('activity')) {
+            activity()
+                ->causedBy($admin)
+                ->withProperties([
+                    'updated_fields' => array_keys($validated),
+                    'before' => $before,
+                    'after' => $after,
+                ])
+                ->log('Updated Nano Banana 2 settings');
+        }
 
         return response()->json([
             'message' => 'Nano Banana settings updated successfully',
@@ -331,10 +333,12 @@ class AiStudioToolsController extends Controller
             ],
         ]);
 
-        activity()
-            ->causedBy($admin)
-            ->withProperties(['preset' => $presetName])
-            ->log('Applied Nano Banana 2 preset');
+        if (function_exists('activity')) {
+            activity()
+                ->causedBy($admin)
+                ->withProperties(['preset' => $presetName])
+                ->log('Applied Nano Banana 2 preset');
+        }
 
         return response()->json([
             'message' => "Preset '{$presetName}' applied successfully",

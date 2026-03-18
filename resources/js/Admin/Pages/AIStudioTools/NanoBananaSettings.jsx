@@ -12,6 +12,30 @@ import { Settings2, CheckCircle2, AlertCircle, Loader2, Save } from 'lucide-reac
  * - Real-time config preview
  */
 export default function NanoBananaSettings() {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    const parseErrorMessage = async (response, fallback) => {
+        try {
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                const payload = await response.json();
+                if (payload?.message) {
+                    return payload.message;
+                }
+                if (payload?.errors && typeof payload.errors === 'object') {
+                    const firstField = Object.keys(payload.errors)[0];
+                    const firstError = firstField ? payload.errors[firstField]?.[0] : null;
+                    if (firstError) {
+                        return firstError;
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Failed parsing error payload:', err);
+        }
+        return fallback;
+    };
+
     const [settings, setSettings] = useState(null);
     const [presets, setPresets] = useState({});
     const [supportedFields, setSupportedFields] = useState({});
@@ -82,10 +106,17 @@ export default function NanoBananaSettings() {
         try {
             const response = await fetch('/admin/ai-studio-tools/nano-banana/preset', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
                 body: JSON.stringify({ preset_name: presetName }),
             });
-            if (!response.ok) throw new Error('Failed to apply preset');
+            if (!response.ok) {
+                throw new Error(await parseErrorMessage(response, 'Failed to apply preset'));
+            }
             const data = await response.json();
             setSettings(data.settings);
             setFormData(prev => ({
@@ -97,7 +128,7 @@ export default function NanoBananaSettings() {
             setSubmitStatus({ type: 'success', message: `Preset "${presetName}" applied!` });
         } catch (err) {
             console.error('Error applying preset:', err);
-            setSubmitStatus({ type: 'error', message: 'Failed to apply preset' });
+            setSubmitStatus({ type: 'error', message: err?.message || 'Failed to apply preset' });
         } finally {
             setSaving(false);
         }
@@ -110,16 +141,23 @@ export default function NanoBananaSettings() {
         try {
             const response = await fetch('/admin/ai-studio-tools/nano-banana/settings', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
                 body: JSON.stringify(formData),
             });
-            if (!response.ok) throw new Error('Failed to save settings');
+            if (!response.ok) {
+                throw new Error(await parseErrorMessage(response, 'Failed to save settings'));
+            }
             const data = await response.json();
             setSettings(data.settings);
             setSubmitStatus({ type: 'success', message: 'Settings saved successfully!' });
         } catch (err) {
             console.error('Error saving settings:', err);
-            setSubmitStatus({ type: 'error', message: 'Failed to save settings' });
+            setSubmitStatus({ type: 'error', message: err?.message || 'Failed to save settings' });
         } finally {
             setSaving(false);
         }
