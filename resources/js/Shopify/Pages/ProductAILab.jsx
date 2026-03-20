@@ -694,7 +694,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                             <BlockStack gap="100">
                               <Text variant="bodySm" as="p" tone="subdued">Style Reference</Text>
                               <MiniDropZone
-                                label="Style Reference"
+                                label=""
                                 preview={styleRef}
                                 onDrop={makeRefDropHandler(setStyleRef)}
                                 onRemove={() => setStyleRef(null)}
@@ -705,7 +705,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                             <BlockStack gap="100">
                               <Text variant="bodySm" as="p" tone="subdued">Face Reference</Text>
                               <MiniDropZone
-                                label="Face Reference"
+                                label=""
                                 preview={faceRef}
                                 onDrop={makeRefDropHandler(setFaceRef)}
                                 onRemove={() => setFaceRef(null)}
@@ -716,7 +716,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                             <BlockStack gap="100">
                               <Text variant="bodySm" as="p" tone="subdued">Pose Reference</Text>
                               <MiniDropZone
-                                label="Pose Reference"
+                                label=""
                                 preview={poseRef}
                                 onDrop={makeRefDropHandler(setPoseRef)}
                                 onRemove={() => setPoseRef(null)}
