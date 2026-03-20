@@ -40,7 +40,6 @@ class BackgroundRemoverSettingsController extends Controller
      *
      * Accepts partial updates:
      * - model_version (required)
-     * - prepend_prompt (optional)
      * - default_resolution (optional, format: WxH or empty)
      */
     public function update(Request $request)
@@ -66,23 +65,6 @@ class BackgroundRemoverSettingsController extends Controller
                         'new' => $modelVersion,
                     ];
                     $updates['model_version'] = $modelVersion;
-                }
-            }
-
-            // Prepend prompt
-            if ($request->has('prepend_prompt')) {
-                $prompt = trim((string) $request->input('prepend_prompt', ''));
-                if (strlen($prompt) > 2000) {
-                    return response()->json([
-                        'message' => 'Prepend prompt must not exceed 2000 characters.',
-                    ], 422);
-                }
-                if ($prompt !== $oldSettings['prepend_prompt']) {
-                    $changes['prepend_prompt'] = [
-                        'old' => $oldSettings['prepend_prompt'],
-                        'new' => $prompt,
-                    ];
-                    $updates['prepend_prompt'] = $prompt;
                 }
             }
 
@@ -145,7 +127,6 @@ class BackgroundRemoverSettingsController extends Controller
             // Clear all Background Remover settings from database
             $keys = [
                 SiteSetting::KEY_BACKGROUND_REMOVER_MODEL_VERSION,
-                SiteSetting::KEY_BACKGROUND_REMOVER_PREPEND_PROMPT,
                 SiteSetting::KEY_BACKGROUND_REMOVER_DEFAULT_RESOLUTION,
             ];
 

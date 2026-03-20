@@ -52,7 +52,6 @@ class SiteSetting extends Model
 
     // Background Remover settings
     public const KEY_BACKGROUND_REMOVER_MODEL_VERSION = 'background_remover_model_version';
-    public const KEY_BACKGROUND_REMOVER_PREPEND_PROMPT = 'background_remover_prepend_prompt';
     public const KEY_BACKGROUND_REMOVER_DEFAULT_RESOLUTION = 'background_remover_default_resolution';
 
     /**
@@ -419,7 +418,6 @@ class SiteSetting extends Model
 
         $dbSettings = [
             'model_version' => static::get(self::KEY_BACKGROUND_REMOVER_MODEL_VERSION),
-            'prepend_prompt' => static::get(self::KEY_BACKGROUND_REMOVER_PREPEND_PROMPT),
             'default_resolution' => static::get(self::KEY_BACKGROUND_REMOVER_DEFAULT_RESOLUTION),
         ];
 
@@ -427,7 +425,6 @@ class SiteSetting extends Model
 
         return [
             'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
-            'prepend_prompt' => trim((string) ($dbSettings['prepend_prompt'] ?? '')),
             'default_resolution' => (string) ($dbSettings['default_resolution'] ?: ($configDefaults_defaults['resolution'] ?? '')),
         ];
     }
@@ -435,15 +432,12 @@ class SiteSetting extends Model
     /**
      * Set Background Remover settings (store in database).
      *
-     * @param array $settings Keys: model_version, prepend_prompt, default_resolution
+     * @param array $settings Keys: model_version, default_resolution
      */
     public static function setBackgroundRemoverSettings(array $settings): void
     {
         if (isset($settings['model_version'])) {
             static::set(self::KEY_BACKGROUND_REMOVER_MODEL_VERSION, (string) $settings['model_version']);
-        }
-        if (isset($settings['prepend_prompt'])) {
-            static::set(self::KEY_BACKGROUND_REMOVER_PREPEND_PROMPT, (string) $settings['prepend_prompt']);
         }
         if (isset($settings['default_resolution'])) {
             static::set(self::KEY_BACKGROUND_REMOVER_DEFAULT_RESOLUTION, (string) $settings['default_resolution']);

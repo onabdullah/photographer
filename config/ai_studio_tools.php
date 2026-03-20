@@ -315,9 +315,6 @@ return [
 
         // Cost per image (Replicate pricing - fixed rate for BiRefNet)
         'cost_per_image' => 0.0023,
-
-        // Feature flags
-        'features' => [],
     ],
 ];
 

@@ -35,7 +35,6 @@ class BackgroundRemoverSettingsChangedMail extends Mailable
     {
         $labels = [
             'model_version' => 'Model Version',
-            'prepend_prompt' => 'Prepend Prompt',
             'default_resolution' => 'Default Resolution',
         ];
 
