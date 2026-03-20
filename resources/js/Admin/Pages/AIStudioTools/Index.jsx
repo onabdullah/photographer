@@ -15,6 +15,17 @@ const TOOL_COLORS = [
 
 const CHART_HEIGHT = 200;
 
+// Blinking animation style
+const blinkingAnimation = `
+  @keyframes blink {
+    0%, 49%, 100% { opacity: 1; }
+    50%, 99% { opacity: 0.3; }
+  }
+  .status-dot-live {
+    animation: blink 2s infinite;
+  }
+`;
+
 function formatDate(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
@@ -186,7 +197,9 @@ export default function AIStudioToolsIndex({
     ], [filteredTools]);
 
     return (
-        <AdminLayout
+        <>
+            <style>{blinkingAnimation}</style>
+            <AdminLayout
             title="AI Tools Analysis"
             breadcrumbs={[{ label: 'Reports' }, { label: 'AI Tools Analysis' }]}
         >
@@ -239,16 +252,19 @@ export default function AIStudioToolsIndex({
                                     />
                                     <div className="p-4 flex-1 flex flex-col gap-3">
                                         <div className="flex items-start justify-between gap-2">
-                                            <div className="min-w-0">
-                                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                    {t.label}
-                                                </h3>
-                                                <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400 line-clamp-2" title={t.model_name}>
-                                                    {t.model_name}
-                                                </p>
-                                                <p className="mt-1 text-[11px] font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wide">
-                                                    {t.model_provider}
-                                                </p>
+                                            <div className="min-w-0 flex items-start gap-2">
+                                                <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-1.5 ${t.is_enabled ? 'status-dot-live bg-emerald-500' : 'bg-amber-500/40'}`} title={t.is_enabled ? 'Live' : 'Hidden'} />
+                                                <div className="min-w-0">
+                                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                        {t.label}
+                                                    </h3>
+                                                    <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400 line-clamp-2" title={t.model_name}>
+                                                        {t.model_name}
+                                                    </p>
+                                                    <p className="mt-1 text-[11px] font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wide">
+                                                        {t.model_provider}
+                                                    </p>
+                                                </div>
                                             </div>
                                             <div className="flex-shrink-0 text-right">
                                                 <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">Credit used</p>
@@ -734,5 +750,6 @@ export default function AIStudioToolsIndex({
                 )}
             </div>
         </AdminLayout>
+        </>
     );
 }
