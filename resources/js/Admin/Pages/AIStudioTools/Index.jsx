@@ -2,7 +2,7 @@ import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { router } from '@inertiajs/react';
-import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag } from 'lucide-react';
+import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag, Settings } from 'lucide-react';
 
 const TOOL_COLORS = [
     '#0ea5e9',
@@ -305,6 +305,12 @@ export default function AIStudioToolsIndex({
                                                 <option value="enabled">Show on store</option>
                                                 <option value="disabled">Hidden</option>
                                             </select>
+                                            <button
+                                                className="min-h-[28px] px-3 py-1 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-1.5"
+                                                title="Settings"
+                                            >
+                                                <Settings size={14} />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
