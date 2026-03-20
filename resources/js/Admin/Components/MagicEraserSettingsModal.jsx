@@ -1,9 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, RotateCcw, Loader, Wand2 } from 'lucide-react';
+import { X, Save, RotateCcw, Loader, Wand2, SettingsIcon as SettingsIco } from 'lucide-react';
 import axios from 'axios';
 
 // Exact from Replicate API schema: google/nano-banana-2
 const RESOLUTIONS = ['1K', '2K', '4K'];
+const ASPECT_RATIOS = [
+  'match_input_image',
+  '1:1',
+  '1:4',
+  '1:8',
+  '2:3',
+  '3:2',
+  '3:4',
+  '4:1',
+  '4:3',
+  '4:5',
+  '5:4',
+  '8:1',
+  '9:16',
+  '16:9',
+  '21:9',
+];
 const OUTPUT_FORMATS = ['jpg', 'png'];
 
 const COST_PER_RESOLUTION = {
@@ -26,6 +43,7 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
     model_version: '',
     prepend_prompt: '',
     default_resolution: '1K',
+    default_aspect_ratio: 'match_input_image',
     default_output_format: 'jpg',
     features_enabled: {
       google_search: false,
@@ -122,7 +140,7 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <Wand2 size={24} className="text-purple-600" />
+            <Wand2 size={24} className="text-primary-600" />
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Magic Eraser Settings</h2>
             {isRefreshing && <span className="text-xs font-medium text-gray-500">(refreshing...)</span>}
           </div>
@@ -145,7 +163,7 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
 
           {!hasLoadedOnce && (
             <div className="flex justify-center items-center py-12">
-              <Loader size={32} className="animate-spin text-purple-600" />
+              <Loader size={32} className="animate-spin text-primary-600" />
             </div>
           )}
 
@@ -154,7 +172,7 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
               {/* Model Version */}
               <div>
                 <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                  <Wand2 size={16} className="text-purple-600" />
+                  <Wand2 size={16} className="text-primary-600" />
                   Model Version
                 </label>
                 <input
@@ -162,7 +180,7 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                   value={settings.model_version || ''}
                   onChange={e => setSettings({ ...settings, model_version: e.target.value })}
                   placeholder="e.g., google/nano-banana-2"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-600"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Specify the model version used for erasing objects</p>
               </div>
@@ -175,7 +193,7 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                   onChange={e => setSettings({ ...settings, prepend_prompt: e.target.value.substring(0, 2000) })}
                   placeholder="e.g., 'high quality result, seamless blending, realistic texture'"
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600 resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-600 resize-none"
                 />
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   This text will be prepended to all erase prompts for consistent quality.
@@ -198,7 +216,7 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                       <select
                         value={settings.default_resolution || '1K'}
                         onChange={e => setSettings({ ...settings, default_resolution: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
                       >
                         {RESOLUTIONS.map(r => (
                           <option key={r} value={r}>{r}</option>
@@ -210,6 +228,27 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                     </div>
                   </div>
 
+                  {/* Aspect Ratio */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Default Aspect Ratio
+                    </label>
+                    <select
+                      value={settings.default_aspect_ratio || 'match_input_image'}
+                      onChange={e => setSettings({ ...settings, default_aspect_ratio: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
+                    >
+                      {ASPECT_RATIOS.map(ar => (
+                        <option key={ar} value={ar}>
+                          {ar === 'match_input_image' ? 'Match Input Image (Default)' : ar}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Aspect ratio for erased region (select "Match Input Image" to preserve input aspect)
+                    </p>
+                  </div>
+
                   {/* Output Format */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -218,7 +257,7 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                     <select
                       value={settings.default_output_format || 'jpg'}
                       onChange={e => setSettings({ ...settings, default_output_format: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
                     >
                       {OUTPUT_FORMATS.map(f => (
                         <option key={f} value={f}>{f}</option>
@@ -245,10 +284,10 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                           },
                         })
                       }
-                      className="w-4 h-4 accent-purple-600 cursor-pointer rounded mt-0.5"
+                      className="w-4 h-4 accent-primary-600 cursor-pointer rounded mt-0.5"
                     />
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900 dark:text-white group-hover:text-purple-600 transition">
+                      <div className="font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition">
                         Google Search Grounding
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -273,10 +312,10 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                           },
                         })
                       }
-                      className="w-4 h-4 accent-purple-600 cursor-pointer rounded mt-0.5"
+                      className="w-4 h-4 accent-primary-600 cursor-pointer rounded mt-0.5"
                     />
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900 dark:text-white group-hover:text-purple-600 transition">
+                      <div className="font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition">
                         Image Search Grounding
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -318,7 +357,7 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                 onClick={handleSave}
                 disabled={saving || !hasChanges}
                 type="button"
-                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {saving ? (
                   <>

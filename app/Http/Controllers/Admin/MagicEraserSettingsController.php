@@ -42,6 +42,7 @@ class MagicEraserSettingsController extends Controller
      * - model_version (required)
      * - prepend_prompt
      * - default_resolution (1K, 2K, 4K)
+     * - default_aspect_ratio
      * - default_output_format (jpg, png)
      * - features_enabled: { google_search, image_search }
      */
@@ -56,6 +57,7 @@ class MagicEraserSettingsController extends Controller
             // Get old settings for comparison
             $oldSettings = SiteSetting::getMagicEraserSettings();
             $configDefaults = config('ai_studio_tools.magic_eraser', []);
+            $supportedFields = $configDefaults['supported_fields'] ?? [];
 
             $updates = [];
             $changes = [];
@@ -103,6 +105,24 @@ class MagicEraserSettingsController extends Controller
                 } else {
                     return response()->json([
                         'message' => 'Invalid resolution. Supported: 1K, 2K, 4K',
+                    ], 422);
+                }
+            }
+
+            // Default aspect ratio
+            if ($request->filled('default_aspect_ratio')) {
+                $aspect = $request->input('default_aspect_ratio');
+                if (in_array($aspect, $supportedFields['aspect_ratio'] ?? [], true)) {
+                    if ($aspect !== $oldSettings['default_aspect_ratio']) {
+                        $changes['default_aspect_ratio'] = [
+                            'old' => $oldSettings['default_aspect_ratio'],
+                            'new' => $aspect,
+                        ];
+                        $updates['default_aspect_ratio'] = $aspect;
+                    }
+                } else {
+                    return response()->json([
+                        'message' => 'Invalid aspect ratio. Supported: ' . implode(', ', $supportedFields['aspect_ratio'] ?? []),
                     ], 422);
                 }
             }
@@ -198,6 +218,7 @@ class MagicEraserSettingsController extends Controller
                 SiteSetting::KEY_MAGIC_ERASER_MODEL_VERSION,
                 SiteSetting::KEY_MAGIC_ERASER_PREPEND_PROMPT,
                 SiteSetting::KEY_MAGIC_ERASER_DEFAULT_RESOLUTION,
+                SiteSetting::KEY_MAGIC_ERASER_DEFAULT_ASPECT_RATIO,
                 SiteSetting::KEY_MAGIC_ERASER_DEFAULT_OUTPUT_FORMAT,
                 SiteSetting::KEY_MAGIC_ERASER_FEATURES_ENABLED,
             ];

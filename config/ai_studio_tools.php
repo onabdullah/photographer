@@ -238,11 +238,29 @@ return [
         'model_version' => '71516450bdbeafc41df33ad538bc8cc6a90f80038a563b1260531c02d694f4fd',
 
         'defaults' => [
+            'aspect_ratio' => 'match_input_image',
             'resolution' => '1K',
             'output_format' => 'jpg',
         ],
 
         'supported_fields' => [
+            'aspect_ratio' => [
+                'match_input_image',
+                '1:1',
+                '1:4',
+                '1:8',
+                '2:3',
+                '3:2',
+                '3:4',
+                '4:1',
+                '4:3',
+                '4:5',
+                '5:4',
+                '8:1',
+                '9:16',
+                '16:9',
+                '21:9',
+            ],
             'resolution' => ['1K', '2K', '4K'],
             'output_format' => ['jpg', 'png'],
         ],
@@ -271,5 +289,36 @@ return [
             ],
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Background Remover Configuration
+    | Uses: men1scus/birefnet (Replicate API)
+    | Purpose: Remove background from product images
+    |--------------------------------------------------------------------------
+    */
+    'background_remover' => [
+        'model_version' => 'f74986db0355b58403ed20963af156525e2891ea3c2d499bfbfb2a28cd87c5d7',
+
+        'defaults' => [
+            'resolution' => '',
+        ],
+
+        'supported_fields' => [
+            'resolution' => [
+                '',  // auto
+                '512x512',
+                '1024x1024',
+                '2048x2048',
+            ],
+        ],
+
+        // Cost per image (Replicate pricing - fixed rate for BiRefNet)
+        'cost_per_image' => 0.0023,
+
+        // Feature flags
+        'features' => [],
+    ],
 ];
+
 
