@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, RotateCcw, Loader, Sparkles, Settings as SettingsIcon, Plus, Edit2, Trash2, GripVertical } from 'lucide-react';
+import { X, Save, RotateCcw, Loader, Sparkles, Settings as SettingsIcon, Plus, Edit2, Trash2, Layers } from 'lucide-react';
 import axios from 'axios';
 
 // Exact from Replicate API schema: google/nano-banana-2
@@ -288,7 +288,7 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
-            <GripVertical size={16} className="inline mr-1.5" />
+            <Layers size={16} className="inline mr-1.5" />
             Reference Types
           </button>
         </div>
