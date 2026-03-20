@@ -120,27 +120,136 @@ class SiteSetting extends Model
     }
 
     /**
-     * Temporary compatibility accessor for Nano Banana settings.
+     * Get Nano Banana 2 settings (merged: config defaults + DB overrides).
      *
-     * We currently keep behavior aligned with existing defaults and do not
-     * require DB-backed admin settings for storefront flows.
+     * Allows admin to override config via database without deploys.
+     * Fallback chain: DB → config → hardcoded defaults
      */
     public static function getNanoBananaSettings(): array
     {
+        $configDefaults = config('ai_studio_tools.nano_banana', []);
+
+        // Database keys for Nano Banana settings
+        $dbSettings = [
+            'model_version' => static::get('nano_banana_model_version'),
+            'default_aspect_ratio' => static::get('nano_banana_default_aspect_ratio'),
+            'default_resolution' => static::get('nano_banana_default_resolution'),
+            'default_output_format' => static::get('nano_banana_default_output_format'),
+            'prompt_template' => static::get('nano_banana_prompt_template'),
+            'cost_guardrails' => static::getJson('nano_banana_cost_guardrails'),
+            'advanced_config' => static::getJson('nano_banana_advanced_config'),
+            'features_enabled' => static::getJson('nano_banana_features_enabled'),
+        ];
+
+        // Normalize feature flags: merge DB-backed toggles with config
+        $normalizeFeature = function (mixed $dbValue, mixed $configValue, bool $fallback): bool {
+            // Explicit DB override takes precedence
+            if ($dbValue !== null) {
+                if (is_array($dbValue)) {
+                    return (bool) ($dbValue['enabled'] ?? $fallback);
+                }
+                return (bool) $dbValue;
+            }
+            // Fall back to config
+            if ($configValue !== null) {
+                if (is_array($configValue)) {
+                    return (bool) ($configValue['enabled'] ?? $fallback);
+                }
+                return (bool) $configValue;
+            }
+            return $fallback;
+        };
+
+        $configFeatures = $configDefaults['features'] ?? [];
+        $dbFeatures = $dbSettings['features_enabled'] ?? [];
+        $configDefaults_defaults = $configDefaults['defaults'] ?? [];
+
         return [
-            'model_version' => '71516450bdbeafc41df33ad538bc8cc6a90f80038a563b1260531c02d694f4fd',
-            'default_aspect_ratio' => '1:1',
-            'default_resolution' => '1K',
-            'default_output_format' => 'jpg',
+            'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
+            'default_resolution' => (string) ($dbSettings['default_resolution'] ?: ($configDefaults_defaults['resolution'] ?? '1K')),
+            'default_aspect_ratio' => (string) ($dbSettings['default_aspect_ratio'] ?: ($configDefaults_defaults['aspect_ratio'] ?? 'match_input_image')),
+            'default_output_format' => (string) ($dbSettings['default_output_format'] ?: ($configDefaults_defaults['output_format'] ?? 'jpg')),
+            'prompt_template' => trim((string) ($dbSettings['prompt_template'] ?? '')),
+            'advanced_config' => is_array($dbSettings['advanced_config'] ?? null) ? $dbSettings['advanced_config'] : ($configDefaults['advanced_config'] ?? []),
+            'supported_fields' => $configDefaults['supported_fields'] ?? [],
+            'cost_per_resolution' => $configDefaults['cost_per_resolution'] ?? [],
+            'cost_multiplier_with_search' => (float) ($configDefaults['cost_multiplier_with_search'] ?? 1.5),
+            'retry' => $configDefaults['retry'] ?? ['max_attempts' => 3, 'timeout_seconds' => 65, 'backoff_strategy' => 'exponential'],
+            'cost_guardrails' => is_array($dbSettings['cost_guardrails'] ?? null) ? $dbSettings['cost_guardrails'] : [],
             'features_enabled' => [
-                'google_search' => false,
-                'image_search' => false,
-            ],
-            'cost_guardrails' => [
-                'allow_google_search' => true,
-                'allow_image_search' => true,
+                'google_search' => $normalizeFeature(
+                    $dbFeatures['google_search'] ?? null,
+                    $configFeatures['google_search'] ?? null,
+                    false
+                ),
+                'image_search' => $normalizeFeature(
+                    $dbFeatures['image_search'] ?? null,
+                    $configFeatures['image_search'] ?? null,
+                    false
+                ),
+                'seed_reproducibility' => $normalizeFeature(
+                    $dbFeatures['seed_reproducibility'] ?? null,
+                    $configFeatures['seed_reproducibility'] ?? null,
+                    true
+                ),
             ],
         ];
+    }
+
+    /**
+     * Set Nano Banana 2 settings (store in database).
+     *
+     * @param array $settings Keys: model_version, default_aspect_ratio, default_resolution,
+     *                        default_output_format, prompt_template, cost_guardrails,
+     *                        advanced_config, features_enabled
+     */
+    public static function setNanoBananaSettings(array $settings): void
+    {
+        if (isset($settings['model_version'])) {
+            static::set('nano_banana_model_version', (string) $settings['model_version']);
+        }
+        if (isset($settings['default_aspect_ratio'])) {
+            static::set('nano_banana_default_aspect_ratio', (string) $settings['default_aspect_ratio']);
+        }
+        if (isset($settings['default_resolution'])) {
+            static::set('nano_banana_default_resolution', (string) $settings['default_resolution']);
+        }
+        if (isset($settings['default_output_format'])) {
+            static::set('nano_banana_default_output_format', (string) $settings['default_output_format']);
+        }
+        if (isset($settings['prompt_template'])) {
+            static::set('nano_banana_prompt_template', (string) $settings['prompt_template']);
+        }
+        if (isset($settings['cost_guardrails']) && is_array($settings['cost_guardrails'])) {
+            static::setJson('nano_banana_cost_guardrails', $settings['cost_guardrails']);
+        }
+        if (isset($settings['advanced_config']) && is_array($settings['advanced_config'])) {
+            static::setJson('nano_banana_advanced_config', $settings['advanced_config']);
+        }
+        if (isset($settings['features_enabled']) && is_array($settings['features_enabled'])) {
+            static::setJson('nano_banana_features_enabled', $settings['features_enabled']);
+        }
+    }
+
+    /**
+     * Get a JSON-encoded setting value.
+     */
+    private static function getJson(string $key): ?array
+    {
+        $raw = static::get($key);
+        if (! $raw) {
+            return null;
+        }
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    /**
+     * Set a JSON-encoded setting value.
+     */
+    private static function setJson(string $key, array $value): void
+    {
+        static::set($key, json_encode($value));
     }
 
     private static function getBoolean(string $key, bool $default): bool

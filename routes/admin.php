@@ -307,9 +307,24 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('/ai-studio-tools', \App\Http\Controllers\Admin\AiStudioToolsController::class)
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools');
+    Route::get('/ai-studio-tools/nano-banana', function () {
+        return Inertia::render('Admin/Pages/AIStudioTools/NanoBananaSettings');
+    })->middleware('admin.permission:ai_studio.view')
+        ->name('ai-studio-tools.nano-banana');
     Route::patch('/ai-studio-tools/settings', [\App\Http\Controllers\Admin\AiStudioToolsController::class, 'updateToolSetting'])
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools.settings');
+
+    // Nano Banana 2 Model Configuration
+    Route::get('/nano-banana-settings', [\App\Http\Controllers\Admin\NanoBananaSettingsController::class, 'show'])
+        ->middleware('admin.permission:ai_studio.view')
+        ->name('nano-banana-settings.show');
+    Route::put('/nano-banana-settings', [\App\Http\Controllers\Admin\NanoBananaSettingsController::class, 'update'])
+        ->middleware('admin.permission:ai_studio.manage')
+        ->name('nano-banana-settings.update');
+    Route::post('/nano-banana-settings/reset', [\App\Http\Controllers\Admin\NanoBananaSettingsController::class, 'reset'])
+        ->middleware('admin.permission:ai_studio.manage')
+        ->name('nano-banana-settings.reset');
 
     // Dashboard Content Management
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
