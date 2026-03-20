@@ -347,6 +347,16 @@ Route::middleware(['auth:admin'])->group(function () {
             ->name('magic-eraser-settings.reset');
     });
 
+    // Background Remover Settings (Model version, resolution, etc.)
+    Route::prefix('background-remover-settings')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\BackgroundRemoverSettingsController::class, 'show'])
+            ->name('background-remover-settings.show');
+        Route::put('/', [\App\Http\Controllers\Admin\BackgroundRemoverSettingsController::class, 'update'])
+            ->name('background-remover-settings.update');
+        Route::post('/reset', [\App\Http\Controllers\Admin\BackgroundRemoverSettingsController::class, 'reset'])
+            ->name('background-remover-settings.reset');
+    });
+
     // Dashboard Content Management
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
         ->middleware('admin.permission:settings.manage')

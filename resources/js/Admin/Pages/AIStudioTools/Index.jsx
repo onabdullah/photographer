@@ -5,6 +5,7 @@ import { router } from '@inertiajs/react';
 import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag, Settings } from 'lucide-react';
 import ProductAILabSettingsModal from '@/Admin/Components/ProductAILabSettingsModal';
 import MagicEraserSettingsModal from '@/Admin/Components/MagicEraserSettingsModal';
+import BackgroundRemoverSettingsModal from '@/Admin/Components/BackgroundRemoverSettingsModal';
 
 const TOOL_COLORS = [
     '#0ea5e9',
@@ -53,6 +54,7 @@ export default function AIStudioToolsIndex({
     const [mainTab, setMainTab] = useState(initialTab === 'models' ? 'models' : 'overview');
     const [showProductAILabSettingsModal, setShowProductAILabSettingsModal] = useState(false);
     const [showMagicEraserSettingsModal, setShowMagicEraserSettingsModal] = useState(false);
+    const [showBackgroundRemoverSettingsModal, setShowBackgroundRemoverSettingsModal] = useState(false);
 
     useEffect(() => {
         setMainTab(initialTab === 'models' ? 'models' : 'overview');
@@ -333,6 +335,8 @@ export default function AIStudioToolsIndex({
                                                             setShowProductAILabSettingsModal(true);
                                                         } else if (t.key === 'magic_eraser') {
                                                             setShowMagicEraserSettingsModal(true);
+                                                        } else if (t.key === 'background_remover') {
+                                                            setShowBackgroundRemoverSettingsModal(true);
                                                         }
                                                     }}
                                                 >
@@ -775,6 +779,15 @@ export default function AIStudioToolsIndex({
             onClose={() => setShowMagicEraserSettingsModal(false)}
             onSave={() => {
                 setShowMagicEraserSettingsModal(false);
+                // Optional: refresh page or reload settings
+                window.location.reload();
+            }}
+        />
+        <BackgroundRemoverSettingsModal
+            isOpen={showBackgroundRemoverSettingsModal}
+            onClose={() => setShowBackgroundRemoverSettingsModal(false)}
+            onSave={() => {
+                setShowBackgroundRemoverSettingsModal(false);
                 // Optional: refresh page or reload settings
                 window.location.reload();
             }}

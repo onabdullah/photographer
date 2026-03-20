@@ -411,6 +411,46 @@ class SiteSetting extends Model
     }
 
     /**
+     * Get Background Remover settings (merged: config defaults + DB overrides).
+     */
+    public static function getBackgroundRemoverSettings(): array
+    {
+        $configDefaults = config('ai_studio_tools.background_remover', []);
+
+        $dbSettings = [
+            'model_version' => static::get(self::KEY_BACKGROUND_REMOVER_MODEL_VERSION),
+            'prepend_prompt' => static::get(self::KEY_BACKGROUND_REMOVER_PREPEND_PROMPT),
+            'default_resolution' => static::get(self::KEY_BACKGROUND_REMOVER_DEFAULT_RESOLUTION),
+        ];
+
+        $configDefaults_defaults = $configDefaults['defaults'] ?? [];
+
+        return [
+            'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
+            'prepend_prompt' => trim((string) ($dbSettings['prepend_prompt'] ?? '')),
+            'default_resolution' => (string) ($dbSettings['default_resolution'] ?: ($configDefaults_defaults['resolution'] ?? '')),
+        ];
+    }
+
+    /**
+     * Set Background Remover settings (store in database).
+     *
+     * @param array $settings Keys: model_version, prepend_prompt, default_resolution
+     */
+    public static function setBackgroundRemoverSettings(array $settings): void
+    {
+        if (isset($settings['model_version'])) {
+            static::set(self::KEY_BACKGROUND_REMOVER_MODEL_VERSION, (string) $settings['model_version']);
+        }
+        if (isset($settings['prepend_prompt'])) {
+            static::set(self::KEY_BACKGROUND_REMOVER_PREPEND_PROMPT, (string) $settings['prepend_prompt']);
+        }
+        if (isset($settings['default_resolution'])) {
+            static::set(self::KEY_BACKGROUND_REMOVER_DEFAULT_RESOLUTION, (string) $settings['default_resolution']);
+        }
+    }
+
+    /**
      * Get a JSON-encoded setting value.
      */
     private static function getJson(string $key): ?array
