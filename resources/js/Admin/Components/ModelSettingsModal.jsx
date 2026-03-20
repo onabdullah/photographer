@@ -43,10 +43,69 @@ export default function ModelSettingsModal({ isOpen, onClose, modelKey, modelNam
   const handleSave = async () => {
     try {
       setSaving(true);
-      await axios.put('/admin/nano-banana-settings', settings);
+      const settingsToSave = {
+        ...settings,
+        reference_categories: referenceCategories,
+      };
+      await axios.put('/admin/nano-banana-settings', settingsToSave);
       onSave();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddRef = () => {
+    if (!refForm.name.trim()) {
+      alert('Please enter a reference section name');
+      return;
+    }
+    if (editingRef !== null) {
+      const updated = [...referenceCategories];
+      updated[editingRef] = { ...refForm, id: referenceCategories[editingRef].id };
+      setReferenceCategories(updated);
+      setEditingRef(null);
+    } else {
+      setReferenceCategories([
+        ...referenceCategories,
+        {
+          id: Date.now(),
+          ...refForm,
+        },
+      ]);
+    }
+    setRefForm({ name: '', description: '', prepend_prompt: '', enabled: true });
+    setShowRefForm(false);
+  };
+
+  const handleEditRef = (index) => {
+    setRefForm(referenceCategories[index]);
+    setEditingRef(index);
+    setShowRefForm(true);
+  };
+
+  const handleDeleteRef = (index) => {
+    if (confirm('Delete this reference section?')) {
+      setReferenceCategories(referenceCategories.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleReset = async () => {
+    if (!confirm('Reset all settings to system defaults? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      setSaving(true);
+      await axios.post('/admin/nano-banana-settings/reset');
+      // Reload settings
+      const response = await axios.get('/admin/nano-banana-settings');
+      setSettings(response.data.settings);
+      const refs = response.data.settings.reference_categories || [];
+      setReferenceCategories(refs);
+      alert('Settings reset to defaults');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to reset settings');
     } finally {
       setSaving(false);
     }
@@ -77,10 +136,10 @@ export default function ModelSettingsModal({ isOpen, onClose, modelKey, modelNam
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+        <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 overflow-x-auto">
           <button
             onClick={() => setActiveTab('config')}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'config'
                 ? 'border-primary-600 text-primary-600'
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -90,13 +149,23 @@ export default function ModelSettingsModal({ isOpen, onClose, modelKey, modelNam
           </button>
           <button
             onClick={() => setActiveTab('visibility')}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'visibility'
                 ? 'border-primary-600 text-primary-600'
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             User Visibility
+          </button>
+          <button
+            onClick={() => setActiveTab('references')}
+            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+              activeTab === 'references'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            Reference Sections
           </button>
         </div>
 
@@ -381,26 +450,199 @@ export default function ModelSettingsModal({ isOpen, onClose, modelKey, modelNam
               </div>
             </div>
           )}
+
+          {activeTab === 'references' && (
+            <div className="space-y-6">
+              {/* Info Box */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex gap-2">
+                  <AlertCircle size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-800 dark:text-blue-200">
+                    Create custom reference sections. Each section can have a unique prepend prompt that guides the AI when users select that reference type.
+                  </div>
+                </div>
+              </div>
+
+              {/* Add New Reference Form */}
+              {showRefForm ? (
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                    {editingRef !== null ? 'Edit Reference Section' : 'Add Reference Section'}
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Section Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={refForm.name}
+                        onChange={e => setRefForm({...refForm, name: e.target.value})}
+                        placeholder="e.g., Product Style, Face Shape, Pose"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        value={refForm.description}
+                        onChange={e => setRefForm({...refForm, description: e.target.value})}
+                        placeholder="e.g., Use reference images to match the product style"
+                        rows="2"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Prepend Prompt *
+                      </label>
+                      <textarea
+                        value={refForm.prepend_prompt}
+                        onChange={e => setRefForm({...refForm, prepend_prompt: e.target.value})}
+                        placeholder="e.g., Match the style and lighting from the reference image. Use similar colors and composition."
+                        rows="3"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        This text will be prepended to the user's prompt when they use this reference type
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="refEnabled"
+                        checked={refForm.enabled}
+                        onChange={e => setRefForm({...refForm, enabled: e.target.checked})}
+                        className="w-4 h-4"
+                      />
+                      <label htmlFor="refEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                        Enabled (show to users)
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCancelRef}
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddRef}
+                        className="px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-sm font-medium"
+                      >
+                        {editingRef !== null ? 'Update' : 'Add'} Section
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowRefForm(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Plus size={16} />
+                  Add Reference Section
+                </button>
+              )}
+
+              {/* Reference Sections List */}
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                  Reference Sections ({referenceCategories.length})
+                </h3>
+                {referenceCategories.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                    <p className="text-gray-500 dark:text-gray-400">No reference sections yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {referenceCategories.map((ref, idx) => (
+                      <div
+                        key={ref.id}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-gray-900 dark:text-white">{ref.name}</h4>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                ref.enabled
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                              }`}>
+                                {ref.enabled ? 'Visible to users' : 'Hidden'}
+                              </span>
+                            </div>
+                            {ref.description && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{ref.description}</p>
+                            )}
+                            <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded text-xs text-gray-700 dark:text-gray-300 font-mono">
+                              <p className="font-medium mb-1">Prepend prompt:</p>
+                              <p>{ref.prepend_prompt}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <button
+                              onClick={() => handleEditRef(idx)}
+                              type="button"
+                              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRef(idx)}
+                              type="button"
+                              className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+        <div className="flex items-center justify-between gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
           <button
-            onClick={onClose}
-            type="button"
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
+            onClick={handleReset}
             disabled={saving}
             type="button"
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-4 py-2 border border-red-300 dark:border-red-700 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {saving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />}
-            {saving ? 'Saving...' : 'Save Changes'}
+            Reset to Defaults
           </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              type="button"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              type="button"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            >
+              {saving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />}
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

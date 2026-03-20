@@ -307,10 +307,6 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::get('/ai-studio-tools', \App\Http\Controllers\Admin\AiStudioToolsController::class)
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools');
-    Route::get('/ai-studio-tools/nano-banana', function () {
-        return Inertia::render('Admin/Pages/AIStudioTools/NanoBananaSettings');
-    })->middleware('admin.permission:ai_studio.view')
-        ->name('ai-studio-tools.nano-banana');
     Route::patch('/ai-studio-tools/settings', [\App\Http\Controllers\Admin\AiStudioToolsController::class, 'updateToolSetting'])
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools.settings');
