@@ -268,10 +268,17 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
     return () => { if (pollRef.current) clearTimeout(pollRef.current); };
   }, [processingStatus, jobId]);
 
-  /* ── Dropzone handler ── */
+  /* ── Dropzone handlers ── */
   const handleProductDrop = useCallback((_all, accepted) => {
     const file = accepted[0];
     if (file) setProductImage(URL.createObjectURL(file));
+  }, []);
+
+  const makeRefDropHandler = useCallback((setRef) => {
+    return (_all, accepted) => {
+      const file = accepted[0];
+      if (file) setRef(URL.createObjectURL(file));
+    };
   }, []);
 
   const handleBrowseSelectImage = useCallback((url) => {
