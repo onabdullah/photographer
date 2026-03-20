@@ -91,6 +91,12 @@ export default function ModelSettingsModal({ isOpen, onClose, modelKey, modelNam
     }
   };
 
+  const handleCancelRef = () => {
+    setShowRefForm(false);
+    setEditingRef(null);
+    setRefForm({ name: '', description: '', prepend_prompt: '', enabled: true });
+  };
+
   const handleReset = async () => {
     if (!confirm('Reset all settings to system defaults? This action cannot be undone.')) {
       return;

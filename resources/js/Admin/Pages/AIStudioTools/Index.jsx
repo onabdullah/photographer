@@ -2,9 +2,7 @@ import AdminLayout from '@/Admin/Layouts/AdminLayout';
 import { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { router } from '@inertiajs/react';
-import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag, Settings, Zap } from 'lucide-react';
-import ModelSettingsModal from '@/Admin/Components/ModelSettingsModal';
-import axios from 'axios';
+import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag } from 'lucide-react';
 
 const TOOL_COLORS = [
     '#0ea5e9',
@@ -39,13 +37,10 @@ export default function AIStudioToolsIndex({
     initialTab = 'overview',
 }) {
     const [selectedTool, setSelectedTool] = useState('all');
-    const [mainTab, setMainTab] = useState(initialTab === 'models' ? 'models' : initialTab === 'settings' ? 'settings' : 'overview');
-    const [modelSettingsModal, setModelSettingsModal] = useState({ isOpen: false, model: null });
-    const [modelSettings, setModelSettings] = useState(null);
-    const [loadingSettings, setLoadingSettings] = useState(false);
+    const [mainTab, setMainTab] = useState(initialTab === 'models' ? 'models' : 'overview');
 
     useEffect(() => {
-        setMainTab(initialTab === 'models' ? 'models' : initialTab === 'settings' ? 'settings' : 'overview');
+        setMainTab(initialTab === 'models' ? 'models' : 'overview');
     }, [initialTab]);
 
     const loadModelSettings = async (modelKey) => {
@@ -221,18 +216,6 @@ export default function AIStudioToolsIndex({
                     >
                         <Cpu size={16} />
                         Tools
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setMainTab('settings')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                            mainTab === 'settings'
-                                ? 'bg-primary-600 text-white'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
-                    >
-                        <Settings size={16} />
-                        Model Settings
                     </button>
                 </div>
 
@@ -740,80 +723,6 @@ export default function AIStudioToolsIndex({
                         </div>
                     </>
                 )}
-
-                {mainTab === 'settings' && (
-                    <div className="space-y-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Model Settings & Configuration</h2>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                                Manage model-specific settings including feature visibility, cost controls, and advanced parameters. Changes apply instantly to your Shopify app.
-                            </p>
-
-                            {/* Available Models */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {/* Nano Banana 2 Card */}
-                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg dark:hover:shadow-black/30 transition-shadow cursor-pointer group"
-                                     onClick={() => loadModelSettings('nano_banana')}
-                                >
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold">
-                                                NB
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-gray-900 dark:text-white">Nano Banana 2</h3>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">Google Gemini</p>
-                                            </div>
-                                        </div>
-                                        <Zap size={16} className="text-amber-500" />
-                                    </div>
-
-                                    <div className="space-y-2 mb-4">
-                                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                                            Advanced image generation with multimodal support
-                                        </p>
-                                        <div className="flex flex-wrap gap-1">
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium">
-                                                <Sparkles size={12} />
-                                                Multimodal
-                                            </span>
-                                            <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium">
-                                                Active
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        className="w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors group-hover:shadow-lg"
-                                    >
-                                        Configure Settings
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Info Box */}
-                            <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex gap-3">
-                                <AlertCircle size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                                <div className="text-sm text-blue-800 dark:text-blue-200">
-                                    <strong>Pro Tip:</strong> Configure what features, resolutions, and aspect ratios each user sees. Admin-only settings control the backend behavior while visibility settings determine the user interface in your Shopify app.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Model Settings Modal */}
-                <ModelSettingsModal
-                    isOpen={modelSettingsModal.isOpen}
-                    onClose={() => setModelSettingsModal({ isOpen: false, model: null })}
-                    modelKey={modelSettingsModal.model?.key}
-                    modelName={modelSettingsModal.model?.name}
-                    currentSettings={modelSettings}
-                    onSave={() => {
-                        setModelSettingsModal({ isOpen: false, model: null });
-                    }}
-                />
             </div>
         </AdminLayout>
     );
