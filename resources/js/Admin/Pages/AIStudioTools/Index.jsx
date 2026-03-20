@@ -1,8 +1,8 @@
 import AdminLayout from '@/Admin/Layouts/AdminLayout';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Chart from 'react-apexcharts';
 import { router } from '@inertiajs/react';
-import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag, Settings } from 'lucide-react';
+import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag, Settings, X, Save, Info, ChevronDown } from 'lucide-react';
 
 const TOOL_COLORS = [
     '#0ea5e9',
@@ -14,6 +14,266 @@ const TOOL_COLORS = [
 ];
 
 const CHART_HEIGHT = 200;
+
+/* ─── Per-tool model parameter schemas ──────────────────────────────────────
+   Mirrors the Replicate input schemas. Each entry has: key, label, type,
+   default, options (for enum), min/max (for number), description.
+*/
+const TOOL_SCHEMAS = {
+    // google/nano-banana-2  (magic_eraser + universal_generate)
+    universal_generate: [
+        { key: 'aspect_ratio', label: 'Aspect Ratio', type: 'select',
+          options: ['match_input_image','1:1','1:4','1:8','2:3','3:2','3:4','4:1','4:3','4:5','5:4','8:1','9:16','16:9','21:9'],
+          default: 'match_input_image', description: 'Aspect ratio of the generated image.' },
+        { key: 'resolution', label: 'Resolution', type: 'select',
+          options: ['1K', '2K', '4K'], default: '1K',
+          description: 'Resolution of the output image. Higher = slower + more expensive.' },
+        { key: 'output_format', label: 'Output Format', type: 'select',
+          options: ['jpg', 'png'], default: 'jpg',
+          description: 'File format of the generated image.' },
+        { key: 'google_search', label: 'Google Search grounding', type: 'boolean', default: false,
+          description: 'Use Google Web Search for real-time information. Increases API cost by ~50%.' },
+        { key: 'image_search', label: 'Image Search grounding', type: 'boolean', default: false,
+          description: 'Use Google Image Search as visual context. Increases API cost by ~50%.' },
+    ],
+    magic_eraser: [
+        { key: 'aspect_ratio', label: 'Aspect Ratio', type: 'select',
+          options: ['match_input_image','1:1','1:4','1:8','2:3','3:2','3:4','4:1','4:3','4:5','5:4','8:1','9:16','16:9','21:9'],
+          default: 'match_input_image', description: 'Aspect ratio of the generated image.' },
+        { key: 'resolution', label: 'Resolution', type: 'select',
+          options: ['1K', '2K', '4K'], default: '1K',
+          description: 'Resolution of the output image. Higher = slower + more expensive.' },
+        { key: 'output_format', label: 'Output Format', type: 'select',
+          options: ['jpg', 'png'], default: 'jpg',
+          description: 'File format of the generated image.' },
+        { key: 'google_search', label: 'Google Search grounding', type: 'boolean', default: false,
+          description: 'Use Google Web Search for real-time information. Increases API cost by ~50%.' },
+        { key: 'image_search', label: 'Image Search grounding', type: 'boolean', default: false,
+          description: 'Use Google Image Search as visual context. Increases API cost by ~50%.' },
+    ],
+    // nightmareai/real-esrgan (upscaler)
+    upscaler: [
+        { key: 'scale', label: 'Scale Factor', type: 'number', default: 4, min: 0, max: 10,
+          description: 'Factor to scale the image by (0–10).' },
+        { key: 'face_enhance', label: 'Face Enhancement', type: 'boolean', default: false,
+          description: 'Run GFPGAN face enhancement alongside upscaling.' },
+    ],
+    // men1scus/birefnet (background_remover)
+    background_remover: [
+        { key: 'resolution', label: 'Output Resolution', type: 'text', default: '',
+          description: "Resolution in WxH format, e.g. '1024x1024'. Leave blank to match input." },
+    ],
+};
+
+/* ─── ToolSettingsPanel (slide-over) ───────────────────────────────────────── */
+
+function ToolSettingsPanel({ tool, onClose }) {
+    const schema = TOOL_SCHEMAS[tool.key] ?? [];
+
+    // Build initial form state from saved model_settings, falling back to schema defaults
+    const buildInitial = useCallback(() => {
+        const saved = tool.model_settings ?? {};
+        const init = {};
+        schema.forEach(field => {
+            init[field.key] = saved[field.key] !== undefined ? saved[field.key] : field.default;
+        });
+        return init;
+    }, [tool.key, tool.model_settings]);
+
+    const [values, setValues]   = useState(buildInitial);
+    const [saving, setSaving]   = useState(false);
+    const [saved, setSaved]     = useState(false);
+    const panelRef              = useRef(null);
+
+    // Reset when tool changes
+    useEffect(() => { setValues(buildInitial()); setSaved(false); }, [tool.key]);
+
+    // Close on Escape
+    useEffect(() => {
+        const handler = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [onClose]);
+
+    const set = (key, val) => setValues(prev => ({ ...prev, [key]: val }));
+
+    const handleSave = () => {
+        setSaving(true);
+        router.put(
+            `/admin/ai-studio-tools/${tool.key}/model-settings`,
+            { model_settings: values },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => { setSaved(true); setSaving(false); setTimeout(() => setSaved(false), 2500); },
+                onError:   () => { setSaving(false); },
+            }
+        );
+    };
+
+    const handleReset = () => {
+        const defaults = {};
+        schema.forEach(f => { defaults[f.key] = f.default; });
+        setValues(defaults);
+    };
+
+    return (
+        <>
+            {/* Backdrop */}
+            <div
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity"
+                onClick={onClose}
+            />
+
+            {/* Panel */}
+            <div
+                ref={panelRef}
+                className="fixed right-0 top-0 h-full w-full max-w-md z-50 flex flex-col bg-white dark:bg-gray-900 shadow-2xl border-l border-gray-200 dark:border-gray-700"
+                style={{ animation: 'slideInRight 0.22s ease' }}
+            >
+                <style>{`
+                    @keyframes slideInRight {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to   { transform: translateX(0);    opacity: 1; }
+                    }
+                `}</style>
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 flex-shrink-0">
+                    <div className="min-w-0">
+                        <p className="text-[10px] uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-0.5">Model Settings</p>
+                        <h2 className="text-sm font-bold text-gray-900 dark:text-white truncate">{tool.label}</h2>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{tool.model_name}</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="ml-3 flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        aria-label="Close settings"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+                    {schema.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+                            <Settings size={32} className="text-gray-300 dark:text-gray-600" />
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No configurable parameters</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">This tool uses fixed model settings.</p>
+                        </div>
+                    ) : (
+                        schema.map(field => (
+                            <div key={field.key}>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                        {field.label}
+                                    </label>
+                                    {field.default !== undefined && (
+                                        <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                                            default: <span className="font-mono">{String(field.default) || '—'}</span>
+                                        </span>
+                                    )}
+                                </div>
+
+                                {field.type === 'select' && (
+                                    <div className="relative">
+                                        <select
+                                            value={values[field.key]}
+                                            onChange={e => set(field.key, e.target.value)}
+                                            className="w-full appearance-none pl-3 pr-8 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors cursor-pointer"
+                                        >
+                                            {field.options.map(opt => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    </div>
+                                )}
+
+                                {field.type === 'boolean' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => set(field.key, !values[field.key])}
+                                        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/40 ${
+                                            values[field.key]
+                                                ? 'bg-primary-600'
+                                                : 'bg-gray-200 dark:bg-gray-600'
+                                        }`}
+                                        aria-pressed={values[field.key]}
+                                    >
+                                        <span
+                                            className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+                                                values[field.key] ? 'translate-x-6' : 'translate-x-1'
+                                            }`}
+                                        />
+                                    </button>
+                                )}
+
+                                {field.type === 'number' && (
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="number"
+                                            value={values[field.key]}
+                                            min={field.min}
+                                            max={field.max}
+                                            step={field.step ?? 1}
+                                            onChange={e => set(field.key, field.step ? parseFloat(e.target.value) : parseInt(e.target.value))}
+                                            className="w-28 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                                        />
+                                        {(field.min !== undefined || field.max !== undefined) && (
+                                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                                                {field.min} – {field.max}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
+                                {field.type === 'text' && (
+                                    <input
+                                        type="text"
+                                        value={values[field.key]}
+                                        placeholder={field.placeholder ?? ''}
+                                        onChange={e => set(field.key, e.target.value)}
+                                        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                                    />
+                                )}
+
+                                {field.description && (
+                                    <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500 flex items-start gap-1">
+                                        <Info size={11} className="flex-shrink-0 mt-0.5" />
+                                        {field.description}
+                                    </p>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Footer */}
+                {schema.length > 0 && (
+                    <div className="flex-shrink-0 px-5 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 flex items-center gap-3">
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white transition-colors"
+                        >
+                            <Save size={14} />
+                            {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Settings'}
+                        </button>
+                        <button
+                            onClick={handleReset}
+                            disabled={saving}
+                            className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                        >
+                            Reset to defaults
+                        </button>
+                    </div>
+                )}
+            </div>
+        </>
+    );
+}
 
 // Blinking animation style
 const blinkingAnimation = `
@@ -54,21 +314,7 @@ export default function AIStudioToolsIndex({
         setMainTab(initialTab === 'models' ? 'models' : 'overview');
     }, [initialTab]);
 
-    const loadModelSettings = async (modelKey) => {
-        try {
-            setLoadingSettings(true);
-            const response = await axios.get('/admin/nano-banana-settings');
-            setModelSettings(response.data.settings);
-            setModelSettingsModal({
-                isOpen: true,
-                model: { key: modelKey, name: 'Nano Banana 2' }
-            });
-        } catch (err) {
-            alert('Failed to load model settings');
-        } finally {
-            setLoadingSettings(false);
-        }
-    };
+    const [settingsTool, setSettingsTool] = useState(null); // tool object when panel open
 
     const toolOptions = useMemo(() => {
         const opts = [{ key: 'all', label: 'All tools' }];
@@ -322,6 +568,7 @@ export default function AIStudioToolsIndex({
                                                     <option value="disabled">Hidden</option>
                                                 </select>
                                                 <button
+                                                    onClick={() => setSettingsTool(t)}
                                                     className="min-h-[28px] px-3 py-1 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-1.5 whitespace-nowrap"
                                                     title="Settings"
                                                 >
@@ -335,6 +582,14 @@ export default function AIStudioToolsIndex({
                             ))}
                         </div>
                     </div>
+                )}
+
+                {/* Tool Settings Slide-over */}
+                {settingsTool && (
+                    <ToolSettingsPanel
+                        tool={settingsTool}
+                        onClose={() => setSettingsTool(null)}
+                    />
                 )}
 
                 {mainTab === 'overview' && (

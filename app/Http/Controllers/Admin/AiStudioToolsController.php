@@ -92,9 +92,12 @@ class AiStudioToolsController extends Controller
             ->toArray();
 
         try {
-            $toolSettings = AiStudioToolSetting::whereIn('tool_key', $toolOrder)->pluck('is_enabled', 'tool_key')->toArray();
+            $toolSettingsRows = AiStudioToolSetting::whereIn('tool_key', $toolOrder)->get()->keyBy('tool_key');
+            $toolSettings     = $toolSettingsRows->mapWithKeys(fn ($r, $k) => [$k => $r->is_enabled])->toArray();
+            $modelSettings    = $toolSettingsRows->mapWithKeys(fn ($r, $k) => [$k => $r->model_settings ?? []])->toArray();
         } catch (\Throwable $e) {
-            $toolSettings = [];
+            $toolSettings  = [];
+            $modelSettings = [];
         }
 
         $tools = [];
@@ -111,25 +114,26 @@ class AiStudioToolsController extends Controller
             $consumedUsd = round($credits_used * $ratePerImageUsd, 4);
 
             $tools[] = [
-                'key' => $toolKey,
-                'label' => $meta['label'],
-                'model_name' => $meta['model_name'],
-                'model_provider' => $meta['model_provider'],
+                'key'                        => $toolKey,
+                'label'                      => $meta['label'],
+                'model_name'                 => $meta['model_name'],
+                'model_provider'             => $meta['model_provider'],
                 'estimated_rate_per_image_usd' => $ratePerImageUsd,
-                'consumed_usd' => $consumedUsd,
-                'is_enabled' => $toolSettings[$toolKey] ?? true,
-                'total_completed' => $successFromDb,
-                'success_count' => $successFromDb,
-                'failed_count' => $failedFromDb,
-                'used_in_production' => (int) ($usedInProductionByTool[$toolKey] ?? 0),
-                'downloaded_count' => (int) ($downloadedByTool[$toolKey] ?? 0),
-                'credits_used' => $credits_used,
-                'requests_count' => $requestsCount,
-                'avg_response_seconds' => $rt ? round((float) $rt['avg_sec'], 2) : null,
-                'min_response_seconds' => $rt ? round((float) $rt['min_sec'], 2) : null,
-                'max_response_seconds' => $rt ? round((float) $rt['max_sec'], 2) : null,
-                'response_time_count' => $rt ? (int) $rt['cnt'] : 0,
-                'errors' => $errorsByTool[$toolKey] ?? [],
+                'consumed_usd'               => $consumedUsd,
+                'is_enabled'                 => $toolSettings[$toolKey] ?? true,
+                'model_settings'             => $modelSettings[$toolKey] ?? [],
+                'total_completed'            => $successFromDb,
+                'success_count'              => $successFromDb,
+                'failed_count'               => $failedFromDb,
+                'used_in_production'         => (int) ($usedInProductionByTool[$toolKey] ?? 0),
+                'downloaded_count'           => (int) ($downloadedByTool[$toolKey] ?? 0),
+                'credits_used'               => $credits_used,
+                'requests_count'             => $requestsCount,
+                'avg_response_seconds'       => $rt ? round((float) $rt['avg_sec'], 2) : null,
+                'min_response_seconds'       => $rt ? round((float) $rt['min_sec'], 2) : null,
+                'max_response_seconds'       => $rt ? round((float) $rt['max_sec'], 2) : null,
+                'response_time_count'        => $rt ? (int) $rt['cnt'] : 0,
+                'errors'                     => $errorsByTool[$toolKey] ?? [],
             ];
         }
 
@@ -222,5 +226,49 @@ class AiStudioToolsController extends Controller
         }
 
         return redirect()->back()->with('success', 'Tool setting updated.');
+    }
+
+    /**
+     * GET /admin/ai-studio-tools/{toolKey}/model-settings
+     * Returns the saved model_settings JSON for a single tool (for the settings panel).
+     */
+    public function getModelSettings(Request $request, string $toolKey)
+    {
+        $validKeys = array_keys(config('ai_studio_tools.tools', []));
+        if (! in_array($toolKey, $validKeys, true)) {
+            return response()->json(['error' => 'Unknown tool'], 404);
+        }
+
+        $row = AiStudioToolSetting::where('tool_key', $toolKey)->first();
+
+        return response()->json([
+            'tool_key'       => $toolKey,
+            'model_settings' => $row?->model_settings ?? [],
+        ]);
+    }
+
+    /**
+     * PUT /admin/ai-studio-tools/{toolKey}/model-settings
+     * Persists arbitrary model parameter overrides for a tool.
+     */
+    public function updateModelSettings(Request $request, string $toolKey)
+    {
+        $validKeys = array_keys(config('ai_studio_tools.tools', []));
+
+        $request->validate([
+            'tool_key'       => 'sometimes|string',
+            'model_settings' => 'required|array',
+        ]);
+
+        if (! in_array($toolKey, $validKeys, true)) {
+            return response()->json(['error' => 'Unknown tool'], 422);
+        }
+
+        AiStudioToolSetting::updateOrCreate(
+            ['tool_key' => $toolKey],
+            ['model_settings' => $request->input('model_settings')]
+        );
+
+        return redirect()->back()->with('success', 'Model settings saved.');
     }
 }

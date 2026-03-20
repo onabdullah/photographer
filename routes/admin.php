@@ -310,6 +310,12 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::patch('/ai-studio-tools/settings', [\App\Http\Controllers\Admin\AiStudioToolsController::class, 'updateToolSetting'])
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools.settings');
+    Route::get('/ai-studio-tools/{toolKey}/model-settings', [\App\Http\Controllers\Admin\AiStudioToolsController::class, 'getModelSettings'])
+        ->middleware('admin.permission:ai_studio.view')
+        ->name('ai-studio-tools.model-settings.get');
+    Route::put('/ai-studio-tools/{toolKey}/model-settings', [\App\Http\Controllers\Admin\AiStudioToolsController::class, 'updateModelSettings'])
+        ->middleware('admin.permission:ai_studio.view')
+        ->name('ai-studio-tools.model-settings.update');
 
     // Dashboard Content Management
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
