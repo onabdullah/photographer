@@ -337,6 +337,16 @@ Route::middleware(['auth:admin'])->group(function () {
             ->name('product-ai-lab.reference-types.reorder');
     });
 
+    // Magic Eraser Settings (Model version, resolution, output format, etc.)
+    Route::prefix('magic-eraser-settings')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\MagicEraserSettingsController::class, 'show'])
+            ->name('magic-eraser-settings.show');
+        Route::put('/', [\App\Http\Controllers\Admin\MagicEraserSettingsController::class, 'update'])
+            ->name('magic-eraser-settings.update');
+        Route::post('/reset', [\App\Http\Controllers\Admin\MagicEraserSettingsController::class, 'reset'])
+            ->name('magic-eraser-settings.reset');
+    });
+
     // Dashboard Content Management
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
         ->middleware('admin.permission:settings.manage')

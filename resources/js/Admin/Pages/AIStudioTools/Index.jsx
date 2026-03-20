@@ -4,6 +4,7 @@ import Chart from 'react-apexcharts';
 import { router } from '@inertiajs/react';
 import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag, Settings } from 'lucide-react';
 import ProductAILabSettingsModal from '@/Admin/Components/ProductAILabSettingsModal';
+import MagicEraserSettingsModal from '@/Admin/Components/MagicEraserSettingsModal';
 
 const TOOL_COLORS = [
     '#0ea5e9',
@@ -51,6 +52,7 @@ export default function AIStudioToolsIndex({
     const [selectedTool, setSelectedTool] = useState('all');
     const [mainTab, setMainTab] = useState(initialTab === 'models' ? 'models' : 'overview');
     const [showProductAILabSettingsModal, setShowProductAILabSettingsModal] = useState(false);
+    const [showMagicEraserSettingsModal, setShowMagicEraserSettingsModal] = useState(false);
 
     useEffect(() => {
         setMainTab(initialTab === 'models' ? 'models' : 'overview');
@@ -329,6 +331,8 @@ export default function AIStudioToolsIndex({
                                                     onClick={() => {
                                                         if (t.key === 'universal_generate') {
                                                             setShowProductAILabSettingsModal(true);
+                                                        } else if (t.key === 'magic_eraser') {
+                                                            setShowMagicEraserSettingsModal(true);
                                                         }
                                                     }}
                                                 >
@@ -762,6 +766,15 @@ export default function AIStudioToolsIndex({
             onClose={() => setShowProductAILabSettingsModal(false)}
             onSave={() => {
                 setShowProductAILabSettingsModal(false);
+                // Optional: refresh page or reload settings
+                window.location.reload();
+            }}
+        />
+        <MagicEraserSettingsModal
+            isOpen={showMagicEraserSettingsModal}
+            onClose={() => setShowMagicEraserSettingsModal(false)}
+            onSave={() => {
+                setShowMagicEraserSettingsModal(false);
                 // Optional: refresh page or reload settings
                 window.location.reload();
             }}

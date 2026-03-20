@@ -42,6 +42,13 @@ class SiteSetting extends Model
     public const KEY_PRODUCT_AI_LAB_DEFAULT_OUTPUT_FORMAT = 'product_ai_lab_default_output_format';
     public const KEY_PRODUCT_AI_LAB_FEATURES_ENABLED = 'product_ai_lab_features_enabled';
 
+    // Magic Eraser settings
+    public const KEY_MAGIC_ERASER_MODEL_VERSION = 'magic_eraser_model_version';
+    public const KEY_MAGIC_ERASER_PREPEND_PROMPT = 'magic_eraser_prepend_prompt';
+    public const KEY_MAGIC_ERASER_DEFAULT_RESOLUTION = 'magic_eraser_default_resolution';
+    public const KEY_MAGIC_ERASER_DEFAULT_OUTPUT_FORMAT = 'magic_eraser_default_output_format';
+    public const KEY_MAGIC_ERASER_FEATURES_ENABLED = 'magic_eraser_features_enabled';
+
     /**
      * Get a setting value by key.
      */
@@ -315,6 +322,80 @@ class SiteSetting extends Model
         }
         if (isset($settings['features_enabled']) && is_array($settings['features_enabled'])) {
             static::setJson(self::KEY_PRODUCT_AI_LAB_FEATURES_ENABLED, $settings['features_enabled']);
+        }
+    }
+
+    /**
+     * Get Magic Eraser settings (merged: config defaults + DB overrides).
+     */
+    public static function getMagicEraserSettings(): array
+    {
+        $configDefaults = config('ai_studio_tools.magic_eraser', []);
+
+        $dbSettings = [
+            'model_version' => static::get(self::KEY_MAGIC_ERASER_MODEL_VERSION),
+            'prepend_prompt' => static::get(self::KEY_MAGIC_ERASER_PREPEND_PROMPT),
+            'default_resolution' => static::get(self::KEY_MAGIC_ERASER_DEFAULT_RESOLUTION),
+            'default_output_format' => static::get(self::KEY_MAGIC_ERASER_DEFAULT_OUTPUT_FORMAT),
+            'features_enabled' => static::getJson(self::KEY_MAGIC_ERASER_FEATURES_ENABLED),
+        ];
+
+        $configDefaults_defaults = $configDefaults['defaults'] ?? [];
+        $configFeatures = $configDefaults['features'] ?? [];
+        $dbFeatures = $dbSettings['features_enabled'] ?? [];
+
+        $normalizeFeature = function (mixed $dbValue, mixed $configValue, bool $fallback): bool {
+            if ($dbValue !== null) {
+                return (bool) ($dbValue['enabled'] ?? $dbValue);
+            }
+            if ($configValue !== null) {
+                return (bool) ($configValue['enabled'] ?? $configValue);
+            }
+            return $fallback;
+        };
+
+        return [
+            'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
+            'prepend_prompt' => trim((string) ($dbSettings['prepend_prompt'] ?? '')),
+            'default_resolution' => (string) ($dbSettings['default_resolution'] ?: ($configDefaults_defaults['resolution'] ?? '1K')),
+            'default_output_format' => (string) ($dbSettings['default_output_format'] ?: ($configDefaults_defaults['output_format'] ?? 'jpg')),
+            'features_enabled' => [
+                'google_search' => $normalizeFeature(
+                    $dbFeatures['google_search'] ?? null,
+                    $configFeatures['google_search'] ?? null,
+                    false
+                ),
+                'image_search' => $normalizeFeature(
+                    $dbFeatures['image_search'] ?? null,
+                    $configFeatures['image_search'] ?? null,
+                    false
+                ),
+            ],
+        ];
+    }
+
+    /**
+     * Set Magic Eraser settings (store in database).
+     *
+     * @param array $settings Keys: model_version, prepend_prompt, default_resolution,
+     *                        default_output_format, features_enabled
+     */
+    public static function setMagicEraserSettings(array $settings): void
+    {
+        if (isset($settings['model_version'])) {
+            static::set(self::KEY_MAGIC_ERASER_MODEL_VERSION, (string) $settings['model_version']);
+        }
+        if (isset($settings['prepend_prompt'])) {
+            static::set(self::KEY_MAGIC_ERASER_PREPEND_PROMPT, (string) $settings['prepend_prompt']);
+        }
+        if (isset($settings['default_resolution'])) {
+            static::set(self::KEY_MAGIC_ERASER_DEFAULT_RESOLUTION, (string) $settings['default_resolution']);
+        }
+        if (isset($settings['default_output_format'])) {
+            static::set(self::KEY_MAGIC_ERASER_DEFAULT_OUTPUT_FORMAT, (string) $settings['default_output_format']);
+        }
+        if (isset($settings['features_enabled']) && is_array($settings['features_enabled'])) {
+            static::setJson(self::KEY_MAGIC_ERASER_FEATURES_ENABLED, $settings['features_enabled']);
         }
     }
 

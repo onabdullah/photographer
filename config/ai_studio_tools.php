@@ -226,4 +226,50 @@ return [
         // Cost multiplier when search grounding is enabled (+50%)
         'cost_multiplier_with_search' => 1.5,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Magic Eraser Configuration
+    | Uses: google/nano-banana-2 (Replicate API)
+    | Purpose: Remove and replace objects/areas in product images
+    |--------------------------------------------------------------------------
+    */
+    'magic_eraser' => [
+        'model_version' => '71516450bdbeafc41df33ad538bc8cc6a90f80038a563b1260531c02d694f4fd',
+
+        'defaults' => [
+            'resolution' => '1K',
+            'output_format' => 'jpg',
+        ],
+
+        'supported_fields' => [
+            'resolution' => ['1K', '2K', '4K'],
+            'output_format' => ['jpg', 'png'],
+        ],
+
+        // Cost per resolution (Replicate pricing)
+        'cost_per_resolution' => [
+            '1K' => 0.067,
+            '2K' => 0.101,
+            '4K' => 0.151,
+        ],
+
+        // Cost multiplier when search grounding is enabled (+50%)
+        'cost_multiplier_with_search' => 1.5,
+
+        // Feature flags matching Replicate API boolean parameters
+        'features' => [
+            'google_search' => [
+                'enabled' => false,
+                'label' => 'Google Search Grounding',
+                'description' => 'Use Google Web Search for context (optional)',
+            ],
+            'image_search' => [
+                'enabled' => false,
+                'label' => 'Image Search Grounding',
+                'description' => 'Use Google Image Search for visual references (optional)',
+            ],
+        ],
+    ],
 ];
+
