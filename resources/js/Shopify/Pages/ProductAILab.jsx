@@ -113,7 +113,7 @@ function PillButton({ selected, onClick, children }) {
 function MiniDropZone({ label, preview, onDrop, onRemove }) {
   return (
     <BlockStack gap="100">
-      <Text variant="bodySm" tone="subdued" as="p">{label}</Text>
+      {label && <Text variant="bodySm" tone="subdued" as="p">{label}</Text>}
       {preview ? (
         <BlockStack gap="100">
           <div
