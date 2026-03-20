@@ -744,17 +744,19 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                   </Box>
 
                   {/* Step 5 – Input Prompt */}
-                  <TextField
-                    label="Describe the scene"
-                    value={scenePrompt}
-                    onChange={setScenePrompt}
-                    placeholder="e.g. Luxury marble surface, warm studio lighting, minimalist background"
-                    multiline={3}
-                    autoComplete="off"
-                    characterCount={scenePrompt.length}
-                    maxLength={600}
-                    helpText="Be specific, the AI reads every detail."
-                  />
+                  {!drawerOpen && (
+                    <TextField
+                      label="Describe the scene"
+                      value={scenePrompt}
+                      onChange={setScenePrompt}
+                      placeholder="e.g. Luxury marble surface, warm studio lighting, minimalist background"
+                      multiline={3}
+                      autoComplete="off"
+                      characterCount={scenePrompt.length}
+                      maxLength={600}
+                      helpText="Be specific, the AI reads every detail."
+                    />
+                  )}
 
                   {/* Generate / Reset */}
                   <Box paddingBlockStart="200">
