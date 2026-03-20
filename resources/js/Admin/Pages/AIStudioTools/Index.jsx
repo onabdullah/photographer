@@ -327,6 +327,7 @@ export default function AIStudioToolsIndex({
                                                     <option value="enabled">Show on store</option>
                                                     <option value="disabled">Hidden</option>
                                                 </select>
+                                                {(['universal_generate', 'magic_eraser', 'background_remover'].includes(t.key)) && (
                                                 <button
                                                     className="min-h-[28px] px-3 py-1 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-1.5 whitespace-nowrap"
                                                     title="Settings"
@@ -343,6 +344,7 @@ export default function AIStudioToolsIndex({
                                                     <Settings size={14} />
                                                     Settings
                                                 </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
