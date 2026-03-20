@@ -21,6 +21,7 @@ class ProductAILabSettingsChangedMail extends Mailable
         public User $admin,
         public array $changes,
         public bool $isReset = false,
+        public bool $isReferenceTypeChange = false,
         public string $fromAddress = '',
         public ?string $fromName = null,
         string $changedAt = '',
@@ -28,7 +29,9 @@ class ProductAILabSettingsChangedMail extends Mailable
         $this->fromAddress = $fromAddress ?: config('mail.from.address');
         $this->fromName = $fromName ?? config('mail.from.name') ?? config('app.name');
         $this->changedAt = $changedAt ?: now()->format('D, d M Y · H:i T');
-        $this->changeType = $isReset ? 'Settings Reset' : 'Settings Changed';
+        $this->changeType = $this->isReferenceTypeChange
+            ? 'Reference Type ' . ($isReset ? 'Reset' : 'Changed')
+            : ($isReset ? 'Settings Reset' : 'Settings Changed');
     }
 
     public function formatLabel(string $key): string

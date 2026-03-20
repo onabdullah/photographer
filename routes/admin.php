@@ -321,6 +321,22 @@ Route::middleware(['auth:admin'])->group(function () {
             ->name('product-ai-lab-settings.reset');
     });
 
+    // Product AI Lab Reference Types Management
+    Route::prefix('product-ai-lab/reference-types')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ProductAILabReferenceTypeController::class, 'index'])
+            ->name('product-ai-lab.reference-types.index');
+        Route::post('/', [\App\Http\Controllers\Admin\ProductAILabReferenceTypeController::class, 'store'])
+            ->name('product-ai-lab.reference-types.store');
+        Route::get('/{id}', [\App\Http\Controllers\Admin\ProductAILabReferenceTypeController::class, 'show'])
+            ->name('product-ai-lab.reference-types.show');
+        Route::put('/{id}', [\App\Http\Controllers\Admin\ProductAILabReferenceTypeController::class, 'update'])
+            ->name('product-ai-lab.reference-types.update');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\ProductAILabReferenceTypeController::class, 'destroy'])
+            ->name('product-ai-lab.reference-types.destroy');
+        Route::post('/reorder', [\App\Http\Controllers\Admin\ProductAILabReferenceTypeController::class, 'reorder'])
+            ->name('product-ai-lab.reference-types.reorder');
+    });
+
     // Dashboard Content Management
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
         ->middleware('admin.permission:settings.manage')

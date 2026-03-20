@@ -22,6 +22,7 @@ class SendProductAILabSettingsSecurityEmailJob implements ShouldQueue
         protected User $admin,
         protected array $changes,
         protected bool $isReset = false,
+        protected bool $isReferenceTypeChange = false,
     ) {}
 
     public function handle(): void
@@ -41,7 +42,8 @@ class SendProductAILabSettingsSecurityEmailJob implements ShouldQueue
             $mailable = new ProductAILabSettingsChangedMail(
                 $this->admin,
                 $this->changes,
-                $this->isReset
+                $this->isReset,
+                isReferenceTypeChange: $this->isReferenceTypeChange
             );
 
             SendMailJob::dispatch(

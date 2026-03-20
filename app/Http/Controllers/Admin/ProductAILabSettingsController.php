@@ -12,10 +12,21 @@ class ProductAILabSettingsController extends Controller
 {
     /**
      * Get current Product AI Lab settings (merged: config + DB).
+     *
+     * Query parameter:
+     * - format=minimal : Returns only settings (not config) for reduced payload
      */
-    public function show()
+    public function show(Request $request)
     {
         $settings = SiteSetting::getProductAILabSettings();
+
+        // Return minimal format if requested (for performance optimization)
+        if ($request->query('format') === 'minimal') {
+            return response()->json([
+                'settings' => $settings,
+            ]);
+        }
+
         $configDefaults = config('ai_studio_tools.product_ai_lab', []);
 
         return response()->json([
