@@ -273,7 +273,7 @@ class SiteSetting extends Model
             'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
             'prepend_prompt' => trim((string) ($dbSettings['prepend_prompt'] ?? '')),
             'default_resolution' => (string) ($dbSettings['default_resolution'] ?: ($configDefaults_defaults['resolution'] ?? '1K')),
-            'default_aspect_ratio' => (string) ($dbSettings['default_aspect_ratio'] ?: ($configDefaults_defaults['aspect_ratio'] ?? '1:1')),
+            'default_aspect_ratio' => (string) ($dbSettings['default_aspect_ratio'] ?: ($configDefaults_defaults['aspect_ratio'] ?? 'match_input_image')),
             'default_output_format' => (string) ($dbSettings['default_output_format'] ?: ($configDefaults_defaults['output_format'] ?? 'jpg')),
             'features_enabled' => [
                 'google_search' => $normalizeFeature(

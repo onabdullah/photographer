@@ -2,20 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, RotateCcw, Loader, Sparkles, Settings as SettingsIcon } from 'lucide-react';
 import axios from 'axios';
 
+// Exact from Replicate API schema: google/nano-banana-2
 const RESOLUTIONS = ['1K', '2K', '4K'];
 const ASPECT_RATIOS = [
+  'match_input_image',
   '1:1',
+  '1:4',
+  '1:8',
   '2:3',
   '3:2',
   '3:4',
+  '4:1',
   '4:3',
   '4:5',
   '5:4',
+  '8:1',
   '9:16',
   '16:9',
   '21:9',
 ];
 const OUTPUT_FORMATS = ['jpg', 'png'];
+
+const COST_PER_RESOLUTION = {
+  '1K': 0.067,
+  '2K': 0.101,
+  '4K': 0.151,
+};
 
 export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
   const [loading, setLoading] = useState(false);
@@ -25,7 +37,7 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
     model_version: '',
     prepend_prompt: '',
     default_resolution: '1K',
-    default_aspect_ratio: '1:1',
+    default_aspect_ratio: 'match_input_image',
     default_output_format: 'jpg',
     features_enabled: {
       google_search: false,
@@ -139,14 +151,17 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
 
                 {/* Prepend Prompt Section */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3">Prepend Prompt</label>
+                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3">Prepend Prompt (Optional)</label>
                   <textarea
                     value={settings.prepend_prompt || ''}
                     onChange={e => setSettings({ ...settings, prepend_prompt: e.target.value.substring(0, 2000) })}
-                    placeholder="Custom prompt prefix to prepend to all user prompts (optional)"
+                    placeholder="e.g., 'high-quality product photo, professional lighting, 8K resolution'"
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-600 resize-none"
                   />
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    This text will be prepended to all user prompts. Useful for consistent style/quality guidelines.
+                  </p>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     {(settings.prepend_prompt || '').length}/2000 characters
                   </p>
@@ -164,15 +179,20 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Default Resolution
                       </label>
-                      <select
-                        value={settings.default_resolution || '1K'}
-                        onChange={e => setSettings({ ...settings, default_resolution: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
-                      >
-                        {RESOLUTIONS.map(r => (
-                          <option key={r} value={r}>{r}</option>
-                        ))}
-                      </select>
+                      <div className="space-y-2">
+                        <select
+                          value={settings.default_resolution || '1K'}
+                          onChange={e => setSettings({ ...settings, default_resolution: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
+                        >
+                          {RESOLUTIONS.map(r => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Cost per image: ~${COST_PER_RESOLUTION[settings.default_resolution || '1K']}/img
+                        </p>
+                      </div>
                     </div>
 
                     {/* Default Aspect Ratio */}
@@ -181,14 +201,19 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                         Default Aspect Ratio
                       </label>
                       <select
-                        value={settings.default_aspect_ratio || '1:1'}
+                        value={settings.default_aspect_ratio || 'match_input_image'}
                         onChange={e => setSettings({ ...settings, default_aspect_ratio: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
                       >
                         {ASPECT_RATIOS.map(ar => (
-                          <option key={ar} value={ar}>{ar}</option>
+                          <option key={ar} value={ar}>
+                            {ar === 'match_input_image' ? 'Match Input Image (Default)' : ar}
+                          </option>
                         ))}
                       </select>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Aspect ratio of generated images (select "Match Input Image" to preserve input aspect)
+                      </p>
                     </div>
 
                     {/* Default Output Format */}
@@ -211,9 +236,9 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
 
                 {/* Feature Toggles Section */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Features</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Search Grounding Features</h3>
                   <div className="space-y-3 pl-2">
-                    <label className="flex items-center gap-3 cursor-pointer group">
+                    <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                       <input
                         type="checkbox"
                         checked={settings.features_enabled?.google_search || false}
@@ -226,17 +251,22 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                             },
                           })
                         }
-                        className="w-4 h-4 accent-primary-600 cursor-pointer rounded"
+                        className="w-4 h-4 accent-primary-600 cursor-pointer rounded mt-0.5"
                       />
-                      <div>
+                      <div className="flex-1">
                         <div className="font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition">
                           Google Search Grounding
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Use real-time web search for context</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Use real-time web search for context (weather, sports scores, recent events, etc.)
+                        </div>
+                        <div className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-1">
+                          ⚠️ Increases API cost by 50%
+                        </div>
                       </div>
                     </label>
 
-                    <label className="flex items-center gap-3 cursor-pointer group">
+                    <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                       <input
                         type="checkbox"
                         checked={settings.features_enabled?.image_search || false}
@@ -249,13 +279,18 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                             },
                           })
                         }
-                        className="w-4 h-4 accent-primary-600 cursor-pointer rounded"
+                        className="w-4 h-4 accent-primary-600 cursor-pointer rounded mt-0.5"
                       />
-                      <div>
+                      <div className="flex-1">
                         <div className="font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition">
                           Image Search Grounding
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Search for web images as visual references</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Find and use web images as visual references for generation (automatically enables web search)
+                        </div>
+                        <div className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-1">
+                          ⚠️ Increases API cost by 50%
+                        </div>
                       </div>
                     </label>
                   </div>
