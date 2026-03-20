@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  BlockStack,
-  Box,
-  Text,
-  TextField,
-  Select,
-  Checkbox,
-  Button,
-  Divider,
-  InlineStack,
-  Spinner,
-  Banner,
-  Layout,
-} from '@shopify/polaris';
+import AdminLayout from '@/Admin/Layouts/AdminLayout';
+import { useAdminToast } from '@/Admin/Components/AdminToast';
+import { Loader, Save, RotateCcw } from 'lucide-react';
 import axios from 'axios';
 
 const RESOLUTIONS = ['1K', '2K', '4K'];
@@ -37,9 +25,9 @@ const ASPECT_RATIOS = [
 const OUTPUT_FORMATS = ['jpg', 'png'];
 
 export default function NanoBananaSettings() {
+  const toast = useAdminToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState(null);
   const [config, setConfig] = useState(null);
   const [settings, setSettings] = useState(null);
   const [formData, setFormData] = useState({});
@@ -64,15 +52,10 @@ export default function NanoBananaSettings() {
         advanced_config: response.data.settings.advanced_config || {},
       });
     } catch (err) {
-      showToast('Failed to load settings', true);
+      toast.error('Failed to load settings');
     } finally {
       setLoading(false);
     }
-  };
-
-  const showToast = (msg, isError = false) => {
-    setToast({ message: msg, isError });
-    setTimeout(() => setToast(null), 3000);
   };
 
   const handleInputChange = (field, value) => {
@@ -116,10 +99,10 @@ export default function NanoBananaSettings() {
     try {
       setSaving(true);
       await axios.put('/admin/nano-banana-settings', formData);
-      showToast('Settings saved successfully');
-      fetchSettings(); // Refresh
+      toast.success('Settings saved successfully');
+      fetchSettings();
     } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to save settings', true);
+      toast.error(err.response?.data?.message || 'Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -130,10 +113,10 @@ export default function NanoBananaSettings() {
     try {
       setSaving(true);
       await axios.post('/admin/nano-banana-settings/reset');
-      showToast('Settings reset to defaults');
+      toast.success('Settings reset to defaults');
       fetchSettings();
     } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to reset settings', true);
+      toast.error(err.response?.data?.message || 'Failed to reset settings');
     } finally {
       setSaving(false);
     }
@@ -141,254 +124,318 @@ export default function NanoBananaSettings() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" padding="400">
-        <Spinner />
-      </Box>
+      <AdminLayout title="Nano Banana 2 Configuration">
+        <div className="flex items-center justify-center py-20">
+          <Loader className="w-6 h-6 text-primary-600 animate-spin" />
+        </div>
+      </AdminLayout>
     );
   }
 
   if (!settings) {
-    return <Banner title="Error" tone="critical">Failed to load settings</Banner>;
+    return (
+      <AdminLayout title="Nano Banana 2 Configuration">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 text-red-700 dark:text-red-200">
+          Failed to load settings
+        </div>
+      </AdminLayout>
+    );
   }
 
   const costPerRes = config?.cost_per_resolution || {};
   const costMult = config?.cost_multiplier_with_search || 1.5;
 
   return (
-    <Layout>
-      <Layout.Section>
-        {toast && (
-          <Box marginBottom="400">
-            <Banner
-              title={toast.isError ? 'Error' : 'Success'}
-              tone={toast.isError ? 'critical' : 'success'}
-            >
-              {toast.message}
-            </Banner>
-          </Box>
-        )}
-
-        <Card>
-          <BlockStack gap="400">
-            <Text as="h2" variant="headingLg">Nano Banana 2 Configuration</Text>
-            <Text tone="subdued">
+    <AdminLayout title="Nano Banana 2 Configuration">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Main Configuration Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Configuration</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Configure how the Nano Banana 2 model behaves. All changes apply instantly to new generations.
-            </Text>
+            </p>
+          </div>
 
-            <Divider />
+          <hr className="border-gray-200 dark:border-gray-700" />
 
-            {/* Defaults Section */}
-            <Box>
-              <Text as="h3" variant="headingMd">Defaults</Text>
-              <BlockStack gap="300" paddingBlockStart="300">
-                <Select
-                  label="Default Aspect Ratio"
-                  options={ASPECT_RATIOS.map(ar => ({ label: ar, value: ar }))}
+          {/* Defaults Section */}
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Defaults</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Default Aspect Ratio
+                </label>
+                <select
                   value={formData.default_aspect_ratio || 'match_input_image'}
-                  onChange={val => handleInputChange('default_aspect_ratio', val)}
-                />
-                <Select
-                  label="Default Resolution"
-                  options={RESOLUTIONS.map(r => ({ label: r, value: r }))}
+                  onChange={e => handleInputChange('default_aspect_ratio', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  {ASPECT_RATIOS.map(ar => (
+                    <option key={ar} value={ar}>{ar}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Default Resolution
+                </label>
+                <select
                   value={formData.default_resolution || '1K'}
-                  onChange={val => handleInputChange('default_resolution', val)}
-                />
-                <Select
-                  label="Default Output Format"
-                  options={OUTPUT_FORMATS.map(f => ({ label: f, value: f }))}
+                  onChange={e => handleInputChange('default_resolution', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  {RESOLUTIONS.map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Default Output Format
+                </label>
+                <select
                   value={formData.default_output_format || 'jpg'}
-                  onChange={val => handleInputChange('default_output_format', val)}
+                  onChange={e => handleInputChange('default_output_format', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  {OUTPUT_FORMATS.map(f => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-gray-200 dark:border-gray-700" />
+
+          {/* Feature Flags */}
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Feature Flags</h3>
+            <div className="space-y-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.features_enabled?.google_search || false}
+                  onChange={e => handleFeatureToggle('google_search', e.target.checked)}
+                  className="mt-1"
                 />
-              </BlockStack>
-            </Box>
+                <div>
+                  <div className="font-medium text-gray-900 dark:text-white">Google Search Grounding</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Use real-time web search to ground generations (+50% API cost)
+                  </div>
+                </div>
+              </label>
 
-            <Divider />
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.features_enabled?.image_search || false}
+                  onChange={e => handleFeatureToggle('image_search', e.target.checked)}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="font-medium text-gray-900 dark:text-white">Image Search Grounding</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Use web image search to ground generations (+50% API cost)
+                  </div>
+                </div>
+              </label>
 
-            {/* Feature Flags */}
-            <Box>
-              <Text as="h3" variant="headingMd">Feature Flags</Text>
-              <BlockStack gap="200" paddingBlockStart="300">
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.features_enabled?.google_search || false}
-                    onChange={e => handleFeatureToggle('google_search', e.target.checked)}
-                  />
-                  <span>
-                    <strong>Google Search Grounding</strong>
-                    <br />
-                    <span style={{ fontSize: 12, opacity: 0.7 }}>
-                      Use real-time web search to ground generations (+50% API cost)
-                    </span>
-                  </span>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.features_enabled?.seed_reproducibility !== false}
+                  onChange={e => handleFeatureToggle('seed_reproducibility', e.target.checked)}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="font-medium text-gray-900 dark:text-white">Seed Reproducibility</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Allow users to specify seed for reproducible results
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <hr className="border-gray-200 dark:border-gray-700" />
+
+          {/* Cost Guardrails */}
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Cost Guardrails</h3>
+            <div className="space-y-4">
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-2">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Pricing per Generation:</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  1K: ${costPerRes['1K']?.toFixed(3)},
+                  2K: ${costPerRes['2K']?.toFixed(3)},
+                  4K: ${costPerRes['4K']?.toFixed(3)}
+                </div>
+                {(formData.features_enabled?.google_search || formData.features_enabled?.image_search) && (
+                  <div className="text-sm text-amber-600 dark:text-amber-400">
+                    Search enabled: costs × {costMult}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Max Cost Per Generation (USD)
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.features_enabled?.image_search || false}
-                    onChange={e => handleFeatureToggle('image_search', e.target.checked)}
-                  />
-                  <span>
-                    <strong>Image Search Grounding</strong>
-                    <br />
-                    <span style={{ fontSize: 12, opacity: 0.7 }}>
-                      Use web image search to ground generations (+50% API cost)
-                    </span>
-                  </span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.features_enabled?.seed_reproducibility !== false}
-                    onChange={e => handleFeatureToggle('seed_reproducibility', e.target.checked)}
-                  />
-                  <span>
-                    <strong>Seed Reproducibility</strong>
-                    <br />
-                    <span style={{ fontSize: 12, opacity: 0.7 }}>
-                      Allow users to specify seed for reproducible results
-                    </span>
-                  </span>
-                </label>
-              </BlockStack>
-            </Box>
-
-            <Divider />
-
-            {/* Cost Guardrails */}
-            <Box>
-              <Text as="h3" variant="headingMd">Cost Guardrails</Text>
-              <BlockStack gap="300" paddingBlockStart="300">
-                <Box background="bg-surface-secondary" padding="300" borderRadius="200">
-                  <Text variant="bodySm">Pricing per Generation:</Text>
-                  <Text variant="bodySm">
-                    1K: ${costPerRes['1K']?.toFixed(3)},
-                    2K: ${costPerRes['2K']?.toFixed(3)},
-                    4K: ${costPerRes['4K']?.toFixed(3)}
-                  </Text>
-                  {(formData.features_enabled?.google_search || formData.features_enabled?.image_search) && (
-                    <Text variant="bodySm" tone="warning">
-                      Search enabled: costs × {costMult}
-                    </Text>
-                  )}
-                </Box>
-                <TextField
-                  label="Max Cost Per Generation (USD)"
+                <input
                   type="number"
                   step="0.01"
                   min="0"
                   value={String(formData.cost_guardrails?.max_cost_usd || '')}
-                  onChange={val => handleCostGuardrailChange('max_cost_usd', val ? parseFloat(val) : undefined)}
+                  onChange={e => handleCostGuardrailChange('max_cost_usd', e.target.value ? parseFloat(e.target.value) : undefined)}
                   placeholder="e.g., 0.50 (leave empty for no limit)"
-                  helpText="Prevent generations exceeding this cost threshold"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.cost_guardrails?.allow_google_search !== false}
-                    onChange={e => handleCostGuardrailChange('allow_google_search', e.target.checked)}
-                  />
-                  <span>Allow Google Search Grounding</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.cost_guardrails?.allow_image_search !== false}
-                    onChange={e => handleCostGuardrailChange('allow_image_search', e.target.checked)}
-                  />
-                  <span>Allow Image Search Grounding</span>
-                </label>
-              </BlockStack>
-            </Box>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Prevent generations exceeding this cost threshold
+                </p>
+              </div>
 
-            <Divider />
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.cost_guardrails?.allow_google_search !== false}
+                  onChange={e => handleCostGuardrailChange('allow_google_search', e.target.checked)}
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Allow Google Search Grounding</span>
+              </label>
 
-            {/* Advanced Config */}
-            <Box>
-              <Text as="h3" variant="headingMd">Advanced Parameters</Text>
-              <BlockStack gap="300" paddingBlockStart="300">
-                <TextField
-                  label="Guidance Scale"
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.cost_guardrails?.allow_image_search !== false}
+                  onChange={e => handleCostGuardrailChange('allow_image_search', e.target.checked)}
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Allow Image Search Grounding</span>
+              </label>
+            </div>
+          </div>
+
+          <hr className="border-gray-200 dark:border-gray-700" />
+
+          {/* Advanced Config */}
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Advanced Parameters</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Guidance Scale
+                </label>
+                <input
                   type="number"
                   step="0.1"
                   min="0"
                   max="20"
                   value={String(formData.advanced_config?.guidance_scale || '')}
-                  onChange={val => handleAdvancedChange('guidance_scale', val ? parseFloat(val) : undefined)}
+                  onChange={e => handleAdvancedChange('guidance_scale', e.target.value ? parseFloat(e.target.value) : undefined)}
                   placeholder="0.0 - 20.0 (leave empty for Replicate default)"
-                  helpText="Higher = more adherence to prompt. Leave empty for Replicate default."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
-                <TextField
-                  label="Num Inference Steps"
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Higher = more adherence to prompt. Leave empty for Replicate default.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Num Inference Steps
+                </label>
+                <input
                   type="number"
                   step="1"
                   min="1"
                   max="100"
                   value={String(formData.advanced_config?.num_inference_steps || '')}
-                  onChange={val => handleAdvancedChange('num_inference_steps', val ? parseInt(val, 10) : undefined)}
+                  onChange={e => handleAdvancedChange('num_inference_steps', e.target.value ? parseInt(e.target.value, 10) : undefined)}
                   placeholder="1 - 100 (leave empty for Replicate default)"
-                  helpText="More steps = better quality but slower. Leave empty for Replicate default."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
-              </BlockStack>
-            </Box>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  More steps = better quality but slower. Leave empty for Replicate default.
+                </p>
+              </div>
+            </div>
+          </div>
 
-            <Divider />
+          <hr className="border-gray-200 dark:border-gray-700" />
 
-            {/* Prompt Template */}
-            <Box>
-              <Text as="h3" variant="headingMd">Prompt Template (Optional)</Text>
-              <BlockStack gap="300" paddingBlockStart="300">
-                <TextField
-                  label="Prepend to User Prompts"
-                  value={formData.prompt_template || ''}
-                  onChange={val => handleInputChange('prompt_template', val)}
-                  placeholder="e.g., 'Always use professional photography lighting. Keep colors vibrant and true to life.'"
-                  multiline={3}
-                  helpText="This text is prepended to all user prompts. Leave empty for no template."
-                />
-              </BlockStack>
-            </Box>
+          {/* Prompt Template */}
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Prompt Template (Optional)</h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Prepend to User Prompts
+              </label>
+              <textarea
+                value={formData.prompt_template || ''}
+                onChange={e => handleInputChange('prompt_template', e.target.value)}
+                placeholder="e.g., 'Always use professional photography lighting. Keep colors vibrant and true to life.'"
+                rows="3"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                This text is prepended to all user prompts. Leave empty for no template.
+              </p>
+            </div>
+          </div>
 
-            <Divider />
+          <hr className="border-gray-200 dark:border-gray-700" />
 
-            {/* Actions */}
-            <InlineStack gap="200">
-              <Button primary onClick={handleSave} loading={saving} disabled={loading || saving}>
-                Save Settings
-              </Button>
-              <Button onClick={handleReset} disabled={loading || saving}>
+          {/* Actions */}
+          <div className="flex items-center justify-between pt-2">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Last updated: {settings.updated_at ? new Date(settings.updated_at).toLocaleString() : 'N/A'}
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleReset}
+                disabled={loading || saving}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                <RotateCcw size={16} />
                 Reset to Defaults
-              </Button>
-            </InlineStack>
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={loading || saving}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {saving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />}
+                {saving ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
+          </div>
+        </div>
 
-            <Box paddingBlockStart="200">
-              <Text variant="bodySm" tone="subdued">
-                Last updated: {settings.updated_at ? new Date(settings.updated_at).toLocaleString() : 'N/A'}
-              </Text>
-            </Box>
-          </BlockStack>
-        </Card>
-      </Layout.Section>
-
-      <Layout.Section variant="oneThird">
-        <Card>
-          <BlockStack gap="200">
-            <Text as="h3" variant="headingMd">About Nano Banana 2</Text>
-            <Text variant="bodySm" tone="subdued">
+        {/* About Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4">About Nano Banana 2</h3>
+          <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+            <p>
               Google's Gemini-powered model on Replicate. Supports multimodal input (product + reference images for style, face, pose matching).
-            </Text>
-            <Text variant="bodySm" tone="subdued">
-              Model Version:<br />
-              <code style={{ fontSize: 10, wordBreak: 'break-all' }}>
+            </p>
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Model Version:</span>
+              <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-700/50 rounded text-xs font-mono break-all text-gray-600 dark:text-gray-400">
                 {config?.model_version}
-              </code>
-            </Text>
-            <Text variant="bodySm" tone="subdued">
+              </div>
+            </div>
+            <p>
               Supports up to 14 images per request. Reference images help guide the model.
-            </Text>
-          </BlockStack>
-        </Card>
-      </Layout.Section>
-    </Layout>
+            </p>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
   );
 }

@@ -189,7 +189,7 @@ class NanoBananaSettingsController extends Controller
     /**
      * Reset to config defaults (clear DB overrides).
      */
-    public function reset()
+    public function reset(Request $request)
     {
         try {
             // Clear all Nano Banana settings from database

@@ -16,9 +16,7 @@ import {
     Moon,
     Menu,
     Plus,
-    Lightbulb,
     Bot,
-    FileBarChart2,
     Crown,
     ShieldCheck,
     Eye,
@@ -27,9 +25,7 @@ import {
     TerminalSquare,
     X,
     Sparkles,
-    DollarSign,
     CreditCard,
-    Package,
     MessageCircle,
 } from 'lucide-react';
 
@@ -95,19 +91,6 @@ const SECTIONS = [
         label: 'SYSTEM',
         items: [
             { name: 'Settings', href: '/admin/settings', icon: Settings, permission: 'settings.view' },
-            {
-                name: 'Coming Soon',
-                icon: Lightbulb,
-                permission: null,
-                badge: 'BETA',
-                badgeColor: 'secondary',
-                collapsible: true,
-                children: [
-                    { name: 'AI Models', icon: Bot,           href: '#' },
-                    { name: 'Reports',   icon: FileBarChart2, href: '#' },
-                    { name: 'Finance',   icon: DollarSign,     href: '#' },
-                ],
-            },
         ],
     },
 ];
