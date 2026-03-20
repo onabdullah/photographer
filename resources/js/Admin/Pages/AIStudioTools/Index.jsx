@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { router } from '@inertiajs/react';
 import { Sparkles, Cpu, Activity, Package, BarChart3, Coins, Trophy, Clock, AlertCircle, Download, ShoppingBag, Settings } from 'lucide-react';
+import ProductAILabSettingsModal from '@/Admin/Components/ProductAILabSettingsModal';
 
 const TOOL_COLORS = [
     '#0ea5e9',
@@ -49,6 +50,7 @@ export default function AIStudioToolsIndex({
 }) {
     const [selectedTool, setSelectedTool] = useState('all');
     const [mainTab, setMainTab] = useState(initialTab === 'models' ? 'models' : 'overview');
+    const [showProductAILabSettingsModal, setShowProductAILabSettingsModal] = useState(false);
 
     useEffect(() => {
         setMainTab(initialTab === 'models' ? 'models' : 'overview');
@@ -324,6 +326,11 @@ export default function AIStudioToolsIndex({
                                                 <button
                                                     className="min-h-[28px] px-3 py-1 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-1.5 whitespace-nowrap"
                                                     title="Settings"
+                                                    onClick={() => {
+                                                        if (t.key === 'universal_generate') {
+                                                            setShowProductAILabSettingsModal(true);
+                                                        }
+                                                    }}
                                                 >
                                                     <Settings size={14} />
                                                     Settings
@@ -749,6 +756,16 @@ export default function AIStudioToolsIndex({
                 )}
             </div>
         </AdminLayout>
+
+        <ProductAILabSettingsModal
+            isOpen={showProductAILabSettingsModal}
+            onClose={() => setShowProductAILabSettingsModal(false)}
+            onSave={() => {
+                setShowProductAILabSettingsModal(false);
+                // Optional: refresh page or reload settings
+                window.location.reload();
+            }}
+        />
         </>
     );
 }

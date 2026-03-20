@@ -34,6 +34,14 @@ class SiteSetting extends Model
     public const KEY_CHAT_SHOW_STATUS_BADGE_AGENTS = 'chat_show_status_badge_agents';
     public const KEY_CHAT_SHOW_STATUS_BADGE_CUSTOMERS = 'chat_show_status_badge_customers';
 
+    // Product AI Lab settings
+    public const KEY_PRODUCT_AI_LAB_MODEL_VERSION = 'product_ai_lab_model_version';
+    public const KEY_PRODUCT_AI_LAB_PREPEND_PROMPT = 'product_ai_lab_prepend_prompt';
+    public const KEY_PRODUCT_AI_LAB_DEFAULT_RESOLUTION = 'product_ai_lab_default_resolution';
+    public const KEY_PRODUCT_AI_LAB_DEFAULT_ASPECT_RATIO = 'product_ai_lab_default_aspect_ratio';
+    public const KEY_PRODUCT_AI_LAB_DEFAULT_OUTPUT_FORMAT = 'product_ai_lab_default_output_format';
+    public const KEY_PRODUCT_AI_LAB_FEATURES_ENABLED = 'product_ai_lab_features_enabled';
+
     /**
      * Get a setting value by key.
      */
@@ -228,6 +236,85 @@ class SiteSetting extends Model
         }
         if (isset($settings['features_enabled']) && is_array($settings['features_enabled'])) {
             static::setJson('nano_banana_features_enabled', $settings['features_enabled']);
+        }
+    }
+
+    /**
+     * Get Product AI Lab settings (merged: config defaults + DB overrides).
+     */
+    public static function getProductAILabSettings(): array
+    {
+        $configDefaults = config('ai_studio_tools.product_ai_lab', []);
+
+        $dbSettings = [
+            'model_version' => static::get(self::KEY_PRODUCT_AI_LAB_MODEL_VERSION),
+            'prepend_prompt' => static::get(self::KEY_PRODUCT_AI_LAB_PREPEND_PROMPT),
+            'default_resolution' => static::get(self::KEY_PRODUCT_AI_LAB_DEFAULT_RESOLUTION),
+            'default_aspect_ratio' => static::get(self::KEY_PRODUCT_AI_LAB_DEFAULT_ASPECT_RATIO),
+            'default_output_format' => static::get(self::KEY_PRODUCT_AI_LAB_DEFAULT_OUTPUT_FORMAT),
+            'features_enabled' => static::getJson(self::KEY_PRODUCT_AI_LAB_FEATURES_ENABLED),
+        ];
+
+        $configDefaults_defaults = $configDefaults['defaults'] ?? [];
+        $configFeatures = $configDefaults['features'] ?? [];
+        $dbFeatures = $dbSettings['features_enabled'] ?? [];
+
+        $normalizeFeature = function (mixed $dbValue, mixed $configValue, bool $fallback): bool {
+            if ($dbValue !== null) {
+                return (bool) ($dbValue['enabled'] ?? $dbValue);
+            }
+            if ($configValue !== null) {
+                return (bool) ($configValue['enabled'] ?? $configValue);
+            }
+            return $fallback;
+        };
+
+        return [
+            'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
+            'prepend_prompt' => trim((string) ($dbSettings['prepend_prompt'] ?? '')),
+            'default_resolution' => (string) ($dbSettings['default_resolution'] ?: ($configDefaults_defaults['resolution'] ?? '1K')),
+            'default_aspect_ratio' => (string) ($dbSettings['default_aspect_ratio'] ?: ($configDefaults_defaults['aspect_ratio'] ?? '1:1')),
+            'default_output_format' => (string) ($dbSettings['default_output_format'] ?: ($configDefaults_defaults['output_format'] ?? 'jpg')),
+            'features_enabled' => [
+                'google_search' => $normalizeFeature(
+                    $dbFeatures['google_search'] ?? null,
+                    $configFeatures['google_search'] ?? null,
+                    false
+                ),
+                'image_search' => $normalizeFeature(
+                    $dbFeatures['image_search'] ?? null,
+                    $configFeatures['image_search'] ?? null,
+                    false
+                ),
+            ],
+        ];
+    }
+
+    /**
+     * Set Product AI Lab settings (store in database).
+     *
+     * @param array $settings Keys: model_version, prepend_prompt, default_resolution,
+     *                        default_aspect_ratio, default_output_format, features_enabled
+     */
+    public static function setProductAILabSettings(array $settings): void
+    {
+        if (isset($settings['model_version'])) {
+            static::set(self::KEY_PRODUCT_AI_LAB_MODEL_VERSION, (string) $settings['model_version']);
+        }
+        if (isset($settings['prepend_prompt'])) {
+            static::set(self::KEY_PRODUCT_AI_LAB_PREPEND_PROMPT, (string) $settings['prepend_prompt']);
+        }
+        if (isset($settings['default_resolution'])) {
+            static::set(self::KEY_PRODUCT_AI_LAB_DEFAULT_RESOLUTION, (string) $settings['default_resolution']);
+        }
+        if (isset($settings['default_aspect_ratio'])) {
+            static::set(self::KEY_PRODUCT_AI_LAB_DEFAULT_ASPECT_RATIO, (string) $settings['default_aspect_ratio']);
+        }
+        if (isset($settings['default_output_format'])) {
+            static::set(self::KEY_PRODUCT_AI_LAB_DEFAULT_OUTPUT_FORMAT, (string) $settings['default_output_format']);
+        }
+        if (isset($settings['features_enabled']) && is_array($settings['features_enabled'])) {
+            static::setJson(self::KEY_PRODUCT_AI_LAB_FEATURES_ENABLED, $settings['features_enabled']);
         }
     }
 

@@ -311,6 +311,16 @@ Route::middleware(['auth:admin'])->group(function () {
         ->middleware('admin.permission:ai_studio.view')
         ->name('ai-studio-tools.settings');
 
+    // Product AI Lab Settings (Model version, parameters, etc.)
+    Route::prefix('product-ai-lab-settings')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ProductAILabSettingsController::class, 'show'])
+            ->name('product-ai-lab-settings.show');
+        Route::put('/', [\App\Http\Controllers\Admin\ProductAILabSettingsController::class, 'update'])
+            ->name('product-ai-lab-settings.update');
+        Route::post('/reset', [\App\Http\Controllers\Admin\ProductAILabSettingsController::class, 'reset'])
+            ->name('product-ai-lab-settings.reset');
+    });
+
     // Dashboard Content Management
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
         ->middleware('admin.permission:settings.manage')
