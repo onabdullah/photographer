@@ -692,12 +692,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                           >
                             {/* Style Reference */}
                             <BlockStack gap="100">
-                              <BlockStack gap="50">
-                                <Text variant="bodySm" as="p" tone="subdued">Style Reference</Text>
-                                <Text variant="bodySm" as="p" tone="subdued" style={{ fontSize: 11, opacity: 0.75 }}>
-                                  Guide the AI to match a specific aesthetic, mood, or visual style
-                                </Text>
-                              </BlockStack>
+                              <Text variant="bodySm" as="p" tone="subdued">Style Reference</Text>
                               <MiniDropZone
                                 label="Style Reference"
                                 preview={styleRef}
@@ -708,12 +703,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
 
                             {/* Face Reference */}
                             <BlockStack gap="100">
-                              <BlockStack gap="50">
-                                <Text variant="bodySm" as="p" tone="subdued">Face Reference</Text>
-                                <Text variant="bodySm" as="p" tone="subdued" style={{ fontSize: 11, opacity: 0.75 }}>
-                                  Ensure the subject's facial features match the reference
-                                </Text>
-                              </BlockStack>
+                              <Text variant="bodySm" as="p" tone="subdued">Face Reference</Text>
                               <MiniDropZone
                                 label="Face Reference"
                                 preview={faceRef}
@@ -724,12 +714,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
 
                             {/* Pose Reference */}
                             <BlockStack gap="100">
-                              <BlockStack gap="50">
-                                <Text variant="bodySm" as="p" tone="subdued">Pose Reference</Text>
-                                <Text variant="bodySm" as="p" tone="subdued" style={{ fontSize: 11, opacity: 0.75 }}>
-                                  Control the subject's posture and positioning
-                                </Text>
-                              </BlockStack>
+                              <Text variant="bodySm" as="p" tone="subdued">Pose Reference</Text>
                               <MiniDropZone
                                 label="Pose Reference"
                                 preview={poseRef}
