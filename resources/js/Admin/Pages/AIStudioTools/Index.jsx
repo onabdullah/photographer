@@ -253,16 +253,16 @@ export default function AIStudioToolsIndex({
                                             <div className="flex-shrink-0 text-right">
                                                 <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">Credit used</p>
                                                 <p className="text-lg font-bold tabular-nums text-gray-900 dark:text-white">{(t.credits_used ?? 0).toLocaleString()}</p>
-                                                <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                                    <p className="text-[10px] text-gray-600 dark:text-gray-400 tabular-nums">
+                                                <p className="mt-1 text-[10px] text-gray-600 dark:text-gray-400 tabular-nums flex items-center justify-end gap-1">
+                                                    <span>
                                                         {t.estimated_rate_per_image_usd != null && t.estimated_rate_per_image_usd > 0
                                                             ? `~$${Number(t.estimated_rate_per_image_usd).toFixed(4)}/img`
                                                             : '$0/img'}
-                                                    </p>
-                                                    <p className="text-[10px] text-gray-600 dark:text-gray-400 tabular-nums">
+                                                    </span>
+                                                    <span className="text-teal-600 dark:text-teal-400 font-semibold">
                                                         Consumed: {t.consumed_usd != null && t.consumed_usd > 0 ? `$${Number(t.consumed_usd).toFixed(2)}` : '$0'}
-                                                    </p>
-                                                </div>
+                                                    </span>
+                                                </p>
                                             </div>
                                         </div>
                                         <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700/80 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
