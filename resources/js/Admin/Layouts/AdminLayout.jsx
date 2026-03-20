@@ -71,6 +71,7 @@ const SECTIONS = [
         label: 'REPORTS',
         items: [
             { name: 'AI Tools Analysis', href: '/admin/ai-studio-tools', icon: Sparkles, permission: 'ai_studio.view' },
+            { name: 'Nano Banana Settings', href: '/admin/ai-studio-tools/nano-banana', icon: Bot, permission: 'ai_studio.manage' },
             { name: 'Analytics',     href: '/admin/analytics',     icon: BarChart3, permission: 'analytics.view' },
         ],
     },

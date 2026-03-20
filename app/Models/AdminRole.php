@@ -30,6 +30,7 @@ class AdminRole extends Model
         'ANALYTICS & REPORTS' => [
             'analytics.view'    => 'Analytics View',
             'ai_studio.view'    => 'AI Studio Tools View',
+            'ai_studio.manage'  => 'AI Studio Tools Manage (Nano Banana)',
         ],
         'FINANCE' => [
             'finance.view'      => 'Finance View',
