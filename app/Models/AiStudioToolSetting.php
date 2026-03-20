@@ -6,11 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class AiStudioToolSetting extends Model
 {
-    protected $fillable = ['tool_key', 'is_enabled', 'model_settings'];
+    protected $fillable = ['tool_key', 'is_enabled'];
 
     protected $casts = [
-        'is_enabled'     => 'boolean',
-        'model_settings' => 'array',
+        'is_enabled' => 'boolean',
     ];
 
     /** Tool key to store frontend value (for Select). */
