@@ -128,6 +128,7 @@ class SiteSetting extends Model
     public static function getNanoBananaSettings(): array
     {
         return [
+            'model_version' => '71516450bdbeafc41df33ad538bc8cc6a90f80038a563b1260531c02d694f4fd',
             'default_aspect_ratio' => '1:1',
             'default_resolution' => '1K',
             'default_output_format' => 'jpg',
