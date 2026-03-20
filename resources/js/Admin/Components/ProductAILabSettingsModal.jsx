@@ -268,27 +268,27 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 overflow-x-auto">
+        <div className="flex flex-wrap gap-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 pb-2">
           <button
             onClick={() => setActiveTab('settings')}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'settings'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
-            <SettingsIcon size={16} className="inline mr-1.5" />
+            <SettingsIcon size={16} />
             Settings
           </button>
           <button
             onClick={() => setActiveTab('reference-types')}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'reference-types'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
-            <Layers size={16} className="inline mr-1.5" />
+            <Layers size={16} />
             Reference Types
           </button>
         </div>
