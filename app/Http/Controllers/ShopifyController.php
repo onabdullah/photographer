@@ -241,4 +241,90 @@ class ShopifyController extends Controller
             ],
         ]);
     }
+
+    /**
+     * API endpoint to fetch Nano Banana settings (for dynamic merchant UI updates).
+     */
+    public function getAiStudioSettings(Request $request)
+    {
+        if (! $this->shopDomain($request)) {
+            return response()->json(['message' => 'Shop not authenticated.'], 403);
+        }
+
+        $nanoSettings = SiteSetting::getNanoBananaSettings();
+        $features = is_array($nanoSettings['features_enabled'] ?? null) ? $nanoSettings['features_enabled'] : [];
+        $guardrails = is_array($nanoSettings['cost_guardrails'] ?? null) ? $nanoSettings['cost_guardrails'] : [];
+
+        $defaultReferenceCategories = [
+            [
+                'id' => 'style_ref',
+                'name' => 'Style Reference',
+                'description' => 'Guide the AI to match a specific aesthetic, mood, or visual style',
+                'prepend_prompt' => 'Match the visual style and aesthetic shown in the reference image.',
+                'is_default' => true,
+            ],
+            [
+                'id' => 'face_ref',
+                'name' => 'Face Reference',
+                'description' => 'Ensure the subject\'s facial features match the reference',
+                'prepend_prompt' => 'Maintain the facial features and expression shown in the reference image.',
+                'is_default' => true,
+            ],
+            [
+                'id' => 'pose_ref',
+                'name' => 'Pose Reference',
+                'description' => 'Control the subject\'s posture and positioning',
+                'prepend_prompt' => 'Position the subject in the pose shown in the reference image.',
+                'is_default' => true,
+            ],
+        ];
+
+        // Include custom reference categories from admin settings
+        $customReferenceCategories = $nanoSettings['reference_categories'] ?? [];
+        $allReferenceCategories = array_merge($defaultReferenceCategories, $customReferenceCategories);
+
+        $allAspectRatios = [
+            ['value' => '1:1', 'label' => '1:1'],
+            ['value' => '4:3', 'label' => '4:3'],
+            ['value' => '3:4', 'label' => '3:4'],
+            ['value' => '16:9', 'label' => '16:9'],
+            ['value' => '9:16', 'label' => '9:16'],
+        ];
+
+        $allResolutions = [
+            ['value' => '1K', 'label' => '1K', 'hint' => 'Standard', 'extraCredits' => 0],
+            ['value' => '2K', 'label' => '2K', 'hint' => 'HD', 'extraCredits' => 1],
+            ['value' => '4K', 'label' => '4K', 'hint' => 'Ultra HD', 'extraCredits' => 3],
+        ];
+
+        $visibleAspectRatios = $allAspectRatios;
+        $visibleResolutions = $allResolutions;
+
+        if (isset($guardrails['lock_aspect_ratios']) && is_array($guardrails['lock_aspect_ratios'])) {
+            $lockedAspects = $guardrails['lock_aspect_ratios'];
+            $visibleAspectRatios = array_filter($allAspectRatios, function ($opt) use ($lockedAspects) {
+                return in_array($opt['value'], $lockedAspects, true);
+            });
+            $visibleAspectRatios = array_values($visibleAspectRatios);
+        }
+
+        if (isset($guardrails['lock_resolutions']) && is_array($guardrails['lock_resolutions'])) {
+            $lockedResolutions = $guardrails['lock_resolutions'];
+            $visibleResolutions = array_filter($allResolutions, function ($opt) use ($lockedResolutions) {
+                return in_array($opt['value'], $lockedResolutions, true);
+            });
+            $visibleResolutions = array_values($visibleResolutions);
+        }
+
+        return response()->json([
+            'reference_categories' => $allReferenceCategories,
+            'visible_aspect_ratios' => $visibleAspectRatios,
+            'visible_resolutions' => $visibleResolutions,
+            'features' => [
+                'google_search' => (bool) ($features['google_search'] ?? false),
+                'image_search' => (bool) ($features['image_search'] ?? false),
+            ],
+            'guardrails' => $guardrails,
+        ]);
+    }
 }

@@ -33,6 +33,7 @@ Route::middleware(['verify.shopify', \App\Http\Middleware\SyncShopDetailsWhenMis
     // AI Studio Smart Router – single generate endpoint + async job polling
     Route::post('/api/ai-studio/generate', [\App\Http\Controllers\AiRouterController::class, 'generate'])->name('api.ai-studio.generate');
     Route::get('/api/ai-studio/job/{jobId}', [\App\Http\Controllers\AiRouterController::class, 'jobStatus'])->name('api.ai-studio.job');
+    Route::get('/api/ai-studio/settings', [\App\Http\Controllers\ShopifyController::class, 'getAiStudioSettings'])->name('api.ai-studio.settings');
 
     // Settings
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'settings'])->name('settings');

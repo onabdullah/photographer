@@ -51,6 +51,30 @@ const RESOLUTION_OPTIONS = [
   { value: '4K', label: '4K', hint: 'Ultra HD',   extraCredits: 3 },
 ];
 
+const DEFAULT_REFERENCE_CATEGORIES = [
+  {
+    id: 'style_ref',
+    name: 'Style Reference',
+    description: 'Guide the AI to match a specific aesthetic, mood, or visual style',
+    prepend_prompt: 'Match the visual style and aesthetic shown in the reference image.',
+    is_default: true,
+  },
+  {
+    id: 'face_ref',
+    name: 'Face Reference',
+    description: 'Ensure the subject\'s facial features match the reference',
+    prepend_prompt: 'Maintain the facial features and expression shown in the reference image.',
+    is_default: true,
+  },
+  {
+    id: 'pose_ref',
+    name: 'Pose Reference',
+    description: 'Control the subject\'s posture and positioning',
+    prepend_prompt: 'Position the subject in the pose shown in the reference image.',
+    is_default: true,
+  },
+];
+
 const GALLERY_TOOL_OPTIONS = [
   { value: 'all',               label: 'All tools' },
   { value: 'universal_generate', label: 'Product AI Lab (VTO)' },
@@ -181,14 +205,15 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
   const [generationId, setGenerationId]           = useState(null);
   const [toast, setToast]                         = useState(null);
   const [recentGenerations, setRecentGenerations] = useState([]);
+  const [settings, setSettings]                   = useState(null);
+  const [visibleAspectRatios, setVisibleAspectRatios] = useState(ASPECT_RATIO_OPTIONS);
+  const [visibleResolutions, setVisibleResolutions] = useState(RESOLUTION_OPTIONS);
+  const [referenceCategories, setReferenceCategories] = useState(DEFAULT_REFERENCE_CATEGORIES);
+  const [selectedReferences, setSelectedReferences] = useState({});
 
   const [browseModalOpen, setBrowseModalOpen]     = useState(false);
   /* Pro Reference Drawer */
   const [drawerOpen, setDrawerOpen]     = useState(false);
-  const [styleRef, setStyleRef]         = useState(null);
-  const [faceRef, setFaceRef]           = useState(null);
-
-  const [poseRef, setPoseRef]           = useState(null);
   const pollRef   = useRef(null);
   const pollCount = useRef(0);
 
@@ -198,12 +223,38 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
   const isDone         = processingStatus === 'done';
   const hasProduct     = Boolean(productImage);
   const hasPrompt      = scenePrompt.trim().length > 0;
-  const hasRefs        = Boolean(styleRef || faceRef || poseRef);
+  const hasRefs        = Object.keys(selectedReferences).length > 0;
   const hasSearchGrounding = (googleSearchAvailable && googleSearchEnabled) || (imageSearchAvailable && imageSearchEnabled);
   const creditsNeeded  = 2 + resolutionExtraCredits(resolution) + (hasRefs ? 2 : 0);
   const canGenerate    = hasProduct && hasPrompt && !isScanning;
   const remainingAfter = Math.max(0, credits - creditsNeeded);
   const processingLabel = PROCESSING_MESSAGES[processingMsgIdx % PROCESSING_MESSAGES.length];
+
+  /* ── Fetch Settings ── */
+  useEffect(() => {
+    axios.get('/shopify/api/ai-studio/settings')
+      .then((res) => {
+        const data = res.data;
+        setSettings(data);
+
+        if (data.reference_categories && Array.isArray(data.reference_categories)) {
+          setReferenceCategories(data.reference_categories);
+        }
+
+        if (data.visible_aspect_ratios && Array.isArray(data.visible_aspect_ratios)) {
+          setVisibleAspectRatios(data.visible_aspect_ratios);
+        }
+
+        if (data.visible_resolutions && Array.isArray(data.visible_resolutions)) {
+          setVisibleResolutions(data.visible_resolutions);
+        }
+      })
+      .catch(() => {
+        setVisibleAspectRatios(ASPECT_RATIO_OPTIONS);
+        setVisibleResolutions(RESOLUTION_OPTIONS);
+        setReferenceCategories(DEFAULT_REFERENCE_CATEGORIES);
+      });
+  }, []);
 
   /* ── Toast ── */
   const showToast    = useCallback((msg, isError = false) => setToast({ message: msg, isError }), []);
@@ -280,11 +331,6 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
     showToast('Image selected');
   }, [showToast]);
 
-  const makeRefDropHandler = (setter) => (_all, accepted) => {
-    const file = accepted[0];
-    if (file) setter(URL.createObjectURL(file));
-  };
-
   /* ── Reset ── */
   const handleReset = useCallback(() => {
     setProductImage(null);
@@ -293,9 +339,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
     setProcessingStatus('idle');
     setJobId(null);
     setGenerationId(null);
-    setStyleRef(null);
-    setFaceRef(null);
-    setPoseRef(null);
+    setSelectedReferences({});
     setGoogleSearchEnabled(false);
     setImageSearchEnabled(false);
     setDrawerOpen(false);
@@ -323,15 +367,11 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
       const productBlob = await fetch(productImage).then((r) => r.blob());
       form.append('main_image', productBlob, 'product.png');
 
-      const refEntries = [
-        ['style_ref', styleRef],
-        ['face_ref',  faceRef],
-        ['pose_ref',  poseRef],
-      ];
-      for (const [key, url] of refEntries) {
+      const refEntries = Object.entries(selectedReferences);
+      for (const [refId, url] of refEntries) {
         if (url) {
           const blob = await fetch(url).then((r) => r.blob());
-          form.append(`reference_images[${key}]`, blob, `${key}.png`);
+          form.append(`reference_images[${refId}]`, blob, `${refId}.png`);
         }
       }
 
@@ -569,7 +609,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                   <BlockStack gap="200">
                     <Text variant="bodySm" tone="subdued" as="p">Aspect Ratio</Text>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {ASPECT_RATIO_OPTIONS.map((opt) => (
+                      {visibleAspectRatios.map((opt) => (
                         <PillButton
                           key={opt.value}
                           selected={aspectRatio === opt.value}
@@ -585,7 +625,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                   <BlockStack gap="200">
                     <Text variant="bodySm" tone="subdued" as="p">Resolution</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
-                      {RESOLUTION_OPTIONS.map((opt) => (
+                      {visibleResolutions.map((opt) => (
                         <PillButton
                           key={opt.value}
                           selected={resolution === opt.value}
@@ -637,7 +677,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                             fontWeight: 700,
                           }}
                         >
-                          {[styleRef, faceRef, poseRef].filter(Boolean).length} active
+                          {Object.keys(selectedReferences).length} active
                         </span>
                       )}
                     </button>
@@ -679,7 +719,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                           <div
                             style={{
                               display: 'grid',
-                              gridTemplateColumns: '1fr 1fr 1fr',
+                              gridTemplateColumns: referenceCategories.length === 1 ? '1fr' : referenceCategories.length === 2 ? '1fr 1fr' : '1fr 1fr 1fr',
                               gap: 12,
                               background: 'var(--p-color-bg-surface-secondary)',
                               borderRadius: 10,
@@ -687,24 +727,50 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                               border: `1px solid var(--p-color-border)`,
                             }}
                           >
-                            <MiniDropZone
-                              label="Style Ref"
-                              preview={styleRef}
-                              onDrop={makeRefDropHandler(setStyleRef)}
-                              onRemove={() => setStyleRef(null)}
-                            />
-                            <MiniDropZone
-                              label="Face Ref"
-                              preview={faceRef}
-                              onDrop={makeRefDropHandler(setFaceRef)}
-                              onRemove={() => setFaceRef(null)}
-                            />
-                            <MiniDropZone
-                              label="Pose Ref"
-                              preview={poseRef}
-                              onDrop={makeRefDropHandler(setPoseRef)}
-                              onRemove={() => setPoseRef(null)}
-                            />
+                            {referenceCategories.map((category) => (
+                              <BlockStack key={category.id} gap="100">
+                                <BlockStack gap="50">
+                                  <Text variant="bodySm" as="p" tone="subdued">{category.name}</Text>
+                                  <Text variant="bodySm" as="p" tone="subdued" style={{ fontSize: 11, opacity: 0.75 }}>
+                                    {category.description}
+                                  </Text>
+                                </BlockStack>
+                                <MiniDropZone
+                                  label={category.name}
+                                  preview={selectedReferences[category.id] || null}
+                                  onDrop={(all, accepted) => {
+                                    const file = accepted[0];
+                                    if (file) {
+                                      setSelectedReferences((prev) => ({
+                                        ...prev,
+                                        [category.id]: URL.createObjectURL(file),
+                                      }));
+                                    }
+                                  }}
+                                  onRemove={() => {
+                                    setSelectedReferences((prev) => {
+                                      const updated = { ...prev };
+                                      delete updated[category.id];
+                                      return updated;
+                                    });
+                                  }}
+                                />
+                                {!category.is_default && (
+                                  <InlineStack gap="100">
+                                    <Button variant="plain" size="slim" onClick={() => {
+                                      // Edit functionality for admin-created references
+                                    }}>
+                                      Edit
+                                    </Button>
+                                    <Button variant="plain" size="slim" tone="critical" onClick={() => {
+                                      // Delete functionality for admin-created references
+                                    }}>
+                                      Delete
+                                    </Button>
+                                  </InlineStack>
+                                )}
+                              </BlockStack>
+                            ))}
                           </div>
                         </BlockStack>
                       </Box>
