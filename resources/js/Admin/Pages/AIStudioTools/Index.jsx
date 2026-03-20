@@ -277,7 +277,7 @@ export default function AIStudioToolsIndex({
                                                 <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{t.used_in_production?.toLocaleString() ?? 0}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center justify-between gap-2 pt-2 flex-wrap">
+                                        <div className="flex flex-col gap-2 pt-2">
                                             <div className="flex items-center gap-3 text-[10px] text-gray-500 dark:text-gray-400">
                                                 <span className="font-medium tabular-nums">
                                                     {t.estimated_rate_per_image_usd != null && t.estimated_rate_per_image_usd > 0
@@ -288,29 +288,32 @@ export default function AIStudioToolsIndex({
                                                     Consumed: {t.consumed_usd != null && t.consumed_usd > 0 ? `$${Number(t.consumed_usd).toFixed(2)}` : '$0'}
                                                 </span>
                                             </div>
-                                            <select
-                                                value={t.is_enabled ? 'enabled' : 'disabled'}
-                                                onChange={(e) => {
-                                                    const isEnabled = e.target.value === 'enabled';
-                                                    router.patch('/admin/ai-studio-tools/settings', { tool_key: t.key, is_enabled: isEnabled }, { preserveScroll: true });
-                                                }}
-                                                className={`min-h-[28px] px-2.5 py-1 text-xs font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-colors appearance-none bg-no-repeat pr-7 ${
-                                                    t.is_enabled
-                                                        ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25 dark:border-emerald-500/30'
-                                                        : 'bg-gray-500/10 dark:bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-400/25 dark:border-gray-500/30'
-                                                }`}
-                                                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundPosition: 'right 0.5rem center' }}
-                                                aria-label={`${t.label} visibility on store`}
-                                            >
-                                                <option value="enabled">Show on store</option>
-                                                <option value="disabled">Hidden</option>
-                                            </select>
-                                            <button
-                                                className="min-h-[28px] px-3 py-1 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-1.5"
-                                                title="Settings"
-                                            >
-                                                <Settings size={14} />
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <select
+                                                    value={t.is_enabled ? 'enabled' : 'disabled'}
+                                                    onChange={(e) => {
+                                                        const isEnabled = e.target.value === 'enabled';
+                                                        router.patch('/admin/ai-studio-tools/settings', { tool_key: t.key, is_enabled: isEnabled }, { preserveScroll: true });
+                                                    }}
+                                                    className={`flex-1 min-h-[28px] px-2.5 py-1 text-xs font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-colors appearance-none bg-no-repeat pr-7 ${
+                                                        t.is_enabled
+                                                            ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25 dark:border-emerald-500/30'
+                                                            : 'bg-gray-500/10 dark:bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-400/25 dark:border-gray-500/30'
+                                                    }`}
+                                                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundPosition: 'right 0.5rem center' }}
+                                                    aria-label={`${t.label} visibility on store`}
+                                                >
+                                                    <option value="enabled">Show on store</option>
+                                                    <option value="disabled">Hidden</option>
+                                                </select>
+                                                <button
+                                                    className="min-h-[28px] px-3 py-1 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-1.5"
+                                                    title="Settings"
+                                                >
+                                                    <Settings size={14} />
+                                                    Settings
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
