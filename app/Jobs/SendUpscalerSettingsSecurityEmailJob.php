@@ -19,7 +19,7 @@ class SendUpscalerSettingsSecurityEmailJob implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public AdminUser $admin,
+        public int $adminId,
         public array $changes,
         public bool $isReset = false,
     ) {
@@ -30,6 +30,12 @@ class SendUpscalerSettingsSecurityEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
+        // Get the admin user who made the change
+        $admin = AdminUser::find($this->adminId);
+        if (!$admin) {
+            return;
+        }
+
         // Find all super-admins to notify
         $superAdmins = AdminUser::whereHas('adminRoles', function ($query) {
             $query->where('code', 'super_admin');
@@ -37,7 +43,7 @@ class SendUpscalerSettingsSecurityEmailJob implements ShouldQueue
 
         foreach ($superAdmins as $superAdmin) {
             Mail::to($superAdmin->email)->send(
-                new UpscalerSettingsChangedMail($this->admin, $this->changes, $this->isReset)
+                new UpscalerSettingsChangedMail($admin, $this->changes, $this->isReset)
             );
         }
     }

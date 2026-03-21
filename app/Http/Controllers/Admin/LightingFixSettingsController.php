@@ -229,8 +229,8 @@ class LightingFixSettingsController extends Controller
                     'changes' => $changes,
                 ]);
 
-                // Dispatch security email job to super-admin
-                SendLightingFixSettingsSecurityEmailJob::dispatch($admin, $changes);
+                // Dispatch security email job to super-admin (pass ID, not model)
+                SendLightingFixSettingsSecurityEmailJob::dispatch($admin->id, $changes);
             }
 
             return response()->json([
@@ -299,7 +299,7 @@ class LightingFixSettingsController extends Controller
             }
 
             if (!empty($changes)) {
-                SendLightingFixSettingsSecurityEmailJob::dispatch($admin, $changes, isReset: true);
+                SendLightingFixSettingsSecurityEmailJob::dispatch($admin->id, $changes, isReset: true);
             }
 
             return response()->json([

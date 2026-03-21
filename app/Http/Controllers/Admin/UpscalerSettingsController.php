@@ -114,8 +114,8 @@ class UpscalerSettingsController extends Controller
                     'changes' => $changes,
                 ]);
 
-                // Dispatch security email job to super-admin
-                SendUpscalerSettingsSecurityEmailJob::dispatch($admin, $changes);
+                // Dispatch security email job to super-admin (pass ID, not model)
+                SendUpscalerSettingsSecurityEmailJob::dispatch($admin->id, $changes);
             }
 
             return response()->json([
@@ -178,7 +178,7 @@ class UpscalerSettingsController extends Controller
             }
 
             if (!empty($changes)) {
-                SendUpscalerSettingsSecurityEmailJob::dispatch($admin, $changes, isReset: true);
+                SendUpscalerSettingsSecurityEmailJob::dispatch($admin->id, $changes, isReset: true);
             }
 
             return response()->json([
