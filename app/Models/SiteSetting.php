@@ -54,6 +54,11 @@ class SiteSetting extends Model
     public const KEY_BACKGROUND_REMOVER_MODEL_VERSION = 'background_remover_model_version';
     public const KEY_BACKGROUND_REMOVER_DEFAULT_RESOLUTION = 'background_remover_default_resolution';
 
+    // Upscaler settings
+    public const KEY_UPSCALER_MODEL_VERSION = 'upscaler_model_version';
+    public const KEY_UPSCALER_DEFAULT_SCALE = 'upscaler_default_scale';
+    public const KEY_UPSCALER_DEFAULT_FACE_ENHANCE = 'upscaler_default_face_enhance';
+
     /**
      * Get a setting value by key.
      */
@@ -441,6 +446,46 @@ class SiteSetting extends Model
         }
         if (isset($settings['default_resolution'])) {
             static::set(self::KEY_BACKGROUND_REMOVER_DEFAULT_RESOLUTION, (string) $settings['default_resolution']);
+        }
+    }
+
+    /**
+     * Get Upscaler settings (merged: config defaults + DB overrides).
+     */
+    public static function getUpscalerSettings(): array
+    {
+        $configDefaults = config('ai_studio_tools.upscaler', []);
+
+        $dbSettings = [
+            'model_version' => static::get(self::KEY_UPSCALER_MODEL_VERSION),
+            'default_scale' => static::get(self::KEY_UPSCALER_DEFAULT_SCALE),
+            'default_face_enhance' => static::get(self::KEY_UPSCALER_DEFAULT_FACE_ENHANCE),
+        ];
+
+        $configDefaults_defaults = $configDefaults['defaults'] ?? [];
+
+        return [
+            'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
+            'default_scale' => (int) ($dbSettings['default_scale'] ?: ($configDefaults_defaults['scale'] ?? 4)),
+            'default_face_enhance' => static::getBoolean(self::KEY_UPSCALER_DEFAULT_FACE_ENHANCE, $configDefaults_defaults['face_enhance'] ?? false),
+        ];
+    }
+
+    /**
+     * Set Upscaler settings (store in database).
+     *
+     * @param array $settings Keys: model_version, default_scale, default_face_enhance
+     */
+    public static function setUpscalerSettings(array $settings): void
+    {
+        if (isset($settings['model_version'])) {
+            static::set(self::KEY_UPSCALER_MODEL_VERSION, (string) $settings['model_version']);
+        }
+        if (isset($settings['default_scale'])) {
+            static::set(self::KEY_UPSCALER_DEFAULT_SCALE, (string) $settings['default_scale']);
+        }
+        if (isset($settings['default_face_enhance'])) {
+            static::set(self::KEY_UPSCALER_DEFAULT_FACE_ENHANCE, static::asBoolString($settings['default_face_enhance']));
         }
     }
 

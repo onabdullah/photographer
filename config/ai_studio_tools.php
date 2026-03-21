@@ -316,6 +316,32 @@ return [
         // Cost per image (Replicate pricing - fixed rate for BiRefNet)
         'cost_per_image' => 0.0023,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Upscaler Configuration
+    | Uses: nightmareai/real-esrgan (Replicate API)
+    | Purpose: Upscale images with optional face enhancement
+    |--------------------------------------------------------------------------
+    */
+    'upscaler' => [
+        'model_version' => 'e0e41191a09250ae4688a43ce19e639c8fef9ca48fb2834d12b78b52532bd4a6',
+
+        'defaults' => [
+            'scale' => 4,
+            'face_enhance' => false,
+        ],
+
+        'supported_fields' => [
+            'scale' => [
+                'min' => 1,
+                'max' => 10,
+            ],
+        ],
+
+        // Cost per image (Replicate pricing - fixed rate for Real-ESRGAN)
+        'cost_per_image' => 0.0023,
+    ],
 ];
 
 

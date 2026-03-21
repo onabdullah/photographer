@@ -357,6 +357,16 @@ Route::middleware(['auth:admin'])->group(function () {
             ->name('background-remover-settings.reset');
     });
 
+    // Upscaler Settings (Model version, scale, face enhance, etc.)
+    Route::prefix('upscaler-settings')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\UpscalerSettingsController::class, 'show'])
+            ->name('upscaler-settings.show');
+        Route::put('/', [\App\Http\Controllers\Admin\UpscalerSettingsController::class, 'update'])
+            ->name('upscaler-settings.update');
+        Route::post('/reset', [\App\Http\Controllers\Admin\UpscalerSettingsController::class, 'reset'])
+            ->name('upscaler-settings.reset');
+    });
+
     // Dashboard Content Management
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
         ->middleware('admin.permission:settings.manage')
