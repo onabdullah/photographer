@@ -342,6 +342,52 @@ return [
         // Cost per image (Replicate pricing - fixed rate for Real-ESRGAN)
         'cost_per_image' => 0.0023,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lighting Fix Configuration
+    | Uses: zsxkib/ic-light (Replicate API)
+    | Purpose: Apply relighting and lighting effects to product images
+    |--------------------------------------------------------------------------
+    */
+    'lighting_fix' => [
+        'model_version' => 'd41bcb10d8c159868f4cfbd7c6a2ca01484f7d39e4613419d5952c61562f1ba7',
+
+        'defaults' => [
+            'appended_prompt' => 'best quality',
+            'negative_prompt' => 'lowres, bad anatomy, bad hands, cropped, worst quality',
+            'light_source' => 'None',
+            'output_format' => 'webp',
+            'width' => 512,
+            'height' => 640,
+            'cfg' => 2,
+            'steps' => 25,
+        ],
+
+        'supported_fields' => [
+            'light_source' => [
+                'None',
+                'Left Light',
+                'Right Light',
+                'Top Light',
+                'Bottom Light',
+            ],
+            'output_format' => ['webp', 'jpg', 'png'],
+            'width' => [256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024],
+            'height' => [256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024],
+            'cfg' => [
+                'min' => 1,
+                'max' => 32,
+            ],
+            'steps' => [
+                'min' => 1,
+                'max' => 100,
+            ],
+        ],
+
+        // Cost per image (Replicate pricing)
+        'cost_per_image' => 0.0035,
+    ],
 ];
 
 

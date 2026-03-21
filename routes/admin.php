@@ -367,6 +367,16 @@ Route::middleware(['auth:admin'])->group(function () {
             ->name('upscaler-settings.reset');
     });
 
+    // Lighting Fix Settings (Model version, prompts, light source, dimensions, inference params)
+    Route::prefix('lighting-fix-settings')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\LightingFixSettingsController::class, 'show'])
+            ->name('lighting-fix-settings.show');
+        Route::put('/', [\App\Http\Controllers\Admin\LightingFixSettingsController::class, 'update'])
+            ->name('lighting-fix-settings.update');
+        Route::post('/reset', [\App\Http\Controllers\Admin\LightingFixSettingsController::class, 'reset'])
+            ->name('lighting-fix-settings.reset');
+    });
+
     // Dashboard Content Management
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
         ->middleware('admin.permission:settings.manage')

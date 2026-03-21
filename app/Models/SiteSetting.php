@@ -59,6 +59,17 @@ class SiteSetting extends Model
     public const KEY_UPSCALER_DEFAULT_SCALE = 'upscaler_default_scale';
     public const KEY_UPSCALER_DEFAULT_FACE_ENHANCE = 'upscaler_default_face_enhance';
 
+    // Lighting Fix settings
+    public const KEY_LIGHTING_FIX_MODEL_VERSION = 'lighting_fix_model_version';
+    public const KEY_LIGHTING_FIX_APPENDED_PROMPT = 'lighting_fix_appended_prompt';
+    public const KEY_LIGHTING_FIX_NEGATIVE_PROMPT = 'lighting_fix_negative_prompt';
+    public const KEY_LIGHTING_FIX_DEFAULT_LIGHT_SOURCE = 'lighting_fix_default_light_source';
+    public const KEY_LIGHTING_FIX_DEFAULT_OUTPUT_FORMAT = 'lighting_fix_default_output_format';
+    public const KEY_LIGHTING_FIX_DEFAULT_WIDTH = 'lighting_fix_default_width';
+    public const KEY_LIGHTING_FIX_DEFAULT_HEIGHT = 'lighting_fix_default_height';
+    public const KEY_LIGHTING_FIX_DEFAULT_CFG = 'lighting_fix_default_cfg';
+    public const KEY_LIGHTING_FIX_DEFAULT_STEPS = 'lighting_fix_default_steps';
+
     /**
      * Get a setting value by key.
      */
@@ -486,6 +497,77 @@ class SiteSetting extends Model
         }
         if (isset($settings['default_face_enhance'])) {
             static::set(self::KEY_UPSCALER_DEFAULT_FACE_ENHANCE, static::asBoolString($settings['default_face_enhance']));
+        }
+    }
+
+    /**
+     * Get Lighting Fix settings (merged: config defaults + DB overrides).
+     */
+    public static function getLightingFixSettings(): array
+    {
+        $configDefaults = config('ai_studio_tools.lighting_fix', []);
+
+        $dbSettings = [
+            'model_version' => static::get(self::KEY_LIGHTING_FIX_MODEL_VERSION),
+            'appended_prompt' => static::get(self::KEY_LIGHTING_FIX_APPENDED_PROMPT),
+            'negative_prompt' => static::get(self::KEY_LIGHTING_FIX_NEGATIVE_PROMPT),
+            'default_light_source' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_LIGHT_SOURCE),
+            'default_output_format' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_OUTPUT_FORMAT),
+            'default_width' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_WIDTH),
+            'default_height' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_HEIGHT),
+            'default_cfg' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_CFG),
+            'default_steps' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_STEPS),
+        ];
+
+        $configDefaults_defaults = $configDefaults['defaults'] ?? [];
+
+        return [
+            'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
+            'appended_prompt' => trim((string) ($dbSettings['appended_prompt'] ?: ($configDefaults_defaults['appended_prompt'] ?? 'best quality'))),
+            'negative_prompt' => trim((string) ($dbSettings['negative_prompt'] ?: ($configDefaults_defaults['negative_prompt'] ?? 'lowres, bad anatomy, bad hands, cropped, worst quality'))),
+            'default_light_source' => (string) ($dbSettings['default_light_source'] ?: ($configDefaults_defaults['light_source'] ?? 'None')),
+            'default_output_format' => (string) ($dbSettings['default_output_format'] ?: ($configDefaults_defaults['output_format'] ?? 'webp')),
+            'default_width' => (int) ($dbSettings['default_width'] ?: ($configDefaults_defaults['width'] ?? 512)),
+            'default_height' => (int) ($dbSettings['default_height'] ?: ($configDefaults_defaults['height'] ?? 640)),
+            'default_cfg' => (float) ($dbSettings['default_cfg'] ?: ($configDefaults_defaults['cfg'] ?? 2)),
+            'default_steps' => (int) ($dbSettings['default_steps'] ?: ($configDefaults_defaults['steps'] ?? 25)),
+        ];
+    }
+
+    /**
+     * Set Lighting Fix settings (store in database).
+     *
+     * @param array $settings Keys: model_version, appended_prompt, negative_prompt, default_light_source,
+     *                        default_output_format, default_width, default_height, default_cfg, default_steps
+     */
+    public static function setLightingFixSettings(array $settings): void
+    {
+        if (isset($settings['model_version'])) {
+            static::set(self::KEY_LIGHTING_FIX_MODEL_VERSION, (string) $settings['model_version']);
+        }
+        if (isset($settings['appended_prompt'])) {
+            static::set(self::KEY_LIGHTING_FIX_APPENDED_PROMPT, (string) $settings['appended_prompt']);
+        }
+        if (isset($settings['negative_prompt'])) {
+            static::set(self::KEY_LIGHTING_FIX_NEGATIVE_PROMPT, (string) $settings['negative_prompt']);
+        }
+        if (isset($settings['default_light_source'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_LIGHT_SOURCE, (string) $settings['default_light_source']);
+        }
+        if (isset($settings['default_output_format'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_OUTPUT_FORMAT, (string) $settings['default_output_format']);
+        }
+        if (isset($settings['default_width'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_WIDTH, (string) $settings['default_width']);
+        }
+        if (isset($settings['default_height'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_HEIGHT, (string) $settings['default_height']);
+        }
+        if (isset($settings['default_cfg'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_CFG, (string) $settings['default_cfg']);
+        }
+        if (isset($settings['default_steps'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_STEPS, (string) $settings['default_steps']);
         }
     }
 
