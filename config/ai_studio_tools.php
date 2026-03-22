@@ -362,6 +362,11 @@ return [
             'height' => 640,
             'cfg' => 2,
             'steps' => 25,
+            'highres_scale' => 1.5,
+            'lowres_denoise' => 0.9,
+            'highres_denoise' => 0.5,
+            'output_quality' => 80,
+            'number_of_images' => 1,
         ],
 
         'supported_fields' => [
@@ -382,6 +387,26 @@ return [
             'steps' => [
                 'min' => 1,
                 'max' => 100,
+            ],
+            'highres_scale' => [
+                'min' => 1,
+                'max' => 3,
+            ],
+            'lowres_denoise' => [
+                'min' => 0.1,
+                'max' => 1,
+            ],
+            'highres_denoise' => [
+                'min' => 0.1,
+                'max' => 1,
+            ],
+            'output_quality' => [
+                'min' => 0,
+                'max' => 100,
+            ],
+            'number_of_images' => [
+                'min' => 1,
+                'max' => 12,
             ],
         ],
 

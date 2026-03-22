@@ -10,6 +10,16 @@ const CFG_MIN = 1;
 const CFG_MAX = 32;
 const STEPS_MIN = 1;
 const STEPS_MAX = 100;
+const HIGHRES_SCALE_MIN = 1;
+const HIGHRES_SCALE_MAX = 3;
+const LOWRES_DENOISE_MIN = 0.1;
+const LOWRES_DENOISE_MAX = 1;
+const HIGHRES_DENOISE_MIN = 0.1;
+const HIGHRES_DENOISE_MAX = 1;
+const OUTPUT_QUALITY_MIN = 0;
+const OUTPUT_QUALITY_MAX = 100;
+const NUM_IMAGES_MIN = 1;
+const NUM_IMAGES_MAX = 12;
 const COST_PER_IMAGE = 0.0035;
 
 export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
@@ -32,6 +42,11 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
     default_height: 640,
     default_cfg: 2,
     default_steps: 25,
+    default_highres_scale: 1.5,
+    default_lowres_denoise: 0.9,
+    default_highres_denoise: 0.5,
+    default_output_quality: 80,
+    default_number_of_images: 1,
   });
   const [originalSettings, setOriginalSettings] = useState(null);
 
@@ -321,6 +336,121 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                     </div>
                     <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
                       More steps = better quality but slower processing
+                    </p>
+                  </div>
+
+                  {/* Highres Scale */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Highres Scale: <span className="font-bold text-primary-600">{settings.default_highres_scale.toFixed(2)}×</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={HIGHRES_SCALE_MIN}
+                      max={HIGHRES_SCALE_MAX}
+                      step="0.1"
+                      value={settings.default_highres_scale}
+                      onChange={e => setSettings({ ...settings, default_highres_scale: parseFloat(e.target.value) })}
+                      className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <span>{HIGHRES_SCALE_MIN}×</span>
+                      <span>{HIGHRES_SCALE_MAX}×</span>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      Resolution multiplier for final output
+                    </p>
+                  </div>
+
+                  {/* Lowres Denoise */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Lowres Denoise: <span className="font-bold text-primary-600">{settings.default_lowres_denoise.toFixed(2)}</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={LOWRES_DENOISE_MIN}
+                      max={LOWRES_DENOISE_MAX}
+                      step="0.1"
+                      value={settings.default_lowres_denoise}
+                      onChange={e => setSettings({ ...settings, default_lowres_denoise: parseFloat(e.target.value) })}
+                      className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <span>{LOWRES_DENOISE_MIN}</span>
+                      <span>{LOWRES_DENOISE_MAX}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      Higher = more adherence to background, lower = more creative
+                    </p>
+                  </div>
+
+                  {/* Highres Denoise */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Highres Denoise: <span className="font-bold text-primary-600">{settings.default_highres_denoise.toFixed(2)}</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={HIGHRES_DENOISE_MIN}
+                      max={HIGHRES_DENOISE_MAX}
+                      step="0.1"
+                      value={settings.default_highres_denoise}
+                      onChange={e => setSettings({ ...settings, default_highres_denoise: parseFloat(e.target.value) })}
+                      className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <span>{HIGHRES_DENOISE_MIN}</span>
+                      <span>{HIGHRES_DENOISE_MAX}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      Higher = more adherence to upscale, lower = more creative details
+                    </p>
+                  </div>
+
+                  {/* Output Quality */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Output Quality: <span className="font-bold text-primary-600">{settings.default_output_quality}%</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={OUTPUT_QUALITY_MIN}
+                      max={OUTPUT_QUALITY_MAX}
+                      step="1"
+                      value={settings.default_output_quality}
+                      onChange={e => setSettings({ ...settings, default_output_quality: parseInt(e.target.value) })}
+                      className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <span>{OUTPUT_QUALITY_MIN}%</span>
+                      <span>{OUTPUT_QUALITY_MAX}%</span>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      Compression quality for lossy formats (JPEG/WebP)
+                    </p>
+                  </div>
+
+                  {/* Number of Images */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Number of Images: <span className="font-bold text-primary-600">{settings.default_number_of_images}</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={NUM_IMAGES_MIN}
+                      max={NUM_IMAGES_MAX}
+                      step="1"
+                      value={settings.default_number_of_images}
+                      onChange={e => setSettings({ ...settings, default_number_of_images: parseInt(e.target.value) })}
+                      className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <span>{NUM_IMAGES_MIN}</span>
+                      <span>{NUM_IMAGES_MAX}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      How many unique images to generate per request
                     </p>
                   </div>
                 </div>

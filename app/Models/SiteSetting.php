@@ -69,6 +69,11 @@ class SiteSetting extends Model
     public const KEY_LIGHTING_FIX_DEFAULT_HEIGHT = 'lighting_fix_default_height';
     public const KEY_LIGHTING_FIX_DEFAULT_CFG = 'lighting_fix_default_cfg';
     public const KEY_LIGHTING_FIX_DEFAULT_STEPS = 'lighting_fix_default_steps';
+    public const KEY_LIGHTING_FIX_DEFAULT_HIGHRES_SCALE = 'lighting_fix_default_highres_scale';
+    public const KEY_LIGHTING_FIX_DEFAULT_LOWRES_DENOISE = 'lighting_fix_default_lowres_denoise';
+    public const KEY_LIGHTING_FIX_DEFAULT_HIGHRES_DENOISE = 'lighting_fix_default_highres_denoise';
+    public const KEY_LIGHTING_FIX_DEFAULT_OUTPUT_QUALITY = 'lighting_fix_default_output_quality';
+    public const KEY_LIGHTING_FIX_DEFAULT_NUMBER_OF_IMAGES = 'lighting_fix_default_number_of_images';
 
     /**
      * Get a setting value by key.
@@ -517,6 +522,11 @@ class SiteSetting extends Model
             'default_height' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_HEIGHT),
             'default_cfg' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_CFG),
             'default_steps' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_STEPS),
+            'default_highres_scale' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_HIGHRES_SCALE),
+            'default_lowres_denoise' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_LOWRES_DENOISE),
+            'default_highres_denoise' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_HIGHRES_DENOISE),
+            'default_output_quality' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_OUTPUT_QUALITY),
+            'default_number_of_images' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_NUMBER_OF_IMAGES),
         ];
 
         $configDefaults_defaults = $configDefaults['defaults'] ?? [];
@@ -531,6 +541,11 @@ class SiteSetting extends Model
             'default_height' => (int) ($dbSettings['default_height'] ?: ($configDefaults_defaults['height'] ?? 640)),
             'default_cfg' => (float) ($dbSettings['default_cfg'] ?: ($configDefaults_defaults['cfg'] ?? 2)),
             'default_steps' => (int) ($dbSettings['default_steps'] ?: ($configDefaults_defaults['steps'] ?? 25)),
+            'default_highres_scale' => (float) ($dbSettings['default_highres_scale'] ?: ($configDefaults_defaults['highres_scale'] ?? 1.5)),
+            'default_lowres_denoise' => (float) ($dbSettings['default_lowres_denoise'] ?: ($configDefaults_defaults['lowres_denoise'] ?? 0.9)),
+            'default_highres_denoise' => (float) ($dbSettings['default_highres_denoise'] ?: ($configDefaults_defaults['highres_denoise'] ?? 0.5)),
+            'default_output_quality' => (int) ($dbSettings['default_output_quality'] ?: ($configDefaults_defaults['output_quality'] ?? 80)),
+            'default_number_of_images' => (int) ($dbSettings['default_number_of_images'] ?: ($configDefaults_defaults['number_of_images'] ?? 1)),
         ];
     }
 
@@ -538,7 +553,9 @@ class SiteSetting extends Model
      * Set Lighting Fix settings (store in database).
      *
      * @param array $settings Keys: model_version, appended_prompt, negative_prompt, default_light_source,
-     *                        default_output_format, default_width, default_height, default_cfg, default_steps
+     *                        default_output_format, default_width, default_height, default_cfg, default_steps,
+     *                        default_highres_scale, default_lowres_denoise, default_highres_denoise,
+     *                        default_output_quality, default_number_of_images
      */
     public static function setLightingFixSettings(array $settings): void
     {
@@ -568,6 +585,21 @@ class SiteSetting extends Model
         }
         if (isset($settings['default_steps'])) {
             static::set(self::KEY_LIGHTING_FIX_DEFAULT_STEPS, (string) $settings['default_steps']);
+        }
+        if (isset($settings['default_highres_scale'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_HIGHRES_SCALE, (string) $settings['default_highres_scale']);
+        }
+        if (isset($settings['default_lowres_denoise'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_LOWRES_DENOISE, (string) $settings['default_lowres_denoise']);
+        }
+        if (isset($settings['default_highres_denoise'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_HIGHRES_DENOISE, (string) $settings['default_highres_denoise']);
+        }
+        if (isset($settings['default_output_quality'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_OUTPUT_QUALITY, (string) $settings['default_output_quality']);
+        }
+        if (isset($settings['default_number_of_images'])) {
+            static::set(self::KEY_LIGHTING_FIX_DEFAULT_NUMBER_OF_IMAGES, (string) $settings['default_number_of_images']);
         }
     }
 

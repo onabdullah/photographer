@@ -219,6 +219,96 @@ class LightingFixSettingsController extends Controller
                 }
             }
 
+            // Default highres scale
+            if ($request->filled('default_highres_scale')) {
+                $scale = (float) $request->input('default_highres_scale');
+                $scaleRange = $supportedFields['highres_scale'] ?? ['min' => 1, 'max' => 3];
+                if ($scale < $scaleRange['min'] || $scale > $scaleRange['max']) {
+                    return response()->json([
+                        'message' => "Highres scale must be between {$scaleRange['min']} and {$scaleRange['max']}",
+                    ], 422);
+                }
+                if ($scale !== $oldSettings['default_highres_scale']) {
+                    $changes['default_highres_scale'] = [
+                        'old' => $oldSettings['default_highres_scale'],
+                        'new' => $scale,
+                    ];
+                    $updates['default_highres_scale'] = $scale;
+                }
+            }
+
+            // Default lowres denoise
+            if ($request->filled('default_lowres_denoise')) {
+                $denoise = (float) $request->input('default_lowres_denoise');
+                $denoiseRange = $supportedFields['lowres_denoise'] ?? ['min' => 0.1, 'max' => 1];
+                if ($denoise < $denoiseRange['min'] || $denoise > $denoiseRange['max']) {
+                    return response()->json([
+                        'message' => "Lowres denoise must be between {$denoiseRange['min']} and {$denoiseRange['max']}",
+                    ], 422);
+                }
+                if ($denoise !== $oldSettings['default_lowres_denoise']) {
+                    $changes['default_lowres_denoise'] = [
+                        'old' => $oldSettings['default_lowres_denoise'],
+                        'new' => $denoise,
+                    ];
+                    $updates['default_lowres_denoise'] = $denoise;
+                }
+            }
+
+            // Default highres denoise
+            if ($request->filled('default_highres_denoise')) {
+                $denoise = (float) $request->input('default_highres_denoise');
+                $denoiseRange = $supportedFields['highres_denoise'] ?? ['min' => 0.1, 'max' => 1];
+                if ($denoise < $denoiseRange['min'] || $denoise > $denoiseRange['max']) {
+                    return response()->json([
+                        'message' => "Highres denoise must be between {$denoiseRange['min']} and {$denoiseRange['max']}",
+                    ], 422);
+                }
+                if ($denoise !== $oldSettings['default_highres_denoise']) {
+                    $changes['default_highres_denoise'] = [
+                        'old' => $oldSettings['default_highres_denoise'],
+                        'new' => $denoise,
+                    ];
+                    $updates['default_highres_denoise'] = $denoise;
+                }
+            }
+
+            // Default output quality
+            if ($request->filled('default_output_quality')) {
+                $quality = (int) $request->input('default_output_quality');
+                $qualityRange = $supportedFields['output_quality'] ?? ['min' => 0, 'max' => 100];
+                if ($quality < $qualityRange['min'] || $quality > $qualityRange['max']) {
+                    return response()->json([
+                        'message' => "Output quality must be between {$qualityRange['min']} and {$qualityRange['max']}",
+                    ], 422);
+                }
+                if ($quality !== $oldSettings['default_output_quality']) {
+                    $changes['default_output_quality'] = [
+                        'old' => $oldSettings['default_output_quality'],
+                        'new' => $quality,
+                    ];
+                    $updates['default_output_quality'] = $quality;
+                }
+            }
+
+            // Default number of images
+            if ($request->filled('default_number_of_images')) {
+                $numImages = (int) $request->input('default_number_of_images');
+                $imagesRange = $supportedFields['number_of_images'] ?? ['min' => 1, 'max' => 12];
+                if ($numImages < $imagesRange['min'] || $numImages > $imagesRange['max']) {
+                    return response()->json([
+                        'message' => "Number of images must be between {$imagesRange['min']} and {$imagesRange['max']}",
+                    ], 422);
+                }
+                if ($numImages !== $oldSettings['default_number_of_images']) {
+                    $changes['default_number_of_images'] = [
+                        'old' => $oldSettings['default_number_of_images'],
+                        'new' => $numImages,
+                    ];
+                    $updates['default_number_of_images'] = $numImages;
+                }
+            }
+
             // Save all updates if there are changes
             if (!empty($updates)) {
                 SiteSetting::setLightingFixSettings($updates);
@@ -274,6 +364,11 @@ class LightingFixSettingsController extends Controller
                 SiteSetting::KEY_LIGHTING_FIX_DEFAULT_HEIGHT,
                 SiteSetting::KEY_LIGHTING_FIX_DEFAULT_CFG,
                 SiteSetting::KEY_LIGHTING_FIX_DEFAULT_STEPS,
+                SiteSetting::KEY_LIGHTING_FIX_DEFAULT_HIGHRES_SCALE,
+                SiteSetting::KEY_LIGHTING_FIX_DEFAULT_LOWRES_DENOISE,
+                SiteSetting::KEY_LIGHTING_FIX_DEFAULT_HIGHRES_DENOISE,
+                SiteSetting::KEY_LIGHTING_FIX_DEFAULT_OUTPUT_QUALITY,
+                SiteSetting::KEY_LIGHTING_FIX_DEFAULT_NUMBER_OF_IMAGES,
             ];
 
             foreach ($keys as $key) {
