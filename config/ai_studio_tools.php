@@ -38,9 +38,9 @@ return [
         ],
         'enhance' => [
             'label' => 'Image Enhancer',
-            'model_name' => 'GFPGAN (tencentarc/gfpgan)',
+            'model_name' => 'Nano Banana 2 (Google Gemini)',
             'model_provider' => 'Replicate',
-            'estimated_rate_per_image_usd' => 0.0023,
+            'estimated_rate_per_image_usd' => 0.067,
         ],
         'lighting' => [
             'label' => 'Lighting Fix',
@@ -412,6 +412,69 @@ return [
 
         // Cost per image (Replicate pricing)
         'cost_per_image' => 0.0035,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Image Enhancer Configuration
+    | Uses: google/nano-banana-2 (Replicate API)
+    | Purpose: Enhance and regenerate product images with better quality/composition
+    |--------------------------------------------------------------------------
+    */
+    'enhance' => [
+        'model_version' => '71516450bdbeafc41df33ad538bc8cc6a90f80038a563b1260531c02d694f4fd',
+
+        'defaults' => [
+            'aspect_ratio' => 'match_input_image',
+            'resolution' => '1K',
+            'output_format' => 'jpg',
+        ],
+
+        'supported_fields' => [
+            'aspect_ratio' => [
+                'match_input_image',
+                '1:1',
+                '1:4',
+                '1:8',
+                '2:3',
+                '3:2',
+                '3:4',
+                '4:1',
+                '4:3',
+                '4:5',
+                '5:4',
+                '8:1',
+                '9:16',
+                '16:9',
+                '21:9',
+            ],
+            'resolution' => ['1K', '2K', '4K'],
+            'output_format' => ['jpg', 'png'],
+        ],
+
+        // Feature flags matching Replicate API boolean parameters
+        'features' => [
+            'google_search' => [
+                'enabled' => false,
+                'label' => 'Google Search Grounding',
+                'description' => 'Use Google Web Search for real-time context',
+            ],
+            'image_search' => [
+                'enabled' => false,
+                'label' => 'Image Search Grounding',
+                'description' => 'Use Google Image Search to find web images as visual references',
+            ],
+        ],
+
+        // Cost per resolution (Replicate pricing)
+        'cost_per_resolution' => [
+            '1K' => 0.067,
+            '2K' => 0.101,
+            '4K' => 0.151,
+        ],
+
+        // Cost multiplier when search grounding is enabled (+50%)
+        'cost_multiplier_with_search' => 1.5,
     ],
 ];
 

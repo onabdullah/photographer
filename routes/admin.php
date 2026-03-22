@@ -377,6 +377,16 @@ Route::middleware(['auth:admin'])->group(function () {
             ->name('lighting-fix-settings.reset');
     });
 
+    // Image Enhancer Settings (Model version, aspect ratio, resolution, output format, features)
+    Route::prefix('enhancer-settings')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\EnhancerSettingsController::class, 'show'])
+            ->name('enhancer-settings.show');
+        Route::put('/', [\App\Http\Controllers\Admin\EnhancerSettingsController::class, 'update'])
+            ->name('enhancer-settings.update');
+        Route::post('/reset', [\App\Http\Controllers\Admin\EnhancerSettingsController::class, 'reset'])
+            ->name('enhancer-settings.reset');
+    });
+
     // Dashboard Content Management
     Route::put('/dashboard-settings', [\App\Http\Controllers\Admin\DashboardSettingsController::class, 'update'])
         ->middleware('admin.permission:settings.manage')

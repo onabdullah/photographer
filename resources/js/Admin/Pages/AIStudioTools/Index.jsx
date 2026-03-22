@@ -8,6 +8,7 @@ import MagicEraserSettingsModal from '@/Admin/Components/MagicEraserSettingsModa
 import BackgroundRemoverSettingsModal from '@/Admin/Components/BackgroundRemoverSettingsModal';
 import UpscalerSettingsModal from '@/Admin/Components/UpscalerSettingsModal';
 import LightingFixSettingsModal from '@/Admin/Components/LightingFixSettingsModal';
+import EnhancerSettingsModal from '@/Admin/Components/EnhancerSettingsModal';
 
 const TOOL_COLORS = [
     '#0ea5e9',
@@ -59,6 +60,7 @@ export default function AIStudioToolsIndex({
     const [showBackgroundRemoverSettingsModal, setShowBackgroundRemoverSettingsModal] = useState(false);
     const [showUpscalerSettingsModal, setShowUpscalerSettingsModal] = useState(false);
     const [showLightingFixSettingsModal, setShowLightingFixSettingsModal] = useState(false);
+    const [showEnhancerSettingsModal, setShowEnhancerSettingsModal] = useState(false);
 
     useEffect(() => {
         setMainTab(initialTab === 'models' ? 'models' : 'overview');
@@ -331,7 +333,7 @@ export default function AIStudioToolsIndex({
                                                     <option value="enabled">Show on store</option>
                                                     <option value="disabled">Hidden</option>
                                                 </select>
-                                                {(['universal_generate', 'magic_eraser', 'background_remover', 'upscaler', 'lighting'].includes(t.key)) && (
+                                                {(['universal_generate', 'magic_eraser', 'background_remover', 'upscaler', 'lighting', 'enhance'].includes(t.key)) && (
                                                 <button
                                                     className="min-h-[28px] px-3 py-1 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-1.5 whitespace-nowrap"
                                                     title="Settings"
@@ -346,6 +348,8 @@ export default function AIStudioToolsIndex({
                                                             setShowUpscalerSettingsModal(true);
                                                         } else if (t.key === 'lighting') {
                                                             setShowLightingFixSettingsModal(true);
+                                                        } else if (t.key === 'enhance') {
+                                                            setShowEnhancerSettingsModal(true);
                                                         }
                                                     }}
                                                 >
@@ -816,6 +820,15 @@ export default function AIStudioToolsIndex({
             onClose={() => setShowLightingFixSettingsModal(false)}
             onSave={() => {
                 setShowLightingFixSettingsModal(false);
+                // Optional: refresh page or reload settings
+                window.location.reload();
+            }}
+        />
+        <EnhancerSettingsModal
+            isOpen={showEnhancerSettingsModal}
+            onClose={() => setShowEnhancerSettingsModal(false)}
+            onSave={() => {
+                setShowEnhancerSettingsModal(false);
                 // Optional: refresh page or reload settings
                 window.location.reload();
             }}
