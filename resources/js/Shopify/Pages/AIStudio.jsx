@@ -81,15 +81,25 @@ const UPSCALE_SCALE_OPTIONS = [
   { value: '8', label: '8×' },
 ];
 
-const ENHANCE_VERSION_OPTIONS = [
-  { value: 'v1.4', label: 'v1.4 (Recommended)' },
-  { value: 'v1.3', label: 'v1.3' },
-  { value: 'RestoreFormer', label: 'RestoreFormer' },
+const ENHANCE_ASPECT_RATIOS = [
+  { value: 'match_input_image', label: 'Match Input Image' },
+  { value: '1:1', label: '1:1' },
+  { value: '4:3', label: '4:3' },
+  { value: '16:9', label: '16:9' },
+  { value: '9:16', label: '9:16' },
+  { value: '3:4', label: '3:4' },
+  { value: '4:5', label: '4:5' },
 ];
 
-const ENHANCE_SCALE_OPTIONS = [
-  { value: '1', label: '1×' },
-  { value: '2', label: '2×' },
+const ENHANCE_RESOLUTIONS = [
+  { value: '1K', label: '1K - $0.067' },
+  { value: '2K', label: '2K - $0.101' },
+  { value: '4K', label: '4K - $0.151' },
+];
+
+const ENHANCE_OUTPUT_FORMATS = [
+  { value: 'jpg', label: 'JPG (Compressed)' },
+  { value: 'png', label: 'PNG (Lossless)' },
 ];
 
 const LIGHTING_PRESETS = [
@@ -522,8 +532,12 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [lightingPromptText, setLightingPromptText] = useState('');
   const [upscaleScale, setUpscaleScale] = useState('4');
   const [upscaleFaceEnhance, setUpscaleFaceEnhance] = useState(false);
-  const [enhanceVersion, setEnhanceVersion] = useState('v1.4');
-  const [enhanceScale, setEnhanceScale] = useState('2');
+  const [enhancePrompt, setEnhancePrompt] = useState('enhance and improve image quality');
+  const [enhanceAspectRatio, setEnhanceAspectRatio] = useState('match_input_image');
+  const [enhanceResolution, setEnhanceResolution] = useState('1K');
+  const [enhanceOutputFormat, setEnhanceOutputFormat] = useState('jpg');
+  const [enhanceGoogleSearch, setEnhanceGoogleSearch] = useState(false);
+  const [enhanceImageSearch, setEnhanceImageSearch] = useState(false);
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
   const [magicEraserPrompt, setMagicEraserPrompt] = useState(MAGIC_ERASER_DEFAULT_PROMPT);
   const [magicEraserAspectRatio, setMagicEraserAspectRatio] = useState('match_input_image');
@@ -802,8 +816,12 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       } else {
         throw new Error('Invalid image source');
       }
-      formData.append('version', enhanceVersion);
-      formData.append('scale', enhanceScale);
+      formData.append('prompt', enhancePrompt);
+      formData.append('aspect_ratio', enhanceAspectRatio);
+      formData.append('resolution', enhanceResolution);
+      formData.append('output_format', enhanceOutputFormat);
+      formData.append('google_search', enhanceGoogleSearch);
+      formData.append('image_search', enhanceImageSearch);
       const res = await axios.post('/shopify/tools/enhance', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -822,7 +840,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       showToast(msg, true);
       setProcessingStatus('error');
     }
-  }, [hasValidInput, inputImage, enhanceVersion, enhanceScale, showToast]);
+  }, [hasValidInput, inputImage, enhancePrompt, enhanceAspectRatio, enhanceResolution, enhanceOutputFormat, enhanceGoogleSearch, enhanceImageSearch, showToast]);
 
   const effectiveLightingPrompt = lightingPromptText.trim();
 
@@ -1893,21 +1911,45 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
 
                   {selectedTool === 'enhance' && (
                     <BlockStack gap="200">
-                      <Text variant="bodySm" as="span" tone="subdued">Enhancement version</Text>
+                      <div style={{ maxHeight: '100px', overflow: 'hidden' }}>
+                        <TextField
+                          label="Enhancement description"
+                          value={enhancePrompt}
+                          onChange={setEnhancePrompt}
+                          placeholder="e.g., improve colors, sharpen details, professional look"
+                          multiline={2}
+                          autoComplete="off"
+                          characterCount={enhancePrompt.length}
+                          maxLength={200}
+                        />
+                      </div>
                       <Select
-                        label=""
-                        labelHidden
-                        options={ENHANCE_VERSION_OPTIONS}
-                        value={enhanceVersion}
-                        onChange={setEnhanceVersion}
+                        label="Aspect ratio"
+                        options={ENHANCE_ASPECT_RATIOS}
+                        value={enhanceAspectRatio}
+                        onChange={setEnhanceAspectRatio}
                       />
-                      <Text variant="bodySm" as="span" tone="subdued">Scale / sharpness</Text>
                       <Select
-                        label=""
-                        labelHidden
-                        options={ENHANCE_SCALE_OPTIONS}
-                        value={enhanceScale}
-                        onChange={setEnhanceScale}
+                        label="Resolution"
+                        options={ENHANCE_RESOLUTIONS}
+                        value={enhanceResolution}
+                        onChange={setEnhanceResolution}
+                      />
+                      <Select
+                        label="Output format"
+                        options={ENHANCE_OUTPUT_FORMATS}
+                        value={enhanceOutputFormat}
+                        onChange={setEnhanceOutputFormat}
+                      />
+                      <Checkbox
+                        label="Google Search Grounding"
+                        checked={enhanceGoogleSearch}
+                        onChange={setEnhanceGoogleSearch}
+                      />
+                      <Checkbox
+                        label="Image Search Grounding"
+                        checked={enhanceImageSearch}
+                        onChange={setEnhanceImageSearch}
                       />
                     </BlockStack>
                   )}
