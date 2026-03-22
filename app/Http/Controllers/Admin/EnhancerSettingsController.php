@@ -40,10 +40,8 @@ class EnhancerSettingsController extends Controller
      *
      * Accepts partial updates:
      * - model_version (required for identification, but update is optional)
-     * - default_aspect_ratio
-     * - default_resolution (1K, 2K, 4K)
-     * - default_output_format (jpg, png)
-     * - features_enabled (google_search, image_search toggles)
+     * - default_scale (0-10)
+     * - default_face_enhance (boolean)
      */
     public function update(Request $request)
     {
@@ -73,72 +71,38 @@ class EnhancerSettingsController extends Controller
                 }
             }
 
-            // Default aspect ratio
-            if ($request->filled('default_aspect_ratio')) {
-                $aspectRatio = $request->input('default_aspect_ratio');
-                if (in_array($aspectRatio, $supportedFields['aspect_ratio'] ?? [], true)) {
-                    if ($aspectRatio !== $oldSettings['default_aspect_ratio']) {
-                        $changes['default_aspect_ratio'] = [
-                            'old' => $oldSettings['default_aspect_ratio'],
-                            'new' => $aspectRatio,
-                        ];
-                        $updates['default_aspect_ratio'] = $aspectRatio;
-                    }
-                } else {
+            // Default scale (0-10)
+            if ($request->filled('default_scale')) {
+                $scale = (int) $request->input('default_scale');
+                $scaleMinMax = $supportedFields['scale'] ?? [];
+                $scaleMin = $scaleMinMax['min'] ?? 0;
+                $scaleMax = $scaleMinMax['max'] ?? 10;
+
+                if ($scale < $scaleMin || $scale > $scaleMax) {
                     return response()->json([
-                        'message' => 'Invalid aspect ratio. Supported: ' . implode(', ', $supportedFields['aspect_ratio'] ?? []),
+                        'message' => "Invalid scale. Must be between {$scaleMin} and {$scaleMax}.",
                     ], 422);
+                }
+
+                if ($scale !== $oldSettings['default_scale']) {
+                    $changes['default_scale'] = [
+                        'old' => $oldSettings['default_scale'],
+                        'new' => $scale,
+                    ];
+                    $updates['default_scale'] = $scale;
                 }
             }
 
-            // Default resolution
-            if ($request->filled('default_resolution')) {
-                $resolution = $request->input('default_resolution');
-                if (in_array($resolution, $supportedFields['resolution'] ?? [], true)) {
-                    if ($resolution !== $oldSettings['default_resolution']) {
-                        $changes['default_resolution'] = [
-                            'old' => $oldSettings['default_resolution'],
-                            'new' => $resolution,
-                        ];
-                        $updates['default_resolution'] = $resolution;
-                    }
-                } else {
-                    return response()->json([
-                        'message' => 'Invalid resolution. Supported: ' . implode(', ', $supportedFields['resolution'] ?? []),
-                    ], 422);
+            // Default face enhance (boolean)
+            if ($request->filled('default_face_enhance')) {
+                $faceEnhance = (bool) $request->input('default_face_enhance');
+                if ($faceEnhance !== $oldSettings['default_face_enhance']) {
+                    $changes['default_face_enhance'] = [
+                        'old' => $oldSettings['default_face_enhance'],
+                        'new' => $faceEnhance,
+                    ];
+                    $updates['default_face_enhance'] = $faceEnhance;
                 }
-            }
-
-            // Default output format
-            if ($request->filled('default_output_format')) {
-                $format = strtolower($request->input('default_output_format'));
-                if (in_array($format, $supportedFields['output_format'] ?? [], true)) {
-                    if ($format !== $oldSettings['default_output_format']) {
-                        $changes['default_output_format'] = [
-                            'old' => $oldSettings['default_output_format'],
-                            'new' => $format,
-                        ];
-                        $updates['default_output_format'] = $format;
-                    }
-                } else {
-                    return response()->json([
-                        'message' => 'Invalid output format. Supported: ' . implode(', ', $supportedFields['output_format'] ?? []),
-                    ], 422);
-                }
-            }
-
-            // Features (google_search, image_search)
-            $newFeatures = [
-                'google_search' => $request->has('features_enabled.google_search') ? (bool) $request->input('features_enabled.google_search') : ($oldSettings['features_enabled']['google_search'] ?? false),
-                'image_search' => $request->has('features_enabled.image_search') ? (bool) $request->input('features_enabled.image_search') : ($oldSettings['features_enabled']['image_search'] ?? false),
-            ];
-
-            if ($newFeatures !== $oldSettings['features_enabled']) {
-                $changes['features_enabled'] = [
-                    'old' => $oldSettings['features_enabled'],
-                    'new' => $newFeatures,
-                ];
-                $updates['features_enabled'] = $newFeatures;
             }
 
             // Save all updates if there are changes
@@ -188,10 +152,8 @@ class EnhancerSettingsController extends Controller
             // Clear all Image Enhancer settings from database
             $keys = [
                 SiteSetting::KEY_ENHANCER_MODEL_VERSION,
-                SiteSetting::KEY_ENHANCER_DEFAULT_ASPECT_RATIO,
-                SiteSetting::KEY_ENHANCER_DEFAULT_RESOLUTION,
-                SiteSetting::KEY_ENHANCER_DEFAULT_OUTPUT_FORMAT,
-                SiteSetting::KEY_ENHANCER_FEATURES_ENABLED,
+                SiteSetting::KEY_ENHANCER_DEFAULT_SCALE,
+                SiteSetting::KEY_ENHANCER_DEFAULT_FACE_ENHANCE,
             ];
 
             foreach ($keys as $key) {

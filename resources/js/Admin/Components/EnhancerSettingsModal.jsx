@@ -2,28 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, RotateCcw, Loader, Wand2, Info } from 'lucide-react';
 import axios from 'axios';
 
-const ASPECT_RATIOS = [
-  'match_input_image',
-  '1:1',
-  '1:4',
-  '1:8',
-  '2:3',
-  '3:2',
-  '3:4',
-  '4:1',
-  '4:3',
-  '4:5',
-  '5:4',
-  '8:1',
-  '9:16',
-  '16:9',
-  '21:9',
-];
-
-const RESOLUTIONS = ['1K', '2K', '4K'];
-const RESOLUTION_COSTS = { '1K': 0.067, '2K': 0.101, '4K': 0.151 };
-const OUTPUT_FORMATS = ['jpg', 'png'];
-
 export default function EnhancerSettingsModal({ isOpen, onClose, onSave }) {
   // Performance optimization: Cache & lazy loading
   const cacheRef = useRef(null);
@@ -36,13 +14,8 @@ export default function EnhancerSettingsModal({ isOpen, onClose, onSave }) {
   const [error, setError] = useState(null);
   const [settings, setSettings] = useState({
     model_version: '',
-    default_aspect_ratio: 'match_input_image',
-    default_resolution: '1K',
-    default_output_format: 'jpg',
-    features_enabled: {
-      google_search: false,
-      image_search: false,
-    },
+    default_scale: 4,
+    default_face_enhance: false,
   });
   const [originalSettings, setOriginalSettings] = useState(null);
 
@@ -171,7 +144,7 @@ export default function EnhancerSettingsModal({ isOpen, onClose, onSave }) {
                   <div className="group relative">
                     <Info size={16} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
                     <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
-                      The version hash of the Nano Banana 2 model from Replicate
+                      The version hash of the Real-ESRGAN model from Replicate
                     </div>
                   </div>
                 </label>
@@ -179,155 +152,69 @@ export default function EnhancerSettingsModal({ isOpen, onClose, onSave }) {
                   type="text"
                   value={settings.model_version || ''}
                   onChange={e => setSettings({ ...settings, model_version: e.target.value })}
-                  placeholder="e.g., google/nano-banana-2"
+                  placeholder="e.g., nightmareai/real-esrgan"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-600"
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Nano Banana 2 model version for image enhancement and regeneration</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Real-ESRGAN model version for image upscaling and enhancement</p>
               </div>
 
               {/* Defaults Section */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Default Settings</h3>
                 <div className="space-y-4 pl-6">
-                  {/* Default Aspect Ratio */}
+                  {/* Scale Slider */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                      Aspect Ratio
+                      Upscale Factor
                       <div className="group relative">
                         <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
                         <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg whitespace-nowrap">
-                          Output image aspect ratio (match_input_image uses source)
+                          Scale factor: 0-10x enlargement (default: 4x)
                         </div>
                       </div>
                     </label>
-                    <select
-                      value={settings.default_aspect_ratio}
-                      onChange={e => setSettings({ ...settings, default_aspect_ratio: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
-                    >
-                      {ASPECT_RATIOS.map(ratio => (
-                        <option key={ratio} value={ratio}>
-                          {ratio}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Default Resolution */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                      Resolution
-                      <div className="group relative">
-                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
-                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg whitespace-nowrap">
-                          Output resolution determines cost: 1K (${RESOLUTION_COSTS['1K']}), 2K (${RESOLUTION_COSTS['2K']}), 4K (${RESOLUTION_COSTS['4K']})
-                        </div>
-                      </div>
-                    </label>
-                    <select
-                      value={settings.default_resolution}
-                      onChange={e => setSettings({ ...settings, default_resolution: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
-                    >
-                      {RESOLUTIONS.map(res => (
-                        <option key={res} value={res}>
-                          {res} - ${RESOLUTION_COSTS[res]}/image
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Default Output Format */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                      Output Format
-                      <div className="group relative">
-                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
-                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg whitespace-nowrap">
-                          Image file format: JPG is compressed, PNG is lossless
-                        </div>
-                      </div>
-                    </label>
-                    <div className="flex gap-4">
-                      {OUTPUT_FORMATS.map(format => (
-                        <label key={format} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="output_format"
-                            value={format}
-                            checked={settings.default_output_format === format}
-                            onChange={e => setSettings({ ...settings, default_output_format: e.target.value })}
-                            className="w-4 h-4 text-primary-600 focus:ring-primary-600"
-                          />
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase">{format}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Features Section */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Features</h3>
-                <div className="space-y-3 pl-6">
-                  {/* Google Search */}
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.features_enabled?.google_search || false}
-                      onChange={e =>
-                        setSettings({
-                          ...settings,
-                          features_enabled: {
-                            ...settings.features_enabled,
-                            google_search: e.target.checked,
-                          },
-                        })
-                      }
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-600 accent-primary-600"
-                    />
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Google Search Grounding
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="range"
+                        min="0"
+                        max="10"
+                        value={settings.default_scale}
+                        onChange={e => setSettings({ ...settings, default_scale: parseInt(e.target.value) })}
+                        className="flex-1 h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                      />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white min-w-12 text-right">
+                        {settings.default_scale}x
                       </span>
-                      <div className="group relative">
-                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
-                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg whitespace-nowrap">
-                          Use real-time web search for context (+50% cost)
-                        </div>
-                      </div>
                     </div>
-                  </label>
+                  </div>
 
-                  {/* Image Search */}
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.features_enabled?.image_search || false}
-                      onChange={e =>
-                        setSettings({
-                          ...settings,
-                          features_enabled: {
-                            ...settings.features_enabled,
-                            image_search: e.target.checked,
-                          },
-                        })
-                      }
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-600 accent-primary-600"
-                    />
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Image Search Grounding
-                      </span>
-                      <div className="group relative">
-                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
-                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg whitespace-nowrap">
-                          Use web image search for visual references (+50% cost)
+                  {/* Face Enhance Checkbox */}
+                  <div>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.default_face_enhance}
+                        onChange={e =>
+                          setSettings({
+                            ...settings,
+                            default_face_enhance: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-600 accent-primary-600"
+                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Face Enhancement
+                        </span>
+                        <div className="group relative">
+                          <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+                          <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg whitespace-nowrap">
+                            Apply face enhancement when upscaling images with faces
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </label>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>

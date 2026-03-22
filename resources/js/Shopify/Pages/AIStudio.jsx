@@ -81,27 +81,6 @@ const UPSCALE_SCALE_OPTIONS = [
   { value: '8', label: '8×' },
 ];
 
-const ENHANCE_ASPECT_RATIOS = [
-  { value: 'match_input_image', label: 'Match Input Image' },
-  { value: '1:1', label: '1:1' },
-  { value: '4:3', label: '4:3' },
-  { value: '16:9', label: '16:9' },
-  { value: '9:16', label: '9:16' },
-  { value: '3:4', label: '3:4' },
-  { value: '4:5', label: '4:5' },
-];
-
-const ENHANCE_RESOLUTIONS = [
-  { value: '1K', label: '1K - $0.067' },
-  { value: '2K', label: '2K - $0.101' },
-  { value: '4K', label: '4K - $0.151' },
-];
-
-const ENHANCE_OUTPUT_FORMATS = [
-  { value: 'jpg', label: 'JPG (Compressed)' },
-  { value: 'png', label: 'PNG (Lossless)' },
-];
-
 const LIGHTING_PRESETS = [
   { value: 'custom', label: 'Custom (type your own)' },
   { value: 'warm_studio_left', label: 'Warm Studio Light from Left', prompt: 'Professional studio setup: primary key light from camera left at 45 degrees, soft fill from the opposite side to open shadows. Warm color temperature (3200–4000K). Clean, editorial product or portrait quality with defined but flattering shadow.' },
@@ -532,12 +511,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [lightingPromptText, setLightingPromptText] = useState('');
   const [upscaleScale, setUpscaleScale] = useState('4');
   const [upscaleFaceEnhance, setUpscaleFaceEnhance] = useState(false);
-  const [enhancePrompt, setEnhancePrompt] = useState('enhance and improve image quality');
-  const [enhanceAspectRatio, setEnhanceAspectRatio] = useState('match_input_image');
-  const [enhanceResolution, setEnhanceResolution] = useState('1K');
-  const [enhanceOutputFormat, setEnhanceOutputFormat] = useState('jpg');
-  const [enhanceGoogleSearch, setEnhanceGoogleSearch] = useState(false);
-  const [enhanceImageSearch, setEnhanceImageSearch] = useState(false);
+  const [enhanceScale, setEnhanceScale] = useState(4);
+  const [enhanceFaceEnhance, setEnhanceFaceEnhance] = useState(false);
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
   const [magicEraserPrompt, setMagicEraserPrompt] = useState(MAGIC_ERASER_DEFAULT_PROMPT);
   const [magicEraserAspectRatio, setMagicEraserAspectRatio] = useState('match_input_image');
@@ -816,12 +791,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       } else {
         throw new Error('Invalid image source');
       }
-      formData.append('prompt', enhancePrompt);
-      formData.append('aspect_ratio', enhanceAspectRatio);
-      formData.append('resolution', enhanceResolution);
-      formData.append('output_format', enhanceOutputFormat);
-      formData.append('google_search', enhanceGoogleSearch);
-      formData.append('image_search', enhanceImageSearch);
+      formData.append('scale', enhanceScale);
+      formData.append('face_enhance', enhanceFaceEnhance ? '1' : '0');
       const res = await axios.post('/shopify/tools/enhance', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -840,7 +811,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       showToast(msg, true);
       setProcessingStatus('error');
     }
-  }, [hasValidInput, inputImage, enhancePrompt, enhanceAspectRatio, enhanceResolution, enhanceOutputFormat, enhanceGoogleSearch, enhanceImageSearch, showToast]);
+  }, [hasValidInput, inputImage, enhanceScale, enhanceFaceEnhance, showToast]);
 
   const effectiveLightingPrompt = lightingPromptText.trim();
 
@@ -1911,45 +1882,120 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
 
                   {selectedTool === 'enhance' && (
                     <BlockStack gap="200">
-                      <div style={{ maxHeight: '100px', overflow: 'hidden' }}>
-                        <TextField
-                          label="Enhancement description"
-                          value={enhancePrompt}
-                          onChange={setEnhancePrompt}
-                          placeholder="e.g., improve colors, sharpen details, professional look"
-                          multiline={2}
-                          autoComplete="off"
-                          characterCount={enhancePrompt.length}
-                          maxLength={200}
+                      {hasValidInput ? (
+                        <BlockStack gap="200">
+                          {hasOutput ? (
+                            <div className="aistudio-panel-source-output">
+                              <div className="aistudio-panel-thumb">
+                                <img src={inputImage} alt="Source" />
+                              </div>
+                              <span className="aistudio-panel-arrow" aria-hidden>
+                                <Icon source={ArrowRightIcon} tone="subdued" />
+                              </span>
+                              <div className="aistudio-panel-thumb aistudio-panel-thumb-output aistudio-panel-thumb-checkerboard">
+                                <img
+                                  src={outputImageUrl}
+                                  alt="Output"
+                                  onError={(e) => {
+                                    const img = e.target;
+                                    const src = img?.src || outputImageUrl;
+                                    let path = src;
+                                    try {
+                                      if (typeof src === 'string' && src.startsWith('http')) path = new URL(src).pathname;
+                                    } catch (_) { /* ignore */ }
+                                    if (path && typeof path === 'string' && path.startsWith('/storage/') && typeof window !== 'undefined') {
+                                      img.src = window.location.origin + path;
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="aistudio-panel-thumb">
+                              <img src={inputImage} alt="Source" />
+                            </div>
+                          )}
+                          {!resultImageUrl && (
+                            <InlineStack gap="200" blockAlign="center">
+                              <Button
+                                variant="plain"
+                                size="slim"
+                                onClick={() => fileInputRef.current?.click()}
+                                accessibilityLabel="Replace image"
+                                disabled={isScanning || isProcessing}
+                              >
+                                Replace
+                              </Button>
+                              <Button
+                                variant="plain"
+                                size="slim"
+                                onClick={() => setBrowseModalOpen(true)}
+                                accessibilityLabel="Browse from Store"
+                                disabled={isScanning || isProcessing}
+                              >
+                                Browse from Store
+                              </Button>
+                              <Button
+                                variant="plain"
+                                tone="critical"
+                                size="slim"
+                                onClick={handleReset}
+                                accessibilityLabel="Remove"
+                                disabled={isScanning || isProcessing}
+                              >
+                                Remove
+                              </Button>
+                            </InlineStack>
+                          )}
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            style={{ display: 'none' }}
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                          />
+                        </BlockStack>
+                      ) : (
+                        <>
+                          <DropZone
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            type="image"
+                            onDrop={handleFileDrop}
+                            variableHeight
+                          >
+                            {dropZoneContent}
+                          </DropZone>
+                          <Box paddingBlockStart="100">
+                            <Button variant="plain" size="slim" onClick={() => setBrowseModalOpen(true)}>
+                              or Browse from Store
+                            </Button>
+                          </Box>
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            style={{ display: 'none' }}
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                          />
+                        </>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <label style={{ flex: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                          Upscale Factor: {enhanceScale}x
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="10"
+                          value={enhanceScale}
+                          onChange={e => setEnhanceScale(parseInt(e.target.value))}
+                          style={{ flex: 2 }}
                         />
                       </div>
-                      <Select
-                        label="Aspect ratio"
-                        options={ENHANCE_ASPECT_RATIOS}
-                        value={enhanceAspectRatio}
-                        onChange={setEnhanceAspectRatio}
-                      />
-                      <Select
-                        label="Resolution"
-                        options={ENHANCE_RESOLUTIONS}
-                        value={enhanceResolution}
-                        onChange={setEnhanceResolution}
-                      />
-                      <Select
-                        label="Output format"
-                        options={ENHANCE_OUTPUT_FORMATS}
-                        value={enhanceOutputFormat}
-                        onChange={setEnhanceOutputFormat}
-                      />
                       <Checkbox
-                        label="Google Search Grounding"
-                        checked={enhanceGoogleSearch}
-                        onChange={setEnhanceGoogleSearch}
-                      />
-                      <Checkbox
-                        label="Image Search Grounding"
-                        checked={enhanceImageSearch}
-                        onChange={setEnhanceImageSearch}
+                        label="Face Enhancement"
+                        checked={enhanceFaceEnhance}
+                        onChange={setEnhanceFaceEnhance}
                       />
                     </BlockStack>
                   )}
@@ -1983,7 +2029,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                     </BlockStack>
                   )}
 
-                  {selectedTool !== 'magic_eraser' && (
+                  {selectedTool !== 'magic_eraser' && selectedTool !== 'enhance' && (
                   <BlockStack gap="200">
                     <Text variant="bodySm" as="span" tone="subdued">
                       {hasOutput ? 'Source → Output' : 'Source image'}

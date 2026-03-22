@@ -417,64 +417,24 @@ return [
     /*
     |--------------------------------------------------------------------------
     | Image Enhancer Configuration
-    | Uses: google/nano-banana-2 (Replicate API)
-    | Purpose: Enhance and regenerate product images with better quality/composition
+    | Uses: nightmareai/real-esrgan (Replicate API)
+    | Purpose: Upscale and enhance image quality with optional face enhancement
     |--------------------------------------------------------------------------
     */
     'enhance' => [
-        'model_version' => '71516450bdbeafc41df33ad538bc8cc6a90f80038a563b1260531c02d694f4fd',
-
+        'label' => 'Image Enhancer',
+        'model_name' => 'Real-ESRGAN (nightmareai)',
+        'model_provider' => 'Replicate',
+        'estimated_rate_per_image_usd' => 0.0023,
+        'model_version' => 'nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164ccc0607ccb7cb5285422111e6f4e9e047e8b',
         'defaults' => [
-            'aspect_ratio' => 'match_input_image',
-            'resolution' => '1K',
-            'output_format' => 'jpg',
+            'scale' => 4,
+            'face_enhance' => false,
         ],
-
         'supported_fields' => [
-            'aspect_ratio' => [
-                'match_input_image',
-                '1:1',
-                '1:4',
-                '1:8',
-                '2:3',
-                '3:2',
-                '3:4',
-                '4:1',
-                '4:3',
-                '4:5',
-                '5:4',
-                '8:1',
-                '9:16',
-                '16:9',
-                '21:9',
-            ],
-            'resolution' => ['1K', '2K', '4K'],
-            'output_format' => ['jpg', 'png'],
+            'scale' => ['min' => 0, 'max' => 10],
+            'face_enhance' => [true, false],
         ],
-
-        // Feature flags matching Replicate API boolean parameters
-        'features' => [
-            'google_search' => [
-                'enabled' => false,
-                'label' => 'Google Search Grounding',
-                'description' => 'Use Google Web Search for real-time context',
-            ],
-            'image_search' => [
-                'enabled' => false,
-                'label' => 'Image Search Grounding',
-                'description' => 'Use Google Image Search to find web images as visual references',
-            ],
-        ],
-
-        // Cost per resolution (Replicate pricing)
-        'cost_per_resolution' => [
-            '1K' => 0.067,
-            '2K' => 0.101,
-            '4K' => 0.151,
-        ],
-
-        // Cost multiplier when search grounding is enabled (+50%)
-        'cost_multiplier_with_search' => 1.5,
     ],
 ];
 

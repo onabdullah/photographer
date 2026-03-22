@@ -879,7 +879,8 @@ class AiGenerationService
         }
 
         $imageUrl = $payload['image_url'] ?? null;
-        $prompt = $payload['prompt'] ?? '';
+        $scale = (int) ($payload['scale'] ?? 4);
+        $faceEnhance = (bool) ($payload['face_enhance'] ?? false);
 
         if (! $imageUrl) {
             throw new \InvalidArgumentException('Missing image_url for enhance.');
@@ -890,47 +891,32 @@ class AiGenerationService
         $enhancerConfig = config('ai_studio_tools.enhance', []);
 
         $modelVersion = $settings['model_version'] ?: ($enhancerConfig['model_version'] ?? '');
-        $aspectRatio = $settings['default_aspect_ratio'] ?? 'match_input_image';
-        $resolution = $settings['default_resolution'] ?? '1K';
-        $outputFormat = $settings['default_output_format'] ?? 'jpg';
-        $features = $settings['features_enabled'] ?? ['google_search' => false, 'image_search' => false];
 
-        // Determine image size based on resolution
-        $resolutionMap = [
-            '1K' => '512x512',  // or match input
-            '2K' => '1024x1024',
-            '4K' => '2048x2048',
-        ];
-        $size = $resolutionMap[$resolution] ?? '512x512';
+        // Use provided scale and face_enhance, or fall back to settings
+        if (!isset($payload['scale']) && isset($settings['default_scale'])) {
+            $scale = $settings['default_scale'];
+        }
+        if (!isset($payload['face_enhance']) && isset($settings['default_face_enhance'])) {
+            $faceEnhance = $settings['default_face_enhance'];
+        }
 
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
 
-        // Build Nano Banana 2 payload for image enhancement
+        // Build Real-ESRGAN payload for image upscaling and enhancement
         $apiPayload = [
             'version' => $modelVersion,
             'input' => [
-                'prompt' => $prompt ?: 'enhance image quality',
                 'image' => $imageInput,
-                'aspect_ratio' => $aspectRatio,
-                'resolution' => $resolution,
-                'output_format' => $outputFormat,
+                'scale' => $scale,
+                'face_enhance' => $faceEnhance,
             ],
         ];
-
-        // Add optional features if enabled
-        if ($features['google_search'] ?? false) {
-            $apiPayload['input']['google_search'] = true;
-        }
-        if ($features['image_search'] ?? false) {
-            $apiPayload['input']['image_search'] = true;
-        }
 
         Log::channel('enhance')->info('Enhancer create prediction', [
             'shop_domain' => $shopDomain,
             'model_version' => $modelVersion,
-            'resolution' => $resolution,
-            'aspect_ratio' => $aspectRatio,
-            'output_format' => $outputFormat,
+            'scale' => $scale,
+            'face_enhance' => $faceEnhance,
         ]);
 
         $response = Http::withToken($token)

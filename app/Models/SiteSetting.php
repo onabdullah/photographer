@@ -75,12 +75,10 @@ class SiteSetting extends Model
     public const KEY_LIGHTING_FIX_DEFAULT_OUTPUT_QUALITY = 'lighting_fix_default_output_quality';
     public const KEY_LIGHTING_FIX_DEFAULT_NUMBER_OF_IMAGES = 'lighting_fix_default_number_of_images';
 
-    // Image Enhancer settings
+    // Image Enhancer settings (Real-ESRGAN)
     public const KEY_ENHANCER_MODEL_VERSION = 'enhancer_model_version';
-    public const KEY_ENHANCER_DEFAULT_ASPECT_RATIO = 'enhancer_default_aspect_ratio';
-    public const KEY_ENHANCER_DEFAULT_RESOLUTION = 'enhancer_default_resolution';
-    public const KEY_ENHANCER_DEFAULT_OUTPUT_FORMAT = 'enhancer_default_output_format';
-    public const KEY_ENHANCER_FEATURES_ENABLED = 'enhancer_features_enabled';
+    public const KEY_ENHANCER_DEFAULT_SCALE = 'enhancer_default_scale';
+    public const KEY_ENHANCER_DEFAULT_FACE_ENHANCE = 'enhancer_default_face_enhance';
 
     /**
      * Get a setting value by key.
@@ -619,68 +617,34 @@ class SiteSetting extends Model
 
         $dbSettings = [
             'model_version' => static::get(self::KEY_ENHANCER_MODEL_VERSION),
-            'default_aspect_ratio' => static::get(self::KEY_ENHANCER_DEFAULT_ASPECT_RATIO),
-            'default_resolution' => static::get(self::KEY_ENHANCER_DEFAULT_RESOLUTION),
-            'default_output_format' => static::get(self::KEY_ENHANCER_DEFAULT_OUTPUT_FORMAT),
-            'features_enabled' => static::getJson(self::KEY_ENHANCER_FEATURES_ENABLED),
+            'default_scale' => static::get(self::KEY_ENHANCER_DEFAULT_SCALE),
+            'default_face_enhance' => static::get(self::KEY_ENHANCER_DEFAULT_FACE_ENHANCE),
         ];
 
         $configDefaults_defaults = $configDefaults['defaults'] ?? [];
-        $configFeatures = $configDefaults['features'] ?? [];
-        $dbFeatures = $dbSettings['features_enabled'] ?? [];
-
-        $normalizeFeature = function (mixed $dbValue, mixed $configValue, bool $fallback): bool {
-            if ($dbValue !== null) {
-                return (bool) ($dbValue['enabled'] ?? $dbValue);
-            }
-            if ($configValue !== null) {
-                return (bool) ($configValue['enabled'] ?? $configValue);
-            }
-            return $fallback;
-        };
 
         return [
             'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
-            'default_aspect_ratio' => (string) ($dbSettings['default_aspect_ratio'] ?: ($configDefaults_defaults['aspect_ratio'] ?? 'match_input_image')),
-            'default_resolution' => (string) ($dbSettings['default_resolution'] ?: ($configDefaults_defaults['resolution'] ?? '1K')),
-            'default_output_format' => (string) ($dbSettings['default_output_format'] ?: ($configDefaults_defaults['output_format'] ?? 'jpg')),
-            'features_enabled' => [
-                'google_search' => $normalizeFeature(
-                    $dbFeatures['google_search'] ?? null,
-                    $configFeatures['google_search'] ?? null,
-                    false
-                ),
-                'image_search' => $normalizeFeature(
-                    $dbFeatures['image_search'] ?? null,
-                    $configFeatures['image_search'] ?? null,
-                    false
-                ),
-            ],
+            'default_scale' => (int) ($dbSettings['default_scale'] ?: ($configDefaults_defaults['scale'] ?? 4)),
+            'default_face_enhance' => static::getBoolean(self::KEY_ENHANCER_DEFAULT_FACE_ENHANCE, $configDefaults_defaults['face_enhance'] ?? false),
         ];
     }
 
     /**
      * Set Image Enhancer settings (store in database).
      *
-     * @param array $settings Keys: model_version, default_aspect_ratio, default_resolution,
-     *                        default_output_format, features_enabled
+     * @param array $settings Keys: model_version, default_scale, default_face_enhance
      */
     public static function setEnhancerSettings(array $settings): void
     {
         if (isset($settings['model_version'])) {
             static::set(self::KEY_ENHANCER_MODEL_VERSION, (string) $settings['model_version']);
         }
-        if (isset($settings['default_aspect_ratio'])) {
-            static::set(self::KEY_ENHANCER_DEFAULT_ASPECT_RATIO, (string) $settings['default_aspect_ratio']);
+        if (isset($settings['default_scale'])) {
+            static::set(self::KEY_ENHANCER_DEFAULT_SCALE, (string) $settings['default_scale']);
         }
-        if (isset($settings['default_resolution'])) {
-            static::set(self::KEY_ENHANCER_DEFAULT_RESOLUTION, (string) $settings['default_resolution']);
-        }
-        if (isset($settings['default_output_format'])) {
-            static::set(self::KEY_ENHANCER_DEFAULT_OUTPUT_FORMAT, (string) $settings['default_output_format']);
-        }
-        if (isset($settings['features_enabled']) && is_array($settings['features_enabled'])) {
-            static::setJson(self::KEY_ENHANCER_FEATURES_ENABLED, $settings['features_enabled']);
+        if (isset($settings['default_face_enhance'])) {
+            static::set(self::KEY_ENHANCER_DEFAULT_FACE_ENHANCE, static::asBoolString($settings['default_face_enhance']));
         }
     }
 
