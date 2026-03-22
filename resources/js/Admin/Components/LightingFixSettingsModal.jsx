@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, RotateCcw, Loader, Lightbulb } from 'lucide-react';
+import { X, Save, RotateCcw, Loader, Lightbulb, Info } from 'lucide-react';
 import axios from 'axios';
 
 const LIGHT_SOURCES = ['None', 'Left Light', 'Right Light', 'Top Light', 'Bottom Light'];
@@ -172,6 +172,12 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                 <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                   <Lightbulb size={16} className="text-primary-600" />
                   Model Version
+                  <div className="group relative">
+                    <Info size={16} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+                    <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                      The version hash of the IC-Light model from Replicate
+                    </div>
+                  </div>
                 </label>
                 <input
                   type="text"
@@ -189,8 +195,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                 <div className="space-y-4 pl-6">
                   {/* Appended Prompt */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Appended Prompt ({settings.appended_prompt?.length || 0}/2000)
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <span>Appended Prompt ({settings.appended_prompt?.length || 0}/2000)</span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          Automatically appended to all prompts for quality enhancement
+                        </div>
+                      </div>
                     </label>
                     <textarea
                       value={settings.appended_prompt || ''}
@@ -204,8 +216,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
                   {/* Negative Prompt */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Negative Prompt ({settings.negative_prompt?.length || 0}/2000)
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <span>Negative Prompt ({settings.negative_prompt?.length || 0}/2000)</span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          Attributes to discourage in the generated images
+                        </div>
+                      </div>
                     </label>
                     <textarea
                       value={settings.negative_prompt || ''}
@@ -225,8 +243,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                 <div className="space-y-4 pl-6">
                   {/* Light Source */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Default Light Source
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <span>Default Light Source</span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          The type and position of lighting to apply to the background
+                        </div>
+                      </div>
                     </label>
                     <select
                       value={settings.default_light_source}
@@ -241,8 +265,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
                   {/* Output Format */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Default Output Format
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <span>Default Output Format</span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          The image file format for generated output (WebP/JPEG/PNG)
+                        </div>
+                      </div>
                     </label>
                     <select
                       value={settings.default_output_format}
@@ -258,8 +288,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                   {/* Width & Height Grid */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Default Width
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                        <span>Default Width</span>
+                        <div className="group relative">
+                          <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                          <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                            Width of generated images in pixels
+                          </div>
+                        </div>
                       </label>
                       <select
                         value={settings.default_width}
@@ -272,8 +308,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Default Height
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                        <span>Default Height</span>
+                        <div className="group relative">
+                          <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                          <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                            Height of generated images in pixels
+                          </div>
+                        </div>
                       </label>
                       <select
                         value={settings.default_height}
@@ -295,8 +337,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                 <div className="space-y-4 pl-6">
                   {/* CFG */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Default CFG (Classifier-Free Guidance): <span className="font-bold text-primary-600">{settings.default_cfg}</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <span>Default CFG (Classifier-Free Guidance): <span className="font-bold text-primary-600">{settings.default_cfg}</span></span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          Higher = adhere to prompt, lower = creative interpretation
+                        </div>
+                      </div>
                     </label>
                     <input
                       type="range"
@@ -318,8 +366,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
                   {/* Steps */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Default Steps: <span className="font-bold text-primary-600">{settings.default_steps}</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <span>Default Steps: <span className="font-bold text-primary-600">{settings.default_steps}</span></span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          Number of diffusion steps (more = better quality, slower)
+                        </div>
+                      </div>
                     </label>
                     <input
                       type="range"
@@ -341,8 +395,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
                   {/* Highres Scale */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Highres Scale: <span className="font-bold text-primary-600">{settings.default_highres_scale.toFixed(2)}×</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <span>Highres Scale: <span className="font-bold text-primary-600">{settings.default_highres_scale.toFixed(2)}×</span></span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          Resolution multiplier for final output
+                        </div>
+                      </div>
                     </label>
                     <input
                       type="range"
@@ -364,8 +424,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
                   {/* Lowres Denoise */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Lowres Denoise: <span className="font-bold text-primary-600">{settings.default_lowres_denoise.toFixed(2)}</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <span>Lowres Denoise: <span className="font-bold text-primary-600">{settings.default_lowres_denoise.toFixed(2)}</span></span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          Denoising for initial latent generation
+                        </div>
+                      </div>
                     </label>
                     <input
                       type="range"
@@ -387,8 +453,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
                   {/* Highres Denoise */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Highres Denoise: <span className="font-bold text-primary-600">{settings.default_highres_denoise.toFixed(2)}</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <span>Highres Denoise: <span className="font-bold text-primary-600">{settings.default_highres_denoise.toFixed(2)}</span></span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          Denoising for high-resolution refinement
+                        </div>
+                      </div>
                     </label>
                     <input
                       type="range"
@@ -410,8 +482,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
                   {/* Output Quality */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Output Quality: <span className="font-bold text-primary-600">{settings.default_output_quality}%</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <span>Output Quality: <span className="font-bold text-primary-600">{settings.default_output_quality}%</span></span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          Compression quality for lossy formats
+                        </div>
+                      </div>
                     </label>
                     <input
                       type="range"
@@ -433,8 +511,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
                   {/* Number of Images */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Number of Images: <span className="font-bold text-primary-600">{settings.default_number_of_images}</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <span>Number of Images: <span className="font-bold text-primary-600">{settings.default_number_of_images}</span></span>
+                      <div className="group relative">
+                        <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                          How many unique images to generate per request
+                        </div>
+                      </div>
                     </label>
                     <input
                       type="range"
