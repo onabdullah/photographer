@@ -352,13 +352,21 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                   </div>
 
                   {/* API Parameters */}
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                       <SettingsIcon size={16} className="text-primary-600" />
                       API Parameters
                     </h3>
-                    <div className="space-y-4 pl-6">
-                      {/* Resolution */}
+
+                    {/* Resolution Settings */}
+                    <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 space-y-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Resolution Settings</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Configure default resolution and merchant credit costs in one place.
+                        </p>
+                      </div>
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Default Resolution
@@ -379,7 +387,53 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                         </div>
                       </div>
 
-                      {/* Aspect Ratio */}
+                      <div>
+                        <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Resolution Credit Costs</h5>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                          Base generation cost is 2 credits. Add extra credits per resolution.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          {['1K', '2K', '4K'].map(res => (
+                            <div key={res} className="space-y-1">
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                                {res} Resolution
+                              </label>
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={settings.resolution_credits?.[res] ?? 0}
+                                  onChange={e => {
+                                    setSettings({
+                                      ...settings,
+                                      resolution_credits: {
+                                        ...settings.resolution_credits,
+                                        [res]: Math.max(0, parseInt(e.target.value, 10) || 0),
+                                      },
+                                    });
+                                  }}
+                                  className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono"
+                                />
+                                <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">credits</span>
+                              </div>
+                              <p className="text-xs text-gray-400 dark:text-gray-500">
+                                Total: 2 + {settings.resolution_credits?.[res] ?? 0} = {2 + (settings.resolution_credits?.[res] ?? 0)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Aspect Ratio Settings */}
+                    <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 space-y-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Aspect Ratio Settings</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Control default ratio and exactly which ratios merchants can select.
+                        </p>
+                      </div>
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Default Aspect Ratio
@@ -395,26 +449,61 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                             </option>
                           ))}
                         </select>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Aspect ratio of generated images (select "Match Input Image" to preserve input aspect)
-                        </p>
                       </div>
 
-                      {/* Output Format */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Default Output Format
-                        </label>
-                        <select
-                          value={settings.default_output_format || 'jpg'}
-                          onChange={e => setSettings({ ...settings, default_output_format: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
-                        >
-                          {OUTPUT_FORMATS.map(f => (
-                            <option key={f} value={f}>{f}</option>
+                        <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Visible Aspect Ratios to Merchants</h5>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                          Choose which aspect ratios merchants can select. If none are selected, all will be available.
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {ASPECT_RATIOS.map(ar => (
+                            <label key={ar} className="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                              <input
+                                type="checkbox"
+                                checked={Array.isArray(settings.enabled_aspect_ratios) && settings.enabled_aspect_ratios.some(
+                                  item => (item.value || item) === ar
+                                )}
+                                onChange={e => {
+                                  const current = Array.isArray(settings.enabled_aspect_ratios) ? settings.enabled_aspect_ratios : [];
+                                  if (e.target.checked) {
+                                    setSettings({
+                                      ...settings,
+                                      enabled_aspect_ratios: [...current, { value: ar, label: ar === 'match_input_image' ? 'Match Input' : ar }],
+                                    });
+                                  } else {
+                                    setSettings({
+                                      ...settings,
+                                      enabled_aspect_ratios: current.filter(item => (item.value || item) !== ar),
+                                    });
+                                  }
+                                }}
+                                className="w-4 h-4 accent-primary-600 cursor-pointer rounded"
+                              />
+                              <span className="text-sm text-gray-700 dark:text-gray-300">
+                                {ar === 'match_input_image' ? 'Match Input Image' : ar}
+                              </span>
+                            </label>
                           ))}
-                        </select>
+                        </div>
                       </div>
+                    </div>
+
+                    {/* Output Settings */}
+                    <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Default Output Format
+                      </label>
+                      <select
+                        value={settings.default_output_format || 'jpg'}
+                        onChange={e => setSettings({ ...settings, default_output_format: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
+                      >
+                        {OUTPUT_FORMATS.map(f => (
+                          <option key={f} value={f}>{f}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -480,87 +569,6 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                     </div>
                   </div>
 
-                  {/* Resolution Credits Section */}
-                  <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                      Resolution Credit Costs
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                      Set how many credits each resolution costs to the merchant (base: 2 credits + extra amount below)
-                    </p>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      {['1K', '2K', '4K'].map(res => (
-                        <div key={res} className="space-y-1">
-                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                            {res} Resolution
-                          </label>
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="number"
-                              min="0"
-                              value={settings.resolution_credits?.[res] ?? 0}
-                              onChange={e => {
-                                setSettings({
-                                  ...settings,
-                                  resolution_credits: {
-                                    ...settings.resolution_credits,
-                                    [res]: Math.max(0, parseInt(e.target.value, 10) || 0),
-                                  },
-                                });
-                              }}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono"
-                            />
-                            <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">credits</span>
-                          </div>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">
-                            Total: 2 + {settings.resolution_credits?.[res] ?? 0} = {2 + (settings.resolution_credits?.[res] ?? 0)}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Enabled Aspect Ratios Section */}
-                  <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                      Visible Aspect Ratios to Merchants
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                      Choose which aspect ratios merchants can select. If none selected, all will be available.
-                    </p>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      {ASPECT_RATIOS.map(ar => (
-                        <label key={ar} className="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                          <input
-                            type="checkbox"
-                            checked={Array.isArray(settings.enabled_aspect_ratios) && settings.enabled_aspect_ratios.some(
-                              item => (item.value || item) === ar
-                            )}
-                            onChange={e => {
-                              const current = Array.isArray(settings.enabled_aspect_ratios) ? settings.enabled_aspect_ratios : [];
-                              if (e.target.checked) {
-                                setSettings({
-                                  ...settings,
-                                  enabled_aspect_ratios: [...current, { value: ar, label: ar === 'match_input_image' ? 'Match Input' : ar }],
-                                });
-                              } else {
-                                setSettings({
-                                  ...settings,
-                                  enabled_aspect_ratios: current.filter(item => (item.value || item) !== ar),
-                                });
-                              }
-                            }}
-                            className="w-4 h-4 accent-primary-600 cursor-pointer rounded"
-                          />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {ar === 'match_input_image' ? 'Match Input Image' : ar}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               )}
             </>
