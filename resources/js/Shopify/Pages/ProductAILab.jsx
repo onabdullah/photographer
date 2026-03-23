@@ -810,11 +810,6 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                               </Text>
                             )}
                           </Text>
-                          {hasSearchGrounding && (
-                            <Text variant="bodySm" tone="subdued" as="p">
-                              Search grounding enabled: Replicate runtime cost multiplier may apply.
-                            </Text>
-                          )}
                           <Text variant="bodySm" tone="subdued" as="p">
                             Remaining after: <strong className="tabular-nums">{remainingAfter.toLocaleString()}</strong>
                           </Text>
