@@ -784,8 +784,7 @@ export default function AIStudioToolsIndex({
             onClose={() => setShowProductAILabSettingsModal(false)}
             onSave={() => {
                 setShowProductAILabSettingsModal(false);
-                // Optional: refresh page or reload settings
-                window.location.reload();
+                router.get('/admin/ai-studio-tools', { tab: 'models' }, { preserveScroll: true, replace: true });
             }}
         />
         <MagicEraserSettingsModal
@@ -793,8 +792,7 @@ export default function AIStudioToolsIndex({
             onClose={() => setShowMagicEraserSettingsModal(false)}
             onSave={() => {
                 setShowMagicEraserSettingsModal(false);
-                // Optional: refresh page or reload settings
-                window.location.reload();
+                router.get('/admin/ai-studio-tools', { tab: 'models' }, { preserveScroll: true, replace: true });
             }}
         />
         <BackgroundRemoverSettingsModal
@@ -802,8 +800,7 @@ export default function AIStudioToolsIndex({
             onClose={() => setShowBackgroundRemoverSettingsModal(false)}
             onSave={() => {
                 setShowBackgroundRemoverSettingsModal(false);
-                // Optional: refresh page or reload settings
-                window.location.reload();
+                router.get('/admin/ai-studio-tools', { tab: 'models' }, { preserveScroll: true, replace: true });
             }}
         />
         <UpscalerSettingsModal
@@ -811,8 +808,7 @@ export default function AIStudioToolsIndex({
             onClose={() => setShowUpscalerSettingsModal(false)}
             onSave={() => {
                 setShowUpscalerSettingsModal(false);
-                // Optional: refresh page or reload settings
-                window.location.reload();
+                router.get('/admin/ai-studio-tools', { tab: 'models' }, { preserveScroll: true, replace: true });
             }}
         />
         <LightingFixSettingsModal
@@ -820,8 +816,7 @@ export default function AIStudioToolsIndex({
             onClose={() => setShowLightingFixSettingsModal(false)}
             onSave={() => {
                 setShowLightingFixSettingsModal(false);
-                // Optional: refresh page or reload settings
-                window.location.reload();
+                router.get('/admin/ai-studio-tools', { tab: 'models' }, { preserveScroll: true, replace: true });
             }}
         />
         <EnhancerSettingsModal
@@ -829,8 +824,7 @@ export default function AIStudioToolsIndex({
             onClose={() => setShowEnhancerSettingsModal(false)}
             onSave={() => {
                 setShowEnhancerSettingsModal(false);
-                // Optional: refresh page or reload settings
-                window.location.reload();
+                router.get('/admin/ai-studio-tools', { tab: 'models' }, { preserveScroll: true, replace: true });
             }}
         />
         </>
