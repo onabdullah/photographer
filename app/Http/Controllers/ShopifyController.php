@@ -227,25 +227,36 @@ class ShopifyController extends Controller
             '4K' => 3,
         ];
 
-        // Get enabled reference types from admin configuration
-        $referenceTypes = ProductAILabReferenceType::enabled()->ordered()->get()
-            ->map(fn($rt) => [
-                'slug'         => $rt->slug,
-                'name'         => $rt->name,
-                'description'  => $rt->description,
-                'max_images'   => $rt->max_images_allowed,
-            ])->values()->all();
+        // Get enabled reference types from admin configuration (with fallback)
+        try {
+            $referenceTypes = ProductAILabReferenceType::enabled()->ordered()->get()
+                ->map(fn($rt) => [
+                    'slug'         => $rt->slug,
+                    'name'         => $rt->name,
+                    'description'  => $rt->description,
+                    'max_images'   => $rt->max_images_allowed,
+                ])->values()->all();
+        } catch (\Exception $e) {
+            // Table doesn't exist yet - use empty array
+            $referenceTypes = [];
+        }
 
-        // Get enabled aspect ratios from admin configuration
-        $aspectRatios = ProductAILabAspectRatio::enabled()->ordered()->get()
-            ->map(fn($ar) => [
-                'value'     => $ar->value,
-                'label'     => $ar->label,
-                'isDefault' => $ar->is_default,
-            ])->values()->all();
+        // Get enabled aspect ratios from admin configuration (with fallback)
+        try {
+            $aspectRatios = ProductAILabAspectRatio::enabled()->ordered()->get()
+                ->map(fn($ar) => [
+                    'value'     => $ar->value,
+                    'label'     => $ar->label,
+                    'isDefault' => $ar->is_default,
+                ])->values()->all();
 
-        // Get default aspect ratio (for fallback)
-        $defaultAspectRatio = ProductAILabAspectRatio::getDefault()?->value ?? '1:1';
+            // Get default aspect ratio (for fallback)
+            $defaultAspectRatio = ProductAILabAspectRatio::getDefault()?->value ?? '1:1';
+        } catch (\Exception $e) {
+            // Table doesn't exist yet or other error - use defaults
+            $aspectRatios = [];
+            $defaultAspectRatio = '1:1';
+        }
 
         return \Inertia\Inertia::render('Shopify/ProductAILab', [
             'credits' => $credits,
