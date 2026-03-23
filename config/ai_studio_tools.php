@@ -38,9 +38,9 @@ return [
         ],
         'enhance' => [
             'label' => 'Image Enhancer',
-            'model_name' => 'Nano Banana 2 (Google Gemini)',
+            'model_name' => 'Real-ESRGAN (nightmareai/real-esrgan)',
             'model_provider' => 'Replicate',
-            'estimated_rate_per_image_usd' => 0.067,
+            'estimated_rate_per_image_usd' => 0.0023,
         ],
         'lighting' => [
             'label' => 'Lighting Fix',
