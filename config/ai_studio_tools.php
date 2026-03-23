@@ -423,18 +423,12 @@ return [
     */
     'enhance' => [
         'label' => 'Image Enhancer',
-        'model_name' => 'Real-ESRGAN (nightmareai)',
+        'model_name' => 'Recraft Crisp Upscale (recraft-ai)',
         'model_provider' => 'Replicate',
-        'estimated_rate_per_image_usd' => 0.0023,
-        'model_version' => 'nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164ccc0607ccb7cb5285422111e6f4e9e047e8b',
-        'defaults' => [
-            'scale' => 4,
-            'face_enhance' => false,
-        ],
-        'supported_fields' => [
-            'scale' => [2, 3, 4],
-            'face_enhance' => [true, false],
-        ],
+        'estimated_rate_per_image_usd' => 0.002,
+        'model_version' => 'recraft-ai/recraft-crisp-upscale',
+        'defaults' => [],
+        'supported_fields' => [],
     ],
 ];
 

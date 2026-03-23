@@ -511,8 +511,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [lightingPromptText, setLightingPromptText] = useState('');
   const [upscaleScale, setUpscaleScale] = useState('4');
   const [upscaleFaceEnhance, setUpscaleFaceEnhance] = useState(false);
-  const [enhanceScale, setEnhanceScale] = useState('4');
-  const [enhanceFaceEnhance, setEnhanceFaceEnhance] = useState(false);
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
   const [magicEraserPrompt, setMagicEraserPrompt] = useState(MAGIC_ERASER_DEFAULT_PROMPT);
   const [magicEraserAspectRatio, setMagicEraserAspectRatio] = useState('match_input_image');
@@ -791,8 +789,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       } else {
         throw new Error('Invalid image source');
       }
-      formData.append('scale', parseInt(enhanceScale));
-      formData.append('face_enhance', enhanceFaceEnhance ? '1' : '0');
       const res = await axios.post('/shopify/tools/enhance', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -811,7 +807,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       showToast(msg, true);
       setProcessingStatus('error');
     }
-  }, [hasValidInput, inputImage, enhanceScale, enhanceFaceEnhance, showToast]);
+  }, [hasValidInput, inputImage, showToast]);
 
   const effectiveLightingPrompt = lightingPromptText.trim();
 
@@ -1979,25 +1975,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           />
                         </>
                       )}
-                      <div>
-                        <Text variant="bodySm" as="span" tone="subdued">Upscale Factor</Text>
-                        <Select
-                          label=""
-                          labelHidden
-                          options={[
-                            { value: '2', label: '2× Upscale (Smallest)' },
-                            { value: '3', label: '3× Upscale (Balanced)' },
-                            { value: '4', label: '4× Upscale (Best Quality, Higher Cost)' },
-                          ]}
-                          value={enhanceScale}
-                          onChange={setEnhanceScale}
-                        />
-                      </div>
-                      <Checkbox
-                        label="Face Enhancement"
-                        checked={enhanceFaceEnhance}
-                        onChange={setEnhanceFaceEnhance}
-                      />
                     </BlockStack>
                   )}
 

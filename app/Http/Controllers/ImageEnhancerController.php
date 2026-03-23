@@ -20,7 +20,7 @@ class ImageEnhancerController extends Controller
     ) {}
 
     /**
-     * Start an enhance job. Expects multipart: image (file or URL), scale (2-4), face_enhance (optional bool).
+     * Start an enhance job. Expects multipart: image (file or URL).
      * Returns job_id for polling. Delegates to AiGenerationService.
      */
     public function enhance(Request $request)
@@ -32,8 +32,6 @@ class ImageEnhancerController extends Controller
 
         $request->validate([
             'image' => 'required',
-            'scale' => 'sometimes|integer|in:2,3,4',
-            'face_enhance' => 'sometimes|boolean',
         ]);
 
         $imageUrl = $this->aiGenerationService->resolveImageUrlFromRequest($request);
@@ -44,8 +42,6 @@ class ImageEnhancerController extends Controller
         try {
             $payload = [
                 'image_url' => $imageUrl,
-                'scale' => (int) $request->input('scale', 4),
-                'face_enhance' => $request->boolean('face_enhance', false),
             ];
             $result = $this->aiGenerationService->startGeneration('enhance', $payload, $shopDomain);
             return response()->json($result);

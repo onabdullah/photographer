@@ -75,10 +75,8 @@ class SiteSetting extends Model
     public const KEY_LIGHTING_FIX_DEFAULT_OUTPUT_QUALITY = 'lighting_fix_default_output_quality';
     public const KEY_LIGHTING_FIX_DEFAULT_NUMBER_OF_IMAGES = 'lighting_fix_default_number_of_images';
 
-    // Image Enhancer settings (Real-ESRGAN)
+    // Image Enhancer settings (Recraft Crisp Upscale)
     public const KEY_ENHANCER_MODEL_VERSION = 'enhancer_model_version';
-    public const KEY_ENHANCER_DEFAULT_SCALE = 'enhancer_default_scale';
-    public const KEY_ENHANCER_DEFAULT_FACE_ENHANCE = 'enhancer_default_face_enhance';
 
     /**
      * Get a setting value by key.
@@ -617,34 +615,22 @@ class SiteSetting extends Model
 
         $dbSettings = [
             'model_version' => static::get(self::KEY_ENHANCER_MODEL_VERSION),
-            'default_scale' => static::get(self::KEY_ENHANCER_DEFAULT_SCALE),
-            'default_face_enhance' => static::get(self::KEY_ENHANCER_DEFAULT_FACE_ENHANCE),
         ];
-
-        $configDefaults_defaults = $configDefaults['defaults'] ?? [];
 
         return [
             'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
-            'default_scale' => (int) ($dbSettings['default_scale'] ?: ($configDefaults_defaults['scale'] ?? 4)),
-            'default_face_enhance' => static::getBoolean(self::KEY_ENHANCER_DEFAULT_FACE_ENHANCE, $configDefaults_defaults['face_enhance'] ?? false),
         ];
     }
 
     /**
      * Set Image Enhancer settings (store in database).
      *
-     * @param array $settings Keys: model_version, default_scale, default_face_enhance
+     * @param array $settings Keys: model_version
      */
     public static function setEnhancerSettings(array $settings): void
     {
         if (isset($settings['model_version'])) {
             static::set(self::KEY_ENHANCER_MODEL_VERSION, (string) $settings['model_version']);
-        }
-        if (isset($settings['default_scale'])) {
-            static::set(self::KEY_ENHANCER_DEFAULT_SCALE, (string) $settings['default_scale']);
-        }
-        if (isset($settings['default_face_enhance'])) {
-            static::set(self::KEY_ENHANCER_DEFAULT_FACE_ENHANCE, static::asBoolString($settings['default_face_enhance']));
         }
     }
 

@@ -879,8 +879,6 @@ class AiGenerationService
         }
 
         $imageUrl = $payload['image_url'] ?? null;
-        $scale = (int) ($payload['scale'] ?? 4);
-        $faceEnhance = (bool) ($payload['face_enhance'] ?? false);
 
         if (! $imageUrl) {
             throw new \InvalidArgumentException('Missing image_url for enhance.');
@@ -892,31 +890,19 @@ class AiGenerationService
 
         $modelVersion = $settings['model_version'] ?: ($enhancerConfig['model_version'] ?? '');
 
-        // Use provided scale and face_enhance, or fall back to settings
-        if (!isset($payload['scale']) && isset($settings['default_scale'])) {
-            $scale = $settings['default_scale'];
-        }
-        if (!isset($payload['face_enhance']) && isset($settings['default_face_enhance'])) {
-            $faceEnhance = $settings['default_face_enhance'];
-        }
-
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
 
-        // Build Real-ESRGAN payload for image upscaling and enhancement
+        // Build Recraft Crisp Upscale payload (only image)
         $apiPayload = [
             'version' => $modelVersion,
             'input' => [
                 'image' => $imageInput,
-                'scale' => $scale,
-                'face_enhance' => $faceEnhance,
             ],
         ];
 
         Log::channel('enhance')->info('Enhancer create prediction', [
             'shop_domain' => $shopDomain,
             'model_version' => $modelVersion,
-            'scale' => $scale,
-            'face_enhance' => $faceEnhance,
         ]);
 
         $response = Http::withToken($token)

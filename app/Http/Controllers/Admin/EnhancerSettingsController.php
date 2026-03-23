@@ -39,9 +39,7 @@ class EnhancerSettingsController extends Controller
      * Update Image Enhancer settings.
      *
      * Accepts partial updates:
-     * - model_version (required for identification, but update is optional)
-     * - default_scale (0-10)
-     * - default_face_enhance (boolean)
+     * - model_version (optional)
      */
     public function update(Request $request)
     {
@@ -53,8 +51,6 @@ class EnhancerSettingsController extends Controller
 
             // Get old settings for comparison
             $oldSettings = SiteSetting::getEnhancerSettings();
-            $configDefaults = config('ai_studio_tools.enhance', []);
-            $supportedFields = $configDefaults['supported_fields'] ?? [];
 
             $updates = [];
             $changes = [];
@@ -68,38 +64,6 @@ class EnhancerSettingsController extends Controller
                         'new' => $modelVersion,
                     ];
                     $updates['model_version'] = $modelVersion;
-                }
-            }
-
-            // Default scale (2, 3, or 4)
-            if ($request->filled('default_scale')) {
-                $scale = (int) $request->input('default_scale');
-                $validScales = $supportedFields['scale'] ?? [2, 3, 4];
-
-                if (!in_array($scale, $validScales, true)) {
-                    return response()->json([
-                        'message' => 'Scale must be 2x, 3x, or 4x',
-                    ], 422);
-                }
-
-                if ($scale !== $oldSettings['default_scale']) {
-                    $changes['default_scale'] = [
-                        'old' => $oldSettings['default_scale'],
-                        'new' => $scale,
-                    ];
-                    $updates['default_scale'] = $scale;
-                }
-            }
-
-            // Default face enhance (boolean)
-            if ($request->filled('default_face_enhance')) {
-                $faceEnhance = (bool) $request->input('default_face_enhance');
-                if ($faceEnhance !== $oldSettings['default_face_enhance']) {
-                    $changes['default_face_enhance'] = [
-                        'old' => $oldSettings['default_face_enhance'],
-                        'new' => $faceEnhance,
-                    ];
-                    $updates['default_face_enhance'] = $faceEnhance;
                 }
             }
 
@@ -150,8 +114,6 @@ class EnhancerSettingsController extends Controller
             // Clear all Image Enhancer settings from database
             $keys = [
                 SiteSetting::KEY_ENHANCER_MODEL_VERSION,
-                SiteSetting::KEY_ENHANCER_DEFAULT_SCALE,
-                SiteSetting::KEY_ENHANCER_DEFAULT_FACE_ENHANCE,
             ];
 
             foreach ($keys as $key) {
