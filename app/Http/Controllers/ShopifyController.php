@@ -59,6 +59,13 @@ class ShopifyController extends Controller
         }
 
         $credits = (int) ($shop->ai_credits_balance ?? 0);
+        $magicEraserSettings = SiteSetting::getMagicEraserSettings();
+        $magicAspectRatios = $magicEraserSettings['enabled_aspect_ratios'] ?? [];
+        $magicResolutionCredits = $magicEraserSettings['resolution_credits'] ?? [
+            '1K' => 1,
+            '2K' => 2,
+            '4K' => 4,
+        ];
 
         return \Inertia\Inertia::render('Shopify/AIStudio', [
             'product' => $product,
@@ -66,6 +73,16 @@ class ShopifyController extends Controller
             'initialTool' => $initialTool,
             'enabledTools' => $enabledTools,
             'credits' => $credits,
+            'magicEraser' => [
+                'defaults' => [
+                    'aspect_ratio' => (string) ($magicEraserSettings['default_aspect_ratio'] ?? 'match_input_image'),
+                    'resolution' => (string) ($magicEraserSettings['default_resolution'] ?? '1K'),
+                    'output_format' => (string) ($magicEraserSettings['default_output_format'] ?? 'jpg'),
+                    'prepend_prompt' => (string) ($magicEraserSettings['prepend_prompt'] ?? ''),
+                ],
+                'resolutionCredits' => $magicResolutionCredits,
+                'aspectRatios' => $magicAspectRatios,
+            ],
         ]);
     }
 

@@ -25,20 +25,24 @@ class AiGenerationService
         return round($generation->created_at->diffInSeconds(now(), true), 4);
     }
 
-    /** Credits for this run: Magic Eraser 1K=1, 2K=2, 4K=4; all other tools = 1. */
+    /** Credits for this run: Magic Eraser uses admin-configured per-resolution costs; all other tools = 1. */
     private static function creditsForTool(string $toolUsed, ?string $resolution = null): int
     {
         if ($toolUsed !== 'magic_eraser') {
             return 1;
         }
+
+        $settings = SiteSetting::getMagicEraserSettings();
+        $resolutionCredits = is_array($settings['resolution_credits'] ?? null)
+            ? $settings['resolution_credits']
+            : ['1K' => 1, '2K' => 2, '4K' => 4];
+
         $r = strtoupper((string) $resolution);
-        if ($r === '4K') {
-            return 4;
+        if (isset($resolutionCredits[$r])) {
+            return max(1, (int) $resolutionCredits[$r]);
         }
-        if ($r === '2K') {
-            return 2;
-        }
-        return 1; // 1K or default
+
+        return max(1, (int) ($resolutionCredits['1K'] ?? 1));
     }
 
     /** Deduct credits for a completed generation. Returns new balance or null if merchant not found. */
@@ -535,44 +539,37 @@ class AiGenerationService
             throw new \RuntimeException('Invalid mask data. Please draw the area to erase and try again.');
         }
 
-        $nanoConfig = $this->resolvedNanoBananaConfig();
+        $magicConfig = $this->resolvedMagicEraserConfig();
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
         $maskInput = $this->imageUrlToReplicateInput($maskUrl);
         $basePrompt = $payload['prompt'] ?? 'Remove the selected region and reconstruct the area seamlessly so it matches the surrounding context, lighting, and texture. Output must be photorealistic and visually consistent with the rest of the image.';
-        $prompt = $this->prependPromptTemplate($basePrompt, $nanoConfig['prompt_template']);
-        $aspectRatio = $payload['aspect_ratio'] ?? $nanoConfig['default_aspect_ratio'];
-        $resolution = strtoupper((string) ($payload['resolution'] ?? $nanoConfig['default_resolution']));
-        $outputFormat = strtolower((string) ($payload['output_format'] ?? $nanoConfig['default_output_format']));
+        $prompt = $this->prependPromptTemplate($basePrompt, $magicConfig['prompt_template']);
+        $aspectRatio = $payload['aspect_ratio'] ?? $magicConfig['default_aspect_ratio'];
+        $resolution = strtoupper((string) ($payload['resolution'] ?? $magicConfig['default_resolution']));
+        $outputFormat = strtolower((string) ($payload['output_format'] ?? $magicConfig['default_output_format']));
 
-        $supported = $nanoConfig['supported_fields'];
+        $supported = $magicConfig['supported_fields'];
         if (! in_array($aspectRatio, $supported['aspect_ratio'] ?? [], true)) {
-            $aspectRatio = $nanoConfig['default_aspect_ratio'];
+            $aspectRatio = $magicConfig['default_aspect_ratio'];
         }
         if (! in_array($resolution, $supported['resolution'] ?? [], true)) {
-            $resolution = strtoupper((string) $nanoConfig['default_resolution']);
+            $resolution = strtoupper((string) $magicConfig['default_resolution']);
         }
         if (! in_array($outputFormat, $supported['output_format'] ?? [], true)) {
-            $outputFormat = strtolower((string) $nanoConfig['default_output_format']);
+            $outputFormat = strtolower((string) $magicConfig['default_output_format']);
         }
 
-        $featureFlags = $nanoConfig['features_enabled'];
-        $googleSearch = (bool) ($payload['google_search'] ?? false);
-        $imageSearch = (bool) ($payload['image_search'] ?? false);
-        if (! ($featureFlags['google_search'] ?? false)) {
-            $googleSearch = false;
-        }
-        if (! ($featureFlags['image_search'] ?? false)) {
-            $imageSearch = false;
-        }
+        $googleSearch = false;
+        $imageSearch = false;
         $seed = $payload['seed'] ?? null;
-        if (! ($featureFlags['seed_reproducibility'] ?? true)) {
+        if (! ($magicConfig['features_enabled']['seed_reproducibility'] ?? true)) {
             $seed = null;
         }
 
-        $this->enforceNanoBananaCostGuardrails($resolution, $googleSearch, $imageSearch, $nanoConfig);
+        $this->enforceNanoBananaCostGuardrails($resolution, $googleSearch, $imageSearch, $magicConfig);
 
         $apiPayload = [
-            'version' => $nanoConfig['model_version'],
+            'version' => $magicConfig['model_version'],
             'input' => [
                 'prompt' => $prompt,
                 'image_input' => [$imageInput, $maskInput],
@@ -581,12 +578,6 @@ class AiGenerationService
                 'output_format' => $outputFormat,
             ],
         ];
-        if ($googleSearch) {
-            $apiPayload['input']['google_search'] = true;
-        }
-        if ($imageSearch) {
-            $apiPayload['input']['image_search'] = true;
-        }
         if ($seed !== null && is_numeric($seed)) {
             $seedValue = (int) $seed;
             $seedMin = (int) ($supported['seed']['min'] ?? 0);
@@ -595,7 +586,7 @@ class AiGenerationService
                 $apiPayload['input']['seed'] = $seedValue;
             }
         }
-        $advancedConfig = $nanoConfig['advanced_config'];
+        $advancedConfig = $magicConfig['advanced_config'];
         if (isset($advancedConfig['guidance_scale']) && is_numeric($advancedConfig['guidance_scale'])) {
             $apiPayload['input']['guidance_scale'] = (float) $advancedConfig['guidance_scale'];
         }
@@ -607,8 +598,6 @@ class AiGenerationService
             'shop_domain' => $shopDomain,
             'resolution' => $resolution,
             'aspect_ratio' => $aspectRatio,
-            'google_search' => $googleSearch,
-            'image_search' => $imageSearch,
         ]);
 
         $response = $this->postReplicatePredictionWithRetry($token, $apiPayload, 'magic_eraser', [
@@ -760,6 +749,31 @@ class AiGenerationService
                 'google_search' => $normalizeFeature($savedFeatures['google_search'] ?? null, (bool) (($defaultFeatures['google_search']['enabled'] ?? false))),
                 'image_search' => $normalizeFeature($savedFeatures['image_search'] ?? null, (bool) (($defaultFeatures['image_search']['enabled'] ?? false))),
                 'seed_reproducibility' => $normalizeFeature($savedFeatures['seed_reproducibility'] ?? null, (bool) (($defaultFeatures['seed_reproducibility']['enabled'] ?? true))),
+            ],
+        ];
+    }
+
+    /**
+     * Resolve Magic Eraser runtime config from magic_eraser config + SiteSetting overrides.
+     */
+    private function resolvedMagicEraserConfig(): array
+    {
+        $defaults = config('ai_studio_tools.magic_eraser', []);
+        $settings = SiteSetting::getMagicEraserSettings();
+
+        return [
+            'model_version' => (string) ($settings['model_version'] ?: ($defaults['model_version'] ?? '')),
+            'default_resolution' => (string) ($settings['default_resolution'] ?: ($defaults['defaults']['resolution'] ?? '1K')),
+            'default_aspect_ratio' => (string) ($settings['default_aspect_ratio'] ?: ($defaults['defaults']['aspect_ratio'] ?? 'match_input_image')),
+            'default_output_format' => (string) ($settings['default_output_format'] ?: ($defaults['defaults']['output_format'] ?? 'jpg')),
+            'prompt_template' => trim((string) ($settings['prepend_prompt'] ?? '')),
+            'advanced_config' => [],
+            'supported_fields' => $defaults['supported_fields'] ?? [],
+            'cost_per_resolution' => $defaults['cost_per_resolution'] ?? [],
+            'retry' => config('ai_studio_tools.nano_banana.retry', []),
+            'cost_guardrails' => [],
+            'features_enabled' => [
+                'seed_reproducibility' => true,
             ],
         ];
     }

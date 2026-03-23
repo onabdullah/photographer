@@ -44,7 +44,6 @@ class MagicEraserSettingsController extends Controller
      * - default_resolution (1K, 2K, 4K)
      * - default_aspect_ratio
      * - default_output_format (jpg, png)
-     * - features_enabled: { google_search, image_search }
      */
     public function update(Request $request)
     {
@@ -145,26 +144,59 @@ class MagicEraserSettingsController extends Controller
                 }
             }
 
-            // Feature flags
-            if ($request->has('features_enabled') && is_array($request->input('features_enabled'))) {
-                $features = $request->input('features_enabled');
-                $features_enabled = [];
+            // Resolution credits
+            if ($request->has('resolution_credits') && is_array($request->input('resolution_credits'))) {
+                $credits = $request->input('resolution_credits');
+                $resolution_credits = [];
 
-                if (isset($features['google_search'])) {
-                    $features_enabled['google_search'] = (bool) $features['google_search'];
-                }
-                if (isset($features['image_search'])) {
-                    $features_enabled['image_search'] = (bool) $features['image_search'];
+                foreach (['1K', '2K', '4K'] as $res) {
+                    if (isset($credits[$res])) {
+                        $val = (int) $credits[$res];
+                        if ($val < 0) {
+                            return response()->json([
+                                'message' => "Resolution credits for {$res} must be non-negative.",
+                            ], 422);
+                        }
+                        $resolution_credits[$res] = $val;
+                    }
                 }
 
-                if (!empty($features_enabled)) {
-                    $oldFeatures = $oldSettings['features_enabled'] ?? [];
-                    if ($features_enabled !== $oldFeatures) {
-                        $changes['features_enabled'] = [
-                            'old' => $oldFeatures,
-                            'new' => $features_enabled,
+                if (!empty($resolution_credits)) {
+                    $oldCredits = $oldSettings['resolution_credits'] ?? [];
+                    if ($resolution_credits !== $oldCredits) {
+                        $changes['resolution_credits'] = [
+                            'old' => $oldCredits,
+                            'new' => $resolution_credits,
                         ];
-                        $updates['features_enabled'] = $features_enabled;
+                        $updates['resolution_credits'] = $resolution_credits;
+                    }
+                }
+            }
+
+            // Enabled aspect ratios (array of values or objects with value/label)
+            if ($request->has('enabled_aspect_ratios') && is_array($request->input('enabled_aspect_ratios'))) {
+                $aspectRatios = $request->input('enabled_aspect_ratios');
+                $enabledAspectRatios = [];
+
+                foreach ($aspectRatios as $ar) {
+                    if (is_string($ar)) {
+                        $enabledAspectRatios[] = ['value' => $ar, 'label' => $ar];
+                    } elseif (is_array($ar) && isset($ar['value'])) {
+                        $enabledAspectRatios[] = [
+                            'value' => (string) $ar['value'],
+                            'label' => (string) ($ar['label'] ?? $ar['value']),
+                        ];
+                    }
+                }
+
+                if (!empty($enabledAspectRatios)) {
+                    $oldAspectRatios = $oldSettings['enabled_aspect_ratios'] ?? [];
+                    if ($enabledAspectRatios !== $oldAspectRatios) {
+                        $changes['enabled_aspect_ratios'] = [
+                            'old' => $oldAspectRatios,
+                            'new' => $enabledAspectRatios,
+                        ];
+                        $updates['enabled_aspect_ratios'] = $enabledAspectRatios;
                     }
                 }
             }
@@ -220,7 +252,10 @@ class MagicEraserSettingsController extends Controller
                 SiteSetting::KEY_MAGIC_ERASER_DEFAULT_RESOLUTION,
                 SiteSetting::KEY_MAGIC_ERASER_DEFAULT_ASPECT_RATIO,
                 SiteSetting::KEY_MAGIC_ERASER_DEFAULT_OUTPUT_FORMAT,
-                SiteSetting::KEY_MAGIC_ERASER_FEATURES_ENABLED,
+                SiteSetting::KEY_MAGIC_ERASER_RESOLUTION_1K_CREDITS,
+                SiteSetting::KEY_MAGIC_ERASER_RESOLUTION_2K_CREDITS,
+                SiteSetting::KEY_MAGIC_ERASER_RESOLUTION_4K_CREDITS,
+                SiteSetting::KEY_MAGIC_ERASER_ENABLED_ASPECT_RATIOS,
             ];
 
             foreach ($keys as $key) {

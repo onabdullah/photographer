@@ -451,11 +451,12 @@ function MasterpieceIllustration() {
   );
 }
 
-function creditsForResolution(resolution) {
+function creditsForResolution(resolution, resolutionCredits = { '1K': 1, '2K': 2, '4K': 4 }) {
   const r = (resolution || '1K').toUpperCase();
-  if (r === '4K') return 4;
-  if (r === '2K') return 2;
-  return 1;
+  if (resolutionCredits[r] != null) {
+    return Math.max(1, Number(resolutionCredits[r]) || 1);
+  }
+  return Math.max(1, Number(resolutionCredits['1K']) || 1);
 }
 
 function PillButton({ selected, onClick, children }) {
@@ -482,10 +483,32 @@ function PillButton({ selected, onClick, children }) {
   );
 }
 
-export default function AIStudio({ product, initialImage, initialTool, enabledTools: enabledToolsProp, credits: initialCredits = 0 }) {
+export default function AIStudio({ product, initialImage, initialTool, enabledTools: enabledToolsProp, credits: initialCredits = 0, magicEraser = {} }) {
   const enabledTools = Array.isArray(enabledToolsProp) && enabledToolsProp.length > 0
     ? enabledToolsProp
     : VALID_TOOLS;
+  const magicDefaults = magicEraser?.defaults || {};
+  const magicResolutionCredits = magicEraser?.resolutionCredits || { '1K': 1, '2K': 2, '4K': 4 };
+  const magicAspectRatioOptions = Array.isArray(magicEraser?.aspectRatios) && magicEraser.aspectRatios.length > 0
+    ? magicEraser.aspectRatios.map((item) => ({
+        value: item?.value || item,
+        label: item?.label || item?.value || item,
+      }))
+    : MAGIC_ERASER_ASPECT_RATIOS;
+  const magicResolutionOptions = [
+    { value: '1K', label: '1K', hint: 'Standard', credits: Math.max(1, Number(magicResolutionCredits['1K']) || 1) },
+    { value: '2K', label: '2K', hint: 'HD', credits: Math.max(1, Number(magicResolutionCredits['2K']) || 2) },
+    { value: '4K', label: '4K', hint: 'Ultra HD', credits: Math.max(1, Number(magicResolutionCredits['4K']) || 4) },
+  ];
+  const defaultMagicAspectRatio = magicAspectRatioOptions.some((opt) => opt.value === magicDefaults.aspect_ratio)
+    ? magicDefaults.aspect_ratio
+    : (magicAspectRatioOptions[0]?.value ?? 'match_input_image');
+  const defaultMagicResolution = magicResolutionOptions.some((opt) => opt.value === magicDefaults.resolution)
+    ? magicDefaults.resolution
+    : '1K';
+  const defaultMagicOutputFormat = MAGIC_ERASER_OUTPUT_FORMATS.some((opt) => opt.value === magicDefaults.output_format)
+    ? magicDefaults.output_format
+    : 'jpg';
   const toolOptions = AI_TOOLS.filter((t) => enabledTools.includes(t.value));
   const validInitialTool = initialTool && enabledTools.includes(initialTool) ? initialTool : (enabledTools[0] ?? 'magic_eraser');
   const [credits, setCredits] = useState(() => Math.max(0, parseInt(initialCredits, 10) || 0));
@@ -513,9 +536,9 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [upscaleFaceEnhance, setUpscaleFaceEnhance] = useState(false);
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
   const [magicEraserPrompt, setMagicEraserPrompt] = useState(MAGIC_ERASER_DEFAULT_PROMPT);
-  const [magicEraserAspectRatio, setMagicEraserAspectRatio] = useState('match_input_image');
-  const [magicEraserResolution, setMagicEraserResolution] = useState('1K');
-  const [magicEraserOutputFormat, setMagicEraserOutputFormat] = useState('jpg');
+  const [magicEraserAspectRatio, setMagicEraserAspectRatio] = useState(defaultMagicAspectRatio);
+  const [magicEraserResolution, setMagicEraserResolution] = useState(defaultMagicResolution);
+  const [magicEraserOutputFormat, setMagicEraserOutputFormat] = useState(defaultMagicOutputFormat);
   const [magicEraserHasStrokes, setMagicEraserHasStrokes] = useState(false);
   const [magicEraserCursorPos, setMagicEraserCursorPos] = useState({ x: -100, y: -100 });
   const [magicEraserCursorVisible, setMagicEraserCursorVisible] = useState(false);
@@ -1096,13 +1119,16 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     setLastCompletedTool(null);
     setCompareSliderPosition(50);
     setMagicEraserHasStrokes(false);
+    setMagicEraserAspectRatio(defaultMagicAspectRatio);
+    setMagicEraserResolution(defaultMagicResolution);
+    setMagicEraserOutputFormat(defaultMagicOutputFormat);
     const canvas = magicEraserCanvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, []);
+  }, [defaultMagicAspectRatio, defaultMagicResolution, defaultMagicOutputFormat]);
 
   const handleGenerate = async () => {
     if (!hasValidInput) {
@@ -1821,7 +1847,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                       <BlockStack gap="200">
                         <Text variant="bodySm" tone="subdued" as="p">Aspect ratio</Text>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                          {MAGIC_ERASER_ASPECT_RATIOS.map((opt) => (
+                          {magicAspectRatioOptions.map((opt) => (
                             <PillButton
                               key={opt.value}
                               selected={magicEraserAspectRatio === opt.value}
@@ -1835,7 +1861,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                       <BlockStack gap="200">
                         <Text variant="bodySm" tone="subdued" as="p">Resolution</Text>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
-                          {MAGIC_ERASER_RESOLUTIONS.map((opt) => (
+                          {magicResolutionOptions.map((opt) => (
                             <PillButton
                               key={opt.value}
                               selected={magicEraserResolution === opt.value}
@@ -1844,11 +1870,11 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                               <span style={{ fontWeight: 700 }}>{opt.value}</span>
                               <br />
                               <span style={{ fontSize: 10, opacity: 0.75 }}>
-                                {opt.value === '4K' ? 'Ultra HD' : opt.value === '2K' ? 'HD' : 'Standard'}
+                                {opt.hint}
                               </span>
                               <br />
                               <span style={{ fontSize: 10, color: '#FF7A30' }}>
-                                {opt.value === '4K' ? '4 cr' : opt.value === '2K' ? '2 cr' : '1 cr'}
+                                {opt.credits} cr
                               </span>
                             </PillButton>
                           ))}
@@ -2156,7 +2182,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           {selectedTool === 'magic_eraser' ? '✨ Erase Object' : selectedTool === 'compressor' ? '✨ Compress' : '✨ Generate'}
                         </MagicButton>
                         {(() => {
-                          const creditsForAction = selectedTool === 'magic_eraser' ? creditsForResolution(magicEraserResolution) : 1;
+                          const creditsForAction = selectedTool === 'magic_eraser' ? creditsForResolution(magicEraserResolution, magicResolutionCredits) : 1;
                           const remainingAfter = Math.max(0, credits - creditsForAction);
                           return (
                             <BlockStack gap="100">

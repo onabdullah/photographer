@@ -52,7 +52,10 @@ class SiteSetting extends Model
     public const KEY_MAGIC_ERASER_DEFAULT_RESOLUTION = 'magic_eraser_default_resolution';
     public const KEY_MAGIC_ERASER_DEFAULT_ASPECT_RATIO = 'magic_eraser_default_aspect_ratio';
     public const KEY_MAGIC_ERASER_DEFAULT_OUTPUT_FORMAT = 'magic_eraser_default_output_format';
-    public const KEY_MAGIC_ERASER_FEATURES_ENABLED = 'magic_eraser_features_enabled';
+    public const KEY_MAGIC_ERASER_RESOLUTION_1K_CREDITS = 'magic_eraser_resolution_1k_credits';
+    public const KEY_MAGIC_ERASER_RESOLUTION_2K_CREDITS = 'magic_eraser_resolution_2k_credits';
+    public const KEY_MAGIC_ERASER_RESOLUTION_4K_CREDITS = 'magic_eraser_resolution_4k_credits';
+    public const KEY_MAGIC_ERASER_ENABLED_ASPECT_RATIOS = 'magic_eraser_enabled_aspect_ratios';
 
     // Background Remover settings
     public const KEY_BACKGROUND_REMOVER_MODEL_VERSION = 'background_remover_model_version';
@@ -405,22 +408,21 @@ class SiteSetting extends Model
             'default_resolution' => static::get(self::KEY_MAGIC_ERASER_DEFAULT_RESOLUTION),
             'default_aspect_ratio' => static::get(self::KEY_MAGIC_ERASER_DEFAULT_ASPECT_RATIO),
             'default_output_format' => static::get(self::KEY_MAGIC_ERASER_DEFAULT_OUTPUT_FORMAT),
-            'features_enabled' => static::getJson(self::KEY_MAGIC_ERASER_FEATURES_ENABLED),
+            'enabled_aspect_ratios' => static::getJson(self::KEY_MAGIC_ERASER_ENABLED_ASPECT_RATIOS),
         ];
 
         $configDefaults_defaults = $configDefaults['defaults'] ?? [];
-        $configFeatures = $configDefaults['features'] ?? [];
-        $dbFeatures = $dbSettings['features_enabled'] ?? [];
 
-        $normalizeFeature = function (mixed $dbValue, mixed $configValue, bool $fallback): bool {
-            if ($dbValue !== null) {
-                return (bool) ($dbValue['enabled'] ?? $dbValue);
-            }
-            if ($configValue !== null) {
-                return (bool) ($configValue['enabled'] ?? $configValue);
-            }
-            return $fallback;
-        };
+        $enabledAspectRatios = $dbSettings['enabled_aspect_ratios'] ?? ($configDefaults['enabled_aspect_ratios'] ?? []);
+        $aspectRatiosArray = [];
+        if (is_array($enabledAspectRatios) && !empty($enabledAspectRatios)) {
+            $aspectRatiosArray = array_map(function($ar) {
+                if (is_string($ar)) {
+                    return ['value' => $ar, 'label' => $ar];
+                }
+                return is_array($ar) ? $ar : ['value' => (string) $ar, 'label' => (string) $ar];
+            }, $enabledAspectRatios);
+        }
 
         return [
             'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
@@ -428,18 +430,12 @@ class SiteSetting extends Model
             'default_resolution' => (string) ($dbSettings['default_resolution'] ?: ($configDefaults_defaults['resolution'] ?? '1K')),
             'default_aspect_ratio' => (string) ($dbSettings['default_aspect_ratio'] ?: ($configDefaults_defaults['aspect_ratio'] ?? 'match_input_image')),
             'default_output_format' => (string) ($dbSettings['default_output_format'] ?: ($configDefaults_defaults['output_format'] ?? 'jpg')),
-            'features_enabled' => [
-                'google_search' => $normalizeFeature(
-                    $dbFeatures['google_search'] ?? null,
-                    $configFeatures['google_search'] ?? null,
-                    false
-                ),
-                'image_search' => $normalizeFeature(
-                    $dbFeatures['image_search'] ?? null,
-                    $configFeatures['image_search'] ?? null,
-                    false
-                ),
+            'resolution_credits' => [
+                '1K' => (int) static::get(self::KEY_MAGIC_ERASER_RESOLUTION_1K_CREDITS, 1),
+                '2K' => (int) static::get(self::KEY_MAGIC_ERASER_RESOLUTION_2K_CREDITS, 2),
+                '4K' => (int) static::get(self::KEY_MAGIC_ERASER_RESOLUTION_4K_CREDITS, 4),
             ],
+            'enabled_aspect_ratios' => $aspectRatiosArray,
         ];
     }
 
@@ -447,7 +443,7 @@ class SiteSetting extends Model
      * Set Magic Eraser settings (store in database).
      *
      * @param array $settings Keys: model_version, prepend_prompt, default_resolution,
-     *                        default_aspect_ratio, default_output_format, features_enabled
+     *                        default_aspect_ratio, default_output_format, resolution_credits, enabled_aspect_ratios
      */
     public static function setMagicEraserSettings(array $settings): void
     {
@@ -466,8 +462,20 @@ class SiteSetting extends Model
         if (isset($settings['default_output_format'])) {
             static::set(self::KEY_MAGIC_ERASER_DEFAULT_OUTPUT_FORMAT, (string) $settings['default_output_format']);
         }
-        if (isset($settings['features_enabled']) && is_array($settings['features_enabled'])) {
-            static::setJson(self::KEY_MAGIC_ERASER_FEATURES_ENABLED, $settings['features_enabled']);
+        if (isset($settings['resolution_credits']) && is_array($settings['resolution_credits'])) {
+            foreach (['1K', '2K', '4K'] as $res) {
+                $key = match($res) {
+                    '1K' => self::KEY_MAGIC_ERASER_RESOLUTION_1K_CREDITS,
+                    '2K' => self::KEY_MAGIC_ERASER_RESOLUTION_2K_CREDITS,
+                    '4K' => self::KEY_MAGIC_ERASER_RESOLUTION_4K_CREDITS,
+                };
+                if (isset($settings['resolution_credits'][$res])) {
+                    static::set($key, (int) $settings['resolution_credits'][$res]);
+                }
+            }
+        }
+        if (isset($settings['enabled_aspect_ratios']) && is_array($settings['enabled_aspect_ratios'])) {
+            static::setJson(self::KEY_MAGIC_ERASER_ENABLED_ASPECT_RATIOS, $settings['enabled_aspect_ratios']);
         }
     }
 

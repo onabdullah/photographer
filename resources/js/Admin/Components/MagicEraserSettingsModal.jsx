@@ -45,10 +45,12 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
     default_resolution: '1K',
     default_aspect_ratio: 'match_input_image',
     default_output_format: 'jpg',
-    features_enabled: {
-      google_search: false,
-      image_search: false,
+    resolution_credits: {
+      '1K': 1,
+      '2K': 2,
+      '4K': 4,
     },
+    enabled_aspect_ratios: [],
   });
   const [originalSettings, setOriginalSettings] = useState(null);
 
@@ -264,70 +266,80 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                       ))}
                     </select>
                   </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Resolution Credit Costs</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                      Set how many credits each resolution costs merchants.
+                    </p>
+                    <div className="grid grid-cols-3 gap-4">
+                      {['1K', '2K', '4K'].map(res => (
+                        <div key={res} className="space-y-1">
+                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                            {res} Resolution
+                          </label>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              min="1"
+                              value={settings.resolution_credits?.[res] ?? (res === '1K' ? 1 : res === '2K' ? 2 : 4)}
+                              onChange={e => {
+                                setSettings({
+                                  ...settings,
+                                  resolution_credits: {
+                                    ...settings.resolution_credits,
+                                    [res]: Math.max(1, parseInt(e.target.value, 10) || 1),
+                                  },
+                                });
+                              }}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono"
+                            />
+                            <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">credits</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Visible Aspect Ratios to Merchants</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                      Choose which aspect ratios merchants can select. If none selected, all will be available.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ASPECT_RATIOS.map(ar => (
+                        <label key={ar} className="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                          <input
+                            type="checkbox"
+                            checked={Array.isArray(settings.enabled_aspect_ratios) && settings.enabled_aspect_ratios.some(
+                              item => (item.value || item) === ar
+                            )}
+                            onChange={e => {
+                              const current = Array.isArray(settings.enabled_aspect_ratios) ? settings.enabled_aspect_ratios : [];
+                              if (e.target.checked) {
+                                setSettings({
+                                  ...settings,
+                                  enabled_aspect_ratios: [...current, { value: ar, label: ar === 'match_input_image' ? 'Match Input' : ar }],
+                                });
+                              } else {
+                                setSettings({
+                                  ...settings,
+                                  enabled_aspect_ratios: current.filter(item => (item.value || item) !== ar),
+                                });
+                              }
+                            }}
+                            className="w-4 h-4 accent-primary-600 cursor-pointer rounded"
+                          />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {ar === 'match_input_image' ? 'Match Input Image' : ar}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Features */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Search Grounding Features</h3>
-                <div className="space-y-3 pl-2">
-                  <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                    <input
-                      type="checkbox"
-                      checked={settings.features_enabled?.google_search || false}
-                      onChange={e =>
-                        setSettings({
-                          ...settings,
-                          features_enabled: {
-                            ...settings.features_enabled,
-                            google_search: e.target.checked,
-                          },
-                        })
-                      }
-                      className="w-4 h-4 accent-primary-600 cursor-pointer rounded mt-0.5"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition">
-                        Google Search Grounding
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Use real-time web search for context (optional)
-                      </div>
-                      <div className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-1">
-                        ⚠️ Increases API cost by 50%
-                      </div>
-                    </div>
-                  </label>
-
-                  <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                    <input
-                      type="checkbox"
-                      checked={settings.features_enabled?.image_search || false}
-                      onChange={e =>
-                        setSettings({
-                          ...settings,
-                          features_enabled: {
-                            ...settings.features_enabled,
-                            image_search: e.target.checked,
-                          },
-                        })
-                      }
-                      className="w-4 h-4 accent-primary-600 cursor-pointer rounded mt-0.5"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition">
-                        Image Search Grounding
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Use Google Image Search for visual references (optional)
-                      </div>
-                      <div className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-1">
-                        ⚠️ Increases API cost by 50%
-                      </div>
-                    </div>
-                  </label>
-                </div>
-              </div>
             </div>
           )}
         </div>
