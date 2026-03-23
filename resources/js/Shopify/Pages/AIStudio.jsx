@@ -537,10 +537,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [upscaleScale, setUpscaleScale] = useState('4');
   const [upscaleFaceEnhance, setUpscaleFaceEnhance] = useState(false);
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
-  const [magicEraserPrompt, setMagicEraserPrompt] = useState(() => {
-    // Initialize with admin-configured prompt or default
-    return adminPrependPrompt || MAGIC_ERASER_DEFAULT_PROMPT;
-  });
+  const [magicEraserPrompt, setMagicEraserPrompt] = useState(''); // Start empty - merchant adds their own instructions
   const [magicEraserAspectRatio, setMagicEraserAspectRatio] = useState(defaultMagicAspectRatio);
   const [magicEraserResolution, setMagicEraserResolution] = useState(defaultMagicResolution);
   const [magicEraserOutputFormat, setMagicEraserOutputFormat] = useState(defaultMagicOutputFormat);
