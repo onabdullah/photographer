@@ -60,6 +60,7 @@ class ShopifyController extends Controller
 
         $credits = (int) ($shop->ai_credits_balance ?? 0);
         $magicEraserSettings = SiteSetting::getMagicEraserSettings();
+        $backgroundRemoverSettings = SiteSetting::getBackgroundRemoverSettings();
         $magicAspectRatios = $magicEraserSettings['enabled_aspect_ratios'] ?? [];
         $magicResolutionCredits = $magicEraserSettings['resolution_credits'] ?? [
             '1K' => 1,
@@ -82,6 +83,11 @@ class ShopifyController extends Controller
                 ],
                 'resolutionCredits' => $magicResolutionCredits,
                 'aspectRatios' => $magicAspectRatios,
+            ],
+            'backgroundRemover' => [
+                'defaults' => [
+                    'resolution' => (string) ($backgroundRemoverSettings['default_resolution'] ?? ''),
+                ],
             ],
         ]);
     }

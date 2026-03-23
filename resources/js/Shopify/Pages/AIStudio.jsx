@@ -483,7 +483,7 @@ function PillButton({ selected, onClick, children }) {
   );
 }
 
-export default function AIStudio({ product, initialImage, initialTool, enabledTools: enabledToolsProp, credits: initialCredits = 0, magicEraser = {} }) {
+export default function AIStudio({ product, initialImage, initialTool, enabledTools: enabledToolsProp, credits: initialCredits = 0, magicEraser = {}, backgroundRemover = {} }) {
   const enabledTools = Array.isArray(enabledToolsProp) && enabledToolsProp.length > 0
     ? enabledToolsProp
     : VALID_TOOLS;
@@ -509,6 +509,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const defaultMagicOutputFormat = MAGIC_ERASER_OUTPUT_FORMATS.some((opt) => opt.value === magicDefaults.output_format)
     ? magicDefaults.output_format
     : 'jpg';
+  const backgroundRemoverDefaults = backgroundRemover?.defaults || {};
+  const backgroundRemoverResolution = (backgroundRemoverDefaults.resolution || '').trim();
   const toolOptions = AI_TOOLS.filter((t) => enabledTools.includes(t.value));
   const validInitialTool = initialTool && enabledTools.includes(initialTool) ? initialTool : (enabledTools[0] ?? 'magic_eraser');
   const [credits, setCredits] = useState(() => Math.max(0, parseInt(initialCredits, 10) || 0));
@@ -665,6 +667,10 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
         throw new Error('Invalid image source');
       }
 
+      if (backgroundRemoverResolution) {
+        formData.append('resolution', backgroundRemoverResolution);
+      }
+
       const res = await axios.post('/shopify/remove-background', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -704,7 +710,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       showToast(msg, true);
       setProcessingStatus('error');
     }
-  }, [hasValidInput, inputImage, showToast, refetchRecentGenerations]);
+  }, [hasValidInput, inputImage, showToast, refetchRecentGenerations, backgroundRemoverResolution]);
 
   const handleCompress = useCallback(async () => {
     const sourceImage = inputImage || sourceImageRef.current;

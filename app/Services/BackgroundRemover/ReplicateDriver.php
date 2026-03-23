@@ -19,12 +19,14 @@ class ReplicateDriver implements BackgroundRemoverInterface
      */
     private const MODEL_VERSION = 'men1scus/birefnet:f74986db0355b58403ed20963af156525e2891ea3c2d499bfbfb2a28cd87c5d7';
 
+    private const MODEL_SLUG = 'men1scus/birefnet';
+
     private function bgLog(string $message, array $context = []): void
     {
         Log::channel('bg_remover')->info($message, array_merge(['driver' => 'ReplicateDriver'], $context));
     }
 
-    public function processImage(string $imageUrl): array
+    public function processImage(string $imageUrl, array $options = []): array
     {
         $token = config('services.replicate.token');
         if (empty($token)) {
@@ -35,12 +37,20 @@ class ReplicateDriver implements BackgroundRemoverInterface
         // Send a base64 data URI instead so Replicate never fetches our URL.
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
 
+        $configuredModel = trim((string) ($options['model_version'] ?? ''));
+        $configuredResolution = trim((string) ($options['resolution'] ?? ''));
+        $resolvedVersion = $this->resolveModelVersion($configuredModel);
+
         $payload = [
-            'version' => self::MODEL_VERSION,
+            'version' => $resolvedVersion,
             'input' => [
                 'image' => $imageInput,
             ],
         ];
+
+        if ($configuredResolution !== '') {
+            $payload['input']['resolution'] = $configuredResolution;
+        }
         $this->bgLog('Replicate processImage API request', [
             'url' => self::REPLICATE_API,
             'image_input_type' => str_starts_with($imageInput, 'data:') ? 'data_uri' : 'url',
@@ -57,6 +67,37 @@ class ReplicateDriver implements BackgroundRemoverInterface
             'status_code' => $statusCode,
             'response' => $body,
         ]);
+
+        if (! $response->successful()) {
+            // Some model versions may not accept a resolution field. Retry once without it.
+            if ($statusCode === 422 && isset($payload['input']['resolution'])) {
+                unset($payload['input']['resolution']);
+
+                $this->bgLog('Replicate processImage retry without resolution', [
+                    'status_code' => $statusCode,
+                    'configured_resolution' => $configuredResolution,
+                    'version' => $resolvedVersion,
+                ]);
+
+                $retryResponse = Http::withToken($token)
+                    ->timeout(30)
+                    ->post(self::REPLICATE_API, $payload);
+
+                $retryCode = $retryResponse->status();
+                $retryBody = $retryResponse->json() ?? [];
+
+                $this->bgLog('Replicate processImage retry response', [
+                    'status_code' => $retryCode,
+                    'response' => $retryBody,
+                ]);
+
+                if ($retryResponse->successful()) {
+                    $response = $retryResponse;
+                    $statusCode = $retryCode;
+                    $body = $retryBody;
+                }
+            }
+        }
 
         if (! $response->successful()) {
             $detail = $response->json('detail') ?? $response->body();
@@ -77,6 +118,26 @@ class ReplicateDriver implements BackgroundRemoverInterface
             'job_id' => $id,
             'result_url' => null,
         ];
+    }
+
+    private function resolveModelVersion(string $configuredModel): string
+    {
+        if ($configuredModel === '') {
+            return self::MODEL_VERSION;
+        }
+
+        // Full Replicate version reference provided.
+        if (str_contains($configuredModel, ':')) {
+            return $configuredModel;
+        }
+
+        // Admin may store only hash/version id.
+        if (! str_contains($configuredModel, '/')) {
+            return self::MODEL_SLUG . ':' . $configuredModel;
+        }
+
+        // Admin may store only model slug; fallback to hardcoded known version for stability.
+        return self::MODEL_VERSION;
     }
 
     public function checkJobStatus(string $jobId): array

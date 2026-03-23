@@ -63,7 +63,10 @@ class AiStudioController extends Controller
         }
 
         try {
-            $result = $this->aiGenerationService->startGeneration('remove_bg', ['image_url' => $imageUrl], $shopDomain);
+            $result = $this->aiGenerationService->startGeneration('remove_bg', [
+                'image_url' => $imageUrl,
+                'resolution' => (string) $request->input('resolution', ''),
+            ], $shopDomain);
             $this->bgLog('removeBackground response', ['result' => $result]);
             $this->normalizeResultUrl($request, $result);
             return response()->json($result);

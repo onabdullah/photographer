@@ -7,10 +7,11 @@ interface BackgroundRemoverInterface
     /**
      * Process an image for background removal.
      *
-     * @param  string  $imageUrl  Publicly accessible URL of the image
+    * @param  string  $imageUrl  Publicly accessible URL of the image
+    * @param  array{model_version?: string, resolution?: string}  $options
      * @return array{status: 'processing'|'completed', job_id: string|null, result_url: string|null}
      */
-    public function processImage(string $imageUrl): array;
+    public function processImage(string $imageUrl, array $options = []): array;
 
     /**
      * Check the status of an async background-removal job.

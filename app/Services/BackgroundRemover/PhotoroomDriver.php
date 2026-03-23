@@ -20,7 +20,7 @@ class PhotoroomDriver implements BackgroundRemoverInterface
     /**
      * Photoroom is synchronous: send image URL, get back result image. No job_id.
      */
-    public function processImage(string $imageUrl): array
+    public function processImage(string $imageUrl, array $options = []): array
     {
         $key = config('services.photoroom.key');
         if (empty($key)) {

@@ -280,7 +280,7 @@ class AiGenerationService
         AppStat::incrementKey('total_api_requests');
 
         if ($toolUsed === 'remove_bg') {
-            return $this->startBackgroundRemoval($imageUrl, $shopDomain);
+            return $this->startBackgroundRemoval($payload, $shopDomain);
         }
         if ($toolUsed === 'upscaler') {
             return $this->startUpscaler($payload, $shopDomain);
@@ -330,8 +330,13 @@ class AiGenerationService
         throw new \InvalidArgumentException("Unknown tool: {$toolUsed}");
     }
 
-    private function startBackgroundRemoval(string $imageUrl, string $shopDomain): array
+    private function startBackgroundRemoval(array $payload, string $shopDomain): array
     {
+        $imageUrl = $payload['image_url'] ?? null;
+        if (! is_string($imageUrl) || trim($imageUrl) === '') {
+            throw new \InvalidArgumentException('Missing image_url for background remover.');
+        }
+
         $generation = ImageGeneration::create([
             'shop_domain' => $shopDomain,
             'tool_used' => 'background_remover',
@@ -346,7 +351,14 @@ class AiGenerationService
         ]);
 
         try {
-            $result = $this->backgroundRemover->processImage($imageUrl);
+            $settings = SiteSetting::getBackgroundRemoverSettings();
+            $resolvedResolution = trim((string) ($payload['resolution'] ?? $settings['default_resolution'] ?? ''));
+            $resolvedModelVersion = trim((string) ($settings['model_version'] ?? ''));
+
+            $result = $this->backgroundRemover->processImage($imageUrl, [
+                'model_version' => $resolvedModelVersion,
+                'resolution' => $resolvedResolution,
+            ]);
 
             if (($result['job_id'] ?? null) !== null) {
                 $generation->update(['api_job_id' => $result['job_id']]);
