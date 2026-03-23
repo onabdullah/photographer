@@ -438,17 +438,44 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Default Aspect Ratio
                         </label>
-                        <select
-                          value={settings.default_aspect_ratio || 'match_input_image'}
-                          onChange={e => setSettings({ ...settings, default_aspect_ratio: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
-                        >
-                          {ASPECT_RATIOS.map(ar => (
-                            <option key={ar} value={ar}>
-                              {ar === 'match_input_image' ? 'Match Input Image (Default)' : ar}
-                            </option>
-                          ))}
-                        </select>
+                        {Array.isArray(settings.enabled_aspect_ratios) && settings.enabled_aspect_ratios.length > 0 ? (
+                          <>
+                            <select
+                              value={settings.default_aspect_ratio || 'match_input_image'}
+                              onChange={e => setSettings({ ...settings, default_aspect_ratio: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
+                            >
+                              {settings.enabled_aspect_ratios.map(item => {
+                                const ar = item.value || item;
+                                return (
+                                  <option key={ar} value={ar}>
+                                    {ar === 'match_input_image' ? 'Match Input Image (Default)' : ar}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Only enabled aspect ratios are available. Adjust visible ratios below to change options.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <select
+                              value={settings.default_aspect_ratio || 'match_input_image'}
+                              onChange={e => setSettings({ ...settings, default_aspect_ratio: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
+                            >
+                              {ASPECT_RATIOS.map(ar => (
+                                <option key={ar} value={ar}>
+                                  {ar === 'match_input_image' ? 'Match Input Image (Default)' : ar}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Showing all ratios. Select specific ratios below to restrict options.
+                            </p>
+                          </>
+                        )}
                       </div>
 
                       <div>
