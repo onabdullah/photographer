@@ -486,10 +486,15 @@ class AiUniversalService
 
     private function resolvedReferenceTypes(): array
     {
-        return \App\Models\ProductAILabReferenceType::enabled()->ordered()->get()
-            ->map(fn($rt) => ['slug' => $rt->slug, 'name' => $rt->name])
-            ->values()
-            ->all();
+        try {
+            return \App\Models\ProductAILabReferenceType::enabled()->ordered()->get()
+                ->map(fn($rt) => ['slug' => $rt->slug, 'name' => $rt->name])
+                ->values()
+                ->all();
+        } catch (\Exception $e) {
+            // Fallback: return empty array if table doesn't exist
+            return [];
+        }
     }
 
     private function prependPromptTemplate(string $prompt, string $template): string
