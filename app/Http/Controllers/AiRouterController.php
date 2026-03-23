@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Traits\GetsCurrentShop;
 use App\Models\ImageGeneration;
 use App\Models\Merchant;
+use App\Models\SiteSetting;
 use App\Services\AiUniversalService;
 use App\Services\MerchantCreditService;
 use App\Services\MerchantCreditThresholdNotifier;
@@ -56,6 +57,21 @@ class AiRouterController extends Controller
         ]);
 
         $category = $request->input('product_category');
+
+            // Enforce admin visibility flags for search grounding features.
+            // Even if a client posts google_search/image_search directly, disabled
+            // features must remain unavailable to merchants.
+            $productAILabSettings = SiteSetting::getProductAILabSettings();
+            $featureFlags = is_array($productAILabSettings['features_enabled'] ?? null)
+                ? $productAILabSettings['features_enabled']
+                : [];
+            $allowGoogleSearch = (bool) ($featureFlags['google_search'] ?? false);
+            $allowImageSearch = (bool) ($featureFlags['image_search'] ?? false);
+
+            $request->merge([
+                'google_search' => $allowGoogleSearch && $request->boolean('google_search'),
+                'image_search' => $allowImageSearch && $request->boolean('image_search'),
+            ]);
 
         try {
             /*

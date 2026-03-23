@@ -698,7 +698,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                           {(googleSearchAvailable || imageSearchAvailable) && (
                             <BlockStack gap="200">
                               <Text variant="bodySm" tone="subdued" as="p">
-                                Grounding Options
+                                Search Grounding Features
                               </Text>
                               {googleSearchAvailable && (
                                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--p-color-text)' }}>
