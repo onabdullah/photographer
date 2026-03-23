@@ -97,6 +97,40 @@ class ReplicateDriver implements BackgroundRemoverInterface
                     $body = $retryBody;
                 }
             }
+
+            // If admin configured an invalid version, recover with known-good default.
+            if (! $response->successful() && $resolvedVersion !== self::MODEL_VERSION) {
+                $fallbackPayload = [
+                    'version' => self::MODEL_VERSION,
+                    'input' => [
+                        'image' => $imageInput,
+                    ],
+                ];
+
+                $this->bgLog('Replicate processImage fallback to default model version', [
+                    'from_version' => $resolvedVersion,
+                    'to_version' => self::MODEL_VERSION,
+                    'status_code' => $statusCode,
+                ]);
+
+                $fallbackResponse = Http::withToken($token)
+                    ->timeout(30)
+                    ->post(self::REPLICATE_API, $fallbackPayload);
+
+                $fallbackCode = $fallbackResponse->status();
+                $fallbackBody = $fallbackResponse->json() ?? [];
+
+                $this->bgLog('Replicate processImage fallback response', [
+                    'status_code' => $fallbackCode,
+                    'response' => $fallbackBody,
+                ]);
+
+                if ($fallbackResponse->successful()) {
+                    $response = $fallbackResponse;
+                    $statusCode = $fallbackCode;
+                    $body = $fallbackBody;
+                }
+            }
         }
 
         if (! $response->successful()) {
