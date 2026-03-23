@@ -38,9 +38,9 @@ return [
         ],
         'enhance' => [
             'label' => 'Image Enhancer',
-            'model_name' => 'Real-ESRGAN (nightmareai/real-esrgan)',
+            'model_name' => 'Recraft Crisp Upscale (recraft-ai)',
             'model_provider' => 'Replicate',
-            'estimated_rate_per_image_usd' => 0.0023,
+            'estimated_rate_per_image_usd' => 0.002,
         ],
         'lighting' => [
             'label' => 'Lighting Fix',
