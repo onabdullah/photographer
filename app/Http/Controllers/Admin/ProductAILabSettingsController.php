@@ -45,6 +45,7 @@ class ProductAILabSettingsController extends Controller
      * - default_aspect_ratio
      * - default_output_format (jpg, png)
      * - features_enabled: { google_search, image_search }
+     * - resolution_credits: { 1K, 2K, 4K } (integer credit costs)
      */
     public function update(Request $request)
     {
@@ -169,6 +170,35 @@ class ProductAILabSettingsController extends Controller
                 }
             }
 
+            // Resolution credits
+            if ($request->has('resolution_credits') && is_array($request->input('resolution_credits'))) {
+                $credits = $request->input('resolution_credits');
+                $resolution_credits = [];
+
+                foreach (['1K', '2K', '4K'] as $res) {
+                    if (isset($credits[$res])) {
+                        $val = (int) $credits[$res];
+                        if ($val < 0) {
+                            return response()->json([
+                                'message' => "Resolution credits for {$res} must be non-negative.",
+                            ], 422);
+                        }
+                        $resolution_credits[$res] = $val;
+                    }
+                }
+
+                if (!empty($resolution_credits)) {
+                    $oldCredits = $oldSettings['resolution_credits'] ?? [];
+                    if ($resolution_credits !== $oldCredits) {
+                        $changes['resolution_credits'] = [
+                            'old' => $oldCredits,
+                            'new' => $resolution_credits,
+                        ];
+                        $updates['resolution_credits'] = $resolution_credits;
+                    }
+                }
+            }
+
             // Save all updates if there are changes
             if (!empty($updates)) {
                 SiteSetting::setProductAILabSettings($updates);
@@ -221,6 +251,9 @@ class ProductAILabSettingsController extends Controller
                 SiteSetting::KEY_PRODUCT_AI_LAB_DEFAULT_ASPECT_RATIO,
                 SiteSetting::KEY_PRODUCT_AI_LAB_DEFAULT_OUTPUT_FORMAT,
                 SiteSetting::KEY_PRODUCT_AI_LAB_FEATURES_ENABLED,
+                SiteSetting::KEY_PRODUCT_AI_LAB_RESOLUTION_1K_CREDITS,
+                SiteSetting::KEY_PRODUCT_AI_LAB_RESOLUTION_2K_CREDITS,
+                SiteSetting::KEY_PRODUCT_AI_LAB_RESOLUTION_4K_CREDITS,
             ];
 
             foreach ($keys as $key) {
