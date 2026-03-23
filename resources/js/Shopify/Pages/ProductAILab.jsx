@@ -741,12 +741,6 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                               <BlockStack key={refType.slug} gap="100">
                                 <Text variant="bodySm" as="p" tone="subdued">
                                   {refType.name}
-                                  {refType.description && (
-                                    <>
-                                      <br />
-                                      <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{refType.description}</span>
-                                    </>
-                                  )}
                                 </Text>
                                 <MiniDropZone
                                   label=""
