@@ -721,7 +721,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                                 <MiniDropZone
                                   label=""
                                   preview={referenceStates[refType.slug]}
-                                  onDrop={useCallback((_all, accepted) => {
+                                  onDrop={(_all, accepted) => {
                                     const file = accepted[0];
                                     if (file) {
                                       setReferenceStates(prev => ({
@@ -729,7 +729,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                                         [refType.slug]: URL.createObjectURL(file)
                                       }));
                                     }
-                                  }, [refType.slug])}
+                                  }}
                                   onRemove={() => setReferenceStates(prev => ({ ...prev, [refType.slug]: null }))}
                                 />
                               </BlockStack>
