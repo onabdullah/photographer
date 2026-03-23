@@ -206,10 +206,21 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
               </div>
 
               {/* API Parameters */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">API Parameters</h3>
-                <div className="space-y-4 pl-6">
-                  {/* Resolution */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <SettingsIco size={16} className="text-primary-600" />
+                  API Parameters
+                </h3>
+
+                {/* Resolution Settings */}
+                <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 space-y-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Resolution Settings</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Configure default resolution and merchant credit costs in one place.
+                    </p>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Default Resolution
@@ -230,49 +241,12 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                     </div>
                   </div>
 
-                  {/* Aspect Ratio */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Default Aspect Ratio
-                    </label>
-                    <select
-                      value={settings.default_aspect_ratio || 'match_input_image'}
-                      onChange={e => setSettings({ ...settings, default_aspect_ratio: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
-                    >
-                      {ASPECT_RATIOS.map(ar => (
-                        <option key={ar} value={ar}>
-                          {ar === 'match_input_image' ? 'Match Input Image (Default)' : ar}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Aspect ratio for erased region (select "Match Input Image" to preserve input aspect)
-                    </p>
-                  </div>
-
-                  {/* Output Format */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Default Output Format
-                    </label>
-                    <select
-                      value={settings.default_output_format || 'jpg'}
-                      onChange={e => setSettings({ ...settings, default_output_format: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
-                    >
-                      {OUTPUT_FORMATS.map(f => (
-                        <option key={f} value={f}>{f}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Resolution Credit Costs</h4>
+                    <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Resolution Credit Costs</h5>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                       Set how many credits each resolution costs merchants.
                     </p>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {['1K', '2K', '4K'].map(res => (
                         <div key={res} className="space-y-1">
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -300,9 +274,39 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                       ))}
                     </div>
                   </div>
+                </div>
+
+                {/* Aspect Ratio Settings */}
+                <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 space-y-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Aspect Ratio Settings</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Control default ratio and exactly which ratios merchants can select.
+                    </p>
+                  </div>
 
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Visible Aspect Ratios to Merchants</h4>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Default Aspect Ratio
+                    </label>
+                    <select
+                      value={settings.default_aspect_ratio || 'match_input_image'}
+                      onChange={e => setSettings({ ...settings, default_aspect_ratio: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
+                    >
+                      {ASPECT_RATIOS.map(ar => (
+                        <option key={ar} value={ar}>
+                          {ar === 'match_input_image' ? 'Match Input Image (Default)' : ar}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Aspect ratio for erased region (select "Match Input Image" to preserve input aspect)
+                    </p>
+                  </div>
+
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Visible Aspect Ratios to Merchants</h5>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                       Choose which aspect ratios merchants can select. If none selected, all will be available.
                     </p>
@@ -336,6 +340,34 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
                         </label>
                       ))}
                     </div>
+                  </div>
+                </div>
+
+                {/* Output Format Settings */}
+                <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 space-y-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Output Format Settings</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Configure the default output format for erased images.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Default Output Format
+                    </label>
+                    <select
+                      value={settings.default_output_format || 'jpg'}
+                      onChange={e => setSettings({ ...settings, default_output_format: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
+                    >
+                      {OUTPUT_FORMATS.map(f => (
+                        <option key={f} value={f}>{f}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Choose JPG for smaller file sizes or PNG for transparency support.
+                    </p>
                   </div>
                 </div>
               </div>
