@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsCurrentShop;
 use App\Models\AiStudioToolSetting;
+use App\Models\ProductAILabAspectRatio;
 use App\Models\ProductAILabReferenceType;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
@@ -228,6 +229,17 @@ class ShopifyController extends Controller
                 'max_images'   => $rt->max_images_allowed,
             ])->values()->all();
 
+        // Get enabled aspect ratios from admin configuration
+        $aspectRatios = ProductAILabAspectRatio::enabled()->ordered()->get()
+            ->map(fn($ar) => [
+                'value'     => $ar->value,
+                'label'     => $ar->label,
+                'isDefault' => $ar->is_default,
+            ])->values()->all();
+
+        // Get default aspect ratio (for fallback)
+        $defaultAspectRatio = ProductAILabAspectRatio::getDefault()?->value ?? '1:1';
+
         return \Inertia\Inertia::render('Shopify/ProductAILab', [
             'credits' => $credits,
             'nanoBanana' => [
@@ -236,11 +248,12 @@ class ShopifyController extends Controller
                     'image_search' => $imageFeatureEnabled,
                 ],
                 'defaults' => [
-                    'aspect_ratio' => (string) ($productAILabSettings['default_aspect_ratio'] ?? '1:1'),
+                    'aspect_ratio' => $defaultAspectRatio,
                     'resolution' => (string) ($productAILabSettings['default_resolution'] ?? '1K'),
                     'output_format' => (string) ($productAILabSettings['default_output_format'] ?? 'jpg'),
                 ],
                 'references' => $referenceTypes,
+                'aspectRatios' => $aspectRatios,
             ],
         ]);
     }

@@ -37,14 +37,6 @@ import GenerationsGallery from '@/Shopify/Components/GenerationsGallery';
 const TEAL   = '#468A9A';
 const ORANGE = '#FF7A30';
 
-const ASPECT_RATIO_OPTIONS = [
-  { value: '1:1',  label: '1:1' },
-  { value: '4:3',  label: '4:3' },
-  { value: '3:4',  label: '3:4' },
-  { value: '16:9', label: '16:9' },
-  { value: '9:16', label: '9:16' },
-];
-
 const RESOLUTION_OPTIONS = [
   { value: '1K', label: '1K', hint: 'Standard',   extraCredits: 0 },
   { value: '2K', label: '2K', hint: 'HD',         extraCredits: 1 },
@@ -156,9 +148,13 @@ function MiniDropZone({ label, preview, onDrop, onRemove }) {
 export default function ProductAILab({ credits: initialCredits = 0, nanoBanana = {} }) {
   const featureFlags = nanoBanana?.features || {};
   const defaultConfig = nanoBanana?.defaults || {};
-  const defaultAspect = ASPECT_RATIO_OPTIONS.some((o) => o.value === defaultConfig.aspect_ratio)
+  const aspectRatioOptions = nanoBanana?.aspectRatios || [];
+
+  // Validate default aspect ratio is in the enabled list
+  const defaultAspect = aspectRatioOptions.some((o) => o.value === defaultConfig.aspect_ratio)
     ? defaultConfig.aspect_ratio
-    : '1:1';
+    : (aspectRatioOptions[0]?.value ?? '1:1');
+
   const defaultResolution = RESOLUTION_OPTIONS.some((o) => o.value === defaultConfig.resolution)
     ? defaultConfig.resolution
     : '1K';
@@ -573,7 +569,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                   <BlockStack gap="200">
                     <Text variant="bodySm" tone="subdued" as="p">Aspect Ratio</Text>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {ASPECT_RATIO_OPTIONS.map((opt) => (
+                      {aspectRatioOptions.map((opt) => (
                         <PillButton
                           key={opt.value}
                           selected={aspectRatio === opt.value}
