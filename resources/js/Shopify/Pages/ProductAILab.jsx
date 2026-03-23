@@ -7,6 +7,7 @@ import {
   BlockStack,
   InlineStack,
   DropZone,
+  Checkbox,
   TextField,
   Select,
   Button,
@@ -655,7 +656,28 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                     </div>
                   </BlockStack>
 
-                  {/* Step 4 – Preferences */}
+                  {/* Step 4 – Search Grounding Features */}
+                  {(googleSearchAvailable || imageSearchAvailable) && (
+                    <BlockStack gap="200">
+                      <Text variant="bodySm" tone="subdued" as="p">Search Grounding Features</Text>
+                      {googleSearchAvailable && (
+                        <Checkbox
+                          label="Enable Google Search grounding (+50% API cost)"
+                          checked={googleSearchEnabled}
+                          onChange={setGoogleSearchEnabled}
+                        />
+                      )}
+                      {imageSearchAvailable && (
+                        <Checkbox
+                          label="Enable Image Search grounding (+50% API cost)"
+                          checked={imageSearchEnabled}
+                          onChange={setImageSearchEnabled}
+                        />
+                      )}
+                    </BlockStack>
+                  )}
+
+                  {/* Step 5 – References */}
                   <Box>
                     <Text variant="bodySm" tone="subdued" as="p">Preferences</Text>
                     <button
@@ -695,34 +717,6 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                     {drawerOpen && (
                       <Box paddingBlockStart="300">
                         <BlockStack gap="300">
-                          {(googleSearchAvailable || imageSearchAvailable) && (
-                            <BlockStack gap="200">
-                              <Text variant="bodySm" tone="subdued" as="p">
-                                Search Grounding Features
-                              </Text>
-                              {googleSearchAvailable && (
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--p-color-text)' }}>
-                                  <input
-                                    type="checkbox"
-                                    checked={googleSearchEnabled}
-                                    onChange={(e) => setGoogleSearchEnabled(e.target.checked)}
-                                  />
-                                  Enable Google Search grounding (+50% API cost)
-                                </label>
-                              )}
-                              {imageSearchAvailable && (
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--p-color-text)' }}>
-                                  <input
-                                    type="checkbox"
-                                    checked={imageSearchEnabled}
-                                    onChange={(e) => setImageSearchEnabled(e.target.checked)}
-                                  />
-                                  Enable Image Search grounding (+50% API cost)
-                                </label>
-                              )}
-                            </BlockStack>
-                          )}
-
                           <Text variant="bodySm" tone="subdued" as="p">
                             Reference images shape the AI's output — all are optional. Adding references costs +2 credits.
                           </Text>
@@ -764,7 +758,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                     )}
                   </Box>
 
-                  {/* Step 5 – Input Prompt */}
+                  {/* Step 6 – Input Prompt */}
                   {!drawerOpen && (
                     <TextField
                       label="Describe the scene"
