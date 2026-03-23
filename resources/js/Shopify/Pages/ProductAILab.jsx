@@ -50,7 +50,7 @@ const PROCESSING_MESSAGES = [
 ];
 
 /** Resolve extra credit cost from resolution value */
-function resolutionExtraCredits(resolution, resolutionOptions) {
+function resolutionExtraCredits(resolution, resolutionOptions = []) {
   const opt = resolutionOptions.find((o) => o.value === resolution);
   return opt ? opt.extraCredits : 0;
 }
@@ -787,7 +787,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                             {(hasRefs || resolution !== '1K') && (
                               <Text as="span" variant="bodySm" tone="subdued">
                                 {' '}(base 2
-                                {resolution !== '1K' ? ` + ${resolutionExtraCredits(resolution)} ${resolution} res` : ''}
+                                {resolution !== '1K' ? ` + ${resolutionExtraCredits(resolution, RESOLUTION_OPTIONS)} ${resolution} res` : ''}
                                 {hasRefs ? ' + 2 refs' : ''})
                               </Text>
                             )}
