@@ -488,8 +488,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     ? enabledToolsProp
     : VALID_TOOLS;
   const magicDefaults = magicEraser?.defaults || {};
-  // Use admin-configured prepend_prompt if available, otherwise use default
-  const adminPrependPrompt = magicEraser?.prepend_prompt?.trim() ? magicEraser.prepend_prompt.trim() : MAGIC_ERASER_DEFAULT_PROMPT;
   const magicResolutionCredits = magicEraser?.resolutionCredits || { '1K': 1, '2K': 2, '4K': 4 };
   const magicAspectRatioOptions = Array.isArray(magicEraser?.aspectRatios) && magicEraser.aspectRatios.length > 0
     ? magicEraser.aspectRatios.map((item) => ({
@@ -1894,7 +1892,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           label="Instructions for masked area"
                           value={magicEraserPrompt}
                           onChange={setMagicEraserPrompt}
-                          placeholder={adminPrependPrompt}
+                          placeholder="Describe the magic you want to see..."
                           multiline={3}
                           autoComplete="off"
                           characterCount={magicEraserPrompt.length}
