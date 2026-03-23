@@ -103,6 +103,7 @@ export default function MagicEraserSettingsModal({ isOpen, onClose, onSave }) {
       setError(null);
       await axios.put('/admin/magic-eraser-settings', settings);
       cacheRef.current = settings; // Update cache
+      setOriginalSettings(settings); // Reset original to match saved state
       onSave?.();
       setTimeout(() => onClose(), 500);
     } catch (err) {
