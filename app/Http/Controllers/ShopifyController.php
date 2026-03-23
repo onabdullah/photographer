@@ -240,6 +240,9 @@ class ShopifyController extends Controller
             $referenceTypes = [];
         }
 
+        // Get enabled aspect ratios from admin configuration
+        $enabledAspectRatios = $productAILabSettings['enabled_aspect_ratios'] ?? [];
+
         return \Inertia\Inertia::render('Shopify/ProductAILab', [
             'credits' => $credits,
             'nanoBanana' => [
@@ -254,7 +257,7 @@ class ShopifyController extends Controller
                 ],
                 'resolutionCredits' => $resolutionCredits,
                 'references' => $referenceTypes,
-                'aspectRatios' => [],
+                'aspectRatios' => $enabledAspectRatios,
             ],
         ]);
     }

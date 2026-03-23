@@ -199,6 +199,34 @@ class ProductAILabSettingsController extends Controller
                 }
             }
 
+            // Enabled aspect ratios (array of values or objects with value/label)
+            if ($request->has('enabled_aspect_ratios') && is_array($request->input('enabled_aspect_ratios'))) {
+                $aspectRatios = $request->input('enabled_aspect_ratios');
+                $enabledAspectRatios = [];
+
+                foreach ($aspectRatios as $ar) {
+                    if (is_string($ar)) {
+                        $enabledAspectRatios[] = ['value' => $ar, 'label' => $ar];
+                    } elseif (is_array($ar) && isset($ar['value'])) {
+                        $enabledAspectRatios[] = [
+                            'value' => (string) $ar['value'],
+                            'label' => (string) ($ar['label'] ?? $ar['value']),
+                        ];
+                    }
+                }
+
+                if (!empty($enabledAspectRatios)) {
+                    $oldAspectRatios = $oldSettings['enabled_aspect_ratios'] ?? [];
+                    if ($enabledAspectRatios !== $oldAspectRatios) {
+                        $changes['enabled_aspect_ratios'] = [
+                            'old' => $oldAspectRatios,
+                            'new' => $enabledAspectRatios,
+                        ];
+                        $updates['enabled_aspect_ratios'] = $enabledAspectRatios;
+                    }
+                }
+            }
+
             // Save all updates if there are changes
             if (!empty($updates)) {
                 SiteSetting::setProductAILabSettings($updates);
@@ -254,6 +282,7 @@ class ProductAILabSettingsController extends Controller
                 SiteSetting::KEY_PRODUCT_AI_LAB_RESOLUTION_1K_CREDITS,
                 SiteSetting::KEY_PRODUCT_AI_LAB_RESOLUTION_2K_CREDITS,
                 SiteSetting::KEY_PRODUCT_AI_LAB_RESOLUTION_4K_CREDITS,
+                SiteSetting::KEY_PRODUCT_AI_LAB_ENABLED_ASPECT_RATIOS,
             ];
 
             foreach ($keys as $key) {

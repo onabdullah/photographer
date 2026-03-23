@@ -44,6 +44,7 @@ class SiteSetting extends Model
     public const KEY_PRODUCT_AI_LAB_RESOLUTION_1K_CREDITS = 'product_ai_lab_resolution_1k_credits';
     public const KEY_PRODUCT_AI_LAB_RESOLUTION_2K_CREDITS = 'product_ai_lab_resolution_2k_credits';
     public const KEY_PRODUCT_AI_LAB_RESOLUTION_4K_CREDITS = 'product_ai_lab_resolution_4k_credits';
+    public const KEY_PRODUCT_AI_LAB_ENABLED_ASPECT_RATIOS = 'product_ai_lab_enabled_aspect_ratios';
 
     // Magic Eraser settings
     public const KEY_MAGIC_ERASER_MODEL_VERSION = 'magic_eraser_model_version';
@@ -292,6 +293,7 @@ class SiteSetting extends Model
             'default_aspect_ratio' => static::get(self::KEY_PRODUCT_AI_LAB_DEFAULT_ASPECT_RATIO),
             'default_output_format' => static::get(self::KEY_PRODUCT_AI_LAB_DEFAULT_OUTPUT_FORMAT),
             'features_enabled' => static::getJson(self::KEY_PRODUCT_AI_LAB_FEATURES_ENABLED),
+            'enabled_aspect_ratios' => static::getJson(self::KEY_PRODUCT_AI_LAB_ENABLED_ASPECT_RATIOS),
         ];
 
         $configDefaults_defaults = $configDefaults['defaults'] ?? [];
@@ -307,6 +309,18 @@ class SiteSetting extends Model
             }
             return $fallback;
         };
+
+        // Build aspect ratios array (from DB or config defaults)
+        $enabledAspectRatios = $dbSettings['enabled_aspect_ratios'] ?? ($configDefaults['enabled_aspect_ratios'] ?? []);
+        $aspectRatiosArray = [];
+        if (is_array($enabledAspectRatios) && !empty($enabledAspectRatios)) {
+            $aspectRatiosArray = array_map(function($ar) {
+                if (is_string($ar)) {
+                    return ['value' => $ar, 'label' => $ar];
+                }
+                return is_array($ar) ? $ar : ['value' => (string)$ar, 'label' => (string)$ar];
+            }, $enabledAspectRatios);
+        }
 
         return [
             'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
@@ -331,6 +345,7 @@ class SiteSetting extends Model
                 '2K' => (int) static::get(self::KEY_PRODUCT_AI_LAB_RESOLUTION_2K_CREDITS, 1),
                 '4K' => (int) static::get(self::KEY_PRODUCT_AI_LAB_RESOLUTION_4K_CREDITS, 3),
             ],
+            'enabled_aspect_ratios' => $aspectRatiosArray,
         ];
     }
 
@@ -371,6 +386,9 @@ class SiteSetting extends Model
                     static::set($key, (int) $settings['resolution_credits'][$res]);
                 }
             }
+        }
+        if (isset($settings['enabled_aspect_ratios']) && is_array($settings['enabled_aspect_ratios'])) {
+            static::setJson(self::KEY_PRODUCT_AI_LAB_ENABLED_ASPECT_RATIOS, $settings['enabled_aspect_ratios']);
         }
     }
 

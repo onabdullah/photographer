@@ -520,6 +520,47 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                       ))}
                     </div>
                   </div>
+
+                  {/* Enabled Aspect Ratios Section */}
+                  <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                      Visible Aspect Ratios to Merchants
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                      Choose which aspect ratios merchants can select. If none selected, all will be available.
+                    </p>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      {ASPECT_RATIOS.map(ar => (
+                        <label key={ar} className="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                          <input
+                            type="checkbox"
+                            checked={Array.isArray(settings.enabled_aspect_ratios) && settings.enabled_aspect_ratios.some(
+                              item => (item.value || item) === ar
+                            )}
+                            onChange={e => {
+                              const current = Array.isArray(settings.enabled_aspect_ratios) ? settings.enabled_aspect_ratios : [];
+                              if (e.target.checked) {
+                                setSettings({
+                                  ...settings,
+                                  enabled_aspect_ratios: [...current, { value: ar, label: ar === 'match_input_image' ? 'Match Input' : ar }],
+                                });
+                              } else {
+                                setSettings({
+                                  ...settings,
+                                  enabled_aspect_ratios: current.filter(item => (item.value || item) !== ar),
+                                });
+                              }
+                            }}
+                            className="w-4 h-4 accent-primary-600 cursor-pointer rounded"
+                          />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {ar === 'match_input_image' ? 'Match Input Image' : ar}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </>
