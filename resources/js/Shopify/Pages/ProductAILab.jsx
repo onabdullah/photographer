@@ -662,14 +662,14 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                       <Text variant="bodySm" tone="subdued" as="p">Search Grounding Features</Text>
                       {googleSearchAvailable && (
                         <Checkbox
-                          label="Enable Google Search grounding (+50% API cost)"
+                          label="Enable Google Search grounding"
                           checked={googleSearchEnabled}
                           onChange={setGoogleSearchEnabled}
                         />
                       )}
                       {imageSearchAvailable && (
                         <Checkbox
-                          label="Enable Image Search grounding (+50% API cost)"
+                          label="Enable Image Search grounding"
                           checked={imageSearchEnabled}
                           onChange={setImageSearchEnabled}
                         />
