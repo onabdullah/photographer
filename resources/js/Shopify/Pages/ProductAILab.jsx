@@ -142,7 +142,19 @@ function MiniDropZone({ label, preview, onDrop, onRemove }) {
 export default function ProductAILab({ credits: initialCredits = 0, nanoBanana = {} }) {
   const featureFlags = nanoBanana?.features || {};
   const defaultConfig = nanoBanana?.defaults || {};
-  const aspectRatioOptions = nanoBanana?.aspectRatios || [];
+
+  // Fallback aspect ratios if not provided from admin
+  const FALLBACK_ASPECT_RATIOS = [
+    { value: '1:1', label: '1:1' },
+    { value: '4:3', label: '4:3' },
+    { value: '3:4', label: '3:4' },
+    { value: '16:9', label: '16:9' },
+    { value: '9:16', label: '9:16' },
+  ];
+
+  const aspectRatioOptions = nanoBanana?.aspectRatios && nanoBanana.aspectRatios.length > 0
+    ? nanoBanana.aspectRatios
+    : FALLBACK_ASPECT_RATIOS;
 
   // Get dynamic resolution credit costs from admin configuration
   const resolutionCredits = nanoBanana?.resolutionCredits || {
