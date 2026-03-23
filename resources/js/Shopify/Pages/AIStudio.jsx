@@ -1110,8 +1110,14 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [effectiveGenerationId, generationId, showToast, shopifyAppBridge]);
 
   const handleGenerateAIBackground = useCallback(() => {
-    showToast('✨ Generate AI Background — coming soon');
-  }, [showToast]);
+    if (!resultImageUrl) {
+      showToast('Generate and keep a background-removed result first.', true);
+      return;
+    }
+
+    const nextUrl = `/shopify/product-ai-lab?image_url=${encodeURIComponent(resultImageUrl)}`;
+    window.location.assign(nextUrl);
+  }, [resultImageUrl, showToast]);
 
   const handleReset = useCallback(() => {
     setInputImage(null);

@@ -140,7 +140,7 @@ function MiniDropZone({ label, preview, onDrop, onRemove }) {
 /* ─────────────────────────────────────────────────────────────────
    Component
 ───────────────────────────────────────────────────────────────── */
-export default function ProductAILab({ credits: initialCredits = 0, nanoBanana = {} }) {
+export default function ProductAILab({ credits: initialCredits = 0, initialImage = null, nanoBanana = {} }) {
   const featureFlags = nanoBanana?.features || {};
   const defaultConfig = nanoBanana?.defaults || {};
 
@@ -185,7 +185,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
 
   /* ── State ── */
   const [credits, setCredits]                     = useState(() => Math.max(0, parseInt(initialCredits, 10) || 0));
-  const [productImage, setProductImage]           = useState(null);
+  const [productImage, setProductImage]           = useState(initialImage);
   const [aspectRatio, setAspectRatio]             = useState(defaultAspect);
   const [resolution, setResolution]               = useState(defaultResolution);
   const [scenePrompt, setScenePrompt]             = useState('');

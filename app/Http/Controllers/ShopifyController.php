@@ -235,6 +235,11 @@ class ShopifyController extends Controller
             return redirect()->route('shopify.dashboard');
         }
 
+        $imageUrl = $request->input('image_url');
+        if (! is_string($imageUrl) || ! filter_var($imageUrl, FILTER_VALIDATE_URL)) {
+            $imageUrl = null;
+        }
+
         $credits = (int) ($shop->ai_credits_balance ?? 0);
         $productAILabSettings = SiteSetting::getProductAILabSettings();
         $features = is_array($productAILabSettings['features_enabled'] ?? null) ? $productAILabSettings['features_enabled'] : [];
@@ -268,6 +273,7 @@ class ShopifyController extends Controller
 
         return \Inertia\Inertia::render('Shopify/ProductAILab', [
             'credits' => $credits,
+            'initialImage' => $imageUrl,
             'nanoBanana' => [
                 'features' => [
                     'google_search' => $googleFeatureEnabled,
