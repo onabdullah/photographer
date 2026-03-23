@@ -162,30 +162,26 @@ export default function EnhancerSettingsModal({ isOpen, onClose, onSave }) {
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Default Settings</h3>
                 <div className="space-y-4 pl-6">
-                  {/* Scale Slider */}
+                  {/* Scale Dropdown */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                       Upscale Factor
                       <div className="group relative">
                         <Info size={14} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
                         <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg whitespace-nowrap">
-                          Scale factor: 0-10x enlargement (default: 4x)
+                          Choose upscale factor: 2x (smallest), 3x (balanced), 4x (best quality, highest cost)
                         </div>
                       </div>
                     </label>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="range"
-                        min="0"
-                        max="10"
-                        value={settings.default_scale}
-                        onChange={e => setSettings({ ...settings, default_scale: parseInt(e.target.value) })}
-                        className="flex-1 h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-600"
-                      />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white min-w-12 text-right">
-                        {settings.default_scale}x
-                      </span>
-                    </div>
+                    <select
+                      value={settings.default_scale}
+                      onChange={e => setSettings({ ...settings, default_scale: parseInt(e.target.value) })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600"
+                    >
+                      <option value={2}>2× (Smallest)</option>
+                      <option value={3}>3× (Balanced)</option>
+                      <option value={4}>4× (Best Quality, Higher Cost)</option>
+                    </select>
                   </div>
 
                   {/* Face Enhance Checkbox */}

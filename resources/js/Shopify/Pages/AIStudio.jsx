@@ -511,7 +511,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [lightingPromptText, setLightingPromptText] = useState('');
   const [upscaleScale, setUpscaleScale] = useState('4');
   const [upscaleFaceEnhance, setUpscaleFaceEnhance] = useState(false);
-  const [enhanceScale, setEnhanceScale] = useState(4);
+  const [enhanceScale, setEnhanceScale] = useState('4');
   const [enhanceFaceEnhance, setEnhanceFaceEnhance] = useState(false);
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
   const [magicEraserPrompt, setMagicEraserPrompt] = useState(MAGIC_ERASER_DEFAULT_PROMPT);
@@ -791,7 +791,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       } else {
         throw new Error('Invalid image source');
       }
-      formData.append('scale', enhanceScale);
+      formData.append('scale', parseInt(enhanceScale));
       formData.append('face_enhance', enhanceFaceEnhance ? '1' : '0');
       const res = await axios.post('/shopify/tools/enhance', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -1979,17 +1979,18 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           />
                         </>
                       )}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <label style={{ flex: 1, fontSize: '0.9rem', fontWeight: 500 }}>
-                          Upscale Factor: {enhanceScale}x
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="10"
+                      <div>
+                        <Text variant="bodySm" as="span" tone="subdued">Upscale Factor</Text>
+                        <Select
+                          label=""
+                          labelHidden
+                          options={[
+                            { value: '2', label: '2× Upscale (Smallest)' },
+                            { value: '3', label: '3× Upscale (Balanced)' },
+                            { value: '4', label: '4× Upscale (Best Quality, Higher Cost)' },
+                          ]}
                           value={enhanceScale}
-                          onChange={e => setEnhanceScale(parseInt(e.target.value))}
-                          style={{ flex: 2 }}
+                          onChange={setEnhanceScale}
                         />
                       </div>
                       <Checkbox

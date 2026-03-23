@@ -432,7 +432,7 @@ return [
             'face_enhance' => false,
         ],
         'supported_fields' => [
-            'scale' => ['min' => 0, 'max' => 10],
+            'scale' => [2, 3, 4],
             'face_enhance' => [true, false],
         ],
     ],

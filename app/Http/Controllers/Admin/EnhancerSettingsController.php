@@ -71,16 +71,14 @@ class EnhancerSettingsController extends Controller
                 }
             }
 
-            // Default scale (0-10)
+            // Default scale (2, 3, or 4)
             if ($request->filled('default_scale')) {
                 $scale = (int) $request->input('default_scale');
-                $scaleMinMax = $supportedFields['scale'] ?? [];
-                $scaleMin = $scaleMinMax['min'] ?? 0;
-                $scaleMax = $scaleMinMax['max'] ?? 10;
+                $validScales = $supportedFields['scale'] ?? [2, 3, 4];
 
-                if ($scale < $scaleMin || $scale > $scaleMax) {
+                if (!in_array($scale, $validScales, true)) {
                     return response()->json([
-                        'message' => "Invalid scale. Must be between {$scaleMin} and {$scaleMax}.",
+                        'message' => 'Scale must be 2x, 3x, or 4x',
                     ], 422);
                 }
 
