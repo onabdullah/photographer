@@ -74,11 +74,11 @@ class ShopifyController extends Controller
             'enabledTools' => $enabledTools,
             'credits' => $credits,
             'magicEraser' => [
+                'prepend_prompt' => (string) ($magicEraserSettings['prepend_prompt'] ?? ''),
                 'defaults' => [
                     'aspect_ratio' => (string) ($magicEraserSettings['default_aspect_ratio'] ?? 'match_input_image'),
                     'resolution' => (string) ($magicEraserSettings['default_resolution'] ?? '1K'),
                     'output_format' => (string) ($magicEraserSettings['default_output_format'] ?? 'jpg'),
-                    'prepend_prompt' => (string) ($magicEraserSettings['prepend_prompt'] ?? ''),
                 ],
                 'resolutionCredits' => $magicResolutionCredits,
                 'aspectRatios' => $magicAspectRatios,
