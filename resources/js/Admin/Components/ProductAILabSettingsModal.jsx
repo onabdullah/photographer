@@ -52,6 +52,11 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
       google_search: false,
       image_search: false,
     },
+    resolution_credits: {
+      '1K': 0,
+      '2K': 1,
+      '4K': 3,
+    },
   });
   const [originalSettings, setOriginalSettings] = useState(null);
 
@@ -472,6 +477,47 @@ export default function ProductAILabSettingsModal({ isOpen, onClose, onSave }) {
                           </div>
                         </div>
                       </label>
+                    </div>
+                  </div>
+
+                  {/* Resolution Credits Section */}
+                  <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                      Resolution Credit Costs
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                      Set how many credits each resolution costs to the merchant (base: 2 credits + extra amount below)
+                    </p>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      {['1K', '2K', '4K'].map(res => (
+                        <div key={res} className="space-y-1">
+                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                            {res} Resolution
+                          </label>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              min="0"
+                              value={settings.resolution_credits?.[res] ?? 0}
+                              onChange={e => {
+                                setSettings({
+                                  ...settings,
+                                  resolution_credits: {
+                                    ...settings.resolution_credits,
+                                    [res]: Math.max(0, parseInt(e.target.value, 10) || 0),
+                                  },
+                                });
+                              }}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono"
+                            />
+                            <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">credits</span>
+                          </div>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                            Total: 2 + {settings.resolution_credits?.[res] ?? 0} = {2 + (settings.resolution_credits?.[res] ?? 0)}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>

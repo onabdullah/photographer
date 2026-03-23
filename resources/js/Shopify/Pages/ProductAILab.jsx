@@ -37,12 +37,6 @@ import GenerationsGallery from '@/Shopify/Components/GenerationsGallery';
 const TEAL   = '#468A9A';
 const ORANGE = '#FF7A30';
 
-const RESOLUTION_OPTIONS = [
-  { value: '1K', label: '1K', hint: 'Standard',   extraCredits: 0 },
-  { value: '2K', label: '2K', hint: 'HD',         extraCredits: 1 },
-  { value: '4K', label: '4K', hint: 'Ultra HD',   extraCredits: 3 },
-];
-
 const GALLERY_TOOL_OPTIONS = [
   { value: 'all',               label: 'All tools' },
   { value: 'universal_generate', label: 'Product AI Lab (VTO)' },
@@ -56,8 +50,8 @@ const PROCESSING_MESSAGES = [
 ];
 
 /** Resolve extra credit cost from resolution value */
-function resolutionExtraCredits(resolution) {
-  const opt = RESOLUTION_OPTIONS.find((o) => o.value === resolution);
+function resolutionExtraCredits(resolution, resolutionOptions) {
+  const opt = resolutionOptions.find((o) => o.value === resolution);
   return opt ? opt.extraCredits : 0;
 }
 
@@ -150,6 +144,20 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
   const defaultConfig = nanoBanana?.defaults || {};
   const aspectRatioOptions = nanoBanana?.aspectRatios || [];
 
+  // Get dynamic resolution credit costs from admin configuration
+  const resolutionCredits = nanoBanana?.resolutionCredits || {
+    '1K': 0,
+    '2K': 1,
+    '4K': 3,
+  };
+
+  // Build dynamic resolution options with admin-configured credit costs
+  const RESOLUTION_OPTIONS = [
+    { value: '1K', label: '1K', hint: 'Standard',   extraCredits: resolutionCredits['1K'] ?? 0 },
+    { value: '2K', label: '2K', hint: 'HD',         extraCredits: resolutionCredits['2K'] ?? 1 },
+    { value: '4K', label: '4K', hint: 'Ultra HD',   extraCredits: resolutionCredits['4K'] ?? 3 },
+  ];
+
   // Validate default aspect ratio is in the enabled list
   const defaultAspect = aspectRatioOptions.some((o) => o.value === defaultConfig.aspect_ratio)
     ? defaultConfig.aspect_ratio
@@ -200,7 +208,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
   const hasPrompt      = scenePrompt.trim().length > 0;
   const hasRefs        = Object.values(referenceStates).some(v => v !== null);
   const hasSearchGrounding = (googleSearchAvailable && googleSearchEnabled) || (imageSearchAvailable && imageSearchEnabled);
-  const creditsNeeded  = 2 + resolutionExtraCredits(resolution) + (hasRefs ? 2 : 0);
+  const creditsNeeded  = 2 + resolutionExtraCredits(resolution, RESOLUTION_OPTIONS) + (hasRefs ? 2 : 0);
   const canGenerate    = hasProduct && hasPrompt && !isScanning;
   const remainingAfter = Math.max(0, credits - creditsNeeded);
   const processingLabel = PROCESSING_MESSAGES[processingMsgIdx % PROCESSING_MESSAGES.length];

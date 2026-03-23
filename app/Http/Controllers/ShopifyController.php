@@ -220,6 +220,13 @@ class ShopifyController extends Controller
         $googleFeatureEnabled = (bool) ($features['google_search'] ?? false);
         $imageFeatureEnabled = (bool) ($features['image_search'] ?? false);
 
+        // Get resolution credit mappings
+        $resolutionCredits = $productAILabSettings['resolution_credits'] ?? [
+            '1K' => 0,
+            '2K' => 1,
+            '4K' => 3,
+        ];
+
         // Get enabled reference types from admin configuration
         $referenceTypes = ProductAILabReferenceType::enabled()->ordered()->get()
             ->map(fn($rt) => [
@@ -252,6 +259,7 @@ class ShopifyController extends Controller
                     'resolution' => (string) ($productAILabSettings['default_resolution'] ?? '1K'),
                     'output_format' => (string) ($productAILabSettings['default_output_format'] ?? 'jpg'),
                 ],
+                'resolutionCredits' => $resolutionCredits,
                 'references' => $referenceTypes,
                 'aspectRatios' => $aspectRatios,
             ],

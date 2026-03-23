@@ -41,6 +41,9 @@ class SiteSetting extends Model
     public const KEY_PRODUCT_AI_LAB_DEFAULT_ASPECT_RATIO = 'product_ai_lab_default_aspect_ratio';
     public const KEY_PRODUCT_AI_LAB_DEFAULT_OUTPUT_FORMAT = 'product_ai_lab_default_output_format';
     public const KEY_PRODUCT_AI_LAB_FEATURES_ENABLED = 'product_ai_lab_features_enabled';
+    public const KEY_PRODUCT_AI_LAB_RESOLUTION_1K_CREDITS = 'product_ai_lab_resolution_1k_credits';
+    public const KEY_PRODUCT_AI_LAB_RESOLUTION_2K_CREDITS = 'product_ai_lab_resolution_2k_credits';
+    public const KEY_PRODUCT_AI_LAB_RESOLUTION_4K_CREDITS = 'product_ai_lab_resolution_4k_credits';
 
     // Magic Eraser settings
     public const KEY_MAGIC_ERASER_MODEL_VERSION = 'magic_eraser_model_version';
@@ -323,6 +326,11 @@ class SiteSetting extends Model
                     false
                 ),
             ],
+            'resolution_credits' => [
+                '1K' => (int) static::get(self::KEY_PRODUCT_AI_LAB_RESOLUTION_1K_CREDITS, 0),
+                '2K' => (int) static::get(self::KEY_PRODUCT_AI_LAB_RESOLUTION_2K_CREDITS, 1),
+                '4K' => (int) static::get(self::KEY_PRODUCT_AI_LAB_RESOLUTION_4K_CREDITS, 3),
+            ],
         ];
     }
 
@@ -351,6 +359,18 @@ class SiteSetting extends Model
         }
         if (isset($settings['features_enabled']) && is_array($settings['features_enabled'])) {
             static::setJson(self::KEY_PRODUCT_AI_LAB_FEATURES_ENABLED, $settings['features_enabled']);
+        }
+        if (isset($settings['resolution_credits']) && is_array($settings['resolution_credits'])) {
+            foreach (['1K', '2K', '4K'] as $res) {
+                $key = match($res) {
+                    '1K' => self::KEY_PRODUCT_AI_LAB_RESOLUTION_1K_CREDITS,
+                    '2K' => self::KEY_PRODUCT_AI_LAB_RESOLUTION_2K_CREDITS,
+                    '4K' => self::KEY_PRODUCT_AI_LAB_RESOLUTION_4K_CREDITS,
+                };
+                if (isset($settings['resolution_credits'][$res])) {
+                    static::set($key, (int) $settings['resolution_credits'][$res]);
+                }
+            }
         }
     }
 
