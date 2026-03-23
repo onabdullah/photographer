@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsCurrentShop;
 use App\Models\AiStudioToolSetting;
+use App\Models\ProductAILabReferenceType;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 
@@ -218,6 +219,15 @@ class ShopifyController extends Controller
         $googleFeatureEnabled = (bool) ($features['google_search'] ?? false);
         $imageFeatureEnabled = (bool) ($features['image_search'] ?? false);
 
+        // Get enabled reference types from admin configuration
+        $referenceTypes = ProductAILabReferenceType::enabled()->ordered()->get()
+            ->map(fn($rt) => [
+                'slug'         => $rt->slug,
+                'name'         => $rt->name,
+                'description'  => $rt->description,
+                'max_images'   => $rt->max_images_allowed,
+            ])->values()->all();
+
         return \Inertia\Inertia::render('Shopify/ProductAILab', [
             'credits' => $credits,
             'nanoBanana' => [
@@ -230,6 +240,7 @@ class ShopifyController extends Controller
                     'resolution' => (string) ($productAILabSettings['default_resolution'] ?? '1K'),
                     'output_format' => (string) ($productAILabSettings['default_output_format'] ?? 'jpg'),
                 ],
+                'references' => $referenceTypes,
             ],
         ]);
     }

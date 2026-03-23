@@ -49,14 +49,16 @@ class AiUniversalService
         $userPrompt = (string) $request->input('prompt', '');
         $intent     = $request->input('intent', 'environment');
 
-        // Collect uploaded reference images (style_ref, face_ref, pose_ref)
+        // Collect uploaded reference images (dynamically based on admin configuration)
         $refUrls  = [];
         $refRoles = [];
-        foreach (['style_ref', 'face_ref', 'pose_ref'] as $refKey) {
+        $refTypes = $this->resolvedReferenceTypes();
+        foreach ($refTypes as $refType) {
+            $refKey = $refType['slug'];  // e.g., 'style_ref', 'face_ref', etc.
             if ($request->hasFile("reference_images.{$refKey}")) {
                 $url        = $this->storeUploadedFile($request->file("reference_images.{$refKey}"));
                 $refUrls[]  = $url;
-                $refRoles[] = str_replace('_ref', '', $refKey); // 'style', 'face', 'pose'
+                $refRoles[] = str_replace('_ref', '', $refKey); // Extract role from slug
             }
         }
         $hasRefs = count($refUrls) > 0;
@@ -480,6 +482,14 @@ class AiUniversalService
                 'seed_reproducibility' => $normalizeFeature($savedFeatures['seed_reproducibility'] ?? null, (bool) (($defaultFeatures['seed_reproducibility']['enabled'] ?? true))),
             ],
         ];
+    }
+
+    private function resolvedReferenceTypes(): array
+    {
+        return \App\Models\ProductAILabReferenceType::enabled()->ordered()->get()
+            ->map(fn($rt) => ['slug' => $rt->slug, 'name' => $rt->name])
+            ->values()
+            ->all();
     }
 
     private function prependPromptTemplate(string $prompt, string $template): string

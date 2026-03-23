@@ -184,11 +184,15 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
 
   const [browseModalOpen, setBrowseModalOpen]     = useState(false);
   /* Pro Reference Drawer */
+  const referenceTypes = nanoBanana?.references || [];
+  const [referenceStates, setReferenceStates] = useState(() => {
+    const initial = {};
+    referenceTypes.forEach(rt => {
+      initial[rt.slug] = null;
+    });
+    return initial;
+  });
   const [drawerOpen, setDrawerOpen]     = useState(false);
-  const [styleRef, setStyleRef]         = useState(null);
-  const [faceRef, setFaceRef]           = useState(null);
-
-  const [poseRef, setPoseRef]           = useState(null);
   const pollRef   = useRef(null);
   const pollCount = useRef(0);
 
@@ -198,7 +202,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
   const isDone         = processingStatus === 'done';
   const hasProduct     = Boolean(productImage);
   const hasPrompt      = scenePrompt.trim().length > 0;
-  const hasRefs        = Boolean(styleRef || faceRef || poseRef);
+  const hasRefs        = Object.values(referenceStates).some(v => v !== null);
   const hasSearchGrounding = (googleSearchAvailable && googleSearchEnabled) || (imageSearchAvailable && imageSearchEnabled);
   const creditsNeeded  = 2 + resolutionExtraCredits(resolution) + (hasRefs ? 2 : 0);
   const canGenerate    = hasProduct && hasPrompt && !isScanning;
@@ -295,9 +299,11 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
     setProcessingStatus('idle');
     setJobId(null);
     setGenerationId(null);
-    setStyleRef(null);
-    setFaceRef(null);
-    setPoseRef(null);
+    setReferenceStates(prev => {
+      const reset = {};
+      Object.keys(prev).forEach(key => { reset[key] = null; });
+      return reset;
+    });
     setGoogleSearchEnabled(false);
     setImageSearchEnabled(false);
     setDrawerOpen(false);
@@ -325,17 +331,12 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
       const productBlob = await fetch(productImage).then((r) => r.blob());
       form.append('main_image', productBlob, 'product.png');
 
-      if (styleRef) {
-        const blob = await fetch(styleRef).then((r) => r.blob());
-        form.append('reference_images[style_ref]', blob, 'style_ref.png');
-      }
-      if (faceRef) {
-        const blob = await fetch(faceRef).then((r) => r.blob());
-        form.append('reference_images[face_ref]', blob, 'face_ref.png');
-      }
-      if (poseRef) {
-        const blob = await fetch(poseRef).then((r) => r.blob());
-        form.append('reference_images[pose_ref]', blob, 'pose_ref.png');
+      // Append reference images dynamically based on admin configuration
+      for (const [refSlug, refUrl] of Object.entries(referenceStates)) {
+        if (refUrl) {
+          const blob = await fetch(refUrl).then((r) => r.blob());
+          form.append(`reference_images[${refSlug}]`, blob, `${refSlug}.png`);
+        }
       }
 
       setProcessingStatus('scanning');
@@ -640,7 +641,7 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                             fontWeight: 700,
                           }}
                         >
-                          {[styleRef, faceRef, poseRef].filter(Boolean).length} active
+                          {Object.values(referenceStates).filter(Boolean).length} active
                         </span>
                       )}
                     </button>
@@ -690,38 +691,33 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
                               border: `1px solid var(--p-color-border)`,
                             }}
                           >
-                            {/* Style Reference */}
-                            <BlockStack gap="100">
-                              <Text variant="bodySm" as="p" tone="subdued">Style Reference</Text>
-                              <MiniDropZone
-                                label=""
-                                preview={styleRef}
-                                onDrop={makeRefDropHandler(setStyleRef)}
-                                onRemove={() => setStyleRef(null)}
-                              />
-                            </BlockStack>
-
-                            {/* Face Reference */}
-                            <BlockStack gap="100">
-                              <Text variant="bodySm" as="p" tone="subdued">Face Reference</Text>
-                              <MiniDropZone
-                                label=""
-                                preview={faceRef}
-                                onDrop={makeRefDropHandler(setFaceRef)}
-                                onRemove={() => setFaceRef(null)}
-                              />
-                            </BlockStack>
-
-                            {/* Pose Reference */}
-                            <BlockStack gap="100">
-                              <Text variant="bodySm" as="p" tone="subdued">Pose Reference</Text>
-                              <MiniDropZone
-                                label=""
-                                preview={poseRef}
-                                onDrop={makeRefDropHandler(setPoseRef)}
-                                onRemove={() => setPoseRef(null)}
-                              />
-                            </BlockStack>
+                            {referenceTypes.map((refType) => (
+                              <BlockStack key={refType.slug} gap="100">
+                                <Text variant="bodySm" as="p" tone="subdued">
+                                  {refType.name}
+                                  {refType.description && (
+                                    <>
+                                      <br />
+                                      <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{refType.description}</span>
+                                    </>
+                                  )}
+                                </Text>
+                                <MiniDropZone
+                                  label=""
+                                  preview={referenceStates[refType.slug]}
+                                  onDrop={useCallback((_all, accepted) => {
+                                    const file = accepted[0];
+                                    if (file) {
+                                      setReferenceStates(prev => ({
+                                        ...prev,
+                                        [refType.slug]: URL.createObjectURL(file)
+                                      }));
+                                    }
+                                  }, [refType.slug])}
+                                  onRemove={() => setReferenceStates(prev => ({ ...prev, [refType.slug]: null }))}
+                                />
+                              </BlockStack>
+                            ))}
                           </div>
                         </BlockStack>
                       </Box>
