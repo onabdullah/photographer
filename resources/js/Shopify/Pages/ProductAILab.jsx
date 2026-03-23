@@ -257,6 +257,9 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
   useEffect(() => {
     if (processingStatus !== 'scanning' || !jobId) return;
     pollCount.current = 0;
+    let networkErrorCount = 0;
+    const MAX_NETWORK_RETRIES = 3;
+    
     const poll = async () => {
       if (pollCount.current > 90) {
         setProcessingStatus('error');
@@ -265,8 +268,13 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
       }
       pollCount.current += 1;
       try {
-        const res = await axios.get(`/shopify/api/ai-studio/job/${jobId}`);
+        const res = await axios.get(`/shopify/api/ai-studio/job/${jobId}`, {
+          timeout: 10000, // 10 second timeout per request
+        });
         const data = res.data;
+        // Reset network error count on successful request
+        networkErrorCount = 0;
+        
         if (data.credits_remaining != null) setCredits(data.credits_remaining);
         if (data.status === 'done' && data.result_image_url) {
           setResultImageUrl(data.result_image_url);
@@ -277,11 +285,33 @@ export default function ProductAILab({ credits: initialCredits = 0, nanoBanana =
           setProcessingStatus('error');
           showToast(data.message || 'Generation failed.', true);
         } else {
+          // Still processing, schedule next poll
           pollRef.current = setTimeout(poll, 2000);
         }
-      } catch {
-        setProcessingStatus('error');
-        showToast('Connection error while polling.', true);
+      } catch (err) {
+        // Check if error is retriable (network-related)
+        const isNetworkError = 
+          !err.response || // No response (timeout, DNS, connection reset)
+          err.code === 'ECONNABORTED' ||
+          err.code === 'ENOTFOUND' ||
+          err.code === 'ECONNREFUSED' ||
+          err.code === 'ETIMEDOUT';
+        
+        if (isNetworkError && networkErrorCount < MAX_NETWORK_RETRIES) {
+          // Network error: retry with exponential backoff
+          networkErrorCount += 1;
+          const backoffMs = Math.min(2000 * Math.pow(2, networkErrorCount - 1), 8000);
+          console.warn(`Poll network error (attempt ${networkErrorCount}/${MAX_NETWORK_RETRIES}), retrying in ${backoffMs}ms`, err.message);
+          pollRef.current = setTimeout(poll, backoffMs);
+        } else {
+          // Either non-network error or max retries exceeded
+          setProcessingStatus('error');
+          if (isNetworkError && networkErrorCount >= MAX_NETWORK_RETRIES) {
+            showToast('Connection lost during generation. Please check the gallery after reload.', true);
+          } else {
+            showToast('Error checking generation status. Please reload.', true);
+          }
+        }
       }
     };
     pollRef.current = setTimeout(poll, 2000);
