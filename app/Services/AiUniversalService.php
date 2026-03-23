@@ -446,8 +446,8 @@ class AiUniversalService
 
     private function resolvedNanoBananaConfig(): array
     {
-        $defaults = config('ai_studio_tools.nano_banana', []);
-        $settings = SiteSetting::getNanoBananaSettings();
+        $defaults = config('ai_studio_tools.product_ai_lab', []);
+        $settings = SiteSetting::getProductAILabSettings();
 
         $normalizeFeature = function (mixed $featureValue, bool $fallback): bool {
             if (is_array($featureValue)) {
@@ -467,8 +467,8 @@ class AiUniversalService
             'default_resolution' => (string) ($settings['default_resolution'] ?: ($defaults['defaults']['resolution'] ?? '1K')),
             'default_aspect_ratio' => (string) ($settings['default_aspect_ratio'] ?: ($defaults['defaults']['aspect_ratio'] ?? 'match_input_image')),
             'default_output_format' => (string) ($settings['default_output_format'] ?: ($defaults['defaults']['output_format'] ?? 'jpg')),
-            'prompt_template' => trim((string) ($settings['prompt_template'] ?? '')),
-            'advanced_config' => is_array($settings['advanced_config'] ?? null) ? $settings['advanced_config'] : [],
+            'prompt_template' => trim((string) ($settings['prepend_prompt'] ?? '')),
+            'advanced_config' => [],
             'supported_fields' => $defaults['supported_fields'] ?? [],
             'cost_per_resolution' => $defaults['cost_per_resolution'] ?? [],
             'cost_multiplier_with_search' => (float) ($defaults['cost_multiplier_with_search'] ?? 1.0),
