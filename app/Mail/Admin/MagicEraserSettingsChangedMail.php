@@ -2,6 +2,7 @@
 
 namespace App\Mail\Admin;
 
+use App\Models\AdminUser;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -18,7 +19,7 @@ class MagicEraserSettingsChangedMail extends Mailable
     public string $changeType;
 
     public function __construct(
-        public User $admin,
+        public AdminUser|User $admin,
         public array $changes,
         public bool $isReset = false,
         public string $fromAddress = '',

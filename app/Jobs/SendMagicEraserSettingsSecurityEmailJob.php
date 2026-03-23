@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Mail\Admin\MagicEraserSettingsChangedMail;
 use App\Models\AdminUser;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,7 +22,7 @@ class SendMagicEraserSettingsSecurityEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        protected AdminUser $admin,
+        protected AdminUser|User $admin,
         protected array $changes = [],
         protected bool $isReset = false,
     ) {
