@@ -103,6 +103,7 @@ class ShopifyController extends Controller
                     'lowres_denoise' => (float) ($lightingFixSettings['default_lowres_denoise'] ?? 0.9),
                     'highres_denoise' => (float) ($lightingFixSettings['default_highres_denoise'] ?? 0.5),
                     'output_quality' => (int) ($lightingFixSettings['default_output_quality'] ?? 80),
+                    'number_of_images' => (int) ($lightingFixSettings['default_number_of_images'] ?? 1),
                 ],
                 'supported_fields' => $lightingFixConfig['supported_fields'] ?? [],
             ],

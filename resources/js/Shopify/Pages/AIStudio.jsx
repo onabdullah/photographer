@@ -567,6 +567,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [lightingLowresDenoise, setLightingLowresDenoise] = useState(Number(lightingDefaults.lowres_denoise ?? 0.9));
   const [lightingHighresDenoise, setLightingHighresDenoise] = useState(Number(lightingDefaults.highres_denoise ?? 0.5));
   const [lightingOutputQuality, setLightingOutputQuality] = useState(Number(lightingDefaults.output_quality ?? 80));
+  const [lightingNumberOfImages, setLightingNumberOfImages] = useState(Number(lightingDefaults.number_of_images ?? 1));
   const [upscaleScale, setUpscaleScale] = useState('4');
   const [upscaleFaceEnhance, setUpscaleFaceEnhance] = useState(false);
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
@@ -872,8 +873,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [hasValidInput, inputImage, showToast]);
 
   const effectiveLightingPrompt = lightingPromptText.trim();
-  const lightingPresetLocked = lightingPreset !== 'custom';
-  const showLightingAdvancedControls = !lightingPresetLocked;
 
   const handleLighting = useCallback(async () => {
     const sourceImage = inputImage || sourceImageRef.current;
@@ -906,6 +905,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       formData.append('lowres_denoise', String(lightingLowresDenoise));
       formData.append('highres_denoise', String(lightingHighresDenoise));
       formData.append('output_quality', String(lightingOutputQuality));
+      formData.append('number_of_images', String(lightingNumberOfImages));
       const res = await axios.post('/shopify/tools/lighting', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -938,6 +938,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     lightingLowresDenoise,
     lightingHighresDenoise,
     lightingOutputQuality,
+    lightingNumberOfImages,
     showToast,
   ]);
 
@@ -1740,14 +1741,14 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
             </Layout.Section>
 
             {/* Command Center (right) – compact control panel */}
-            <Layout.Section variant="oneThird" className="aistudio-command-center">
-              <div className="aistudio-command-center-state" style={{
+            <Layout.Section variant="oneThird">
+              <div style={{
                 pointerEvents: (isScanning || isProcessing) ? 'none' : undefined,
                 opacity: (isScanning || isProcessing) ? 0.5 : undefined,
                 transition: 'opacity 0.2s',
               }}>
-              <Card className="aistudio-command-card">
-                <BlockStack gap="400" className="aistudio-command-content">
+              <Card>
+                <BlockStack gap="400">
                   {/* For magic_eraser: show source image at top */}
                   {selectedTool === 'magic_eraser' && (
                     <BlockStack gap="200">
@@ -1788,7 +1789,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                             </div>
                           )}
                           {!resultImageUrl && (
-                            <InlineStack gap="200" blockAlign="center" wrap>
+                            <InlineStack gap="200" blockAlign="center">
                               <Button
                                 variant="plain"
                                 size="slim"
@@ -2077,7 +2078,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                   )}
 
                   {selectedTool === 'lighting' && (
-                    <BlockStack gap="200" style={{ order: 2 }}>
+                    <BlockStack gap="200">
                       <Text variant="bodySm" as="span" tone="subdued">Lighting preset</Text>
                       <Select
                         label=""
@@ -2091,127 +2092,128 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           else if (value === 'custom') setLightingPromptText('');
                         }}
                       />
+                      <TextField
+                        label="Lighting prompt"
+                        value={lightingPromptText}
+                        onChange={setLightingPromptText}
+                        placeholder="Select a preset to pre-fill, or type your own (e.g. Soft golden hour from the right)"
+                        multiline={3}
+                        autoComplete="off"
+                        characterCount={lightingPromptText.length}
+                        maxLength={1000}
+                        helpText="Pre-filled from the preset above. Edit it or use as-is, then click Generate."
+                      />
 
-                      {showLightingAdvancedControls ? (
-                        <>
-                          <InlineGrid columns={1} gap="200">
-                            <Select
-                              label="Light source"
-                              options={lightingLightSourceOptions}
-                              value={lightingLightSource}
-                              onChange={setLightingLightSource}
-                            />
-                            <Select
-                              label="Output format"
-                              options={lightingOutputFormatOptions}
-                              value={lightingOutputFormat}
-                              onChange={setLightingOutputFormat}
-                            />
-                            <Select
-                              label="Width"
-                              options={lightingWidthOptions}
-                              value={String(lightingWidth)}
-                              onChange={setLightingWidth}
-                            />
-                            <Select
-                              label="Height"
-                              options={lightingHeightOptions}
-                              value={String(lightingHeight)}
-                              onChange={setLightingHeight}
-                            />
-                          </InlineGrid>
+                      <InlineGrid columns={{ xs: 1, md: 2 }} gap="200">
+                        <Select
+                          label="Light source"
+                          options={lightingLightSourceOptions}
+                          value={lightingLightSource}
+                          onChange={setLightingLightSource}
+                        />
+                        <Select
+                          label="Output format"
+                          options={lightingOutputFormatOptions}
+                          value={lightingOutputFormat}
+                          onChange={setLightingOutputFormat}
+                        />
+                        <Select
+                          label="Width"
+                          options={lightingWidthOptions}
+                          value={String(lightingWidth)}
+                          onChange={setLightingWidth}
+                        />
+                        <Select
+                          label="Height"
+                          options={lightingHeightOptions}
+                          value={String(lightingHeight)}
+                          onChange={setLightingHeight}
+                        />
+                      </InlineGrid>
 
-                          <BlockStack gap="200">
-                            <Text variant="bodySm" as="span" tone="subdued">CFG: {Number(lightingCfg).toFixed(1)}</Text>
-                            <RangeSlider
-                              label="CFG"
-                              labelHidden
-                              min={1}
-                              max={32}
-                              step={0.1}
-                              value={lightingCfg}
-                              onChange={setLightingCfg}
-                            />
+                      <BlockStack gap="200">
+                        <Text variant="bodySm" as="span" tone="subdued">CFG: {Number(lightingCfg).toFixed(1)}</Text>
+                        <RangeSlider
+                          label="CFG"
+                          labelHidden
+                          min={1}
+                          max={32}
+                          step={0.1}
+                          value={lightingCfg}
+                          onChange={setLightingCfg}
+                        />
 
-                            <Text variant="bodySm" as="span" tone="subdued">Steps: {lightingSteps}</Text>
-                            <RangeSlider
-                              label="Steps"
-                              labelHidden
-                              min={1}
-                              max={100}
-                              step={1}
-                              value={lightingSteps}
-                              onChange={setLightingSteps}
-                            />
+                        <Text variant="bodySm" as="span" tone="subdued">Steps: {lightingSteps}</Text>
+                        <RangeSlider
+                          label="Steps"
+                          labelHidden
+                          min={1}
+                          max={100}
+                          step={1}
+                          value={lightingSteps}
+                          onChange={setLightingSteps}
+                        />
 
-                            <Text variant="bodySm" as="span" tone="subdued">Highres scale: {Number(lightingHighresScale).toFixed(1)}</Text>
-                            <RangeSlider
-                              label="Highres scale"
-                              labelHidden
-                              min={1}
-                              max={3}
-                              step={0.1}
-                              value={lightingHighresScale}
-                              onChange={setLightingHighresScale}
-                            />
+                        <Text variant="bodySm" as="span" tone="subdued">Highres scale: {Number(lightingHighresScale).toFixed(1)}</Text>
+                        <RangeSlider
+                          label="Highres scale"
+                          labelHidden
+                          min={1}
+                          max={3}
+                          step={0.1}
+                          value={lightingHighresScale}
+                          onChange={setLightingHighresScale}
+                        />
 
-                            <Text variant="bodySm" as="span" tone="subdued">Lowres denoise: {Number(lightingLowresDenoise).toFixed(1)}</Text>
-                            <RangeSlider
-                              label="Lowres denoise"
-                              labelHidden
-                              min={0.1}
-                              max={1}
-                              step={0.1}
-                              value={lightingLowresDenoise}
-                              onChange={setLightingLowresDenoise}
-                            />
+                        <Text variant="bodySm" as="span" tone="subdued">Lowres denoise: {Number(lightingLowresDenoise).toFixed(1)}</Text>
+                        <RangeSlider
+                          label="Lowres denoise"
+                          labelHidden
+                          min={0.1}
+                          max={1}
+                          step={0.1}
+                          value={lightingLowresDenoise}
+                          onChange={setLightingLowresDenoise}
+                        />
 
-                            <Text variant="bodySm" as="span" tone="subdued">Highres denoise: {Number(lightingHighresDenoise).toFixed(1)}</Text>
-                            <RangeSlider
-                              label="Highres denoise"
-                              labelHidden
-                              min={0.1}
-                              max={1}
-                              step={0.1}
-                              value={lightingHighresDenoise}
-                              onChange={setLightingHighresDenoise}
-                            />
+                        <Text variant="bodySm" as="span" tone="subdued">Highres denoise: {Number(lightingHighresDenoise).toFixed(1)}</Text>
+                        <RangeSlider
+                          label="Highres denoise"
+                          labelHidden
+                          min={0.1}
+                          max={1}
+                          step={0.1}
+                          value={lightingHighresDenoise}
+                          onChange={setLightingHighresDenoise}
+                        />
 
-                            <Text variant="bodySm" as="span" tone="subdued">Output quality: {lightingOutputQuality}</Text>
-                            <RangeSlider
-                              label="Output quality"
-                              labelHidden
-                              min={0}
-                              max={100}
-                              step={1}
-                              value={lightingOutputQuality}
-                              onChange={setLightingOutputQuality}
-                            />
+                        <Text variant="bodySm" as="span" tone="subdued">Output quality: {lightingOutputQuality}</Text>
+                        <RangeSlider
+                          label="Output quality"
+                          labelHidden
+                          min={0}
+                          max={100}
+                          step={1}
+                          value={lightingOutputQuality}
+                          onChange={setLightingOutputQuality}
+                        />
 
-                          </BlockStack>
-
-                          <TextField
-                            label="Lighting prompt"
-                            value={lightingPromptText}
-                            onChange={setLightingPromptText}
-                            placeholder="Select a preset to pre-fill, or type your own (e.g. Soft golden hour from the right)"
-                            multiline={3}
-                            autoComplete="off"
-                            characterCount={lightingPromptText.length}
-                            maxLength={1000}
-                            helpText="Pre-filled from the preset above. Edit it or use as-is, then click Generate."
-                          />
-                        </>
-                      ) : (
-                        <Text variant="bodySm" tone="subdued" as="p">
-                          Preset selected. Custom options are locked. Click Generate.
-                        </Text>
-                      )}
+                        <Text variant="bodySm" as="span" tone="subdued">Number of images: {lightingNumberOfImages}</Text>
+                        <RangeSlider
+                          label="Number of images"
+                          labelHidden
+                          min={1}
+                          max={12}
+                          step={1}
+                          value={lightingNumberOfImages}
+                          onChange={setLightingNumberOfImages}
+                        />
+                      </BlockStack>
                     </BlockStack>
                   )}
 
                   {selectedTool !== 'magic_eraser' && selectedTool !== 'enhance' && (
-                  <BlockStack gap="200" style={selectedTool === 'lighting' ? { order: 1 } : undefined}>
+                  <BlockStack gap="200">
                     <Text variant="bodySm" as="span" tone="subdued">
                       {hasOutput ? 'Source → Output' : 'Source image'}
                     </Text>
@@ -2249,7 +2251,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           </div>
                         )}
                         {!resultImageUrl && (
-                          <InlineStack gap="200" blockAlign="center" wrap>
+                          <InlineStack gap="200" blockAlign="center">
                             <Button
                               variant="plain"
                               size="slim"
@@ -2333,7 +2335,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                     </BlockStack>
                   )}
 
-                  <Box paddingBlockStart="200" style={selectedTool === 'lighting' ? { order: 3 } : undefined}>
+                  <Box paddingBlockStart="200">
                     {resultImageUrl ? (
                       <BlockStack gap="200">
                         <Button
