@@ -873,6 +873,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [hasValidInput, inputImage, showToast]);
 
   const effectiveLightingPrompt = lightingPromptText.trim();
+  const isLightingPresetLocked = selectedTool === 'lighting' && lightingPreset !== 'custom';
 
   const handleLighting = useCallback(async () => {
     const sourceImage = inputImage || sourceImageRef.current;
@@ -2090,18 +2091,33 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           const preset = LIGHTING_PRESETS.find((p) => p.value === value);
                           if (preset?.prompt) setLightingPromptText(preset.prompt);
                           else if (value === 'custom') setLightingPromptText('');
+
+                          if (value !== 'custom') {
+                            setLightingLightSource(initialLightingLightSource);
+                            setLightingOutputFormat(initialLightingOutputFormat);
+                            setLightingWidth(initialLightingWidth);
+                            setLightingHeight(initialLightingHeight);
+                            setLightingCfg(Number(lightingDefaults.cfg ?? 2));
+                            setLightingSteps(Number(lightingDefaults.steps ?? 25));
+                            setLightingHighresScale(Number(lightingDefaults.highres_scale ?? 1.5));
+                            setLightingLowresDenoise(Number(lightingDefaults.lowres_denoise ?? 0.9));
+                            setLightingHighresDenoise(Number(lightingDefaults.highres_denoise ?? 0.5));
+                            setLightingOutputQuality(Number(lightingDefaults.output_quality ?? 80));
+                            setLightingNumberOfImages(Number(lightingDefaults.number_of_images ?? 1));
+                          }
                         }}
                       />
                       <TextField
                         label="Lighting prompt"
                         value={lightingPromptText}
                         onChange={setLightingPromptText}
+                        disabled={isLightingPresetLocked}
                         placeholder="Select a preset to pre-fill, or type your own (e.g. Soft golden hour from the right)"
                         multiline={3}
                         autoComplete="off"
                         characterCount={lightingPromptText.length}
                         maxLength={1000}
-                        helpText="Pre-filled from the preset above. Edit it or use as-is, then click Generate."
+                        helpText={isLightingPresetLocked ? 'Preset mode: prompt and advanced options are locked. Click Generate.' : 'Pre-filled from the preset above. Edit it or use as-is, then click Generate.'}
                       />
 
                       <InlineGrid columns={{ xs: 1, md: 2 }} gap="200">
@@ -2109,24 +2125,28 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           label="Light source"
                           options={lightingLightSourceOptions}
                           value={lightingLightSource}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingLightSource}
                         />
                         <Select
                           label="Output format"
                           options={lightingOutputFormatOptions}
                           value={lightingOutputFormat}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingOutputFormat}
                         />
                         <Select
                           label="Width"
                           options={lightingWidthOptions}
                           value={String(lightingWidth)}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingWidth}
                         />
                         <Select
                           label="Height"
                           options={lightingHeightOptions}
                           value={String(lightingHeight)}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingHeight}
                         />
                       </InlineGrid>
@@ -2140,6 +2160,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           max={32}
                           step={0.1}
                           value={lightingCfg}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingCfg}
                         />
 
@@ -2151,6 +2172,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           max={100}
                           step={1}
                           value={lightingSteps}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingSteps}
                         />
 
@@ -2162,6 +2184,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           max={3}
                           step={0.1}
                           value={lightingHighresScale}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingHighresScale}
                         />
 
@@ -2173,6 +2196,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           max={1}
                           step={0.1}
                           value={lightingLowresDenoise}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingLowresDenoise}
                         />
 
@@ -2184,6 +2208,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           max={1}
                           step={0.1}
                           value={lightingHighresDenoise}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingHighresDenoise}
                         />
 
@@ -2195,6 +2220,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           max={100}
                           step={1}
                           value={lightingOutputQuality}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingOutputQuality}
                         />
 
@@ -2206,6 +2232,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           max={12}
                           step={1}
                           value={lightingNumberOfImages}
+                          disabled={isLightingPresetLocked}
                           onChange={setLightingNumberOfImages}
                         />
                       </BlockStack>
