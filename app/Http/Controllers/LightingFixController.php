@@ -43,7 +43,6 @@ class LightingFixController extends Controller
             'lowres_denoise' => 'sometimes|numeric|min:0.1|max:1',
             'highres_denoise' => 'sometimes|numeric|min:0.1|max:1',
             'output_quality' => 'sometimes|integer|min:0|max:100',
-            'number_of_images' => 'sometimes|integer|min:1|max:12',
         ]);
 
         $imageUrl = $this->aiGenerationService->resolveImageUrlFromRequest($request);
@@ -64,7 +63,6 @@ class LightingFixController extends Controller
             'lowres_denoise' => $request->input('lowres_denoise'),
             'highres_denoise' => $request->input('highres_denoise'),
             'output_quality' => $request->input('output_quality'),
-            'number_of_images' => $request->input('number_of_images'),
         ];
         $options = array_filter($options, static fn ($value) => $value !== null && $value !== '');
 

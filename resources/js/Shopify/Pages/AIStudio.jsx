@@ -567,7 +567,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [lightingLowresDenoise, setLightingLowresDenoise] = useState(Number(lightingDefaults.lowres_denoise ?? 0.9));
   const [lightingHighresDenoise, setLightingHighresDenoise] = useState(Number(lightingDefaults.highres_denoise ?? 0.5));
   const [lightingOutputQuality, setLightingOutputQuality] = useState(Number(lightingDefaults.output_quality ?? 80));
-  const [lightingNumberOfImages, setLightingNumberOfImages] = useState(Number(lightingDefaults.number_of_images ?? 1));
   const [upscaleScale, setUpscaleScale] = useState('4');
   const [upscaleFaceEnhance, setUpscaleFaceEnhance] = useState(false);
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
@@ -905,7 +904,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       formData.append('lowres_denoise', String(lightingLowresDenoise));
       formData.append('highres_denoise', String(lightingHighresDenoise));
       formData.append('output_quality', String(lightingOutputQuality));
-      formData.append('number_of_images', String(lightingNumberOfImages));
       const res = await axios.post('/shopify/tools/lighting', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -938,7 +936,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     lightingLowresDenoise,
     lightingHighresDenoise,
     lightingOutputQuality,
-    lightingNumberOfImages,
     showToast,
   ]);
 
@@ -2078,7 +2075,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                   )}
 
                   {selectedTool === 'lighting' && (
-                    <BlockStack gap="200">
+                    <BlockStack gap="200" style={{ order: 2 }}>
                       <Text variant="bodySm" as="span" tone="subdued">Lighting preset</Text>
                       <Select
                         label=""
@@ -2187,16 +2184,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           onChange={setLightingOutputQuality}
                         />
 
-                        <Text variant="bodySm" as="span" tone="subdued">Number of images: {lightingNumberOfImages}</Text>
-                        <RangeSlider
-                          label="Number of images"
-                          labelHidden
-                          min={1}
-                          max={12}
-                          step={1}
-                          value={lightingNumberOfImages}
-                          onChange={setLightingNumberOfImages}
-                        />
                       </BlockStack>
 
                       <TextField
@@ -2214,7 +2201,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                   )}
 
                   {selectedTool !== 'magic_eraser' && selectedTool !== 'enhance' && (
-                  <BlockStack gap="200">
+                  <BlockStack gap="200" style={selectedTool === 'lighting' ? { order: 1 } : undefined}>
                     <Text variant="bodySm" as="span" tone="subdued">
                       {hasOutput ? 'Source → Output' : 'Source image'}
                     </Text>
