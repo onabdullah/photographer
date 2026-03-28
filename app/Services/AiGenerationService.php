@@ -23,6 +23,10 @@ class AiGenerationService
     /** Keep input under common GPU memory limits for Real-ESRGAN on hosted hardware. */
     private const UPSCALER_MAX_INPUT_PIXELS = 2000000;
 
+    private const UPSCALER_MODEL_VERSION = 'nightmareai/real-esrgan:279a18ae4f30c9d3636516918d76c8c8262a9bc7c415fe90a88087c78c9ebbef';
+
+    private const UPSCALER_MODEL_SLUG = 'nightmareai/real-esrgan';
+
     private static function processingDurationSeconds(ImageGeneration $generation): float
     {
         return round($generation->created_at->diffInSeconds(now(), true), 4);
@@ -220,6 +224,35 @@ class AiGenerationService
         }
 
         return null;
+    }
+
+    private function isUpscalerModelVersionError(string $detail): bool
+    {
+        $normalized = strtolower($detail);
+
+        return str_contains($normalized, 'specified version does not exist')
+            || str_contains($normalized, "you don't have permission")
+            || (str_contains($normalized, 'version') && str_contains($normalized, 'does not exist'));
+    }
+
+    private function resolveUpscalerModelVersion(string $configuredModel, string $defaultVersion): string
+    {
+        $configured = trim($configuredModel);
+        $fallback = trim($defaultVersion) !== '' ? trim($defaultVersion) : self::UPSCALER_MODEL_VERSION;
+
+        if ($configured === '') {
+            return $fallback;
+        }
+
+        if (str_contains($configured, ':')) {
+            return $configured;
+        }
+
+        if (! str_contains($configured, '/')) {
+            return self::UPSCALER_MODEL_SLUG . ':' . $configured;
+        }
+
+        return $fallback;
     }
 
     /** Fetch image bytes from local storage URL or remote URL. */
@@ -629,6 +662,31 @@ class AiGenerationService
         if (! $response->successful()) {
             $detail = $response->json('detail') ?? $response->body();
             $detailString = is_string($detail) ? $detail : json_encode($detail);
+
+            if (is_string($detailString)
+                && $this->isUpscalerModelVersionError($detailString)
+                && $upscalerConfig['model_version'] !== $upscalerConfig['fallback_model_version']) {
+                $fallbackPayload = $apiPayload;
+                $fallbackPayload['version'] = $upscalerConfig['fallback_model_version'];
+
+                Log::channel('upscaler')->warning('Upscaler retry with fallback model version', [
+                    'shop_domain' => $shopDomain,
+                    'requested_model_version' => $upscalerConfig['model_version'],
+                    'fallback_model_version' => $upscalerConfig['fallback_model_version'],
+                ]);
+
+                $fallbackResponse = Http::withToken($token)
+                    ->timeout(30)
+                    ->post(self::REPLICATE_API, $fallbackPayload);
+
+                $apiPayload = $fallbackPayload;
+                $response = $fallbackResponse;
+                $statusCode = $fallbackResponse->status();
+                $body = $fallbackResponse->json() ?? [];
+                $detail = $fallbackResponse->json('detail') ?? $fallbackResponse->body();
+                $detailString = is_string($detail) ? $detail : json_encode($detail);
+            }
+
             $gpuMaxPixels = is_string($detailString)
                 ? $this->extractGpuMaxPixelsFromUpscalerError($detailString)
                 : null;
@@ -933,8 +991,14 @@ class AiGenerationService
         $defaults = config('ai_studio_tools.upscaler', []);
         $settings = SiteSetting::getUpscalerSettings();
 
+        $configuredModelVersion = (string) ($settings['model_version'] ?: ($defaults['model_version'] ?? ''));
+        $fallbackModelVersion = (string) ($defaults['model_version'] ?? self::UPSCALER_MODEL_VERSION);
+        $resolvedModelVersion = $this->resolveUpscalerModelVersion($configuredModelVersion, $fallbackModelVersion);
+
         return [
-            'model_version' => (string) ($settings['model_version'] ?: ($defaults['model_version'] ?? '')),
+            'model_version' => $resolvedModelVersion,
+            'configured_model_version' => $configuredModelVersion,
+            'fallback_model_version' => $fallbackModelVersion,
             'default_scale' => (int) ($settings['default_scale'] ?: ($defaults['defaults']['scale'] ?? 4)),
             'default_face_enhance' => (bool) ($settings['default_face_enhance'] ?? ($defaults['defaults']['face_enhance'] ?? false)),
             'supported_fields' => $defaults['supported_fields'] ?? [],
