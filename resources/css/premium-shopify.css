@@ -1106,12 +1106,39 @@
   object-fit: cover;
 }
 
+/* Right command panel hardening: keep controls readable in one-third layout */
+.aistudio-command-center,
+.aistudio-command-center-state,
+.aistudio-command-card,
+.aistudio-command-content {
+  min-width: 0;
+}
+
+.aistudio-command-content > * {
+  min-width: 0;
+}
+
+.aistudio-command-content .Polaris-TextField,
+.aistudio-command-content .Polaris-Select,
+.aistudio-command-content .Polaris-RangeSlider,
+.aistudio-command-content .Polaris-DropZone,
+.aistudio-command-content .Polaris-Box,
+.aistudio-command-content .Polaris-InlineGrid,
+.aistudio-command-content .Polaris-InlineStack {
+  min-width: 0;
+  width: 100%;
+}
+
+.aistudio-command-content .Polaris-InlineStack {
+  flex-wrap: wrap;
+}
+
 /* Right panel: source → output with arrow */
 .aistudio-panel-source-output {
   display: flex;
   align-items: center;
   gap: var(--p-space-200);
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .aistudio-panel-source-output .aistudio-panel-thumb {
@@ -1125,6 +1152,7 @@
   justify-content: center;
   flex-shrink: 0;
   color: var(--p-color-text-subdued);
+  padding: 0 2px;
 }
 
 .aistudio-panel-arrow svg {

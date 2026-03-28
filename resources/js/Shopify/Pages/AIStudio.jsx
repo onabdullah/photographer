@@ -1740,14 +1740,14 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
             </Layout.Section>
 
             {/* Command Center (right) – compact control panel */}
-            <Layout.Section variant="oneThird">
-              <div style={{
+            <Layout.Section variant="oneThird" className="aistudio-command-center">
+              <div className="aistudio-command-center-state" style={{
                 pointerEvents: (isScanning || isProcessing) ? 'none' : undefined,
                 opacity: (isScanning || isProcessing) ? 0.5 : undefined,
                 transition: 'opacity 0.2s',
               }}>
-              <Card>
-                <BlockStack gap="400">
+              <Card className="aistudio-command-card">
+                <BlockStack gap="400" className="aistudio-command-content">
                   {/* For magic_eraser: show source image at top */}
                   {selectedTool === 'magic_eraser' && (
                     <BlockStack gap="200">
@@ -1788,7 +1788,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                             </div>
                           )}
                           {!resultImageUrl && (
-                            <InlineStack gap="200" blockAlign="center">
+                            <InlineStack gap="200" blockAlign="center" wrap>
                               <Button
                                 variant="plain"
                                 size="slim"
@@ -2249,7 +2249,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           </div>
                         )}
                         {!resultImageUrl && (
-                          <InlineStack gap="200" blockAlign="center">
+                          <InlineStack gap="200" blockAlign="center" wrap>
                             <Button
                               variant="plain"
                               size="slim"
