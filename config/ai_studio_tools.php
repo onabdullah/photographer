@@ -325,7 +325,10 @@ return [
     |--------------------------------------------------------------------------
     */
     'upscaler' => [
-        'model_version' => 'e0e41191a09250ae4688a43ce19e639c8fef9ca48fb2834d12b78b52532bd4a6',
+        'model_version' => 'nightmareai/real-esrgan:279a18ae4f30c9d3636516918d76c8c8262a9bc7c415fe90a88087c78c9ebbef',
+
+        // Downscale oversized inputs before sending to model to avoid GPU memory failures.
+        'max_input_pixels' => 2000000,
 
         'defaults' => [
             'scale' => 4,

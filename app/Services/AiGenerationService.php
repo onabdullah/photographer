@@ -20,6 +20,9 @@ use Illuminate\Support\Str;
  */
 class AiGenerationService
 {
+    /** Keep input under common GPU memory limits for Real-ESRGAN on hosted hardware. */
+    private const UPSCALER_MAX_INPUT_PIXELS = 2000000;
+
     private static function processingDurationSeconds(ImageGeneration $generation): float
     {
         return round($generation->created_at->diffInSeconds(now(), true), 4);
@@ -72,12 +75,6 @@ class AiGenerationService
     }
 
     private const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
-
-    /** nightmareai/real-esrgan – image, scale (2–10), face_enhance */
-    private const UPSCALER_MODEL_VERSION = 'nightmareai/real-esrgan:279a18ae4f30c9d3636516918d76c8c8262a9bc7c415fe90a88087c78c9ebbef';
-
-    /** tencentarc/gfpgan – face/quality enhancement: img, version (v1.4, v1.3, RestoreFormer), scale (1 or 2). */
-    private const ENHANCER_MODEL_VERSION = 'tencentarc/gfpgan:0fbacf7afc6c144e5be9767cff80f25aff23e52b0708f17e20f9879b2f21516c';
 
     /** zsxkib/ic-light – AI relighting: subject_image, prompt. Latest version. */
     private const IC_LIGHT_MODEL_VERSION = 'zsxkib/ic-light:d41bcb10d8c159868f4cfbd7c6a2ca01484f7d39e4613419d5952c61562f1ba7';
@@ -133,6 +130,129 @@ class AiGenerationService
         $mime = Storage::disk('public')->mimeType($storagePath) ?: 'image/png';
 
         return 'data:' . $mime . ';base64,' . base64_encode($contents);
+    }
+
+    /**
+     * Build upscaler image input and auto-downscale oversized images to avoid GPU memory errors.
+     */
+    private function buildUpscalerImageInput(string $imageUrl, ?int $maxPixelsOverride = null, bool $forceResize = false): string
+    {
+        if (! function_exists('imagecreatefromstring')) {
+            return $this->imageUrlToReplicateInput($imageUrl);
+        }
+
+        $maxPixels = max(100000, (int) ($maxPixelsOverride ?? (config('ai_studio_tools.upscaler.max_input_pixels') ?? self::UPSCALER_MAX_INPUT_PIXELS)));
+        $binary = $this->fetchImageBinaryForProcessing($imageUrl);
+        if ($binary === null || $binary === '') {
+            return $this->imageUrlToReplicateInput($imageUrl);
+        }
+
+        $source = @imagecreatefromstring($binary);
+        if ($source === false) {
+            return $this->imageUrlToReplicateInput($imageUrl);
+        }
+
+        $resized = null;
+        try {
+            $width = imagesx($source);
+            $height = imagesy($source);
+            $pixels = $width * $height;
+
+            if ($width < 1 || $height < 1 || (! $forceResize && $pixels <= $maxPixels)) {
+                return $this->imageUrlToReplicateInput($imageUrl);
+            }
+
+            $scale = sqrt($maxPixels / $pixels);
+            $newWidth = max(1, (int) floor($width * $scale));
+            $newHeight = max(1, (int) floor($height * $scale));
+
+            $resized = imagecreatetruecolor($newWidth, $newHeight);
+            if ($resized === false) {
+                return $this->imageUrlToReplicateInput($imageUrl);
+            }
+
+            imagealphablending($resized, false);
+            imagesavealpha($resized, true);
+            $transparent = imagecolorallocatealpha($resized, 0, 0, 0, 127);
+            imagefill($resized, 0, 0, $transparent);
+
+            if (! imagecopyresampled($resized, $source, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height)) {
+                return $this->imageUrlToReplicateInput($imageUrl);
+            }
+
+            ob_start();
+            $ok = imagepng($resized);
+            $encoded = ob_get_clean();
+
+            if (! $ok || ! is_string($encoded) || $encoded === '') {
+                return $this->imageUrlToReplicateInput($imageUrl);
+            }
+
+            Log::channel('upscaler')->info('Upscaler input image downscaled before prediction', [
+                'original_width' => $width,
+                'original_height' => $height,
+                'original_pixels' => $pixels,
+                'resized_width' => $newWidth,
+                'resized_height' => $newHeight,
+                'resized_pixels' => $newWidth * $newHeight,
+                'max_pixels' => $maxPixels,
+            ]);
+
+            return 'data:image/png;base64,' . base64_encode($encoded);
+        } finally {
+            if ($resized !== null && (is_resource($resized) || $resized instanceof \GdImage)) {
+                @imagedestroy($resized);
+            }
+            if (is_resource($source) || $source instanceof \GdImage) {
+                @imagedestroy($source);
+            }
+        }
+    }
+
+    private function extractGpuMaxPixelsFromUpscalerError(string $detail): ?int
+    {
+        if ($detail === '' || ! str_contains(strtolower($detail), 'max size that fits in gpu memory')) {
+            return null;
+        }
+
+        if (preg_match('/max size that fits in GPU memory on this hardware,\s*(\d+)/i', $detail, $matches) === 1) {
+            return max(100000, (int) $matches[1]);
+        }
+
+        return null;
+    }
+
+    /** Fetch image bytes from local storage URL or remote URL. */
+    private function fetchImageBinaryForProcessing(string $imageUrl): ?string
+    {
+        $appUrl = rtrim(config('app.url'), '/');
+        if ($appUrl !== '' && str_starts_with($imageUrl, $appUrl . '/')) {
+            $path = parse_url($imageUrl, PHP_URL_PATH);
+            if ($path && str_starts_with($path, '/storage/')) {
+                $storagePath = substr($path, strlen('/storage/'));
+                if (Storage::disk('public')->exists($storagePath)) {
+                    $content = Storage::disk('public')->get($storagePath);
+                    if (is_string($content) && $content !== '') {
+                        return $content;
+                    }
+                }
+            }
+        }
+
+        try {
+            $response = Http::timeout(30)->get($imageUrl);
+            if (! $response->successful()) {
+                return null;
+            }
+
+            return $response->body();
+        } catch (\Throwable $e) {
+            Log::channel('upscaler')->warning('Failed to fetch image for upscaler pre-resize', [
+                'image_url' => $imageUrl,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
     }
 
     /**
@@ -475,13 +595,16 @@ class AiGenerationService
             throw new \RuntimeException('Upscaler is not configured.');
         }
 
+        // Get settings from database (with config defaults)
+        $upscalerConfig = $this->resolvedUpscalerConfig();
+
         $imageUrl = $payload['image_url'];
-        $scale = (int) ($payload['scale'] ?? 4);
-        $faceEnhance = (bool) ($payload['face_enhance'] ?? false);
-        $imageInput = $this->imageUrlToReplicateInput($imageUrl);
+        $scale = (int) ($payload['scale'] ?? $upscalerConfig['default_scale']);
+        $faceEnhance = (bool) ($payload['face_enhance'] ?? $upscalerConfig['default_face_enhance']);
+        $imageInput = $this->buildUpscalerImageInput($imageUrl);
 
         $apiPayload = [
-            'version' => self::UPSCALER_MODEL_VERSION,
+            'version' => $upscalerConfig['model_version'],
             'input' => [
                 'image' => $imageInput,
                 'scale' => $scale,
@@ -493,6 +616,7 @@ class AiGenerationService
             'shop_domain' => $shopDomain,
             'scale' => $scale,
             'face_enhance' => $faceEnhance,
+            'model_version' => $upscalerConfig['model_version'],
         ]);
 
         $response = Http::withToken($token)
@@ -504,8 +628,44 @@ class AiGenerationService
 
         if (! $response->successful()) {
             $detail = $response->json('detail') ?? $response->body();
-            Log::channel('upscaler')->warning('Upscaler create failed', ['status' => $statusCode, 'detail' => $detail]);
-            throw new \RuntimeException(is_string($detail) ? $detail : 'Upscale request failed. Please try again.');
+            $detailString = is_string($detail) ? $detail : json_encode($detail);
+            $gpuMaxPixels = is_string($detailString)
+                ? $this->extractGpuMaxPixelsFromUpscalerError($detailString)
+                : null;
+
+            if ($gpuMaxPixels !== null) {
+                $retryMaxPixels = max(100000, $gpuMaxPixels - 50000);
+                $retryImageInput = $this->buildUpscalerImageInput($imageUrl, $retryMaxPixels, true);
+
+                if ($retryImageInput !== '') {
+                    $retryPayload = $apiPayload;
+                    $retryPayload['input']['image'] = $retryImageInput;
+
+                    Log::channel('upscaler')->warning('Upscaler retry after GPU pixel-limit error', [
+                        'shop_domain' => $shopDomain,
+                        'gpu_max_pixels' => $gpuMaxPixels,
+                        'retry_max_pixels' => $retryMaxPixels,
+                    ]);
+
+                    $retryResponse = Http::withToken($token)
+                        ->timeout(30)
+                        ->post(self::REPLICATE_API, $retryPayload);
+
+                    $response = $retryResponse;
+                    $statusCode = $retryResponse->status();
+                    $body = $retryResponse->json() ?? [];
+                    $detail = $retryResponse->json('detail') ?? $retryResponse->body();
+
+                    if ($retryResponse->successful()) {
+                        // Response replaced by successful retry.
+                    }
+                }
+            }
+
+            if (! $response->successful()) {
+                Log::channel('upscaler')->warning('Upscaler create failed', ['status' => $statusCode, 'detail' => $detail]);
+                throw new \RuntimeException(is_string($detail) ? $detail : 'Upscale request failed. Please try again.');
+            }
         }
 
         $predictionId = $body['id'] ?? null;
@@ -762,6 +922,23 @@ class AiGenerationService
                 'image_search' => $normalizeFeature($savedFeatures['image_search'] ?? null, (bool) (($defaultFeatures['image_search']['enabled'] ?? false))),
                 'seed_reproducibility' => $normalizeFeature($savedFeatures['seed_reproducibility'] ?? null, (bool) (($defaultFeatures['seed_reproducibility']['enabled'] ?? true))),
             ],
+        ];
+    }
+
+    /**
+     * Resolve Upscaler runtime config from upscaler config + SiteSetting overrides.
+     */
+    private function resolvedUpscalerConfig(): array
+    {
+        $defaults = config('ai_studio_tools.upscaler', []);
+        $settings = SiteSetting::getUpscalerSettings();
+
+        return [
+            'model_version' => (string) ($settings['model_version'] ?: ($defaults['model_version'] ?? '')),
+            'default_scale' => (int) ($settings['default_scale'] ?: ($defaults['defaults']['scale'] ?? 4)),
+            'default_face_enhance' => (bool) ($settings['default_face_enhance'] ?? ($defaults['defaults']['face_enhance'] ?? false)),
+            'supported_fields' => $defaults['supported_fields'] ?? [],
+            'cost_per_image' => $defaults['cost_per_image'] ?? 0.0023,
         ];
     }
 
