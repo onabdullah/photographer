@@ -46,7 +46,7 @@ class LightingFixController extends Controller
             $result = $this->aiGenerationService->startLightingJob($imageUrl, $prompt, $shopDomain);
             return response()->json($result);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::channel('upscaler')->error('Lighting fix error', [
+            \Illuminate\Support\Facades\Log::channel('lighting')->error('Lighting fix error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -94,7 +94,7 @@ class LightingFixController extends Controller
 
             return response()->json($result);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::channel('upscaler')->error('Lighting fix poll error', [
+            \Illuminate\Support\Facades\Log::channel('lighting')->error('Lighting fix poll error', [
                 'job_id' => $jobId,
                 'error' => $e->getMessage(),
             ]);

@@ -354,7 +354,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'lighting_fix' => [
-        'model_version' => 'd41bcb10d8c159868f4cfbd7c6a2ca01484f7d39e4613419d5952c61562f1ba7',
+        'model_version' => 'zsxkib/ic-light:d41bcb10d8c159868f4cfbd7c6a2ca01484f7d39e4613419d5952c61562f1ba7',
 
         'defaults' => [
             'appended_prompt' => 'best quality',

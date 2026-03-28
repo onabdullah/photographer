@@ -27,6 +27,8 @@ class AiGenerationService
 
     private const UPSCALER_MODEL_SLUG = 'nightmareai/real-esrgan';
 
+    private const IC_LIGHT_MODEL_SLUG = 'zsxkib/ic-light';
+
     private static function processingDurationSeconds(ImageGeneration $generation): float
     {
         return round($generation->created_at->diffInSeconds(now(), true), 4);
@@ -235,6 +237,15 @@ class AiGenerationService
             || (str_contains($normalized, 'version') && str_contains($normalized, 'does not exist'));
     }
 
+    private function isLightingModelVersionError(string $detail): bool
+    {
+        $normalized = strtolower($detail);
+
+        return str_contains($normalized, 'specified version does not exist')
+            || str_contains($normalized, "you don't have permission")
+            || (str_contains($normalized, 'version') && str_contains($normalized, 'does not exist'));
+    }
+
     private function resolveUpscalerModelVersion(string $configuredModel, string $defaultVersion): string
     {
         $configured = trim($configuredModel);
@@ -250,6 +261,38 @@ class AiGenerationService
 
         if (! str_contains($configured, '/')) {
             return self::UPSCALER_MODEL_SLUG . ':' . $configured;
+        }
+
+        return $fallback;
+    }
+
+    private function resolveLightingModelVersion(string $configuredModel, string $defaultVersion): string
+    {
+        $configured = trim($configuredModel);
+        $fallback = trim($defaultVersion);
+
+        if ($fallback === '') {
+            $fallback = self::IC_LIGHT_MODEL_VERSION;
+        }
+
+        if (! str_contains($fallback, ':')) {
+            if (! str_contains($fallback, '/')) {
+                $fallback = self::IC_LIGHT_MODEL_SLUG . ':' . $fallback;
+            } else {
+                $fallback = self::IC_LIGHT_MODEL_VERSION;
+            }
+        }
+
+        if ($configured === '') {
+            return $fallback;
+        }
+
+        if (str_contains($configured, ':')) {
+            return $configured;
+        }
+
+        if (! str_contains($configured, '/')) {
+            return self::IC_LIGHT_MODEL_SLUG . ':' . $configured;
         }
 
         return $fallback;
@@ -1007,6 +1050,94 @@ class AiGenerationService
     }
 
     /**
+     * Resolve Lighting Fix runtime config from lighting_fix config + SiteSetting overrides.
+     */
+    private function resolvedLightingFixConfig(): array
+    {
+        $defaults = config('ai_studio_tools.lighting_fix', []);
+        $settings = SiteSetting::getLightingFixSettings();
+        $supported = $defaults['supported_fields'] ?? [];
+
+        $configuredModelVersion = (string) ($settings['model_version'] ?: ($defaults['model_version'] ?? ''));
+        $fallbackModelVersion = (string) ($defaults['model_version'] ?? self::IC_LIGHT_MODEL_VERSION);
+        $resolvedModelVersion = $this->resolveLightingModelVersion($configuredModelVersion, $fallbackModelVersion);
+
+        $fallbackLightSource = (string) ($defaults['defaults']['light_source'] ?? 'None');
+        $defaultLightSource = (string) ($settings['default_light_source'] ?: $fallbackLightSource);
+        if (! in_array($defaultLightSource, $supported['light_source'] ?? [], true)) {
+            $defaultLightSource = $fallbackLightSource;
+        }
+
+        $fallbackOutputFormat = strtolower((string) ($defaults['defaults']['output_format'] ?? 'webp'));
+        $defaultOutputFormat = strtolower((string) ($settings['default_output_format'] ?: $fallbackOutputFormat));
+        if (! in_array($defaultOutputFormat, $supported['output_format'] ?? [], true)) {
+            $defaultOutputFormat = $fallbackOutputFormat;
+        }
+
+        $allowedWidths = $supported['width'] ?? [];
+        $fallbackWidth = (int) ($defaults['defaults']['width'] ?? 512);
+        $defaultWidth = (int) ($settings['default_width'] ?: $fallbackWidth);
+        if (! in_array($defaultWidth, $allowedWidths, true)) {
+            $defaultWidth = $fallbackWidth;
+        }
+
+        $allowedHeights = $supported['height'] ?? [];
+        $fallbackHeight = (int) ($defaults['defaults']['height'] ?? 640);
+        $defaultHeight = (int) ($settings['default_height'] ?: $fallbackHeight);
+        if (! in_array($defaultHeight, $allowedHeights, true)) {
+            $defaultHeight = $fallbackHeight;
+        }
+
+        $cfgRange = $supported['cfg'] ?? ['min' => 1, 'max' => 32];
+        $defaultCfg = (float) ($settings['default_cfg'] ?: ($defaults['defaults']['cfg'] ?? 2));
+        $defaultCfg = max((float) ($cfgRange['min'] ?? 1), min((float) ($cfgRange['max'] ?? 32), $defaultCfg));
+
+        $stepsRange = $supported['steps'] ?? ['min' => 1, 'max' => 100];
+        $defaultSteps = (int) ($settings['default_steps'] ?: ($defaults['defaults']['steps'] ?? 25));
+        $defaultSteps = max((int) ($stepsRange['min'] ?? 1), min((int) ($stepsRange['max'] ?? 100), $defaultSteps));
+
+        $highresScaleRange = $supported['highres_scale'] ?? ['min' => 1, 'max' => 3];
+        $defaultHighresScale = (float) ($settings['default_highres_scale'] ?: ($defaults['defaults']['highres_scale'] ?? 1.5));
+        $defaultHighresScale = max((float) ($highresScaleRange['min'] ?? 1), min((float) ($highresScaleRange['max'] ?? 3), $defaultHighresScale));
+
+        $lowresDenoiseRange = $supported['lowres_denoise'] ?? ['min' => 0.1, 'max' => 1];
+        $defaultLowresDenoise = (float) ($settings['default_lowres_denoise'] ?: ($defaults['defaults']['lowres_denoise'] ?? 0.9));
+        $defaultLowresDenoise = max((float) ($lowresDenoiseRange['min'] ?? 0.1), min((float) ($lowresDenoiseRange['max'] ?? 1), $defaultLowresDenoise));
+
+        $highresDenoiseRange = $supported['highres_denoise'] ?? ['min' => 0.1, 'max' => 1];
+        $defaultHighresDenoise = (float) ($settings['default_highres_denoise'] ?: ($defaults['defaults']['highres_denoise'] ?? 0.5));
+        $defaultHighresDenoise = max((float) ($highresDenoiseRange['min'] ?? 0.1), min((float) ($highresDenoiseRange['max'] ?? 1), $defaultHighresDenoise));
+
+        $outputQualityRange = $supported['output_quality'] ?? ['min' => 0, 'max' => 100];
+        $defaultOutputQuality = (int) ($settings['default_output_quality'] ?: ($defaults['defaults']['output_quality'] ?? 80));
+        $defaultOutputQuality = max((int) ($outputQualityRange['min'] ?? 0), min((int) ($outputQualityRange['max'] ?? 100), $defaultOutputQuality));
+
+        $numberOfImagesRange = $supported['number_of_images'] ?? ['min' => 1, 'max' => 12];
+        $defaultNumberOfImages = (int) ($settings['default_number_of_images'] ?: ($defaults['defaults']['number_of_images'] ?? 1));
+        $defaultNumberOfImages = max((int) ($numberOfImagesRange['min'] ?? 1), min((int) ($numberOfImagesRange['max'] ?? 12), $defaultNumberOfImages));
+
+        return [
+            'model_version' => $resolvedModelVersion,
+            'configured_model_version' => $configuredModelVersion,
+            'fallback_model_version' => $this->resolveLightingModelVersion('', $fallbackModelVersion),
+            'appended_prompt' => trim((string) ($settings['appended_prompt'] ?: ($defaults['defaults']['appended_prompt'] ?? 'best quality'))),
+            'negative_prompt' => trim((string) ($settings['negative_prompt'] ?: ($defaults['defaults']['negative_prompt'] ?? 'lowres, bad anatomy, bad hands, cropped, worst quality'))),
+            'default_light_source' => $defaultLightSource,
+            'default_output_format' => $defaultOutputFormat,
+            'default_width' => $defaultWidth,
+            'default_height' => $defaultHeight,
+            'default_cfg' => $defaultCfg,
+            'default_steps' => $defaultSteps,
+            'default_highres_scale' => $defaultHighresScale,
+            'default_lowres_denoise' => $defaultLowresDenoise,
+            'default_highres_denoise' => $defaultHighresDenoise,
+            'default_output_quality' => $defaultOutputQuality,
+            'default_number_of_images' => $defaultNumberOfImages,
+            'supported_fields' => $supported,
+        ];
+    }
+
+    /**
      * Resolve Magic Eraser runtime config from magic_eraser config + SiteSetting overrides.
      */
     private function resolvedMagicEraserConfig(): array
@@ -1229,20 +1360,38 @@ class AiGenerationService
             throw new \InvalidArgumentException('Image URL is required for lighting fix.');
         }
 
+        $lightingConfig = $this->resolvedLightingFixConfig();
+
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
 
         $apiPayload = [
-            'version' => self::IC_LIGHT_MODEL_VERSION,
+            'version' => $lightingConfig['model_version'],
             'input' => [
                 'subject_image' => $imageInput,
                 'prompt' => $prompt,
-                'appended_prompt' => 'best quality, sharp, high detail, preserve exact face and body proportions, no distortion, professional photography, original resolution',
-                'negative_prompt' => 'blurry, deformed face, changed proportions, distorted features, low quality, lowres, bad anatomy, worst quality',
+                'appended_prompt' => $lightingConfig['appended_prompt'],
+                'negative_prompt' => $lightingConfig['negative_prompt'],
+                'light_source' => $lightingConfig['default_light_source'],
+                'output_format' => $lightingConfig['default_output_format'],
+                'width' => $lightingConfig['default_width'],
+                'height' => $lightingConfig['default_height'],
+                'cfg' => $lightingConfig['default_cfg'],
+                'steps' => $lightingConfig['default_steps'],
+                'highres_scale' => $lightingConfig['default_highres_scale'],
+                'lowres_denoise' => $lightingConfig['default_lowres_denoise'],
+                'highres_denoise' => $lightingConfig['default_highres_denoise'],
+                'output_quality' => $lightingConfig['default_output_quality'],
+                'number_of_images' => $lightingConfig['default_number_of_images'],
             ],
         ];
 
         Log::channel('lighting')->info('Lighting fix create prediction', [
             'shop_domain' => $shopDomain,
+            'model_version' => $apiPayload['version'],
+            'light_source' => $lightingConfig['default_light_source'],
+            'output_format' => $lightingConfig['default_output_format'],
+            'width' => $lightingConfig['default_width'],
+            'height' => $lightingConfig['default_height'],
         ]);
 
         $response = Http::withToken($token)
@@ -1254,8 +1403,34 @@ class AiGenerationService
 
         if (! $response->successful()) {
             $detail = $response->json('detail') ?? $response->body();
-            Log::channel('lighting')->warning('Lighting fix create failed', ['status' => $statusCode, 'detail' => $detail]);
-            throw new \RuntimeException(is_string($detail) ? $detail : 'Lighting fix request failed. Please try again.');
+            $detailString = is_string($detail) ? $detail : json_encode($detail);
+
+            if (is_string($detailString)
+                && $this->isLightingModelVersionError($detailString)
+                && $lightingConfig['model_version'] !== $lightingConfig['fallback_model_version']) {
+                $fallbackPayload = $apiPayload;
+                $fallbackPayload['version'] = $lightingConfig['fallback_model_version'];
+
+                Log::channel('lighting')->warning('Lighting fix retry with fallback model version', [
+                    'shop_domain' => $shopDomain,
+                    'requested_model_version' => $lightingConfig['model_version'],
+                    'fallback_model_version' => $lightingConfig['fallback_model_version'],
+                ]);
+
+                $fallbackResponse = Http::withToken($token)
+                    ->timeout(30)
+                    ->post(self::REPLICATE_API, $fallbackPayload);
+
+                $response = $fallbackResponse;
+                $statusCode = $fallbackResponse->status();
+                $body = $fallbackResponse->json() ?? [];
+                $detail = $fallbackResponse->json('detail') ?? $fallbackResponse->body();
+            }
+
+            if (! $response->successful()) {
+                Log::channel('lighting')->warning('Lighting fix create failed', ['status' => $statusCode, 'detail' => $detail]);
+                throw new \RuntimeException(is_string($detail) ? $detail : 'Lighting fix request failed. Please try again.');
+            }
         }
 
         $predictionId = $body['id'] ?? null;

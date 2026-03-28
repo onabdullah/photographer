@@ -183,10 +183,10 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                   type="text"
                   value={settings.model_version || ''}
                   onChange={e => setSettings({ ...settings, model_version: e.target.value })}
-                  placeholder="e.g., zsxkib/ic-light"
+                  placeholder="e.g., zsxkib/ic-light:d41bcb10... or version hash"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-600"
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">IC-Light model version for relighting</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Use full Replicate version (owner/model:hash) or just the hash.</p>
               </div>
 
               {/* Prompts */}
