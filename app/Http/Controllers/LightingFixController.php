@@ -33,6 +33,17 @@ class LightingFixController extends Controller
         $request->validate([
             'image' => 'required',
             'prompt' => 'required|string|max:1000',
+            'light_source' => 'sometimes|string|in:None,Left Light,Right Light,Top Light,Bottom Light',
+            'output_format' => 'sometimes|string|in:webp,jpg,png',
+            'width' => 'sometimes|integer|in:256,320,384,448,512,576,640,704,768,832,896,960,1024',
+            'height' => 'sometimes|integer|in:256,320,384,448,512,576,640,704,768,832,896,960,1024',
+            'cfg' => 'sometimes|numeric|min:1|max:32',
+            'steps' => 'sometimes|integer|min:1|max:100',
+            'highres_scale' => 'sometimes|numeric|min:1|max:3',
+            'lowres_denoise' => 'sometimes|numeric|min:0.1|max:1',
+            'highres_denoise' => 'sometimes|numeric|min:0.1|max:1',
+            'output_quality' => 'sometimes|integer|min:0|max:100',
+            'number_of_images' => 'sometimes|integer|min:1|max:12',
         ]);
 
         $imageUrl = $this->aiGenerationService->resolveImageUrlFromRequest($request);
@@ -42,8 +53,23 @@ class LightingFixController extends Controller
 
         $prompt = $request->input('prompt');
 
+        $options = [
+            'light_source' => $request->input('light_source'),
+            'output_format' => $request->input('output_format'),
+            'width' => $request->input('width'),
+            'height' => $request->input('height'),
+            'cfg' => $request->input('cfg'),
+            'steps' => $request->input('steps'),
+            'highres_scale' => $request->input('highres_scale'),
+            'lowres_denoise' => $request->input('lowres_denoise'),
+            'highres_denoise' => $request->input('highres_denoise'),
+            'output_quality' => $request->input('output_quality'),
+            'number_of_images' => $request->input('number_of_images'),
+        ];
+        $options = array_filter($options, static fn ($value) => $value !== null && $value !== '');
+
         try {
-            $result = $this->aiGenerationService->startLightingJob($imageUrl, $prompt, $shopDomain);
+            $result = $this->aiGenerationService->startLightingJob($imageUrl, $prompt, $shopDomain, $options);
             return response()->json($result);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::channel('lighting')->error('Lighting fix error', [

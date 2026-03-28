@@ -81,6 +81,10 @@ const UPSCALE_SCALE_OPTIONS = [
   { value: '8', label: '8×' },
 ];
 
+const LIGHTING_LIGHT_SOURCES = ['None', 'Left Light', 'Right Light', 'Top Light', 'Bottom Light'];
+const LIGHTING_OUTPUT_FORMATS = ['webp', 'jpg', 'png'];
+const LIGHTING_DIMENSIONS = [256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024];
+
 const LIGHTING_PRESETS = [
   { value: 'custom', label: 'Custom (type your own)' },
   { value: 'warm_studio_left', label: 'Warm Studio Light from Left', prompt: 'Professional studio setup: primary key light from camera left at 45 degrees, soft fill from the opposite side to open shadows. Warm color temperature (3200–4000K). Clean, editorial product or portrait quality with defined but flattering shadow.' },
@@ -483,7 +487,7 @@ function PillButton({ selected, onClick, children }) {
   );
 }
 
-export default function AIStudio({ product, initialImage, initialTool, enabledTools: enabledToolsProp, credits: initialCredits = 0, magicEraser = {}, backgroundRemover = {} }) {
+export default function AIStudio({ product, initialImage, initialTool, enabledTools: enabledToolsProp, credits: initialCredits = 0, magicEraser = {}, backgroundRemover = {}, lightingFix = {} }) {
   const enabledTools = Array.isArray(enabledToolsProp) && enabledToolsProp.length > 0
     ? enabledToolsProp
     : VALID_TOOLS;
@@ -511,6 +515,25 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     : 'jpg';
   const backgroundRemoverDefaults = backgroundRemover?.defaults || {};
   const backgroundRemoverResolution = (backgroundRemoverDefaults.resolution || '').trim();
+  const lightingDefaults = lightingFix?.defaults || {};
+  const lightingSupported = lightingFix?.supported_fields || {};
+  const lightingLightSourceOptions = (lightingSupported.light_source || LIGHTING_LIGHT_SOURCES).map((source) => ({ value: source, label: source }));
+  const lightingOutputFormatOptions = (lightingSupported.output_format || LIGHTING_OUTPUT_FORMATS).map((fmt) => ({ value: fmt, label: String(fmt).toUpperCase() }));
+  const lightingWidthOptions = (lightingSupported.width || LIGHTING_DIMENSIONS).map((size) => ({ value: String(size), label: `${size}px` }));
+  const lightingHeightOptions = (lightingSupported.height || LIGHTING_DIMENSIONS).map((size) => ({ value: String(size), label: `${size}px` }));
+
+  const initialLightingLightSource = lightingLightSourceOptions.some((opt) => opt.value === lightingDefaults.light_source)
+    ? lightingDefaults.light_source
+    : (lightingLightSourceOptions[0]?.value || 'None');
+  const initialLightingOutputFormat = lightingOutputFormatOptions.some((opt) => opt.value === lightingDefaults.output_format)
+    ? lightingDefaults.output_format
+    : (lightingOutputFormatOptions[0]?.value || 'webp');
+  const initialLightingWidth = lightingWidthOptions.some((opt) => Number(opt.value) === Number(lightingDefaults.width))
+    ? String(lightingDefaults.width)
+    : String(lightingWidthOptions[0]?.value || 512);
+  const initialLightingHeight = lightingHeightOptions.some((opt) => Number(opt.value) === Number(lightingDefaults.height))
+    ? String(lightingDefaults.height)
+    : String(lightingHeightOptions[0]?.value || 640);
   const toolOptions = AI_TOOLS.filter((t) => enabledTools.includes(t.value));
   const validInitialTool = initialTool && enabledTools.includes(initialTool) ? initialTool : (enabledTools[0] ?? 'magic_eraser');
   const [credits, setCredits] = useState(() => Math.max(0, parseInt(initialCredits, 10) || 0));
@@ -534,6 +557,17 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const [compressorSizes, setCompressorSizes] = useState(null); // { original_size, result_size } after compress
   const [lightingPreset, setLightingPreset] = useState('custom');
   const [lightingPromptText, setLightingPromptText] = useState('');
+  const [lightingLightSource, setLightingLightSource] = useState(initialLightingLightSource);
+  const [lightingOutputFormat, setLightingOutputFormat] = useState(initialLightingOutputFormat);
+  const [lightingWidth, setLightingWidth] = useState(initialLightingWidth);
+  const [lightingHeight, setLightingHeight] = useState(initialLightingHeight);
+  const [lightingCfg, setLightingCfg] = useState(Number(lightingDefaults.cfg ?? 2));
+  const [lightingSteps, setLightingSteps] = useState(Number(lightingDefaults.steps ?? 25));
+  const [lightingHighresScale, setLightingHighresScale] = useState(Number(lightingDefaults.highres_scale ?? 1.5));
+  const [lightingLowresDenoise, setLightingLowresDenoise] = useState(Number(lightingDefaults.lowres_denoise ?? 0.9));
+  const [lightingHighresDenoise, setLightingHighresDenoise] = useState(Number(lightingDefaults.highres_denoise ?? 0.5));
+  const [lightingOutputQuality, setLightingOutputQuality] = useState(Number(lightingDefaults.output_quality ?? 80));
+  const [lightingNumberOfImages, setLightingNumberOfImages] = useState(Number(lightingDefaults.number_of_images ?? 1));
   const [upscaleScale, setUpscaleScale] = useState('4');
   const [upscaleFaceEnhance, setUpscaleFaceEnhance] = useState(false);
   const [magicEraserBrushSize, setMagicEraserBrushSize] = useState(40); // 10–100 px
@@ -861,6 +895,17 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
         throw new Error('Invalid image source');
       }
       formData.append('prompt', effectiveLightingPrompt);
+      formData.append('light_source', lightingLightSource);
+      formData.append('output_format', lightingOutputFormat);
+      formData.append('width', String(lightingWidth));
+      formData.append('height', String(lightingHeight));
+      formData.append('cfg', String(lightingCfg));
+      formData.append('steps', String(lightingSteps));
+      formData.append('highres_scale', String(lightingHighresScale));
+      formData.append('lowres_denoise', String(lightingLowresDenoise));
+      formData.append('highres_denoise', String(lightingHighresDenoise));
+      formData.append('output_quality', String(lightingOutputQuality));
+      formData.append('number_of_images', String(lightingNumberOfImages));
       const res = await axios.post('/shopify/tools/lighting', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -879,7 +924,23 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       showToast(msg, true);
       setProcessingStatus('error');
     }
-  }, [hasValidInput, inputImage, effectiveLightingPrompt, showToast]);
+  }, [
+    hasValidInput,
+    inputImage,
+    effectiveLightingPrompt,
+    lightingLightSource,
+    lightingOutputFormat,
+    lightingWidth,
+    lightingHeight,
+    lightingCfg,
+    lightingSteps,
+    lightingHighresScale,
+    lightingLowresDenoise,
+    lightingHighresDenoise,
+    lightingOutputQuality,
+    lightingNumberOfImages,
+    showToast,
+  ]);
 
   const handleMagicEraser = useCallback(async () => {
     const sourceImage = inputImage || sourceImageRef.current;
@@ -2042,6 +2103,112 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                         maxLength={1000}
                         helpText="Pre-filled from the preset above. Edit it or use as-is, then click Generate."
                       />
+
+                      <InlineGrid columns={{ xs: 1, md: 2 }} gap="200">
+                        <Select
+                          label="Light source"
+                          options={lightingLightSourceOptions}
+                          value={lightingLightSource}
+                          onChange={setLightingLightSource}
+                        />
+                        <Select
+                          label="Output format"
+                          options={lightingOutputFormatOptions}
+                          value={lightingOutputFormat}
+                          onChange={setLightingOutputFormat}
+                        />
+                        <Select
+                          label="Width"
+                          options={lightingWidthOptions}
+                          value={String(lightingWidth)}
+                          onChange={setLightingWidth}
+                        />
+                        <Select
+                          label="Height"
+                          options={lightingHeightOptions}
+                          value={String(lightingHeight)}
+                          onChange={setLightingHeight}
+                        />
+                      </InlineGrid>
+
+                      <BlockStack gap="200">
+                        <Text variant="bodySm" as="span" tone="subdued">CFG: {Number(lightingCfg).toFixed(1)}</Text>
+                        <RangeSlider
+                          label="CFG"
+                          labelHidden
+                          min={1}
+                          max={32}
+                          step={0.1}
+                          value={lightingCfg}
+                          onChange={setLightingCfg}
+                        />
+
+                        <Text variant="bodySm" as="span" tone="subdued">Steps: {lightingSteps}</Text>
+                        <RangeSlider
+                          label="Steps"
+                          labelHidden
+                          min={1}
+                          max={100}
+                          step={1}
+                          value={lightingSteps}
+                          onChange={setLightingSteps}
+                        />
+
+                        <Text variant="bodySm" as="span" tone="subdued">Highres scale: {Number(lightingHighresScale).toFixed(1)}</Text>
+                        <RangeSlider
+                          label="Highres scale"
+                          labelHidden
+                          min={1}
+                          max={3}
+                          step={0.1}
+                          value={lightingHighresScale}
+                          onChange={setLightingHighresScale}
+                        />
+
+                        <Text variant="bodySm" as="span" tone="subdued">Lowres denoise: {Number(lightingLowresDenoise).toFixed(1)}</Text>
+                        <RangeSlider
+                          label="Lowres denoise"
+                          labelHidden
+                          min={0.1}
+                          max={1}
+                          step={0.1}
+                          value={lightingLowresDenoise}
+                          onChange={setLightingLowresDenoise}
+                        />
+
+                        <Text variant="bodySm" as="span" tone="subdued">Highres denoise: {Number(lightingHighresDenoise).toFixed(1)}</Text>
+                        <RangeSlider
+                          label="Highres denoise"
+                          labelHidden
+                          min={0.1}
+                          max={1}
+                          step={0.1}
+                          value={lightingHighresDenoise}
+                          onChange={setLightingHighresDenoise}
+                        />
+
+                        <Text variant="bodySm" as="span" tone="subdued">Output quality: {lightingOutputQuality}</Text>
+                        <RangeSlider
+                          label="Output quality"
+                          labelHidden
+                          min={0}
+                          max={100}
+                          step={1}
+                          value={lightingOutputQuality}
+                          onChange={setLightingOutputQuality}
+                        />
+
+                        <Text variant="bodySm" as="span" tone="subdued">Number of images: {lightingNumberOfImages}</Text>
+                        <RangeSlider
+                          label="Number of images"
+                          labelHidden
+                          min={1}
+                          max={12}
+                          step={1}
+                          value={lightingNumberOfImages}
+                          onChange={setLightingNumberOfImages}
+                        />
+                      </BlockStack>
                     </BlockStack>
                   )}
 

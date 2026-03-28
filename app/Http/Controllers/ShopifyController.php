@@ -61,6 +61,8 @@ class ShopifyController extends Controller
         $credits = (int) ($shop->ai_credits_balance ?? 0);
         $magicEraserSettings = SiteSetting::getMagicEraserSettings();
         $backgroundRemoverSettings = SiteSetting::getBackgroundRemoverSettings();
+        $lightingFixSettings = SiteSetting::getLightingFixSettings();
+        $lightingFixConfig = config('ai_studio_tools.lighting_fix', []);
         $magicAspectRatios = $magicEraserSettings['enabled_aspect_ratios'] ?? [];
         $magicResolutionCredits = $magicEraserSettings['resolution_credits'] ?? [
             '1K' => 1,
@@ -88,6 +90,22 @@ class ShopifyController extends Controller
                 'defaults' => [
                     'resolution' => (string) ($backgroundRemoverSettings['default_resolution'] ?? ''),
                 ],
+            ],
+            'lightingFix' => [
+                'defaults' => [
+                    'light_source' => (string) ($lightingFixSettings['default_light_source'] ?? 'None'),
+                    'output_format' => (string) ($lightingFixSettings['default_output_format'] ?? 'webp'),
+                    'width' => (int) ($lightingFixSettings['default_width'] ?? 512),
+                    'height' => (int) ($lightingFixSettings['default_height'] ?? 640),
+                    'cfg' => (float) ($lightingFixSettings['default_cfg'] ?? 2),
+                    'steps' => (int) ($lightingFixSettings['default_steps'] ?? 25),
+                    'highres_scale' => (float) ($lightingFixSettings['default_highres_scale'] ?? 1.5),
+                    'lowres_denoise' => (float) ($lightingFixSettings['default_lowres_denoise'] ?? 0.9),
+                    'highres_denoise' => (float) ($lightingFixSettings['default_highres_denoise'] ?? 0.5),
+                    'output_quality' => (int) ($lightingFixSettings['default_output_quality'] ?? 80),
+                    'number_of_images' => (int) ($lightingFixSettings['default_number_of_images'] ?? 1),
+                ],
+                'supported_fields' => $lightingFixConfig['supported_fields'] ?? [],
             ],
         ]);
     }

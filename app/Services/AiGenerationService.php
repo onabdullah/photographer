@@ -491,7 +491,8 @@ class AiGenerationService
             return $this->startLightingJob(
                 $payload['image_url'] ?? null,
                 $payload['prompt'] ?? '',
-                $shopDomain
+                $shopDomain,
+                $payload
             );
         }
         if ($toolUsed === 'compressor') {
@@ -1345,7 +1346,7 @@ class AiGenerationService
      * Start a lighting fix (relighting) job via Replicate IC-Light.
      * Creates ImageGeneration with tool_used = 'lighting', status = 'processing'.
      */
-    public function startLightingJob(string $imageUrl, string $prompt, string $shopDomain): array
+    public function startLightingJob(string $imageUrl, string $prompt, string $shopDomain, array $options = []): array
     {
         $token = config('services.replicate.token');
         if (empty($token)) {
@@ -1362,6 +1363,56 @@ class AiGenerationService
 
         $lightingConfig = $this->resolvedLightingFixConfig();
 
+        $supported = $lightingConfig['supported_fields'] ?? [];
+
+        $lightSource = (string) ($options['light_source'] ?? $lightingConfig['default_light_source']);
+        if (! in_array($lightSource, $supported['light_source'] ?? [], true)) {
+            $lightSource = $lightingConfig['default_light_source'];
+        }
+
+        $outputFormat = strtolower((string) ($options['output_format'] ?? $lightingConfig['default_output_format']));
+        if (! in_array($outputFormat, $supported['output_format'] ?? [], true)) {
+            $outputFormat = $lightingConfig['default_output_format'];
+        }
+
+        $width = (int) ($options['width'] ?? $lightingConfig['default_width']);
+        if (! in_array($width, $supported['width'] ?? [], true)) {
+            $width = (int) $lightingConfig['default_width'];
+        }
+
+        $height = (int) ($options['height'] ?? $lightingConfig['default_height']);
+        if (! in_array($height, $supported['height'] ?? [], true)) {
+            $height = (int) $lightingConfig['default_height'];
+        }
+
+        $cfgRange = $supported['cfg'] ?? ['min' => 1, 'max' => 32];
+        $cfg = (float) ($options['cfg'] ?? $lightingConfig['default_cfg']);
+        $cfg = max((float) ($cfgRange['min'] ?? 1), min((float) ($cfgRange['max'] ?? 32), $cfg));
+
+        $stepsRange = $supported['steps'] ?? ['min' => 1, 'max' => 100];
+        $steps = (int) ($options['steps'] ?? $lightingConfig['default_steps']);
+        $steps = max((int) ($stepsRange['min'] ?? 1), min((int) ($stepsRange['max'] ?? 100), $steps));
+
+        $highresScaleRange = $supported['highres_scale'] ?? ['min' => 1, 'max' => 3];
+        $highresScale = (float) ($options['highres_scale'] ?? $lightingConfig['default_highres_scale']);
+        $highresScale = max((float) ($highresScaleRange['min'] ?? 1), min((float) ($highresScaleRange['max'] ?? 3), $highresScale));
+
+        $lowresDenoiseRange = $supported['lowres_denoise'] ?? ['min' => 0.1, 'max' => 1];
+        $lowresDenoise = (float) ($options['lowres_denoise'] ?? $lightingConfig['default_lowres_denoise']);
+        $lowresDenoise = max((float) ($lowresDenoiseRange['min'] ?? 0.1), min((float) ($lowresDenoiseRange['max'] ?? 1), $lowresDenoise));
+
+        $highresDenoiseRange = $supported['highres_denoise'] ?? ['min' => 0.1, 'max' => 1];
+        $highresDenoise = (float) ($options['highres_denoise'] ?? $lightingConfig['default_highres_denoise']);
+        $highresDenoise = max((float) ($highresDenoiseRange['min'] ?? 0.1), min((float) ($highresDenoiseRange['max'] ?? 1), $highresDenoise));
+
+        $outputQualityRange = $supported['output_quality'] ?? ['min' => 0, 'max' => 100];
+        $outputQuality = (int) ($options['output_quality'] ?? $lightingConfig['default_output_quality']);
+        $outputQuality = max((int) ($outputQualityRange['min'] ?? 0), min((int) ($outputQualityRange['max'] ?? 100), $outputQuality));
+
+        $numberOfImagesRange = $supported['number_of_images'] ?? ['min' => 1, 'max' => 12];
+        $numberOfImages = (int) ($options['number_of_images'] ?? $lightingConfig['default_number_of_images']);
+        $numberOfImages = max((int) ($numberOfImagesRange['min'] ?? 1), min((int) ($numberOfImagesRange['max'] ?? 12), $numberOfImages));
+
         $imageInput = $this->imageUrlToReplicateInput($imageUrl);
 
         $apiPayload = [
@@ -1371,27 +1422,34 @@ class AiGenerationService
                 'prompt' => $prompt,
                 'appended_prompt' => $lightingConfig['appended_prompt'],
                 'negative_prompt' => $lightingConfig['negative_prompt'],
-                'light_source' => $lightingConfig['default_light_source'],
-                'output_format' => $lightingConfig['default_output_format'],
-                'width' => $lightingConfig['default_width'],
-                'height' => $lightingConfig['default_height'],
-                'cfg' => $lightingConfig['default_cfg'],
-                'steps' => $lightingConfig['default_steps'],
-                'highres_scale' => $lightingConfig['default_highres_scale'],
-                'lowres_denoise' => $lightingConfig['default_lowres_denoise'],
-                'highres_denoise' => $lightingConfig['default_highres_denoise'],
-                'output_quality' => $lightingConfig['default_output_quality'],
-                'number_of_images' => $lightingConfig['default_number_of_images'],
+                'light_source' => $lightSource,
+                'output_format' => $outputFormat,
+                'width' => $width,
+                'height' => $height,
+                'cfg' => $cfg,
+                'steps' => $steps,
+                'highres_scale' => $highresScale,
+                'lowres_denoise' => $lowresDenoise,
+                'highres_denoise' => $highresDenoise,
+                'output_quality' => $outputQuality,
+                'number_of_images' => $numberOfImages,
             ],
         ];
 
         Log::channel('lighting')->info('Lighting fix create prediction', [
             'shop_domain' => $shopDomain,
             'model_version' => $apiPayload['version'],
-            'light_source' => $lightingConfig['default_light_source'],
-            'output_format' => $lightingConfig['default_output_format'],
-            'width' => $lightingConfig['default_width'],
-            'height' => $lightingConfig['default_height'],
+            'light_source' => $lightSource,
+            'output_format' => $outputFormat,
+            'width' => $width,
+            'height' => $height,
+            'cfg' => $cfg,
+            'steps' => $steps,
+            'highres_scale' => $highresScale,
+            'lowres_denoise' => $lowresDenoise,
+            'highres_denoise' => $highresDenoise,
+            'output_quality' => $outputQuality,
+            'number_of_images' => $numberOfImages,
         ]);
 
         $response = Http::withToken($token)
