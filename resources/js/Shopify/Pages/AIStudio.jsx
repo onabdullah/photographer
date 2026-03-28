@@ -614,6 +614,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     && activeInputImage !== ''
     && !activeInputImage.includes('placeholder')
     && !activeInputImage.includes('Select+a+Product');
+  const effectiveLightingPrompt = lightingPromptText.trim();
+  const isLightingPresetLocked = selectedTool === 'lighting' && lightingPreset !== 'custom';
   const displayGenerated = generatedImages[selectedGeneratedIndex] || null;
   const outputImageUrl = resultImageUrl || displayGenerated;
   const hasOutput = Boolean(outputImageUrl);
@@ -885,9 +887,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
       setProcessingStatus('error');
     }
   }, [hasValidInput, inputImage, showToast]);
-
-  const effectiveLightingPrompt = lightingPromptText.trim();
-  const isLightingPresetLocked = selectedTool === 'lighting' && lightingPreset !== 'custom';
 
   const handleLighting = useCallback(async () => {
     const sourceImage = inputImage || sourceImageRef.current;
