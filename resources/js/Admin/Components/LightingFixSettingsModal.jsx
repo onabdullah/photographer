@@ -251,7 +251,7 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
           {hasLoadedOnce && (
             <div className="mb-6 border-b border-gray-200 dark:border-slate-700/80 pb-4">
               <div
-                className="inline-flex items-center gap-2 p-1 rounded-2xl bg-gray-100 dark:bg-slate-800/90 border border-gray-200 dark:border-slate-700/80"
+                className="inline-flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-slate-800/90 border border-gray-200 dark:border-slate-700/80"
                 role="tablist"
                 aria-label="Product AI Lab settings tabs"
               >
@@ -260,13 +260,13 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                   role="tab"
                   aria-selected={activeTab === TAB_LIGHTING}
                   onClick={() => setActiveTab(TAB_LIGHTING)}
-                  className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition flex items-center gap-2 ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 ${
                     activeTab === TAB_LIGHTING
                       ? 'text-white bg-primary-600 dark:bg-primary-600 shadow-sm'
                       : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-slate-700/80'
                   }`}
                 >
-                  <Cog size={18} />
+                  <Cog size={14} />
                   Settings
                 </button>
                 <button
@@ -274,13 +274,13 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                   role="tab"
                   aria-selected={activeTab === TAB_PRODUCT_AI_LAB}
                   onClick={() => setActiveTab(TAB_PRODUCT_AI_LAB)}
-                  className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition flex items-center gap-2 ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 ${
                     activeTab === TAB_PRODUCT_AI_LAB
                       ? 'text-white bg-primary-600 dark:bg-primary-600 shadow-sm'
                       : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-slate-700/80'
                   }`}
                 >
-                  <Layers size={18} />
+                  <Layers size={14} />
                   Presets
                 </button>
               </div>
@@ -698,57 +698,76 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                     Add preset
                   </button>
                 </div>
-                <div className="space-y-4">
-                  {(settings.presets || DEFAULT_LIGHTING_PRESETS).map((preset, index) => {
-                    const isCustom = preset.value === 'custom';
 
-                    return (
-                      <div key={`${preset.value || 'preset'}-${index}`} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/40">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                            {isCustom ? 'Custom preset (system)' : `Preset ${index}`}
-                          </span>
-                          {!isCustom && (
-                            <button
-                              type="button"
-                              onClick={() => removePreset(index)}
-                              className="p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded"
-                              aria-label="Remove preset"
-                            >
-                              <X size={14} />
-                            </button>
-                          )}
-                        </div>
+                {(() => {
+                  const allPresets = settings.presets || DEFAULT_LIGHTING_PRESETS;
+                  const editablePresets = allPresets.filter((preset) => preset.value !== 'custom');
 
-                        <div className="space-y-3">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preset name</label>
-                            <input
-                              type="text"
-                              value={preset.label || ''}
-                              disabled={isCustom}
-                              onChange={(e) => updatePreset(index, 'label', e.target.value)}
-                              maxLength={80}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preset prompt</label>
-                            <textarea
-                              value={preset.prompt || ''}
-                              disabled={isCustom}
-                              onChange={(e) => updatePreset(index, 'prompt', e.target.value)}
-                              maxLength={1000}
-                              rows="3"
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70 resize-none"
-                            />
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{(preset.prompt || '').length}/1000</p>
-                          </div>
-                        </div>
+                  return (
+                    <div className="space-y-4">
+                      <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/40">
+                        <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">Custom preset (system)</div>
+                        <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                          This option is intentionally fixed. Users can type their own custom lighting prompt when they pick
+                          <span className="font-medium"> Custom </span>
+                          in AI Studio.
+                        </p>
                       </div>
-                    );
-                  })}
-                </div>
+
+                      {editablePresets.length === 0 && (
+                        <div className="p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-600 dark:text-gray-400">
+                          No custom presets yet. Click
+                          <span className="font-medium"> Add preset </span>
+                          to create your first one.
+                        </div>
+                      )}
+
+                      {editablePresets.map((preset, index) => {
+                        const presetIndex = allPresets.findIndex((item) => item.value === preset.value);
+
+                        return (
+                          <div key={`${preset.value || 'preset'}-${index}`} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/40">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Preset {index + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => removePreset(presetIndex)}
+                                className="p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded"
+                                aria-label="Remove preset"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preset name</label>
+                                <input
+                                  type="text"
+                                  value={preset.label || ''}
+                                  onChange={(e) => updatePreset(presetIndex, 'label', e.target.value)}
+                                  maxLength={80}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preset prompt</label>
+                                <textarea
+                                  value={preset.prompt || ''}
+                                  onChange={(e) => updatePreset(presetIndex, 'prompt', e.target.value)}
+                                  maxLength={1000}
+                                  rows="3"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                                />
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{(preset.prompt || '').length}/1000</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
