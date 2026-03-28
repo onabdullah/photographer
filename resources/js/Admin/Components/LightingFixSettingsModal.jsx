@@ -61,11 +61,15 @@ function normalizePresets(presets) {
 }
 
 export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
+  const TAB_LIGHTING = 'lighting_settings';
+  const TAB_PRODUCT_AI_LAB = 'product_ai_lab_settings';
+
   // Performance optimization: Cache & lazy loading
   const cacheRef = useRef(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCached, setIsCached] = useState(false);
+  const [activeTab, setActiveTab] = useState(TAB_LIGHTING);
 
   // Settings state
   const [saving, setSaving] = useState(false);
@@ -124,6 +128,8 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
   useEffect(() => {
     if (isOpen) {
+      setActiveTab(TAB_LIGHTING);
+
       // First open: fetch fresh
       if (!hasLoadedOnce) {
         loadSettings();
@@ -242,6 +248,39 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
         {/* Content */}
         <div className="p-6 max-h-[calc(100vh-300px)] overflow-y-auto">
+          {hasLoadedOnce && (
+            <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex gap-2" role="tablist" aria-label="Lighting fix settings tabs">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === TAB_LIGHTING}
+                  onClick={() => setActiveTab(TAB_LIGHTING)}
+                  className={`px-3 py-2 text-sm font-medium rounded-t-md transition ${
+                    activeTab === TAB_LIGHTING
+                      ? 'text-primary-700 dark:text-primary-300 border-b-2 border-primary-600 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60'
+                  }`}
+                >
+                  Lighting Fix Settings
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === TAB_PRODUCT_AI_LAB}
+                  onClick={() => setActiveTab(TAB_PRODUCT_AI_LAB)}
+                  className={`px-3 py-2 text-sm font-medium rounded-t-md transition ${
+                    activeTab === TAB_PRODUCT_AI_LAB
+                      ? 'text-primary-700 dark:text-primary-300 border-b-2 border-primary-600 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60'
+                  }`}
+                >
+                  Product AI Lab Settings
+                </button>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
               {error}
@@ -254,7 +293,7 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
             </div>
           )}
 
-          {hasLoadedOnce && (
+          {hasLoadedOnce && activeTab === TAB_LIGHTING && (
             <div className="space-y-6">
               {/* Model Version */}
               <div>
@@ -629,6 +668,17 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                 </div>
               </div>
 
+              {/* Cost Info */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-xs text-blue-700 dark:text-blue-400">
+                  💰 Cost per image: <span className="font-semibold">${COST_PER_IMAGE}/img</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {hasLoadedOnce && activeTab === TAB_PRODUCT_AI_LAB && (
+            <div className="space-y-6">
               {/* Presets */}
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -642,7 +692,7 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                     Add preset
                   </button>
                 </div>
-                <div className="space-y-4 pl-6">
+                <div className="space-y-4">
                   {(settings.presets || DEFAULT_LIGHTING_PRESETS).map((preset, index) => {
                     const isCustom = preset.value === 'custom';
 
@@ -693,13 +743,6 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Cost Info */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                <p className="text-xs text-blue-700 dark:text-blue-400">
-                  💰 Cost per image: <span className="font-semibold">${COST_PER_IMAGE}/img</span>
-                </p>
               </div>
             </div>
           )}
