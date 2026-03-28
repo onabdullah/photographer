@@ -2080,6 +2080,107 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
 
                   {selectedTool === 'lighting' && (
                     <BlockStack gap="200">
+                      <Text variant="bodySm" as="span" tone="subdued">
+                        {hasOutput ? 'Source → Output' : 'Source image'}
+                      </Text>
+                      {hasValidInput ? (
+                        <BlockStack gap="200">
+                          {hasOutput ? (
+                            <div className="aistudio-panel-source-output">
+                              <div className="aistudio-panel-thumb">
+                                <img src={inputImage} alt="Source" />
+                              </div>
+                              <span className="aistudio-panel-arrow" aria-hidden>
+                                <Icon source={ArrowRightIcon} tone="subdued" />
+                              </span>
+                              <div className="aistudio-panel-thumb aistudio-panel-thumb-output aistudio-panel-thumb-checkerboard">
+                                <img
+                                  src={outputImageUrl}
+                                  alt="Output"
+                                  onError={(e) => {
+                                    const img = e.target;
+                                    const src = img?.src || outputImageUrl;
+                                    let path = src;
+                                    try {
+                                      if (typeof src === 'string' && src.startsWith('http')) path = new URL(src).pathname;
+                                    } catch (_) { /* ignore */ }
+                                    if (path && typeof path === 'string' && path.startsWith('/storage/') && typeof window !== 'undefined') {
+                                      img.src = window.location.origin + path;
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="aistudio-panel-thumb">
+                              <img src={inputImage} alt="Source" />
+                            </div>
+                          )}
+                          {!resultImageUrl && (
+                            <InlineStack gap="200" blockAlign="center">
+                              <Button
+                                variant="plain"
+                                size="slim"
+                                onClick={() => fileInputRef.current?.click()}
+                                accessibilityLabel="Replace image"
+                                disabled={isScanning || isProcessing}
+                              >
+                                Replace
+                              </Button>
+                              <Button
+                                variant="plain"
+                                size="slim"
+                                onClick={() => setBrowseModalOpen(true)}
+                                accessibilityLabel="Browse from Store"
+                                disabled={isScanning || isProcessing}
+                              >
+                                Browse from Store
+                              </Button>
+                              <Button
+                                variant="plain"
+                                tone="critical"
+                                size="slim"
+                                onClick={handleReset}
+                                accessibilityLabel="Remove"
+                                disabled={isScanning || isProcessing}
+                              >
+                                Remove
+                              </Button>
+                            </InlineStack>
+                          )}
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            style={{ display: 'none' }}
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                          />
+                        </BlockStack>
+                      ) : (
+                        <>
+                          <DropZone
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            type="image"
+                            onDrop={handleFileDrop}
+                            variableHeight
+                          >
+                            {dropZoneContent}
+                          </DropZone>
+                          <Box paddingBlockStart="100">
+                            <Button variant="plain" size="slim" onClick={() => setBrowseModalOpen(true)}>
+                              or Browse from Store
+                            </Button>
+                          </Box>
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            style={{ display: 'none' }}
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                          />
+                        </>
+                      )}
+
                       <Text variant="bodySm" as="span" tone="subdued">Lighting preset</Text>
                       <Select
                         label=""
@@ -2239,7 +2340,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                     </BlockStack>
                   )}
 
-                  {selectedTool !== 'magic_eraser' && selectedTool !== 'enhance' && (
+                  {selectedTool !== 'magic_eraser' && selectedTool !== 'enhance' && selectedTool !== 'lighting' && (
                   <BlockStack gap="200">
                     <Text variant="bodySm" as="span" tone="subdued">
                       {hasOutput ? 'Source → Output' : 'Source image'}
