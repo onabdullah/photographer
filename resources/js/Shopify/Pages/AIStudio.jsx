@@ -603,8 +603,17 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
     });
   }, []);
 
-  const activeInputImage = inputImage || sourceImageRef.current || null;
-  const hasValidInput = Boolean(activeInputImage) && !activeInputImage.includes('placeholder') && !activeInputImage.includes('Select+a+Product');
+  const normalizeImageSource = useCallback((value) => {
+    if (typeof value === 'string') return value;
+    if (!value || typeof value !== 'object') return '';
+    return value.url || value.src || value.image || '';
+  }, []);
+
+  const activeInputImage = normalizeImageSource(inputImage) || normalizeImageSource(sourceImageRef.current) || null;
+  const hasValidInput = typeof activeInputImage === 'string'
+    && activeInputImage !== ''
+    && !activeInputImage.includes('placeholder')
+    && !activeInputImage.includes('Select+a+Product');
   const displayGenerated = generatedImages[selectedGeneratedIndex] || null;
   const outputImageUrl = resultImageUrl || displayGenerated;
   const hasOutput = Boolean(outputImageUrl);
@@ -674,13 +683,18 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [showToast]);
 
   const handleBrowseSelectImage = useCallback((url) => {
-    setInputImage(url);
-    sourceImageRef.current = url;
+    const normalized = normalizeImageSource(url);
+    if (!normalized) {
+      showToast('Invalid image selected. Please choose another image.', true);
+      return;
+    }
+    setInputImage(normalized);
+    sourceImageRef.current = normalized;
     setInputImageSize(null);
     setCompressorSizes(null);
     setBrowseModalOpen(false);
     showToast('Image selected');
-  }, [showToast]);
+  }, [showToast, normalizeImageSource]);
 
   const handleRemoveBackground = useCallback(async () => {
     const sourceImage = inputImage || sourceImageRef.current;
@@ -1452,7 +1466,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                     <div className="aistudio-scanning">
                       <div className="premium-scanning-wrapper">
                         <img
-                          src={inputImage}
+                          src={activeInputImage}
                           alt="Source image being processed by AI"
                           className="premium-scanning-img"
                         />
@@ -1477,7 +1491,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                       <div className="aistudio-magic-eraser-wrap">
                         <img
                           ref={magicEraserImageRef}
-                          src={inputImage}
+                          src={activeInputImage}
                           alt="Image for magic eraser tool - draw areas to remove"
                           className="aistudio-magic-eraser-img"
                         />
@@ -1569,7 +1583,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                         </div>
                         <div className="aistudio-compare-slider">
                           <div className="aistudio-compare-before" style={{ clipPath: `inset(0 ${100 - compareSliderPosition}% 0 0)` }}>
-                            <img src={inputImage} alt="Before" />
+                            <img src={activeInputImage} alt="Before" />
                           </div>
                           <div className="aistudio-compare-after" style={{ clipPath: `inset(0 0 0 ${compareSliderPosition}%)` }}>
                             <img
@@ -1650,7 +1664,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                   ) : isProcessing && hasValidInput ? (
                     <>
                       <div className="aistudio-hero-loading-bg">
-                        <img src={inputImage} alt="Background image during processing" />
+                        <img src={activeInputImage} alt="Background image during processing" />
                       </div>
                       <div className="aistudio-hero-loading-overlay">
                         <div className="aistudio-hero-pulse" />
@@ -1761,7 +1775,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           {hasOutput ? (
                             <div className="aistudio-panel-source-output">
                               <div className="aistudio-panel-thumb">
-                                <img src={inputImage} alt="Source" />
+                                <img src={activeInputImage} alt="Source" />
                               </div>
                               <span className="aistudio-panel-arrow" aria-hidden>
                                 <Icon source={ArrowRightIcon} tone="subdued" />
@@ -1786,7 +1800,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                             </div>
                           ) : (
                             <div className="aistudio-panel-thumb">
-                              <img src={inputImage} alt="Source" />
+                              <img src={activeInputImage} alt="Source" />
                             </div>
                           )}
                           {!resultImageUrl && (
@@ -1983,7 +1997,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           {hasOutput ? (
                             <div className="aistudio-panel-source-output">
                               <div className="aistudio-panel-thumb">
-                                <img src={inputImage} alt="Source" />
+                                <img src={activeInputImage} alt="Source" />
                               </div>
                               <span className="aistudio-panel-arrow" aria-hidden>
                                 <Icon source={ArrowRightIcon} tone="subdued" />
@@ -2008,7 +2022,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                             </div>
                           ) : (
                             <div className="aistudio-panel-thumb">
-                              <img src={inputImage} alt="Source" />
+                              <img src={activeInputImage} alt="Source" />
                             </div>
                           )}
                           {!resultImageUrl && (
@@ -2088,7 +2102,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           {hasOutput ? (
                             <div className="aistudio-panel-source-output">
                               <div className="aistudio-panel-thumb">
-                                <img src={inputImage} alt="Source" />
+                                <img src={activeInputImage} alt="Source" />
                               </div>
                               <span className="aistudio-panel-arrow" aria-hidden>
                                 <Icon source={ArrowRightIcon} tone="subdued" />
@@ -2113,7 +2127,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                             </div>
                           ) : (
                             <div className="aistudio-panel-thumb">
-                              <img src={inputImage} alt="Source" />
+                              <img src={activeInputImage} alt="Source" />
                             </div>
                           )}
                           {!resultImageUrl && (
@@ -2350,7 +2364,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                         {hasOutput ? (
                           <div className="aistudio-panel-source-output">
                             <div className="aistudio-panel-thumb">
-                              <img src={inputImage} alt="Source" />
+                              <img src={activeInputImage} alt="Source" />
                             </div>
                             <span className="aistudio-panel-arrow" aria-hidden>
                               <Icon source={ArrowRightIcon} tone="subdued" />
@@ -2375,7 +2389,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           </div>
                         ) : (
                           <div className="aistudio-panel-thumb">
-                            <img src={inputImage} alt="Source" />
+                            <img src={activeInputImage} alt="Source" />
                           </div>
                         )}
                         {!resultImageUrl && (
