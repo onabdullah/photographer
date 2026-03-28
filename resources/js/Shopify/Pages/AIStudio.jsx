@@ -872,6 +872,8 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   }, [hasValidInput, inputImage, showToast]);
 
   const effectiveLightingPrompt = lightingPromptText.trim();
+  const lightingPresetLocked = lightingPreset !== 'custom';
+  const showLightingAdvancedControls = !lightingPresetLocked;
 
   const handleLighting = useCallback(async () => {
     const sourceImage = inputImage || sourceImageRef.current;
@@ -2090,113 +2092,121 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                         }}
                       />
 
-                      <InlineGrid columns={{ xs: 1, md: 2 }} gap="200">
-                        <Select
-                          label="Light source"
-                          options={lightingLightSourceOptions}
-                          value={lightingLightSource}
-                          onChange={setLightingLightSource}
-                        />
-                        <Select
-                          label="Output format"
-                          options={lightingOutputFormatOptions}
-                          value={lightingOutputFormat}
-                          onChange={setLightingOutputFormat}
-                        />
-                        <Select
-                          label="Width"
-                          options={lightingWidthOptions}
-                          value={String(lightingWidth)}
-                          onChange={setLightingWidth}
-                        />
-                        <Select
-                          label="Height"
-                          options={lightingHeightOptions}
-                          value={String(lightingHeight)}
-                          onChange={setLightingHeight}
-                        />
-                      </InlineGrid>
+                      {showLightingAdvancedControls ? (
+                        <>
+                          <InlineGrid columns={1} gap="200">
+                            <Select
+                              label="Light source"
+                              options={lightingLightSourceOptions}
+                              value={lightingLightSource}
+                              onChange={setLightingLightSource}
+                            />
+                            <Select
+                              label="Output format"
+                              options={lightingOutputFormatOptions}
+                              value={lightingOutputFormat}
+                              onChange={setLightingOutputFormat}
+                            />
+                            <Select
+                              label="Width"
+                              options={lightingWidthOptions}
+                              value={String(lightingWidth)}
+                              onChange={setLightingWidth}
+                            />
+                            <Select
+                              label="Height"
+                              options={lightingHeightOptions}
+                              value={String(lightingHeight)}
+                              onChange={setLightingHeight}
+                            />
+                          </InlineGrid>
 
-                      <BlockStack gap="200">
-                        <Text variant="bodySm" as="span" tone="subdued">CFG: {Number(lightingCfg).toFixed(1)}</Text>
-                        <RangeSlider
-                          label="CFG"
-                          labelHidden
-                          min={1}
-                          max={32}
-                          step={0.1}
-                          value={lightingCfg}
-                          onChange={setLightingCfg}
-                        />
+                          <BlockStack gap="200">
+                            <Text variant="bodySm" as="span" tone="subdued">CFG: {Number(lightingCfg).toFixed(1)}</Text>
+                            <RangeSlider
+                              label="CFG"
+                              labelHidden
+                              min={1}
+                              max={32}
+                              step={0.1}
+                              value={lightingCfg}
+                              onChange={setLightingCfg}
+                            />
 
-                        <Text variant="bodySm" as="span" tone="subdued">Steps: {lightingSteps}</Text>
-                        <RangeSlider
-                          label="Steps"
-                          labelHidden
-                          min={1}
-                          max={100}
-                          step={1}
-                          value={lightingSteps}
-                          onChange={setLightingSteps}
-                        />
+                            <Text variant="bodySm" as="span" tone="subdued">Steps: {lightingSteps}</Text>
+                            <RangeSlider
+                              label="Steps"
+                              labelHidden
+                              min={1}
+                              max={100}
+                              step={1}
+                              value={lightingSteps}
+                              onChange={setLightingSteps}
+                            />
 
-                        <Text variant="bodySm" as="span" tone="subdued">Highres scale: {Number(lightingHighresScale).toFixed(1)}</Text>
-                        <RangeSlider
-                          label="Highres scale"
-                          labelHidden
-                          min={1}
-                          max={3}
-                          step={0.1}
-                          value={lightingHighresScale}
-                          onChange={setLightingHighresScale}
-                        />
+                            <Text variant="bodySm" as="span" tone="subdued">Highres scale: {Number(lightingHighresScale).toFixed(1)}</Text>
+                            <RangeSlider
+                              label="Highres scale"
+                              labelHidden
+                              min={1}
+                              max={3}
+                              step={0.1}
+                              value={lightingHighresScale}
+                              onChange={setLightingHighresScale}
+                            />
 
-                        <Text variant="bodySm" as="span" tone="subdued">Lowres denoise: {Number(lightingLowresDenoise).toFixed(1)}</Text>
-                        <RangeSlider
-                          label="Lowres denoise"
-                          labelHidden
-                          min={0.1}
-                          max={1}
-                          step={0.1}
-                          value={lightingLowresDenoise}
-                          onChange={setLightingLowresDenoise}
-                        />
+                            <Text variant="bodySm" as="span" tone="subdued">Lowres denoise: {Number(lightingLowresDenoise).toFixed(1)}</Text>
+                            <RangeSlider
+                              label="Lowres denoise"
+                              labelHidden
+                              min={0.1}
+                              max={1}
+                              step={0.1}
+                              value={lightingLowresDenoise}
+                              onChange={setLightingLowresDenoise}
+                            />
 
-                        <Text variant="bodySm" as="span" tone="subdued">Highres denoise: {Number(lightingHighresDenoise).toFixed(1)}</Text>
-                        <RangeSlider
-                          label="Highres denoise"
-                          labelHidden
-                          min={0.1}
-                          max={1}
-                          step={0.1}
-                          value={lightingHighresDenoise}
-                          onChange={setLightingHighresDenoise}
-                        />
+                            <Text variant="bodySm" as="span" tone="subdued">Highres denoise: {Number(lightingHighresDenoise).toFixed(1)}</Text>
+                            <RangeSlider
+                              label="Highres denoise"
+                              labelHidden
+                              min={0.1}
+                              max={1}
+                              step={0.1}
+                              value={lightingHighresDenoise}
+                              onChange={setLightingHighresDenoise}
+                            />
 
-                        <Text variant="bodySm" as="span" tone="subdued">Output quality: {lightingOutputQuality}</Text>
-                        <RangeSlider
-                          label="Output quality"
-                          labelHidden
-                          min={0}
-                          max={100}
-                          step={1}
-                          value={lightingOutputQuality}
-                          onChange={setLightingOutputQuality}
-                        />
+                            <Text variant="bodySm" as="span" tone="subdued">Output quality: {lightingOutputQuality}</Text>
+                            <RangeSlider
+                              label="Output quality"
+                              labelHidden
+                              min={0}
+                              max={100}
+                              step={1}
+                              value={lightingOutputQuality}
+                              onChange={setLightingOutputQuality}
+                            />
 
-                      </BlockStack>
+                          </BlockStack>
 
-                      <TextField
-                        label="Lighting prompt"
-                        value={lightingPromptText}
-                        onChange={setLightingPromptText}
-                        placeholder="Select a preset to pre-fill, or type your own (e.g. Soft golden hour from the right)"
-                        multiline={3}
-                        autoComplete="off"
-                        characterCount={lightingPromptText.length}
-                        maxLength={1000}
-                        helpText="Pre-filled from the preset above. Edit it or use as-is, then click Generate."
-                      />
+                          <TextField
+                            label="Lighting prompt"
+                            value={lightingPromptText}
+                            onChange={setLightingPromptText}
+                            placeholder="Select a preset to pre-fill, or type your own (e.g. Soft golden hour from the right)"
+                            multiline={3}
+                            autoComplete="off"
+                            characterCount={lightingPromptText.length}
+                            maxLength={1000}
+                            helpText="Pre-filled from the preset above. Edit it or use as-is, then click Generate."
+                          />
+                        </>
+                      ) : (
+                        <Text variant="bodySm" tone="subdued" as="p">
+                          Preset selected. Custom options are locked. Click Generate.
+                        </Text>
+                      )}
                     </BlockStack>
                   )}
 
