@@ -2323,7 +2323,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                     </BlockStack>
                   )}
 
-                  <Box paddingBlockStart="200">
+                  <Box paddingBlockStart="200" style={selectedTool === 'lighting' ? { order: 3 } : undefined}>
                     {resultImageUrl ? (
                       <BlockStack gap="200">
                         <Button
