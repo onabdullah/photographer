@@ -145,8 +145,14 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
     try {
       setSaving(true);
       setError(null);
-      await axios.put('/admin/lighting-fix-settings', settings);
-      cacheRef.current = settings; // Update cache
+      const payload = {
+        ...settings,
+        presets: normalizePresets(settings.presets)
+      };
+      await axios.put('/admin/lighting-fix-settings', payload);
+      cacheRef.current = payload; // Update cache
+      setSettings(payload);
+      setOriginalSettings(payload);
       onSave?.();
       setTimeout(() => onClose(), 500);
     } catch (err) {
@@ -196,20 +202,20 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
     setSettings({
       ...settings,
-      presets: normalizePresets(nextPresets),
+      presets: nextPresets,
     });
   };
 
   const addPreset = () => {
     const nextPresets = [...(settings.presets || DEFAULT_LIGHTING_PRESETS), {
-      value: '',
+      value: `new_preset_${Date.now()}`,
       label: 'New preset',
       prompt: '',
     }];
 
     setSettings({
       ...settings,
-      presets: normalizePresets(nextPresets),
+      presets: nextPresets,
     });
   };
 
@@ -221,7 +227,7 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
     nextPresets.splice(index, 1);
     setSettings({
       ...settings,
-      presets: normalizePresets(nextPresets),
+      presets: nextPresets,
     });
   };
 
@@ -229,12 +235,12 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-2xl w-full max-w-3xl my-8 border border-gray-200 dark:border-slate-700/80">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-3xl my-8">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-700/80">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <Sparkles size={24} className="text-primary-600" />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Product AI Lab Settings</h2>
+            <Lightbulb size={24} className="text-primary-600" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Lighting Fix Settings</h2>
             {isRefreshing && <span className="text-xs font-medium text-gray-500">(refreshing...)</span>}
           </div>
           <button
@@ -246,47 +252,36 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
           </button>
         </div>
 
+        {/* Tabs */}
+        {hasLoadedOnce && (
+          <div className="flex flex-wrap gap-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 pb-2">
+            <button
+              onClick={() => setActiveTab(TAB_LIGHTING)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === TAB_LIGHTING
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <Cog size={16} />
+              Settings
+            </button>
+            <button
+              onClick={() => setActiveTab(TAB_PRODUCT_AI_LAB)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === TAB_PRODUCT_AI_LAB
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <Layers size={16} />
+              Presets
+            </button>
+          </div>
+        )}
+
         {/* Content */}
         <div className="p-6 max-h-[calc(100vh-300px)] overflow-y-auto">
-          {hasLoadedOnce && (
-            <div className="mb-6 border-b border-gray-200 dark:border-slate-700/80 pb-4">
-              <div
-                className="inline-flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-slate-800/90 border border-gray-200 dark:border-slate-700/80"
-                role="tablist"
-                aria-label="Product AI Lab settings tabs"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === TAB_LIGHTING}
-                  onClick={() => setActiveTab(TAB_LIGHTING)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 ${
-                    activeTab === TAB_LIGHTING
-                      ? 'text-white bg-primary-600 dark:bg-primary-600 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-slate-700/80'
-                  }`}
-                >
-                  <Cog size={14} />
-                  Settings
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === TAB_PRODUCT_AI_LAB}
-                  onClick={() => setActiveTab(TAB_PRODUCT_AI_LAB)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 ${
-                    activeTab === TAB_PRODUCT_AI_LAB
-                      ? 'text-white bg-primary-600 dark:bg-primary-600 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-slate-700/80'
-                  }`}
-                >
-                  <Layers size={14} />
-                  Presets
-                </button>
-              </div>
-            </div>
-          )}
-
           {error && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
               {error}
@@ -723,10 +718,10 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                       )}
 
                       {editablePresets.map((preset, index) => {
-                        const presetIndex = allPresets.findIndex((item) => item.value === preset.value);
+                        const presetIndex = allPresets.findIndex((item) => item === preset);
 
                         return (
-                          <div key={`${preset.value || 'preset'}-${index}`} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/40">
+                          <div key={`preset-${presetIndex}`} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/40">
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Preset {index + 1}</span>
                               <button
