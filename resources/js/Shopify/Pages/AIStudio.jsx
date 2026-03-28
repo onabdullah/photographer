@@ -85,70 +85,39 @@ const LIGHTING_LIGHT_SOURCES = ['None', 'Left Light', 'Right Light', 'Top Light'
 const LIGHTING_OUTPUT_FORMATS = ['webp', 'jpg', 'png'];
 const LIGHTING_DIMENSIONS = [256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024];
 
-const LIGHTING_PRESETS = [
-  { value: 'custom', label: 'Custom (type your own)' },
-  { value: 'warm_studio_left', label: 'Warm Studio Light from Left', prompt: 'Professional studio setup: primary key light from camera left at 45 degrees, soft fill from the opposite side to open shadows. Warm color temperature (3200–4000K). Clean, editorial product or portrait quality with defined but flattering shadow.' },
-  { value: 'warm_studio_right', label: 'Warm Studio Light from Right', prompt: 'Professional studio setup: primary key light from camera right at 45 degrees, soft fill to balance. Warm color temperature. Clean, editorial quality; subject shape and features preserved with natural dimension.' },
-  { value: 'cinematic_dramatic', label: 'Cinematic Dramatic', prompt: 'Cinematic lighting: single strong key light with deep, controlled shadows. High contrast ratio. Moody, film-noir atmosphere. Preserve subject identity and proportions; only the lighting mood changes.' },
-  { value: 'soft_morning', label: 'Soft Morning Sunlight', prompt: 'Soft morning daylight: large, diffused source (e.g. window) from one side. Warm, gentle shadows. Natural and flattering; no harsh highlights. As if shot in early morning interior or soft overcast.' },
-  { value: 'neon_cyberpunk', label: 'Neon Cyberpunk Backlight', prompt: 'Neon-style backlight: colored lights (e.g. cyan, magenta) from behind the subject, creating a colored rim. Futuristic, editorial look. Subject remains sharp and recognizable; lighting is additive.' },
-  { value: 'golden_hour', label: 'Golden Hour', prompt: 'Golden hour sunlight: warm, low-angle directional light. Long, soft shadows. Sunset/sunrise color temperature. Natural outdoor or simulated golden-hour feel; subject sharp and unchanged.' },
-  { value: 'softbox_clean', label: 'Softbox Studio Clean', prompt: 'Large softbox as main source: even, wraparound soft light. Minimal shadow, ideal for e-commerce and clean product or portrait. Professional, neutral color; sharp detail and true-to-life rendering.' },
-  { value: 'rim_light', label: 'Rim Light / Edge Light', prompt: 'Rim or edge lighting: key light from behind or side-back, creating a bright outline along the subject’s edges. Dramatic separation from background. Face and form preserved; only lighting direction and rim effect applied.' },
-  { value: 'sunset_silhouette', label: 'Sunset Silhouette', prompt: 'Backlit sunset: warm orange and purple sky behind subject. Silhouette or semi-silhouette with subtle rim. Subject outline and proportions kept; lighting and sky set the mood.' },
-  { value: 'moody_low_key', label: 'Moody Low Key', prompt: 'Low-key lighting: single key light, rest of frame in shadow. Deep blacks, moody atmosphere. Subject clearly defined; no change to face or shape, only to light distribution.' },
-  { value: 'high_key_white', label: 'High Key White', prompt: 'High-key setup: soft, even wraparound light. Bright, minimal shadows. Clean white or near-white look. Ideal for beauty or product; sharp and flattering with no distortion.' },
-  { value: 'split_light', label: 'Split Lighting', prompt: 'Split lighting: key light from one side so roughly half the subject is in light, half in shadow. Strong, dramatic. Classic portrait style; face and proportions unchanged.' },
-  { value: 'loop_light', label: 'Loop Lighting', prompt: 'Loop lighting: key at 45 degrees, creating a small shadow from the nose toward the cheek. Classic, flattering portrait pattern. Professional and sharp; subject identity preserved.' },
-  { value: 'rembrandt', label: 'Rembrandt Lighting', prompt: 'Rembrandt lighting: key light to create a small triangle of light on the shadow-side cheek. Classic, dramatic portrait. Subject shape and features unchanged; only lighting pattern applied.' },
-  { value: 'butterfly', label: 'Butterfly Lighting', prompt: 'Butterfly lighting: key above and in front of subject, soft shadow under nose. Flattering, beauty-style. Even and sharp; no alteration to face or proportions.' },
-  { value: 'broad_light', label: 'Broad Lighting', prompt: 'Broad lighting: main light on the side of the face turned toward camera. That side is brighter; classic portrait look. Sharp, professional; subject unchanged.' },
-  { value: 'short_light', label: 'Short Lighting', prompt: 'Short lighting: main light on the side of the face turned away from camera. Slimming, dimensional. Professional portrait; face and proportions preserved.' },
-  { value: 'backlight_silhouette', label: 'Backlight Silhouette', prompt: 'Strong backlight: subject in silhouette or near-silhouette with a bright rim. Subject outline and proportions clear; only lighting and exposure style change.' },
-  { value: 'window_light_natural', label: 'Natural Window Light', prompt: 'Natural window light: soft, diffused daylight from one side. Gentle, flattering. No harsh contrast; sharp and natural with subject unchanged.' },
-  { value: 'overhead_soft', label: 'Soft Overhead', prompt: 'Soft overhead source: even light from above. Minimal harsh shadows. Clean, professional; sharp detail and unchanged subject shape.' },
-  { value: 'three_point_classic', label: 'Three-Point Classic', prompt: 'Classic three-point: key, fill, and back/hair light. Full dimension, professional studio look. Subject sharp and unchanged; only lighting is studio-style.' },
-  { value: 'dramatic_single', label: 'Dramatic Single Source', prompt: 'Single hard key light: strong direction, defined shadows. Editorial or fashion style. Subject identity and proportions preserved; lighting is dramatic only.' },
-  { value: 'soft_diffused', label: 'Soft Diffused', prompt: 'Heavily diffused soft light: wraparound, no harsh shadows. Beauty or product style. Even and sharp; face and shape preserved.' },
-  { value: 'blue_hour', label: 'Blue Hour', prompt: 'Blue hour: cool, twilight ambient light. Subtle blue tone. Cinematic, natural; subject sharp and unchanged.' },
-  { value: 'warm_tungsten', label: 'Warm Tungsten', prompt: 'Warm tungsten-style indoor light: cozy amber tone. As if lit by practical bulbs. Subject and quality preserved; only color temperature shifts.' },
-  { value: 'cool_fluorescent', label: 'Cool Fluorescent', prompt: 'Cool fluorescent-style light: clean, modern. Retail or office feel. Neutral to cool; sharp and accurate, subject unchanged.' },
-  { value: 'chocolate_gold', label: 'Chocolate & Gold', prompt: 'Warm chocolate and gold color palette in the lighting. Luxurious, premium product or portrait feel. Subject sharp; only color mood changes.' },
-  { value: 'silver_platinum', label: 'Silver & Platinum', prompt: 'Cool silver and platinum tones in the light. Sleek, modern product or portrait. Sharp and clean; subject unchanged.' },
-  { value: 'lifestyle_ambient', label: 'Lifestyle Ambient', prompt: 'Natural lifestyle ambient: as if in a real room or environment. Soft, authentic. Subject sharp and natural; no distortion.' },
-  { value: 'editorial_fashion', label: 'Editorial Fashion', prompt: 'Editorial fashion lighting: bold, directional. Magazine-quality. Subject and proportions preserved; only lighting is editorial.' },
-  { value: 'beauty_ring', label: 'Beauty Ring Light', prompt: 'Ring-style light: even, frontal. Soft catchlights in eyes, smooth skin rendering. Beauty standard; sharp and flattering, face unchanged.' },
-  { value: 'product_white_seamless', label: 'White Seamless Product', prompt: 'White seamless product lighting: soft, even. Minimal shadow. Catalog quality; product or subject sharp and true to form.' },
-  { value: 'product_dark_mood', label: 'Dark Mood Product', prompt: 'Dark mood product: single accent or key light. Premium, minimal. Subject sharp; only lighting mood is dark.' },
-  { value: 'food_soft_warm', label: 'Food Soft & Warm', prompt: 'Soft, warm lighting for food: appetizing, gentle shadows. Natural color; sharp detail, no change to subject.' },
-  { value: 'food_bright_fresh', label: 'Food Bright & Fresh', prompt: 'Bright, fresh lighting for food: high key, clean. Healthy, natural look. Sharp and accurate; subject unchanged.' },
-  { value: 'jewelry_sparkle', label: 'Jewelry Sparkle', prompt: 'Lighting to enhance sparkle and reflection on jewelry. Controlled highlights. Subject and stones sharp; only light placement optimized.' },
-  { value: 'cosmetic_clean', label: 'Cosmetic Clean', prompt: 'Clean, even lighting for cosmetics: true color, minimal shadow. Pack shot or beauty style. Sharp and accurate; no distortion.' },
-  { value: 'bottles_glass', label: 'Bottles & Glass', prompt: 'Lighting for glass and bottles: subtle reflections, premium feel. Liquid and form clear. Sharp; subject unchanged.' },
-  { value: 'textile_fabric', label: 'Textile & Fabric', prompt: 'Soft lighting to reveal fabric texture and color accurately. Even, flattering. Material sharp and true; no change to subject.' },
-  { value: 'outdoor_overcast', label: 'Outdoor Overcast', prompt: 'Overcast daylight: soft, shadowless. Natural and even. As if outdoors on a cloudy day; subject sharp and unchanged.' },
-  { value: 'outdoor_direct_sun', label: 'Outdoor Direct Sun', prompt: 'Direct sunlight: strong direction, clear shadows. Bold and vibrant. Subject sharp; only lighting is sunny.' },
-  { value: 'open_shade', label: 'Open Shade', prompt: 'Open shade: soft directional light, no direct sun. Natural outdoor portrait feel. Sharp and flattering; subject preserved.' },
-  { value: 'dappled_light', label: 'Dappled Light', prompt: 'Dappled light: pattern from leaves or blinds. Natural, organic. Subject sharp; only light pattern changes.' },
-  { value: 'candlelight_warm', label: 'Candlelight Warm', prompt: 'Warm candlelight: intimate, orange glow. Low key. Subject sharp and recognizable; only color and mood shift.' },
-  { value: 'fireplace_glow', label: 'Fireplace Glow', prompt: 'Warm glow as from a fireplace. Cozy ambient. Subject unchanged; only lighting mood applied.' },
-  { value: 'neon_pink', label: 'Neon Pink Accent', prompt: 'Neon pink accent light: modern, editorial. Vibrant color. Subject sharp; only accent color added.' },
-  { value: 'neon_blue', label: 'Neon Blue Accent', prompt: 'Neon blue accent light: cool, futuristic. Tech or editorial. Subject unchanged; only lighting color.' },
-  { value: 'neon_green', label: 'Neon Green Accent', prompt: 'Neon green accent light: bold, sci-fi. Subject sharp; only accent color applied.' },
-  { value: 'gradient_sunset', label: 'Gradient Sunset', prompt: 'Sunset gradient in scene: warm to cool, golden to blue. Subject sharp and unchanged; background and light mood only.' },
-  { value: 'gradient_aurora', label: 'Aurora / Northern Lights', prompt: 'Aurora-style gradient: green and purple. Ethereal. Subject sharp; only ambient color and mood.' },
-  { value: 'studio_flat', label: 'Studio Flat Lay', prompt: 'Flat lay lighting from above: even, shadowless. Top-down product or still life. Sharp and clean; subject unchanged.' },
-  { value: 'dramatic_chiaroscuro', label: 'Chiaroscuro', prompt: 'Chiaroscuro: strong contrast between light and dark. Classical, painterly. Subject shape and face preserved; only light contrast.' },
-  { value: 'mist_fog', label: 'Mist or Fog', prompt: 'Soft light through mist or fog: atmospheric, diffused. Subject still sharp and recognizable; only atmosphere added.' },
-  { value: 'rain_window', label: 'Rain on Window', prompt: 'Light through rain on window: moody, bokeh droplets. Subject sharp; only environmental effect.' },
-  { value: 'spotlight_stage', label: 'Spotlight Stage', prompt: 'Single spotlight from above: stage or gallery style. Subject clearly defined; only lighting style changes.' },
-  { value: 'museum_display', label: 'Museum Display', prompt: 'Controlled display lighting: no glare, accurate color. As in a museum. Subject sharp and unchanged.' },
-  { value: 'car_showroom', label: 'Car Showroom', prompt: 'Showroom-style lighting for reflective surfaces: multiple soft sources. Premium look. Subject sharp; only lighting setup.' },
-  { value: 'architectural_clean', label: 'Architectural Clean', prompt: 'Clean architectural lighting: sharp lines, modern space. Subject or product sharp; only environment and light.' },
-  { value: 'vintage_film', label: 'Vintage Film', prompt: 'Vintage film look: slightly warm, soft contrast. Nostalgic. Subject sharp; only color and contrast style.' },
-  { value: 'minimalist_single', label: 'Minimalist Single', prompt: 'Minimalist single light source: clean, simple. One direction. Subject sharp and unchanged.' },
-  { value: 'luxury_glossy', label: 'Luxury Glossy', prompt: 'Luxury glossy style: polished, premium reflections. Magazine finish. Subject sharp; only lighting quality and sheen.' },
+const LIGHTING_PRESET_FALLBACKS = [
+  { value: 'custom', label: 'Custom (type your own)', prompt: '' },
 ];
+
+function normalizeLightingPresets(presets) {
+  const source = Array.isArray(presets) && presets.length > 0 ? presets : LIGHTING_PRESET_FALLBACKS;
+  const seen = new Set();
+  const normalized = [];
+
+  source.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+
+    const label = String(item.label || '').trim();
+    const prompt = String(item.prompt || '').trim();
+    const computedValue = String(item.value || label)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+
+    if (!computedValue || seen.has(computedValue)) return;
+    seen.add(computedValue);
+
+    normalized.push({
+      value: computedValue,
+      label: label || computedValue.replace(/_/g, ' '),
+      prompt,
+    });
+  });
+
+  const withoutCustom = normalized.filter((preset) => preset.value !== 'custom');
+  return [{ value: 'custom', label: 'Custom (type your own)', prompt: '' }, ...withoutCustom];
+}
 
 const MAGIC_ERASER_ASPECT_RATIOS = [
   { value: 'match_input_image', label: 'Match input image' },
@@ -521,6 +490,7 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const lightingOutputFormatOptions = (lightingSupported.output_format || LIGHTING_OUTPUT_FORMATS).map((fmt) => ({ value: fmt, label: String(fmt).toUpperCase() }));
   const lightingWidthOptions = (lightingSupported.width || LIGHTING_DIMENSIONS).map((size) => ({ value: String(size), label: `${size}px` }));
   const lightingHeightOptions = (lightingSupported.height || LIGHTING_DIMENSIONS).map((size) => ({ value: String(size), label: `${size}px` }));
+  const lightingPresets = useMemo(() => normalizeLightingPresets(lightingFix?.presets), [lightingFix?.presets]);
 
   const initialLightingLightSource = lightingLightSourceOptions.some((opt) => opt.value === lightingDefaults.light_source)
     ? lightingDefaults.light_source
@@ -618,6 +588,13 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
   const isLightingPresetLocked = selectedTool === 'lighting' && lightingPreset !== 'custom';
   const displayGenerated = generatedImages[selectedGeneratedIndex] || null;
   const outputImageUrl = resultImageUrl || displayGenerated;
+
+  useEffect(() => {
+    if (!lightingPresets.some((preset) => preset.value === lightingPreset)) {
+      setLightingPreset('custom');
+      setLightingPromptText('');
+    }
+  }, [lightingPreset, lightingPresets]);
   const hasOutput = Boolean(outputImageUrl);
   const isRemoveBg = selectedTool === 'remove_bg';
   const isScanning = processingStatus === 'uploading' || processingStatus === 'scanning';
@@ -2198,11 +2175,11 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                       <Select
                         label=""
                         labelHidden
-                        options={LIGHTING_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
+                        options={lightingPresets.map((p) => ({ value: p.value, label: p.label }))}
                         value={lightingPreset}
                         onChange={(value) => {
                           setLightingPreset(value);
-                          const preset = LIGHTING_PRESETS.find((p) => p.value === value);
+                          const preset = lightingPresets.find((p) => p.value === value);
                           if (preset?.prompt) setLightingPromptText(preset.prompt);
                           else if (value === 'custom') setLightingPromptText('');
 

@@ -372,6 +372,29 @@ return [
             'number_of_images' => 1,
         ],
 
+        'presets' => [
+            [
+                'value' => 'custom',
+                'label' => 'Custom (type your own)',
+                'prompt' => '',
+            ],
+            [
+                'value' => 'soft_studio',
+                'label' => 'Soft Studio',
+                'prompt' => 'Soft studio lighting with clean highlights, gentle shadows, and a premium e-commerce look. Keep the subject natural and sharp.',
+            ],
+            [
+                'value' => 'golden_hour',
+                'label' => 'Golden Hour',
+                'prompt' => 'Warm golden-hour directional light with long, soft shadows and natural cinematic contrast. Preserve identity and proportions.',
+            ],
+            [
+                'value' => 'dramatic_editorial',
+                'label' => 'Dramatic Editorial',
+                'prompt' => 'High-contrast editorial lighting with a strong key light and controlled deep shadows for a premium dramatic mood.',
+            ],
+        ],
+
         'supported_fields' => [
             'light_source' => [
                 'None',

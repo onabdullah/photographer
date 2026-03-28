@@ -105,6 +105,7 @@ class ShopifyController extends Controller
                     'output_quality' => (int) ($lightingFixSettings['default_output_quality'] ?? 80),
                     'number_of_images' => (int) ($lightingFixSettings['default_number_of_images'] ?? 1),
                 ],
+                'presets' => $lightingFixSettings['presets'] ?? [],
                 'supported_fields' => $lightingFixConfig['supported_fields'] ?? [],
             ],
         ]);

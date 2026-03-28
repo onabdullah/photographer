@@ -81,6 +81,7 @@ class SiteSetting extends Model
     public const KEY_LIGHTING_FIX_DEFAULT_HIGHRES_DENOISE = 'lighting_fix_default_highres_denoise';
     public const KEY_LIGHTING_FIX_DEFAULT_OUTPUT_QUALITY = 'lighting_fix_default_output_quality';
     public const KEY_LIGHTING_FIX_DEFAULT_NUMBER_OF_IMAGES = 'lighting_fix_default_number_of_images';
+    public const KEY_LIGHTING_FIX_PRESETS = 'lighting_fix_presets';
 
     // Image Enhancer settings (Recraft Crisp Upscale)
     public const KEY_ENHANCER_MODEL_VERSION = 'enhancer_model_version';
@@ -576,9 +577,15 @@ class SiteSetting extends Model
             'default_highres_denoise' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_HIGHRES_DENOISE),
             'default_output_quality' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_OUTPUT_QUALITY),
             'default_number_of_images' => static::get(self::KEY_LIGHTING_FIX_DEFAULT_NUMBER_OF_IMAGES),
+            'presets' => static::getJson(self::KEY_LIGHTING_FIX_PRESETS),
         ];
 
         $configDefaults_defaults = $configDefaults['defaults'] ?? [];
+        $configPresets = $configDefaults['presets'] ?? [];
+        $resolvedPresets = static::normalizeLightingPresets(
+            is_array($dbSettings['presets']) ? $dbSettings['presets'] : null,
+            $configPresets
+        );
 
         return [
             'model_version' => (string) ($dbSettings['model_version'] ?: ($configDefaults['model_version'] ?? '')),
@@ -595,6 +602,7 @@ class SiteSetting extends Model
             'default_highres_denoise' => (float) ($dbSettings['default_highres_denoise'] ?: ($configDefaults_defaults['highres_denoise'] ?? 0.5)),
             'default_output_quality' => (int) ($dbSettings['default_output_quality'] ?: ($configDefaults_defaults['output_quality'] ?? 80)),
             'default_number_of_images' => (int) ($dbSettings['default_number_of_images'] ?: ($configDefaults_defaults['number_of_images'] ?? 1)),
+            'presets' => $resolvedPresets,
         ];
     }
 
@@ -650,6 +658,70 @@ class SiteSetting extends Model
         if (isset($settings['default_number_of_images'])) {
             static::set(self::KEY_LIGHTING_FIX_DEFAULT_NUMBER_OF_IMAGES, (string) $settings['default_number_of_images']);
         }
+        if (array_key_exists('presets', $settings) && is_array($settings['presets'])) {
+            static::setJson(self::KEY_LIGHTING_FIX_PRESETS, static::normalizeLightingPresets($settings['presets']));
+        }
+    }
+
+    /**
+     * Normalize lighting presets and guarantee a custom option exists.
+     */
+    private static function normalizeLightingPresets(?array $presets, array $fallback = []): array
+    {
+        $source = is_array($presets) && !empty($presets) ? $presets : $fallback;
+        $normalized = [];
+        $usedValues = [];
+
+        foreach ($source as $preset) {
+            if (!is_array($preset)) {
+                continue;
+            }
+
+            $label = trim((string) ($preset['label'] ?? ''));
+            $prompt = trim((string) ($preset['prompt'] ?? ''));
+            $rawValue = trim((string) ($preset['value'] ?? ''));
+
+            if ($label === '' && $rawValue === '') {
+                continue;
+            }
+
+            $value = strtolower($rawValue);
+            if ($value === '') {
+                $value = strtolower(trim((string) preg_replace('/[^A-Za-z0-9]+/', '_', $label), '_'));
+            }
+
+            if ($value === '') {
+                continue;
+            }
+
+            if (in_array($value, $usedValues, true)) {
+                continue;
+            }
+
+            $usedValues[] = $value;
+            $normalized[] = [
+                'value' => $value,
+                'label' => $label !== '' ? $label : ucfirst(str_replace('_', ' ', $value)),
+                'prompt' => $prompt,
+            ];
+        }
+
+        if (!in_array('custom', $usedValues, true)) {
+            array_unshift($normalized, [
+                'value' => 'custom',
+                'label' => 'Custom (type your own)',
+                'prompt' => '',
+            ]);
+        } else {
+            $normalized = array_values(array_filter($normalized, fn ($preset) => $preset['value'] !== 'custom'));
+            array_unshift($normalized, [
+                'value' => 'custom',
+                'label' => 'Custom (type your own)',
+                'prompt' => '',
+            ]);
+        }
+
+        return $normalized;
     }
 
     /**

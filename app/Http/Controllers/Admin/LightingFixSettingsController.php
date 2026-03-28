@@ -309,6 +309,33 @@ class LightingFixSettingsController extends Controller
                 }
             }
 
+            // Lighting presets
+            if ($request->has('presets')) {
+                if (!is_array($request->input('presets'))) {
+                    return response()->json([
+                        'message' => 'Presets must be an array.',
+                    ], 422);
+                }
+
+                $presetResult = $this->normalizePresets($request->input('presets'));
+                if ($presetResult['error'] !== null) {
+                    return response()->json([
+                        'message' => $presetResult['error'],
+                    ], 422);
+                }
+
+                $normalizedPresets = $presetResult['presets'];
+                $existingPresets = is_array($oldSettings['presets'] ?? null) ? $oldSettings['presets'] : [];
+
+                if (json_encode($normalizedPresets) !== json_encode($existingPresets)) {
+                    $changes['presets'] = [
+                        'old' => $existingPresets,
+                        'new' => $normalizedPresets,
+                    ];
+                    $updates['presets'] = $normalizedPresets;
+                }
+            }
+
             // Save all updates if there are changes
             if (!empty($updates)) {
                 SiteSetting::setLightingFixSettings($updates);
@@ -369,6 +396,7 @@ class LightingFixSettingsController extends Controller
                 SiteSetting::KEY_LIGHTING_FIX_DEFAULT_HIGHRES_DENOISE,
                 SiteSetting::KEY_LIGHTING_FIX_DEFAULT_OUTPUT_QUALITY,
                 SiteSetting::KEY_LIGHTING_FIX_DEFAULT_NUMBER_OF_IMAGES,
+                SiteSetting::KEY_LIGHTING_FIX_PRESETS,
             ];
 
             foreach ($keys as $key) {
@@ -411,5 +439,67 @@ class LightingFixSettingsController extends Controller
                 'message' => 'Failed to reset settings: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    private function normalizePresets(array $presets): array
+    {
+        $normalized = [];
+        $usedValues = [];
+
+        foreach ($presets as $preset) {
+            if (!is_array($preset)) {
+                continue;
+            }
+
+            $label = trim((string) ($preset['label'] ?? ''));
+            $prompt = trim((string) ($preset['prompt'] ?? ''));
+            $rawValue = trim((string) ($preset['value'] ?? ''));
+
+            if ($label === '' || $prompt === '') {
+                continue;
+            }
+
+            if (strlen($label) > 80) {
+                return [
+                    'presets' => [],
+                    'error' => 'Each preset label must be 80 characters or fewer.',
+                ];
+            }
+
+            if (strlen($prompt) > 1000) {
+                return [
+                    'presets' => [],
+                    'error' => 'Each preset prompt must be 1000 characters or fewer.',
+                ];
+            }
+
+            $value = strtolower($rawValue);
+            if ($value === '') {
+                $value = strtolower(trim((string) preg_replace('/[^A-Za-z0-9]+/', '_', $label), '_'));
+            }
+            $value = trim((string) preg_replace('/[^a-z0-9_]+/', '', $value), '_');
+
+            if ($value === '' || $value === 'custom' || in_array($value, $usedValues, true)) {
+                continue;
+            }
+
+            $usedValues[] = $value;
+            $normalized[] = [
+                'value' => $value,
+                'label' => $label,
+                'prompt' => $prompt,
+            ];
+        }
+
+        array_unshift($normalized, [
+            'value' => 'custom',
+            'label' => 'Custom (type your own)',
+            'prompt' => '',
+        ]);
+
+        return [
+            'presets' => $normalized,
+            'error' => null,
+        ];
     }
 }

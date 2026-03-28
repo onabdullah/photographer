@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, RotateCcw, Loader, Lightbulb, Info } from 'lucide-react';
+import { X, Save, RotateCcw, Loader, Lightbulb, Info, Plus } from 'lucide-react';
 import axios from 'axios';
 
 const LIGHT_SOURCES = ['None', 'Left Light', 'Right Light', 'Top Light', 'Bottom Light'];
@@ -21,6 +21,44 @@ const OUTPUT_QUALITY_MAX = 100;
 const NUM_IMAGES_MIN = 1;
 const NUM_IMAGES_MAX = 12;
 const COST_PER_IMAGE = 0.0035;
+
+const DEFAULT_LIGHTING_PRESETS = [
+  { value: 'custom', label: 'Custom (type your own)', prompt: '' },
+];
+
+function slugifyPresetValue(input) {
+  return String(input || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function normalizePresets(presets) {
+  const source = Array.isArray(presets) ? presets : DEFAULT_LIGHTING_PRESETS;
+  const used = new Set();
+  const normalized = [];
+
+  source.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+
+    const label = String(item.label || '').trim();
+    const prompt = String(item.prompt || '').trim();
+    const computedValue = slugifyPresetValue(item.value || label);
+
+    if (!computedValue || computedValue === 'custom' || used.has(computedValue)) return;
+    if (!label) return;
+
+    used.add(computedValue);
+    normalized.push({
+      value: computedValue,
+      label,
+      prompt,
+    });
+  });
+
+  return [...DEFAULT_LIGHTING_PRESETS, ...normalized];
+}
 
 export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
   // Performance optimization: Cache & lazy loading
@@ -47,6 +85,7 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
     default_highres_denoise: 0.5,
     default_output_quality: 80,
     default_number_of_images: 1,
+    presets: DEFAULT_LIGHTING_PRESETS,
   });
   const [originalSettings, setOriginalSettings] = useState(null);
 
@@ -62,7 +101,10 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
       // Fetch minimal settings (only settings, no config)
       const response = await axios.get('/admin/lighting-fix-settings?format=minimal');
-      const newSettings = response.data.settings;
+      const newSettings = {
+        ...response.data.settings,
+        presets: normalizePresets(response.data.settings?.presets),
+      };
 
       // Update cache and state
       cacheRef.current = newSettings;
@@ -116,7 +158,10 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
       setSaving(true);
       setError(null);
       const response = await axios.post('/admin/lighting-fix-settings/reset');
-      const newSettings = response.data.settings;
+      const newSettings = {
+        ...response.data.settings,
+        presets: normalizePresets(response.data.settings?.presets),
+      };
       cacheRef.current = newSettings;
       setSettings(newSettings);
       setOriginalSettings(newSettings);
@@ -129,6 +174,50 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
   };
 
   const hasChanges = JSON.stringify(settings) !== JSON.stringify(originalSettings);
+
+  const updatePreset = (index, key, value) => {
+    const nextPresets = [...(settings.presets || DEFAULT_LIGHTING_PRESETS)];
+    if (!nextPresets[index]) return;
+
+    nextPresets[index] = {
+      ...nextPresets[index],
+      [key]: value,
+    };
+
+    if (key === 'label') {
+      nextPresets[index].value = slugifyPresetValue(value);
+    }
+
+    setSettings({
+      ...settings,
+      presets: normalizePresets(nextPresets),
+    });
+  };
+
+  const addPreset = () => {
+    const nextPresets = [...(settings.presets || DEFAULT_LIGHTING_PRESETS), {
+      value: '',
+      label: 'New preset',
+      prompt: '',
+    }];
+
+    setSettings({
+      ...settings,
+      presets: normalizePresets(nextPresets),
+    });
+  };
+
+  const removePreset = (index) => {
+    const nextPresets = [...(settings.presets || DEFAULT_LIGHTING_PRESETS)];
+    const target = nextPresets[index];
+    if (!target || target.value === 'custom') return;
+
+    nextPresets.splice(index, 1);
+    setSettings({
+      ...settings,
+      presets: normalizePresets(nextPresets),
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -537,6 +626,72 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
                       How many unique images to generate per request
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Presets */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Lighting Presets</h3>
+                  <button
+                    type="button"
+                    onClick={addPreset}
+                    className="px-3 py-1.5 text-xs font-medium text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 hover:bg-primary-100 dark:hover:bg-primary-900/50 rounded-md transition flex items-center gap-1"
+                  >
+                    <Plus size={14} />
+                    Add preset
+                  </button>
+                </div>
+                <div className="space-y-4 pl-6">
+                  {(settings.presets || DEFAULT_LIGHTING_PRESETS).map((preset, index) => {
+                    const isCustom = preset.value === 'custom';
+
+                    return (
+                      <div key={`${preset.value || 'preset'}-${index}`} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/40">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            {isCustom ? 'Custom preset (system)' : `Preset ${index}`}
+                          </span>
+                          {!isCustom && (
+                            <button
+                              type="button"
+                              onClick={() => removePreset(index)}
+                              className="p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded"
+                              aria-label="Remove preset"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preset name</label>
+                            <input
+                              type="text"
+                              value={preset.label || ''}
+                              disabled={isCustom}
+                              onChange={(e) => updatePreset(index, 'label', e.target.value)}
+                              maxLength={80}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preset prompt</label>
+                            <textarea
+                              value={preset.prompt || ''}
+                              disabled={isCustom}
+                              onChange={(e) => updatePreset(index, 'prompt', e.target.value)}
+                              maxLength={1000}
+                              rows="3"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-70 resize-none"
+                            />
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{(preset.prompt || '').length}/1000</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
