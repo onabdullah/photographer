@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, RotateCcw, Loader, Lightbulb, Info, Plus, Sparkles, Cog, Layers } from 'lucide-react';
+import { X, Save, RotateCcw, Loader, Lightbulb, Info, Plus, Sparkles, Cog, Layers, Edit2, Trash2, Check } from 'lucide-react';
 import axios from 'axios';
 
 const LIGHT_SOURCES = ['None', 'Left Light', 'Right Light', 'Top Light', 'Bottom Light'];
@@ -70,6 +70,7 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCached, setIsCached] = useState(false);
   const [activeTab, setActiveTab] = useState(TAB_LIGHTING);
+  const [editingPresetIndex, setEditingPresetIndex] = useState(null);
 
   // Settings state
   const [saving, setSaving] = useState(false);
@@ -217,6 +218,7 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
       ...settings,
       presets: nextPresets,
     });
+    setEditingPresetIndex(nextPresets.length - 1);
   };
 
   const removePreset = (index) => {
@@ -719,44 +721,80 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
                       {editablePresets.map((preset, index) => {
                         const presetIndex = allPresets.findIndex((item) => item === preset);
+                        const isEditing = editingPresetIndex === presetIndex;
 
                         return (
                           <div key={`preset-${presetIndex}`} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/40">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Preset {index + 1}</span>
-                              <button
-                                type="button"
-                                onClick={() => removePreset(presetIndex)}
-                                className="p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded"
-                                aria-label="Remove preset"
-                              >
-                                <X size={14} />
-                              </button>
-                            </div>
+                            {isEditing ? (
+                              <>
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-sm font-semibold text-gray-900 dark:text-white">Edit Preset</span>
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingPresetIndex(null)}
+                                      className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded transition"
+                                    >
+                                      <Check size={14} />
+                                      Done
+                                    </button>
+                                  </div>
+                                </div>
 
-                            <div className="space-y-3">
-                              <div>
-                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preset name</label>
-                                <input
-                                  type="text"
-                                  value={preset.label || ''}
-                                  onChange={(e) => updatePreset(presetIndex, 'label', e.target.value)}
-                                  maxLength={80}
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                />
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preset name</label>
+                                    <input
+                                      type="text"
+                                      value={preset.label || ''}
+                                      onChange={(e) => updatePreset(presetIndex, 'label', e.target.value)}
+                                      maxLength={80}
+                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preset prompt</label>
+                                    <textarea
+                                      value={preset.prompt || ''}
+                                      onChange={(e) => updatePreset(presetIndex, 'prompt', e.target.value)}
+                                      maxLength={1000}
+                                      rows="3"
+                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{(preset.prompt || '').length}/1000</p>
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={preset.label}>
+                                    {preset.label || 'Unnamed Preset'}
+                                  </h4>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2" title={preset.prompt}>
+                                    {preset.prompt || 'No prompt specified'}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingPresetIndex(presetIndex)}
+                                    className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition"
+                                    aria-label="Edit preset"
+                                  >
+                                    <Edit2 size={15} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removePreset(presetIndex)}
+                                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition"
+                                    aria-label="Remove preset"
+                                  >
+                                    <Trash2 size={15} />
+                                  </button>
+                                </div>
                               </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preset prompt</label>
-                                <textarea
-                                  value={preset.prompt || ''}
-                                  onChange={(e) => updatePreset(presetIndex, 'prompt', e.target.value)}
-                                  maxLength={1000}
-                                  rows="3"
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-                                />
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{(preset.prompt || '').length}/1000</p>
-                              </div>
-                            </div>
+                            )}
                           </div>
                         );
                       })}
