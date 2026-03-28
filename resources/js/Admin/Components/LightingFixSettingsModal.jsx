@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, RotateCcw, Loader, Lightbulb, Info, Plus } from 'lucide-react';
+import { X, Save, RotateCcw, Loader, Lightbulb, Info, Plus, Sparkles, Cog, Layers } from 'lucide-react';
 import axios from 'axios';
 
 const LIGHT_SOURCES = ['None', 'Left Light', 'Right Light', 'Top Light', 'Bottom Light'];
@@ -229,12 +229,12 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-3xl my-8">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-2xl w-full max-w-3xl my-8 border border-gray-200 dark:border-slate-700/80">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-700/80">
           <div className="flex items-center gap-3">
-            <Lightbulb size={24} className="text-primary-600" />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Lighting Fix Settings</h2>
+            <Sparkles size={24} className="text-primary-600" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Product AI Lab Settings</h2>
             {isRefreshing && <span className="text-xs font-medium text-gray-500">(refreshing...)</span>}
           </div>
           <button
@@ -249,33 +249,39 @@ export default function LightingFixSettingsModal({ isOpen, onClose, onSave }) {
         {/* Content */}
         <div className="p-6 max-h-[calc(100vh-300px)] overflow-y-auto">
           {hasLoadedOnce && (
-            <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex gap-2" role="tablist" aria-label="Lighting fix settings tabs">
+            <div className="mb-6 border-b border-gray-200 dark:border-slate-700/80 pb-4">
+              <div
+                className="inline-flex items-center gap-2 p-1 rounded-2xl bg-gray-100 dark:bg-slate-800/90 border border-gray-200 dark:border-slate-700/80"
+                role="tablist"
+                aria-label="Product AI Lab settings tabs"
+              >
                 <button
                   type="button"
                   role="tab"
                   aria-selected={activeTab === TAB_LIGHTING}
                   onClick={() => setActiveTab(TAB_LIGHTING)}
-                  className={`px-3 py-2 text-sm font-medium rounded-t-md transition ${
+                  className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition flex items-center gap-2 ${
                     activeTab === TAB_LIGHTING
-                      ? 'text-primary-700 dark:text-primary-300 border-b-2 border-primary-600 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60'
+                      ? 'text-white bg-primary-600 dark:bg-primary-600 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-slate-700/80'
                   }`}
                 >
-                  Lighting Fix Settings
+                  <Cog size={18} />
+                  Settings
                 </button>
                 <button
                   type="button"
                   role="tab"
                   aria-selected={activeTab === TAB_PRODUCT_AI_LAB}
                   onClick={() => setActiveTab(TAB_PRODUCT_AI_LAB)}
-                  className={`px-3 py-2 text-sm font-medium rounded-t-md transition ${
+                  className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition flex items-center gap-2 ${
                     activeTab === TAB_PRODUCT_AI_LAB
-                      ? 'text-primary-700 dark:text-primary-300 border-b-2 border-primary-600 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60'
+                      ? 'text-white bg-primary-600 dark:bg-primary-600 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-slate-700/80'
                   }`}
                 >
-                  Product AI Lab Settings
+                  <Layers size={18} />
+                  Presets
                 </button>
               </div>
             </div>
