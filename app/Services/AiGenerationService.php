@@ -1419,7 +1419,6 @@ class AiGenerationService
             'version' => $lightingConfig['model_version'],
             'input' => [
                 'subject_image' => $imageInput,
-                'prompt' => $prompt,
                 'appended_prompt' => $lightingConfig['appended_prompt'],
                 'negative_prompt' => $lightingConfig['negative_prompt'],
                 'light_source' => $lightSource,
@@ -1433,6 +1432,7 @@ class AiGenerationService
                 'highres_denoise' => $highresDenoise,
                 'output_quality' => $outputQuality,
                 'number_of_images' => $numberOfImages,
+                'prompt' => $prompt,
             ],
         ];
 

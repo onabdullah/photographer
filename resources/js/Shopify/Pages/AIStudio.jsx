@@ -2092,17 +2092,6 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           else if (value === 'custom') setLightingPromptText('');
                         }}
                       />
-                      <TextField
-                        label="Lighting prompt"
-                        value={lightingPromptText}
-                        onChange={setLightingPromptText}
-                        placeholder="Select a preset to pre-fill, or type your own (e.g. Soft golden hour from the right)"
-                        multiline={3}
-                        autoComplete="off"
-                        characterCount={lightingPromptText.length}
-                        maxLength={1000}
-                        helpText="Pre-filled from the preset above. Edit it or use as-is, then click Generate."
-                      />
 
                       <InlineGrid columns={{ xs: 1, md: 2 }} gap="200">
                         <Select
@@ -2209,6 +2198,18 @@ export default function AIStudio({ product, initialImage, initialTool, enabledTo
                           onChange={setLightingNumberOfImages}
                         />
                       </BlockStack>
+
+                      <TextField
+                        label="Lighting prompt"
+                        value={lightingPromptText}
+                        onChange={setLightingPromptText}
+                        placeholder="Select a preset to pre-fill, or type your own (e.g. Soft golden hour from the right)"
+                        multiline={3}
+                        autoComplete="off"
+                        characterCount={lightingPromptText.length}
+                        maxLength={1000}
+                        helpText="Pre-filled from the preset above. Edit it or use as-is, then click Generate."
+                      />
                     </BlockStack>
                   )}
 
